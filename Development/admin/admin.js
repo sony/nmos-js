@@ -11,7 +11,7 @@ var myApp = angular.module('myApp', ['ng-admin']);
 
 myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
-  // Application, using the Query API on the same host
+  // Application, mostly just using the Query API on the same host
 
   var admin = nga.application('sea-lion')
     .baseApiUrl('http://' + window.location.hostname + ':3211/x-nmos/query/v1.0/');
@@ -28,20 +28,26 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   // Entities
 
-  var node = nga.entity('nodes').readOnly();
-  var device = nga.entity('devices').readOnly();
-  var source = nga.entity('sources').readOnly();
-  var flow = nga.entity('flows').readOnly();
-  var sender = nga.entity('senders').readOnly();
-  var receiver = nga.entity('receivers').readOnly();
+  var nodes = nga.entity('nodes').readOnly();
+  var devices = nga.entity('devices').readOnly();
+  var sources = nga.entity('sources').readOnly();
+  var flows = nga.entity('flows').readOnly();
+  var senders = nga.entity('senders').readOnly();
+  var receivers = nga.entity('receivers').readOnly();
+  // Logging API is on a different port on the same host
+  var logs = nga.entity('events').label('Logs').baseApiUrl('http://' + window.location.hostname + ':5106/log/').readOnly();
 
   // Templates
 
-  const FILTER_TEMPLATE = '<div class="input-group"><input type="text" ng-model="value" placeholder="{{field._name.substr(0,1).toUpperCase() + field._name.substr(1)}}" class="form-control"></input><span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span></div>';
+  const FILTER_TEMPLATE =
+    '<div class="input-group">' +
+      '<input type="text" ng-model="value" placeholder="{{field._label}}" class="form-control"></input>' +
+      '<span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span>' +
+    '</div>';
 
   // Nodes list view
 
-  node.listView()
+  nodes.listView()
     .fields([
       nga.field('label').isDetailLink(true).sortable(false),
       nga.field('hostname').sortable(false)
@@ -61,27 +67,27 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   // Node show view
 
-  node.showView()
+  nodes.showView()
     .title('Node: {{entry.values.label}}')
     .fields([
-      nga.field('label').label('Label'),
+      nga.field('label'),
       nga.field('id').isDetailLink(false).label('ID'),
       nga.field('hostname'),
       nga.field('href').template('<a href="{{value}}">{{value}}</a>').label('Address'),
       nga.field('version'),
       nga.field('devices', 'referenced_list') // display list of related devices
-        .targetEntity(device)
+        .targetEntity(devices)
         .targetReferenceField('node_id')
         .targetFields([
           nga.field('label').isDetailLink(true).sortable(false)
         ])
     ]);
 
-  admin.addEntity(node);
+  admin.addEntity(nodes);
 
   // Devices list view
 
-  device.listView()
+  devices.listView()
     .fields([
       nga.field('label').isDetailLink(true).sortable(false),
       nga.field('type', 'choice').sortable(false).choices([
@@ -103,29 +109,29 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   // Devices show view
 
-  device.showView()
+  devices.showView()
     .title('Device: {{entry.values.label}}')
     .fields([
       nga.field('label'),
       nga.field('id').isDetailLink(false).label('ID'),
       nga.field('node_id', 'reference')
-        .targetEntity(node)
+        .targetEntity(nodes)
         .targetField(nga.field('label'))
         .label('Node'),
       nga.field('receivers', 'referenced_list')
-        .targetEntity(receiver)
+        .targetEntity(receivers)
         .targetReferenceField('device_id')
         .targetFields([
           nga.field('label').isDetailLink(true).sortable(false)
         ]),
       nga.field('senders', 'referenced_list')
-        .targetEntity(sender)
+        .targetEntity(senders)
         .targetReferenceField('device_id')
         .targetFields([
           nga.field('label').isDetailLink(true).sortable(false)
         ]),
       nga.field('sources', 'referenced_list')
-        .targetEntity(source)
+        .targetEntity(sources)
         .targetReferenceField('device_id')
         .targetFields([
           nga.field('label').isDetailLink(true).sortable(false)
@@ -136,11 +142,11 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('version')
     ]);
 
-  admin.addEntity(device);
+  admin.addEntity(devices);
 
   // Sources list view
 
-  source.listView()
+  sources.listView()
     .fields([
       nga.field('label').isDetailLink(true).sortable(false),
       nga.field('format', 'choice').sortable(false).choices([
@@ -164,13 +170,13 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   // Source show view
 
-  source.showView()
+  sources.showView()
     .title('Source: {{entry.values.label}}')
     .fields([
       nga.field('label'),
       nga.field('id').isDetailLink(false).label('ID'),
       nga.field('device_id', 'reference')
-        .targetEntity(device)
+        .targetEntity(devices)
         .targetField(nga.field('label'))
         .label('Device'),
       nga.field('caps', 'json').label('Capabilities'),
@@ -181,11 +187,11 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         { value: 'urn:x-nmos:format:data', label: 'Data' }
       ]),
       nga.field('parents', 'reference_many') // TODO: format this like a 'referenced_list'
-        .targetEntity(source)
+        .targetEntity(sources)
         .targetField(nga.field('label'))
         .label('Parents'),
       nga.field('flows', 'referenced_list')
-        .targetEntity(flow)
+        .targetEntity(flows)
         .targetReferenceField('source_id')
         .targetFields([
           nga.field('label').isDetailLink(true).sortable(false)
@@ -194,13 +200,13 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('version')
     ]);
 
-  admin.addEntity(source);
+  admin.addEntity(sources);
 
   // Flows list view
 
-  flow.listView()
+  flows.listView()
     .fields([
-      nga.field('label').label('Label').isDetailLink(true).sortable(false),
+      nga.field('label').isDetailLink(true).sortable(false),
       nga.field('format', 'choice').sortable(false).choices([
         { value: 'urn:x-nmos:format:video', label: 'Video' },
         { value: 'urn:x-nmos:format:audio', label: 'Audio' },
@@ -222,13 +228,13 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   // Flow show view
 
-  flow.showView()
+  flows.showView()
     .title('Flow: {{entry.values.label}}')
     .fields([
       nga.field('label'),
       nga.field('id').isDetailLink(false).label('ID'),
       nga.field('source_id', 'reference')
-        .targetEntity(source)
+        .targetEntity(sources)
         .targetField(nga.field('label'))
         .label('Source'),
       nga.field('description'),
@@ -238,11 +244,11 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         { value: 'urn:x-nmos:format:data', label: 'Data' }
       ]),
       nga.field('parents', 'reference_many')
-        .targetEntity(source)
+        .targetEntity(flows)
         .targetField(nga.field('label'))
         .label('Parents'),
       nga.field('senders', 'referenced_list')
-        .targetEntity(sender)
+        .targetEntity(senders)
         .targetReferenceField('flow_id')
         .targetFields([
           nga.field('label').isDetailLink(true).sortable(false)
@@ -251,11 +257,11 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('version')
     ]);
 
-  admin.addEntity(flow);
+  admin.addEntity(flows);
 
   // Senders list view
 
-  sender.listView()
+  senders.listView()
     .fields([
       nga.field('label').isDetailLink(true).sortable(false),
       nga.field('transport', 'choice').sortable(false).choices([
@@ -280,17 +286,17 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   // Sender show view
 
-  sender.showView()
+  senders.showView()
     .title('Sender: {{entry.values.label}}')
     .fields([
       nga.field('label'),
       nga.field('id').isDetailLink(false).label('ID'),
       nga.field('device_id', 'reference')
-        .targetEntity(device)
+        .targetEntity(devices)
         .targetField(nga.field('label'))
         .label('Device'),
       nga.field('flow_id', 'reference')
-        .targetEntity(flow)
+        .targetEntity(flows)
         .targetField(nga.field('label'))
         .label('Flow'),
       nga.field('description'),
@@ -304,11 +310,11 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('version')
     ]);
 
-  admin.addEntity(sender);
+  admin.addEntity(senders);
 
   // Receiver list view
 
-  receiver.listView()
+  receivers.listView()
     .fields([
       nga.field('label').isDetailLink(true).sortable(false),
       nga.field('format', 'choice').sortable(false).choices([
@@ -342,17 +348,17 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   // Receiver show view
 
-  receiver.showView()
+  receivers.showView()
     .title('Receiver: {{entry.values.label}}')
     .fields([
       nga.field('label'),
       nga.field('id').isDetailLink(false).label('ID'),
       nga.field('device_id', 'reference')
-        .targetEntity(device)
+        .targetEntity(devices)
         .targetField(nga.field('label'))
         .label('Device'),
       nga.field('subscription.sender_id', 'reference')
-        .targetEntity(sender)
+        .targetEntity(senders)
         .targetField(nga.field('label'))
         .label('Sender'),
       nga.field('tags', 'json'),
@@ -372,17 +378,75 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('version')
     ]);
 
-  admin.addEntity(receiver);
+  admin.addEntity(receivers);
+
+  // Logs list view
+
+  logs.listView()
+    .fields([
+      nga.field('timestamp', 'datetime').isDetailLink(true).sortable(false),
+      nga.field('level_name').label('Level').sortable(false),
+      nga.field('message').sortable(false).map(function truncate(value) {
+        if (!value) return '';
+        return value.length > 80 ? value.substr(0, 80) + '...' : value;
+      }),
+      nga.field('route_parameters.api').label('API').sortable(false)
+    ])
+    .listActions(['show'])
+    .actions(['filter'])
+    .filters([
+      nga.field('timestamp')
+        .label('Timestamp')
+        .pinned(true)
+        .template(FILTER_TEMPLATE),
+      nga.field('level_name')
+        .label('Level')
+        .pinned(true)
+        .template(FILTER_TEMPLATE),
+      nga.field('message')
+        .label('Message')
+        .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('route_parameters.api')
+        .label('API')
+        .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('route_parameters.resourceType')
+        .label('Resource Type')
+        .pinned(false)
+        .template(FILTER_TEMPLATE)
+    ]);
+
+  // Log show view
+
+  logs.showView()
+    .title('Log: {{entry.values.level_name}} @ {{entry.values.timestamp}}')
+    .fields([
+      nga.field('timestamp', 'datetime'),
+      nga.field('level_name'),
+      nga.field('message'),
+      nga.field('route_parameters.api').label('API'),
+      nga.field('route_parameters.resourceType').label('Resource Type'),
+      nga.field('route_parameters.resourceId').label('Resource ID'),
+      nga.field('http_method').label('HTTP Method'),
+      nga.field('request_uri').label('Request URI'),
+      nga.field('source_location', 'json'),
+      nga.field('thread_id').label('Thread ID'),
+      nga.field('id').isDetailLink(false).label('ID')
+    ]);
+
+  admin.addEntity(logs);
 
   // Side-bar menu
 
   admin.menu(nga.menu()
-    .addChild(nga.menu(node).icon('<span class="glyphicon glyphicon-list"></span>'))
-    .addChild(nga.menu(device).icon('<span class="glyphicon glyphicon-list"></span>'))
-    .addChild(nga.menu(source).icon('<span class="glyphicon glyphicon-list"></span>'))
-    .addChild(nga.menu(flow).icon('<span class="glyphicon glyphicon-list"></span>'))
-    .addChild(nga.menu(sender).icon('<span class="glyphicon glyphicon-list"></span>'))
-    .addChild(nga.menu(receiver).icon('<span class="glyphicon glyphicon-list"></span>'))
+    .addChild(nga.menu(nodes).icon('<span class="glyphicon glyphicon-list"></span>'))
+    .addChild(nga.menu(devices).icon('<span class="glyphicon glyphicon-list"></span>'))
+    .addChild(nga.menu(sources).icon('<span class="glyphicon glyphicon-list"></span>'))
+    .addChild(nga.menu(flows).icon('<span class="glyphicon glyphicon-list"></span>'))
+    .addChild(nga.menu(senders).icon('<span class="glyphicon glyphicon-list"></span>'))
+    .addChild(nga.menu(receivers).icon('<span class="glyphicon glyphicon-list"></span>'))
+    .addChild(nga.menu(logs).icon('<span class="glyphicon glyphicon-list"></span>'))
   );
 
   // attach the admin application to the DOM and execute it
@@ -402,7 +466,7 @@ myApp.config(['RestangularProvider', function (RestangularProvider) {
       delete params._sortDir;
       // Query parameters
       if (params._filters) {
-        params['query.match_type'] = 'substr';  // sea-lion private parameter to allow partial match functionality
+        if (what != 'events') params['query.match_type'] = 'substr';  // sea-lion private parameter to allow partial match functionality
         for (var filter in params._filters) {
           params[filter] = params._filters[filter];
         }

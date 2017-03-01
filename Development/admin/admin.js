@@ -14,7 +14,17 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   // Application, using the Query API on the same host
 
   var admin = nga.application('sea-lion')
-     .baseApiUrl('http://' + window.location.hostname + ':3211/x-nmos/query/v1.0/');
+    .baseApiUrl('http://' + window.location.hostname + ':3211/x-nmos/query/v1.0/');
+
+  // my modern CSS voodoo is sorely lacking
+  admin.header(
+    '<div class="navbar-header ng-scope">' +
+      '<img src="./images/sonyLogo.png" style="height:50px"/><img src="./images/seaLion.png" style="height:50px"/>' +
+      '<a class="navbar-brand" style="float:none" href="#" ng-click="appController.displayHome()">' +
+        'sea-lion' +
+      '</a>' +
+    '</div>'
+    );
 
   // Entities
 

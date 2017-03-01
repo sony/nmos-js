@@ -67,7 +67,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   device.listView().fields([
     nga.field('label').label('Label').isDetailLink(true).sortable(false),
     nga.field('type', 'choice').sortable(false).choices([
-      { value: 'urn:x-nmos:device:generic', label: 'Generic'}, // TODO: add else print string function with choiceS
+      { value: 'urn:x-nmos:device:generic', label: 'Generic'}, // TODO: add else print string function with choiceS - not sure if can be done
     ])
   ])
   .listActions(['show'])
@@ -178,7 +178,10 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   flow.showView().title('Flow: {{entry.values.label}}').fields([
     nga.field('label').label('Label'),
     nga.field('id').isDetailLink(false).label('ID'),
-    nga.field('source_id'),
+    nga.field('source_id', 'reference').sortable(false)
+       .targetEntity(source)
+       .targetField(nga.field('label'))
+       .label('Source'),
     nga.field('description'),
     nga.field('format', 'choice').choices([
       { value: 'urn:x-nmos:format:video', label: 'Video'},
@@ -218,8 +221,20 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   sender.showView().title('Sender: {{entry.values.label}}').fields([
     nga.field('label').label('Label'),
     nga.field('id').isDetailLink(false).label('ID'),
-    nga.field('device_id'),
-    nga.field('flow_id'),
+    /*
+    nga.field('node_id', 'reference').sortable(false)
+       .targetEntity(node)
+       .targetField(nga.field('label'))
+       .label('Node'),
+    */
+    nga.field('device_id', 'reference').sortable(false)
+       .targetEntity(device)
+       .targetField(nga.field('label'))
+       .label('Device'),
+    nga.field('flow_id', 'reference').sortable(false)
+       .targetEntity(flow)
+       .targetField(nga.field('label'))
+       .label('Flow'),
     nga.field('description'),
     nga.field('transport', 'choice').choices([
       { value: 'urn:x-nmos:transport:rtp', label: 'Real-time Transport Protocol'},

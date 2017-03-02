@@ -385,7 +385,13 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   logs.listView()
     .fields([
       nga.field('timestamp', 'datetime').isDetailLink(true).sortable(false),
-      nga.field('level_name').label('Level').sortable(false),
+      nga.field('level_name').label('Level').sortable(false)
+        .cssClasses(function(entry) {
+          if (entry) {
+            return entry.values.level > 10 ? 'level-error' : entry.values.level > 0 ? 'level-warning' : entry.values.level < 0 ? 'level-verbose' : '';
+          }
+          return '';
+      }),
       nga.field('message').sortable(false).map(function truncate(value) {
         if (!value) return '';
         return value.length > 80 ? value.substr(0, 80) + '...' : value;

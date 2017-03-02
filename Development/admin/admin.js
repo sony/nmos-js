@@ -369,16 +369,18 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   // Logs list view
 
+  function levelCssClasses(entry) {
+    if (entry) {
+      return entry.values.level > 10 ? 'level-error' : entry.values.level > 0 ? 'level-warning' : entry.values.level < 0 ? 'level-verbose' : '';
+    }
+    return '';
+  };
+
   logs.listView()
     .fields([
       nga.field('timestamp', 'datetime').isDetailLink(true).sortable(false),
       nga.field('level_name').label('Level').sortable(false)
-        .cssClasses(function(entry) {
-          if (entry) {
-            return entry.values.level > 10 ? 'level-error' : entry.values.level > 0 ? 'level-warning' : entry.values.level < 0 ? 'level-verbose' : '';
-          }
-          return '';
-      }),
+        .cssClasses(levelCssClasses),
       nga.field('message').sortable(false).map(function truncate(value) {
         if (!value) return '';
         return value.length > 80 ? value.substr(0, 80) + '...' : value;
@@ -414,7 +416,10 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .title('Log: {{entry.values.level_name}} @ {{entry.values.timestamp}}')
     .fields([
       nga.field('timestamp', 'datetime'),
-      nga.field('level_name').label('Level'),
+      nga.field('level_name').label('Level')
+        .cssClasses(function(entry) {
+          return 'col-sm-10 col-md-8 col-lg-7 ' + levelCssClasses(entry);
+        }),
       nga.field('message'),
       nga.field('route_parameters.api').label('API'),
       nga.field('route_parameters.resourceType').label('Resource Type'),

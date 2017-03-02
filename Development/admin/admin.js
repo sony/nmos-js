@@ -20,7 +20,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   // my modern CSS voodoo is sorely lacking
   admin.header(
     '<div class="navbar-header ng-scope">' +
-      '<img src="./images/sonyLogo.png" style="height:50px"/><img src="./images/seaLion.png" style="height:50px"/>' +
+      '<img src="./images/sonyLogo.png" style="height:50px" alt="Sony Logo"/><img src="./images/seaLion.png" style="height:50px" alt="sea-lion"/>' +
       '<a class="navbar-brand" style="float:none" href="#" ng-click="appController.displayHome()">' +
         'sea-lion' +
       '</a>' +

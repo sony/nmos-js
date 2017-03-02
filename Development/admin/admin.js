@@ -532,7 +532,7 @@ myApp.config(['RestangularProvider', function (RestangularProvider) {
       delete params._sortDir;
       // Query parameters
       if (params._filters) {
-        if (what != 'events') params['query.match_type'] = 'substr';  // sea-lion private parameter to allow partial match functionality
+        if (what != 'events') params['query.match_type'] = 'substr,icase';  // sea-lion private parameter to allow partial match functionality
         for (var filter in params._filters) {
           params[filter] = params._filters[filter];
         }

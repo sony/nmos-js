@@ -463,6 +463,18 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   admin.addEntity(logs);
 
+  // Dashboard
+  
+  admin.dashboard(nga.dashboard()
+    .addCollection(nga.collection(nodes).fields(nodes.listView().fields()))
+    .addCollection(nga.collection(devices).fields(devices.listView().fields()))
+    .addCollection(nga.collection(sources).fields(sources.listView().fields()))
+    .addCollection(nga.collection(flows).fields(flows.listView().fields()))
+    .addCollection(nga.collection(senders).fields(senders.listView().fields()))
+    .addCollection(nga.collection(receivers).fields(receivers.listView().fields()))
+    //.addCollection(nga.collection(logs).fields(logs.listView().fields()).perPage(10))
+  );
+
   // Side-bar menu
 
   admin.menu(nga.menu()

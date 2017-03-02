@@ -60,6 +60,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .template(FILTER_TEMPLATE),
       nga.field('hostname')
         .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('id').label('ID')
+        .pinned(false)
         .template(FILTER_TEMPLATE)
     ]);
 
@@ -99,6 +102,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .pinned(true)
         .template(FILTER_TEMPLATE),
       nga.field('type')
+        .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('id').label('ID')
         .pinned(false)
         .template(FILTER_TEMPLATE)
     ]);
@@ -159,6 +165,12 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .template(FILTER_TEMPLATE),
       nga.field('format')
         .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('description')
+        .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('id').label('ID')
+        .pinned(false)
         .template(FILTER_TEMPLATE)
     ]);
 
@@ -215,6 +227,12 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .template(FILTER_TEMPLATE),
       nga.field('format')
         .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('description')
+        .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('id').label('ID')
+        .pinned(false)
         .template(FILTER_TEMPLATE)
     ]);
 
@@ -270,6 +288,12 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .pinned(true)
         .template(FILTER_TEMPLATE),
       nga.field('transport')
+        .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('description')
+        .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('id').label('ID')
         .pinned(false)
         .template(FILTER_TEMPLATE)
     ]);
@@ -329,6 +353,12 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .pinned(false)
         .template(FILTER_TEMPLATE),
       nga.field('transport')
+        .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('description')
+        .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('id').label('ID')
         .pinned(false)
         .template(FILTER_TEMPLATE)
     ]);

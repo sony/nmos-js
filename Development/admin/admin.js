@@ -35,10 +35,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   var flows = nga.entity('flows').readOnly();
   var senders = nga.entity('senders').readOnly();
   var receivers = nga.entity('receivers').readOnly();
+  var subscriptions = nga.entity('subscriptions').readOnly();
   // Logging API is on a different port on the same host
-  var logs = nga.entity('events').label('Logs').readOnly().baseApiUrl('http://' + window.location.hostname + ':5106/log/');
-  // Registration API is on a different port on the same host
-  // var resources = nga.entity('resources').baseApiUrl('http://' + window.location.hostname + ':3210/x-nmos/registration/v1.0/');
+  var logs = nga.entity('events').label('Logs').baseApiUrl('http://' + window.location.hostname + ':5106/log/').readOnly();
 
   // Templates
 
@@ -400,6 +399,46 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   admin.addEntity(receivers);
 
+  // Subscriptions list view
+
+  subscriptions.listView()
+    .fields([
+      nga.field('resource_path').isDetailLink(true).sortable(false),
+      nga.field('persist', 'boolean').sortable(false),
+      nga.field('max_update_rate_ms', 'number').label('Max Update Rate (ms)').sortable(false),
+    ])
+    .listActions(['show'])
+    .actions(['filter'])
+    .filters([
+      nga.field('resource_path').label('Resource Path')
+        .pinned(true)
+        .template(FILTER_TEMPLATE),
+      nga.field('persist', 'boolean')
+        .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('max_update_rate_ms', 'number').label('Max Update Rate (ms)')
+        .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('id').label('ID')
+        .pinned(false)
+        .template(FILTER_TEMPLATE)
+    ]);
+
+  // Subscription show view
+
+  subscriptions.showView()
+    .title('Subscription: {{entry.values.resource_path}}')
+    .fields([
+      nga.field('resource_path'),
+      nga.field('persist', 'boolean'),
+      nga.field('max_update_rate_ms', 'number').label('Max Update Rate (ms)'),
+      nga.field('params', 'json'),
+      nga.field('ws_href').template('<a href="{{value}}">{{value}}</a>').label('WebSocket Address'),
+      nga.field('id').isDetailLink(false).label('ID'),
+    ]);
+
+  admin.addEntity(subscriptions);
+
   // Logs list view
 
   function levelCssClasses(entry) {
@@ -443,7 +482,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .template(FILTER_TEMPLATE)
     ]);
 
-  // Logs show view
+  // Log show view
 
   logs.showView()
     .title('Log: {{entry.values.level_name}} @ {{entry.values.timestamp}}')
@@ -466,31 +505,6 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   admin.addEntity(logs);
 
-  // Resources list view
-  //
-  // resources.listView()
-  //   .fields([
-  //     nga.field('label').isDetailLink(true).sortable(false)
-  //   ])
-  //   .listActions(['show'])
-  //   .actions(['filter'])
-  //   .filters([
-  //     nga.field('label')
-  //       .pinned(true)
-  //       .template(FILTER_TEMPLATE)
-  //   ]);
-  //
-  // // Resources creation view
-  //
-  // resources.creationView().fields([
-  //     nga.field('label')
-  // ]);
-  //
-  // // Resources edition view - uses same fields as creation view
-  // resources.editionView().fields(resources.creationView().fields());
-  //
-  // admin.addEntity(resources);
-
   // Dashboard
 
   admin.dashboard(nga.dashboard()
@@ -500,7 +514,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .addCollection(nga.collection(flows).fields(flows.listView().fields()))
     .addCollection(nga.collection(senders).fields(senders.listView().fields()))
     .addCollection(nga.collection(receivers).fields(receivers.listView().fields()))
-    // .addCollection(nga.collection(logs).fields(logs.listView().fields()).perPage(10))
+    .addCollection(nga.collection(subscriptions).fields(subscriptions.listView().fields()))
+    //.addCollection(nga.collection(logs).fields(logs.listView().fields()).perPage(10))
   );
 
   // Side-bar menu
@@ -512,6 +527,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .addChild(nga.menu(flows).icon('<span class="glyphicon glyphicon-list"></span>'))
     .addChild(nga.menu(senders).icon('<span class="glyphicon glyphicon-list"></span>'))
     .addChild(nga.menu(receivers).icon('<span class="glyphicon glyphicon-list"></span>'))
+    .addChild(nga.menu(subscriptions).icon('<span class="glyphicon glyphicon-list"></span>'))
     .addChild(nga.menu(logs).icon('<span class="glyphicon glyphicon-list"></span>'))
   );
 

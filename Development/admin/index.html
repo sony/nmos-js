@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <!--  add style="cursor:pointer;" and ng-click='HOMEPAGE'-->
         <meta charset="utf-8">
-        <title>Sea-Lion</title>
+        <link rel="shortcut icon" href="./images/favicon.ico" type="image/x-icon">
+        <title>sea-lion</title>
         <link rel="stylesheet" href="node_modules/ng-admin/build/ng-admin.min.css">
+        <style>.level-error, .level-error a { color: red } .level-warning, .level-warning a { color: orange } .level-verbose, .level-verbose a { color: #a8a8a8 }</style>
     </head>
     <body ng-app="myApp">
-        <a href="#/dashboard"><img src="./images/sea-lion.png"/></a>
         <div ui-view="ng-admin"></div>
         <script src="node_modules/ng-admin/build/ng-admin.min.js" type="text/javascript"></script>
         <script src="admin.js" type="text/javascript"></script>
-        <a href="#/dashboard"><img src="./images/sonyBlack.jpg"/></a>
     </body>
 </html>

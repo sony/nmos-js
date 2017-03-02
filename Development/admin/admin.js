@@ -41,7 +41,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   const FILTER_TEMPLATE =
     '<div class="input-group">' +
-      '<input type="text" ng-model="value" placeholder="{{field._label}}" class="form-control"></input>' +
+      '<input type="text" ng-model="value" placeholder="{{field._label == null ? field._name.substr(0,1).toUpperCase() + field._name.substr(1) : field._label}}" class="form-control"></input>' +
       '<span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span>' +
     '</div>';
 
@@ -56,11 +56,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .actions(['filter'])
     .filters([
       nga.field('label')
-        .label('') // no label for the pinned filter
         .pinned(true)
         .template(FILTER_TEMPLATE),
       nga.field('hostname')
-        .label('Hostname') // must have a label if not pinned as this text is displayed in drop-down filter selection
         .pinned(false)
         .template(FILTER_TEMPLATE)
     ]);
@@ -98,11 +96,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .actions(['filter'])
     .filters([
       nga.field('label')
-        .label('')
         .pinned(true)
         .template(FILTER_TEMPLATE),
       nga.field('type')
-        .label('Type')
         .pinned(false)
         .template(FILTER_TEMPLATE)
     ]);
@@ -159,11 +155,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .actions(['filter'])
     .filters([
       nga.field('label')
-        .label('')
         .pinned(true)
         .template(FILTER_TEMPLATE),
       nga.field('format')
-        .label('Format')
         .pinned(false)
         .template(FILTER_TEMPLATE)
     ]);
@@ -217,11 +211,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .actions(['filter'])
     .filters([
       nga.field('label')
-        .label('')
         .pinned(true)
         .template(FILTER_TEMPLATE),
       nga.field('format')
-        .label('Format')
         .pinned(false)
         .template(FILTER_TEMPLATE)
     ]);
@@ -275,11 +267,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .actions(['filter'])
     .filters([
       nga.field('label')
-        .label('')
         .pinned(true)
         .template(FILTER_TEMPLATE),
       nga.field('transport')
-        .label('Transport')
         .pinned(false)
         .template(FILTER_TEMPLATE)
     ]);
@@ -333,15 +323,12 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .actions(['filter'])
     .filters([
       nga.field('label')
-        .label('')
         .pinned(true)
         .template(FILTER_TEMPLATE),
       nga.field('format')
-        .label('Format')
         .pinned(false)
         .template(FILTER_TEMPLATE),
       nga.field('transport')
-        .label('Transport')
         .pinned(false)
         .template(FILTER_TEMPLATE)
     ]);
@@ -402,7 +389,6 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .actions(['filter'])
     .filters([
       nga.field('timestamp')
-        .label('Timestamp')
         .pinned(true)
         .template(FILTER_TEMPLATE),
       nga.field('level_name')
@@ -410,7 +396,6 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .pinned(true)
         .template(FILTER_TEMPLATE),
       nga.field('message')
-        .label('Message')
         .pinned(false)
         .template(FILTER_TEMPLATE),
       nga.field('route_parameters.api')
@@ -429,7 +414,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .title('Log: {{entry.values.level_name}} @ {{entry.values.timestamp}}')
     .fields([
       nga.field('timestamp', 'datetime'),
-      nga.field('level_name'),
+      nga.field('level_name').label('Level'),
       nga.field('message'),
       nga.field('route_parameters.api').label('API'),
       nga.field('route_parameters.resourceType').label('Resource Type'),

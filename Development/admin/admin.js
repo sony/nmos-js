@@ -36,7 +36,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   var senders = nga.entity('senders').readOnly();
   var receivers = nga.entity('receivers').readOnly();
   // Logging API is on a different port on the same host
-  var logs = nga.entity('events').label('Logs').readOnly();
+  var logs = nga.entity('events').label('Logs').readOnly().baseApiUrl('http://' + window.location.hostname + ':5106/log/');
   // Registration API is on a different port on the same host
   // var resources = nga.entity('resources').baseApiUrl('http://' + window.location.hostname + ':3210/x-nmos/registration/v1.0/');
 

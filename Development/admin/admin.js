@@ -4,6 +4,7 @@
 // 3. Create show view with title/fields/labels/listActions/references
 // 4. Add entity to admin: admin.addEntity(x);
 // 5. Add menu child: .addChild(nga.menu(x).icon('<span class="glyphicon glyphicon-list"></span>'))
+// 6. (optional) Add dashboard collection: .addCollection(nga.collection(x).fields(x.listView().fields()))
 
 "use strict";
 
@@ -35,7 +36,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   var senders = nga.entity('senders').readOnly();
   var receivers = nga.entity('receivers').readOnly();
   // Logging API is on a different port on the same host
-  var logs = nga.entity('events').label('Logs').baseApiUrl('http://' + window.location.hostname + ':5106/log/').readOnly();
+  var logs = nga.entity('events').label('Logs').readOnly();
+  // Registration API is on a different port on the same host
+  // var resources = nga.entity('resources').baseApiUrl('http://' + window.location.hostname + ':3210/x-nmos/registration/v1.0/');
 
   // Templates
 
@@ -440,7 +443,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .template(FILTER_TEMPLATE)
     ]);
 
-  // Log show view
+  // Logs show view
 
   logs.showView()
     .title('Log: {{entry.values.level_name}} @ {{entry.values.timestamp}}')
@@ -463,8 +466,33 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   admin.addEntity(logs);
 
+  // Resources list view
+  //
+  // resources.listView()
+  //   .fields([
+  //     nga.field('label').isDetailLink(true).sortable(false)
+  //   ])
+  //   .listActions(['show'])
+  //   .actions(['filter'])
+  //   .filters([
+  //     nga.field('label')
+  //       .pinned(true)
+  //       .template(FILTER_TEMPLATE)
+  //   ]);
+  //
+  // // Resources creation view
+  //
+  // resources.creationView().fields([
+  //     nga.field('label')
+  // ]);
+  //
+  // // Resources edition view - uses same fields as creation view
+  // resources.editionView().fields(resources.creationView().fields());
+  //
+  // admin.addEntity(resources);
+
   // Dashboard
-  
+
   admin.dashboard(nga.dashboard()
     .addCollection(nga.collection(nodes).fields(nodes.listView().fields()))
     .addCollection(nga.collection(devices).fields(devices.listView().fields()))
@@ -472,7 +500,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .addCollection(nga.collection(flows).fields(flows.listView().fields()))
     .addCollection(nga.collection(senders).fields(senders.listView().fields()))
     .addCollection(nga.collection(receivers).fields(receivers.listView().fields()))
-    //.addCollection(nga.collection(logs).fields(logs.listView().fields()).perPage(10))
+    // .addCollection(nga.collection(logs).fields(logs.listView().fields()).perPage(10))
   );
 
   // Side-bar menu
@@ -495,7 +523,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
 myApp.config(['RestangularProvider', function (RestangularProvider) {
   RestangularProvider.addFullRequestInterceptor(function (element, operation, what, url, headers, params) {
-    if (operation == "getList") {
+    if (operation === 'getList') {
       // Pagination
       delete params._page;
       delete params._perPage;

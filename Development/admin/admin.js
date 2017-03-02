@@ -409,7 +409,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   logs.listView()
     .fields([
       nga.field('timestamp', 'datetime').isDetailLink(true).sortable(false),
-      nga.field('level_name').label('Level').sortable(false)
+      nga.field('level_name').label('Level').isDetailLink(true).sortable(false)
         .cssClasses(levelCssClasses),
       nga.field('message').sortable(false).map(function truncate(value) {
         if (!value) return '';

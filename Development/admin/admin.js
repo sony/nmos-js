@@ -52,7 +52,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   nodes.listView()
     .fields([
       nga.field('label').isDetailLink(true).sortable(false),
-      nga.field('hostname').sortable(false)
+      nga.field('hostname').sortable(false),
+      nga.field('api.versions', 'string').label('Node API Versions').map((versions) => { return versions.toString(); }).sortable(false),
     ])
     .listActions(['show'])
     .actions(['filter'])
@@ -61,6 +62,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .pinned(true)
         .template(FILTER_TEMPLATE),
       nga.field('hostname')
+        .pinned(false)
+        .template(FILTER_TEMPLATE),
+      nga.field('api.versions', 'json').label('Node API Versions')
         .pinned(false)
         .template(FILTER_TEMPLATE),
       nga.field('id').label('ID')
@@ -77,6 +81,11 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('id').isDetailLink(false).label('ID'),
       nga.field('hostname'),
       nga.field('href').template('<a href="{{value}}">{{value}}</a>').label('Address'),
+      nga.field('api.versions', 'json').label('Node API Versions'),
+      nga.field('api.endpoints', 'json').label('Node API Address Fragments'),
+      nga.field('services', 'json'),
+      nga.field('clocks', 'json'),
+      nga.field('interfaces', 'json'),
       nga.field('version'),
       nga.field('devices', 'referenced_list') // display list of related devices
         .targetEntity(devices)

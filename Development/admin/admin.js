@@ -39,7 +39,26 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   // Logging API is on a different port on the same host
   var logs = nga.entity('events').label('Logs').baseApiUrl('http://' + window.location.hostname + ':5106/log/').readOnly();
 
-  // Templates
+  // Templates and common definitions
+
+  const FORMAT_CHOICES = [
+    { value: 'urn:x-nmos:format:video', label: 'Video' },
+    { value: 'urn:x-nmos:format:audio', label: 'Audio' },
+    { value: 'urn:x-nmos:format:data', label: 'Data' },
+    { value: 'urn:x-nmos:format:mux', label: 'Mux' }
+  ];
+
+  const TRANSPORT_CHOICES = [
+    { value: 'urn:x-nmos:transport:rtp', label: 'RTP (Real-time Transport Protocol)' },
+    { value: 'urn:x-nmos:transport:rtp.mcast', label: 'RTP.mcast (Multicast Real-time Transport Protocol)' },
+    { value: 'urn:x-nmos:transport:rtp.ucast', label: 'RTP.ucast (Unicast Real-time Transport Protocol)' },
+    { value: 'urn:x-nmos:transport:dash', label: 'DASH (Dynamic Adaptive Streaming over HTTP)' }
+  ];
+
+  const TYPE_CHOICES = [
+    { value: 'urn:x-nmos:device:generic', label: 'Generic' },
+    { value: 'urn:x-nmos:device:pipeline', label: 'Pipeline' }
+  ];
 
   const FILTER_TEMPLATE =
     '<div class="input-group">' +
@@ -53,7 +72,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .fields([
       nga.field('label').isDetailLink(true).sortable(false),
       nga.field('hostname').sortable(false),
-      nga.field('api.versions', 'string').label('Node API Versions').map((versions) => { return versions.toString(); }).sortable(false),
+      nga.field('api.versions', 'string').label('Node API Versions').map((versions) => { return versions instanceof Array ? versions.toString() : null; }).sortable(false)
     ])
     .listActions(['show'])
     .actions(['filter'])
@@ -102,9 +121,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   devices.listView()
     .fields([
       nga.field('label').isDetailLink(true).sortable(false),
-      nga.field('type', 'choice').sortable(false).choices([
-        { value: 'urn:x-nmos:device:generic', label: 'Generic' }, // TODO: add else print string function with choiceS - not sure if can be done
-      ])
+      nga.field('type', 'choice').sortable(false).choices(TYPE_CHOICES)
     ])
     .listActions(['show'])
     .actions(['filter'])
@@ -149,9 +166,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetFields([
           nga.field('label').isDetailLink(true).sortable(false)
         ]),
-      nga.field('type', 'choice').choices([
-        { value: 'urn:x-nmos:device:generic', label: 'Generic' },
-      ]),
+      nga.field('type', 'choice').choices(TYPE_CHOICES),
       nga.field('version')
     ]);
 
@@ -162,11 +177,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   sources.listView()
     .fields([
       nga.field('label').isDetailLink(true).sortable(false),
-      nga.field('format', 'choice').sortable(false).choices([
-        { value: 'urn:x-nmos:format:video', label: 'Video' },
-        { value: 'urn:x-nmos:format:audio', label: 'Audio' },
-        { value: 'urn:x-nmos:format:data', label: 'Data' }
-      ])
+      nga.field('format', 'choice').sortable(false).choices()
     ])
     .listActions(['show'])
     .actions(['filter'])
@@ -198,11 +209,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .label('Device'),
       nga.field('caps', 'json').label('Capabilities'),
       nga.field('description'),
-      nga.field('format', 'choice').choices([
-        { value: 'urn:x-nmos:format:video', label: 'Video' },
-        { value: 'urn:x-nmos:format:audio', label: 'Audio' },
-        { value: 'urn:x-nmos:format:data', label: 'Data' }
-      ]),
+      nga.field('format', 'choice').choices(FORMAT_CHOICES),
       nga.field('parents', 'reference_many') // TODO: format this like a 'referenced_list'
         .targetEntity(sources)
         .targetField(nga.field('label'))
@@ -224,11 +231,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   flows.listView()
     .fields([
       nga.field('label').isDetailLink(true).sortable(false),
-      nga.field('format', 'choice').sortable(false).choices([
-        { value: 'urn:x-nmos:format:video', label: 'Video' },
-        { value: 'urn:x-nmos:format:audio', label: 'Audio' },
-        { value: 'urn:x-nmos:format:data', label: 'Data' }
-      ])
+      nga.field('format', 'choice').sortable(false).choices(FORMAT_CHOICES)
     ])
     .listActions(['show'])
     .actions(['filter'])
@@ -259,11 +262,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetField(nga.field('label'))
         .label('Source'),
       nga.field('description'),
-      nga.field('format', 'choice').choices([
-        { value: 'urn:x-nmos:format:video', label: 'Video' },
-        { value: 'urn:x-nmos:format:audio', label: 'Audio' },
-        { value: 'urn:x-nmos:format:data', label: 'Data' }
-      ]),
+      nga.field('format', 'choice').choices(FORMAT_CHOICES),
       nga.field('parents', 'reference_many')
         .targetEntity(flows)
         .targetField(nga.field('label'))
@@ -285,12 +284,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   senders.listView()
     .fields([
       nga.field('label').isDetailLink(true).sortable(false),
-      nga.field('transport', 'choice').sortable(false).choices([
-        { value: 'urn:x-nmos:transport:rtp', label: 'Real-time Transport Protocol' },
-        { value: 'urn:x-nmos:transport:rtp.ucast', label: 'Unicast Real-time Transport Protocol' },
-        { value: 'urn:x-nmos:transport:rtp.mcast', label: 'Multicast Real-time Transport Protocol' },
-        { value: 'urn:x-nmos:transport:dash', label: 'Dynamic Adaptive Streaming over HTTP' }
-      ])
+      nga.field('transport', 'choice').sortable(false).choices(TRANSPORT_CHOICES)
     ])
     .listActions(['show'])
     .actions(['filter'])
@@ -325,12 +319,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetField(nga.field('label'))
         .label('Flow'),
       nga.field('description'),
-      nga.field('transport', 'choice').choices([
-        { value: 'urn:x-nmos:transport:rtp', label: 'Real-time Transport Protocol' },
-        { value: 'urn:x-nmos:transport:rtp.ucast', label: 'Unicast Real-time Transport Protocol' },
-        { value: 'urn:x-nmos:transport:rtp.mcast', label: 'Multicast Real-time Transport Protocol' },
-        { value: 'urn:x-nmos:transport:dash', label: 'Dynamic Adaptive Streaming over HTTP' }
-      ]),
+      nga.field('transport', 'choice').choices(TRANSPORT_CHOICES),
       nga.field('manifest_href').template('<a href="{{value}}">{{value}}</a>').label('Manifest Address'),
       nga.field('version')
     ]);
@@ -342,17 +331,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   receivers.listView()
     .fields([
       nga.field('label').isDetailLink(true).sortable(false),
-      nga.field('format', 'choice').sortable(false).choices([
-        { value: 'urn:x-nmos:format:video', label: 'Video' },
-        { value: 'urn:x-nmos:format:audio', label: 'Audio' },
-        { value: 'urn:x-nmos:format:data', label: 'Data' }
-      ]),
-      nga.field('transport', 'choice').sortable(false).choices([
-        { value: 'urn:x-nmos:transport:rtp', label: 'Real-time Transport Protocol' },
-        { value: 'urn:x-nmos:transport:rtp.ucast', label: 'Unicast Real-time Transport Protocol' },
-        { value: 'urn:x-nmos:transport:rtp.mcast', label: 'Multicast Real-time Transport Protocol' },
-        { value: 'urn:x-nmos:transport:dash', label: 'Dynamic Adaptive Streaming over HTTP' }
-      ]),
+      nga.field('format', 'choice').sortable(false).choices(FORMAT_CHOICES),
+      nga.field('transport', 'choice').sortable(false).choices(TRANSPORT_CHOICES),
     ])
     .listActions(['show'])
     .actions(['filter'])
@@ -392,17 +372,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('tags', 'json'),
       nga.field('description'),
       nga.field('caps', 'json').label('Capabilities'),
-      nga.field('format', 'choice').choices([
-        { value: 'urn:x-nmos:format:video', label: 'Video' },
-        { value: 'urn:x-nmos:format:audio', label: 'Audio' },
-        { value: 'urn:x-nmos:format:data', label: 'Data' }
-      ]),
-      nga.field('transport', 'choice').choices([
-        { value: 'urn:x-nmos:transport:rtp', label: 'Real-time Transport Protocol' },
-        { value: 'urn:x-nmos:transport:rtp.ucast', label: 'Unicast Real-time Transport Protocol' },
-        { value: 'urn:x-nmos:transport:rtp.mcast', label: 'Multicast Real-time Transport Protocol' },
-        { value: 'urn:x-nmos:transport:dash', label: 'Dynamic Adaptive Streaming over HTTP' }
-      ]),
+      nga.field('format', 'choice').choices(FORMAT_CHOICES),
+      nga.field('transport', 'choice').choices(TRANSPORT_CHOICES),
       nga.field('version')
     ]);
 

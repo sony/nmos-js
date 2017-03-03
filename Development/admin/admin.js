@@ -521,6 +521,10 @@ myApp.config(['RestangularProvider', function (RestangularProvider) {
   RestangularProvider.addFullRequestInterceptor(function (element, operation, what, url, headers, params) {
     if (operation === 'getList') {
       // Pagination
+      if (what === 'events') {
+        params['paging.offset'] = (params._page - 1) * params._perPage;
+        params['paging.limit'] = params._perPage;
+      }
       delete params._page;
       delete params._perPage;
       // Sorting

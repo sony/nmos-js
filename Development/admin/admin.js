@@ -542,3 +542,29 @@ myApp.config(['RestangularProvider', function (RestangularProvider) {
     return { params: params };
   });
 }]);
+
+// Use NMOS error response body
+
+const HttpErrorDecorator = ($delegate, $translate, notification) => {
+    $delegate.errorMessage = error => {
+        return {
+            message: error.data.error + ' (' + error.data.code + ')'
+                + (error.data.debug ? '<br/>' + error.data.debug : '')
+        };
+    };
+
+    $delegate.handle403Error = error => {
+        $translate('STATE_FORBIDDEN_ERROR', $delegate.errorMessage(error)).then($delegate.displayError);
+        throw error;
+    };
+
+    $delegate.handleDefaultError = error => {
+        $translate('STATE_CHANGE_ERROR', $delegate.errorMessage(error)).then($delegate.displayError);
+        throw error;
+    };
+
+	  return $delegate;
+}
+
+HttpErrorDecorator.$inject = ['$delegate', '$translate', 'notification'];
+myApp.decorator('HttpErrorService', HttpErrorDecorator);

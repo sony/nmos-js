@@ -29,7 +29,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   // Entities
 
-  var nodes = nga.entity('nodes');
+  var nodes = nga.entity('nodes').readOnly();
   var devices = nga.entity('devices').readOnly();
   var sources = nga.entity('sources').readOnly();
   var flows = nga.entity('flows').readOnly();
@@ -74,9 +74,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('hostname').sortable(false),
       nga.field('api.versions', 'string').label('Node API Versions').map((versions) => { return versions instanceof Array ? versions.toString() : null; }).sortable(false)
     ])
-    .listActions(['show', 'delete']) // actions shown in each row of the list
-    .batchActions(['delete']) // actions shown when multiple rows are selected
-    .actions(['filter', 'batch', 'create']) // actions shown at the top of the list
+    .listActions(['show'])
+    .actions(['filter'])
     .filters([
       nga.field('label')
         .pinned(true)
@@ -113,15 +112,6 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetFields([
           nga.field('label').isDetailLink(true).sortable(false)
         ])
-    ]);
-
-  // Node creation view
-
-  nodes.creationView()
-    .title('Node: {{entry.values.label}}')
-    .fields([
-      nga.field('label'),
-      nga.field('id').isDetailLink(false).label('ID')
     ]);
 
   admin.addEntity(nodes);
@@ -387,33 +377,6 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('version')
     ]);
 
-  // Receiver edit view
-/*
-  receivers.editionView()
-    .prepare(['Restangular', 'datastore', function(Restangular, datastore) {
-      return Restangular.all('senders').getList()
-          .then(senders => { datastore.setEntries('senders', senders.data); console.log(senders.data); } );
-    }])
-    .title('Receiver: {{entry.values.label}}')
-    .fields([
-      nga.field('label').editable(false),
-      nga.field('id').isDetailLink(false).label('ID').editable(false),
-      nga.field('device_id', 'reference')
-        .targetEntity(devices)
-        .targetField(nga.field('label'))
-        .label('Device').editable(false),
-      nga.field('subscription.sender_id', 'reference').attributes({ placeholder: 'Connect to a Sender...' })
-        .targetEntity(senders)
-        .targetField(nga.field('label'))
-        .label('Sender'),
-      nga.field('description').editable(false),
-      nga.field('caps', 'json').label('Capabilities').editable(false),
-      nga.field('format', 'choice').choices(FORMAT_CHOICES).editable(false),
-      nga.field('transport', 'choice').choices(TRANSPORT_CHOICES).editable(false),
-      nga.field('version').editable(false),
-      nga.field('foobar').transform(['dataStore', function (dataStore) { return dataStore; }])
-    ]);
-*/
   admin.addEntity(receivers);
 
   // Subscriptions list view
@@ -482,14 +445,10 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('timestamp')
         .pinned(true)
         .template(FILTER_TEMPLATE),
-      nga.field('level_name', 'choice')
-        .choices([
-          { value: 'info', label: 'info' },
-          { value: 'error', label: 'error' },
-        ])
+      nga.field('level_name')
         .label('Level')
-        .pinned(true),
-        //.template(FILTER_TEMPLATE),
+        .pinned(true)
+        .template(FILTER_TEMPLATE),
       nga.field('message')
         .pinned(false)
         .template(FILTER_TEMPLATE),
@@ -580,15 +539,6 @@ myApp.config(['RestangularProvider', function (RestangularProvider) {
         delete params._filters;
       }
     }
-    else if (operation === 'put' && what === 'receivers') {
-      console.log(element);
-      console.log(scope);
-      //console.log(operation);
-      //console.log(what);
-      //console.log(url);
-      //console.log(headers);
-      //console.log(params);
-    }
     return { params: params };
   });
 }]);
@@ -618,26 +568,3 @@ const HttpErrorDecorator = ($delegate, $translate, notification) => {
 
 HttpErrorDecorator.$inject = ['$delegate', '$translate', 'notification'];
 myApp.decorator('HttpErrorService', HttpErrorDecorator);
-
-// Intercept POST to the Query API and convert to POST to Registration API
-
-myApp.config(['$httpProvider', function($httpProvider) {
-    $httpProvider.interceptors.push(function() {
-        return {
-            request: function(config) {
-                if (config.method === "POST") {
-                    config.url = "http://43.195.121.85:3210/x-nmos/registration/v1.0/resource";
-                    config.data = { type: 'node', data: config.data };
-                }
-                if (config.method === "PUT") {
-                    //console.log(config);
-                }
-                //if (/\/comments$/.test(config.url) && config.params._filters && config.params._filters.post_id) {
-                //    config.url = config.url.replace('comments', 'posts/' + config.params._filters.post_id + '/comments');
-                //    delete config.params._filters.post_id;
-                //}
-                return config;
-            }
-        };
-    });
-}]);

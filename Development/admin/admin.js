@@ -356,7 +356,24 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   // Receiver show view
 
+  const CONNECT_TEMPLATE =
+    '<div class="input-group">' +
+      '<ma-input-field field="::field" value="value"/>' +
+      '<span class="input-group-btn" style="padding-left: 12px"><ma-connect-button entry="entry" value="value" datastore="datastore" label="Connect"/></span>' +
+    '</div>';
+
   receivers.showView()
+    .prepare(['entry', 'Restangular', 'datastore', function(entry, Restangular, datastore) {
+      Restangular.all('senders').getList().then((senders) => {
+        datastore.setEntries('senders', senders.data);
+      });
+      Restangular.one('devices', entry.values.device_id).get().then((device) => {
+        Restangular.one('nodes', device.data.node_id).get().then((node) => {
+          // should use the node api version here
+          datastore.addEntry('target_href', node.data.href + ('/' === node.data.href.substr(-1) ? '' : '/') + 'x-nmos/node/v1.0/receivers/' + entry.values.id + '/target');
+        });
+      });
+    }])
     .title('Receiver: {{entry.values.label}}')
     .fields([
       nga.field('label'),
@@ -369,6 +386,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetEntity(senders)
         .targetField(nga.field('label'))
         .label('Sender'),
+      nga.field('subscription.sender_id.connect').attributes({ placeholder: 'Enter an appropriate Sender ID...' })
+        .label('')
+        .template(CONNECT_TEMPLATE),
       nga.field('tags', 'json'),
       nga.field('description'),
       nga.field('caps', 'json').label('Capabilities'),
@@ -515,6 +535,32 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   nga.configure(admin);
 }]);
 
+// Custom directive to connect a Receiver to a Sender
+
+myApp.directive('maConnectButton', ['$http', '$location', function ($http, $location) {
+    return {
+        restrict: 'E',
+        scope: {
+            entry: '&',
+            value: '&',
+            datastore: '&',
+            size: '@',
+            label: '@'
+        },
+        link: function (scope, element, attrs) {
+            scope.label = scope.label || 'CONNECT';
+            scope.connect = function () {
+                var target_href = scope.datastore().getFirstEntry('target_href');
+                var sender = scope.datastore().getEntries('senders').find(sender => { return sender['id'] === scope.value(); }) || {};
+                console.log(target_href);
+                console.log(sender);
+                $http.put(scope.datastore().getFirstEntry('target_href'), sender);
+            };
+        },
+        template: '<a class="btn btn-default" ng-class="size ? \'btn-\' + size : \'\'" ng-click="connect()">{{label}}</a>'
+    };
+}]);
+
 // Intercept ng-admin REST flavour and adapt for NMOS flavour
 
 myApp.config(['RestangularProvider', function (RestangularProvider) {
@@ -548,7 +594,8 @@ myApp.config(['RestangularProvider', function (RestangularProvider) {
 const HttpErrorDecorator = ($delegate, $translate, notification) => {
     $delegate.errorMessage = error => {
         return {
-            message: error.data.error + ' (' + error.data.code + ')'
+            message: undefined === error.data ? '' :
+                error.data.error + ' (' + error.data.code + ')'
                 + (error.data.debug ? '<br/>' + error.data.debug : '')
         };
     };

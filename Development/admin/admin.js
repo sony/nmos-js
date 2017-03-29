@@ -358,8 +358,11 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   const CONNECT_TEMPLATE =
     '<div class="input-group">' +
+      // would like to have an ma-reference-field which is what is used for the editionView
+      // but I haven't been able to work out how to populate the choices in the showView :-(
+      //'<ma-reference-field entry="entry" field="::field" value="value" datastore="::datastore"/>' +
       '<ma-input-field field="::field" value="value"/>' +
-      '<span class="input-group-btn" style="padding-left: 12px"><ma-connect-button entry="entry" value="value" datastore="datastore" label="Connect"/></span>' +
+      '<span class="input-group-btn" style="padding-left: 12px"><ma-connect-button entry="entry" value="value" datastore="::datastore" label="Connect"/></span>' +
     '</div>';
 
   receivers.showView()
@@ -386,7 +389,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetEntity(senders)
         .targetField(nga.field('label'))
         .label('Sender'),
-      nga.field('subscription.sender_id.connect').attributes({ placeholder: 'Enter an appropriate Sender ID...' })
+      nga.field('subscription.sender_id', 'reference').attributes({ placeholder: 'Enter an appropriate Sender ID...' })
+        .targetEntity(senders)
+        .targetField(nga.field('label'))
         .label('')
         .template(CONNECT_TEMPLATE),
       nga.field('tags', 'json'),

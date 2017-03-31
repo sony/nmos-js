@@ -361,14 +361,19 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       // would like to have an ma-reference-field which is what is used for the editionView
       // but I haven't been able to work out how to populate the choices in the showView :-(
       //'<ma-reference-field entry="entry" field="::field" value="value" datastore="::datastore"/>' +
-      '<ma-input-field field="::field" value="value"/>' +
-      '<span class="input-group-btn" style="padding-left: 12px"><ma-connect-button entry="entry" value="value" datastore="::datastore" label="Connect"/></span>' +
+      '<ma-connect-field entry="entry" field="::field" value="value" datastore="::datastore"/>' +
+      '<span class="input-group-btn" style="padding-left: 12px"><ma-connect-button entry="entry" value="value" datastore="::datastore" label-connect="Connect" label-disconnect="Disconnect"/></span>' +
     '</div>';
+
+  // duplicate entity required due to ng-admin bug, e.g. https://github.com/marmelab/ng-admin/issues/1207
+  var targets = nga.entity('senders').readOnly();
 
   receivers.showView()
     .prepare(['entry', 'Restangular', 'datastore', function(entry, Restangular, datastore) {
+      // should probably use two queries to find Senders that have both the same transport as this Receiver and Flows with the same format
       Restangular.all('senders').getList().then((senders) => {
-        datastore.setEntries('senders', senders.data);
+        datastore.setEntries('targets', senders.data);
+        datastore.setEntries(targets.uniqueId + '_choices', senders.data.map(senders => { return { value: senders.id, label: senders.label }; }));
       });
       Restangular.one('devices', entry.values.device_id).get().then((device) => {
         Restangular.one('nodes', device.data.node_id).get().then((node) => {
@@ -389,10 +394,12 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetEntity(senders)
         .targetField(nga.field('label'))
         .label('Sender'),
-      nga.field('subscription.sender_id', 'reference').attributes({ placeholder: 'Enter an appropriate Sender ID...' })
-        .targetEntity(senders)
+      nga.field('subscription.sender_id.target', 'reference')
+        .targetEntity(targets)
         .targetField(nga.field('label'))
         .label('')
+        .remoteComplete(true, { refreshDelay: 300 })
+        .attributes({ placeholder: 'Select a Sender to connect...' })
         .template(CONNECT_TEMPLATE),
       nga.field('tags', 'json'),
       nga.field('description'),
@@ -540,30 +547,64 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   nga.configure(admin);
 }]);
 
-// Custom directive to connect a Receiver to a Sender
+// Custom directives to select and connect a Receiver to a Sender
 
-myApp.directive('maConnectButton', ['$http', '$location', function ($http, $location) {
-    return {
-        restrict: 'E',
-        scope: {
-            entry: '&',
-            value: '&',
-            datastore: '&',
-            size: '@',
-            label: '@'
-        },
-        link: function (scope, element, attrs) {
-            scope.label = scope.label || 'CONNECT';
-            scope.connect = function () {
-                var target_href = scope.datastore().getFirstEntry('target_href');
-                var sender = scope.datastore().getEntries('senders').find(sender => { return sender['id'] === scope.value(); }) || {};
-                console.log(target_href);
-                console.log(sender);
-                $http.put(scope.datastore().getFirstEntry('target_href'), sender);
-            };
-        },
-        template: '<a class="btn btn-default" ng-class="size ? \'btn-\' + size : \'\'" ng-click="connect()">{{label}}</a>'
-    };
+// relies on field misusing 'reference' type and remoteComplete('true') so that the choice field actually refreshes...
+myApp.directive('maConnectField', [function () {
+  return {
+    restrict: 'E',
+    scope: {
+      entry: '=?',
+      field: '&',
+      value: '=',
+      datastore: '&?'
+    },
+    link: function (scope, element, attrs) {
+      var field = scope.field();
+      var initialChoices = scope.datastore().getEntries(field.targetEntity().uniqueId + '_choices');
+      scope.$broadcast('choices:update', { choices: initialChoices });
+      scope.refresh = function refresh() {
+        var refreshedChoices = scope.datastore().getEntries(field.targetEntity().uniqueId + '_choices');
+        scope.$broadcast('choices:update', { choices: refreshedChoices });
+      };
+    },
+    template: '<ma-choice-field field="::field()" value="value" datastore="datastore()" refresh="refresh()"/>'
+  };
+}]);
+
+// relies on 'target_href' and 'targets' being in the datastore
+// could potentially use Restangular to make the request? and use the ng-admin HttpErrorService?
+myApp.directive('maConnectButton', ['$http', '$state', 'notification', function ($http, $state, notification) {
+  return {
+    restrict: 'E',
+    scope: {
+      entry: '&',
+      value: '=',
+      datastore: '&',
+      size: '@',
+      labelConnect: '@',
+      labelDisconnect: '@'
+    },
+    link: function (scope, element, attrs) {
+      scope.labelConnect = scope.labelConnect || 'CONNECT';
+      scope.labelDisconnect = scope.labelDisconnect || 'DISCONNECT';
+      scope.connect = function () {
+        var target_href = scope.datastore().getFirstEntry('target_href');
+        var sender = scope.datastore().getEntries('targets').find(sender => { return sender.id === scope.value; }) || {};
+        $http.put(scope.datastore().getFirstEntry('target_href'), sender)
+          .then(
+            () => { $state.reload(); },
+            (error) => { notification.log(error.data.error, { addnCls: 'humane-flatty-error' }); }
+          );
+      };
+    },
+    template:
+      '<a class="btn btn-default" ng-class="size ? \'btn-\' + size : \'\'" ng-click="connect()">' +
+        '<span class="glyphicon {{0 < value.length ? \'glyphicon-ok\' : \'glyphicon-remove\'}}" aria-hidden="true"></span>' +
+        '&nbsp;' +
+        '<span class="hidden-xs" translate="{{0 < value.length ? labelConnect : labelDisconnect}}"></span>' +
+      '</a>'
+  };
 }]);
 
 // Intercept ng-admin REST flavour and adapt for NMOS flavour

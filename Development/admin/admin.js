@@ -12,10 +12,14 @@ var myApp = angular.module('myApp', ['ng-admin']);
 
 myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
-  // Application, mostly just using the Query API on the same host
+  // Application, mostly just using the Query API on the same host as this Admin UI
+
+  var adminHost = window.location.hostname;
+  var queryPort = 3211;
+  var loggingPort = 5106;
 
   var admin = nga.application('sea-lion')
-    .baseApiUrl('http://' + window.location.hostname + ':3211/x-nmos/query/v1.0/');
+    .baseApiUrl('http://' + adminHost + ':' + queryPort + '/x-nmos/query/v1.0/');
 
   // my modern CSS voodoo is sorely lacking
   admin.header(
@@ -37,7 +41,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   var receivers = nga.entity('receivers').readOnly();
   var subscriptions = nga.entity('subscriptions').readOnly();
   // Logging API is on a different port on the same host
-  var logs = nga.entity('events').label('Logs').baseApiUrl('http://' + window.location.hostname + ':5106/log/').readOnly();
+  var logs = nga.entity('events').label('Logs').baseApiUrl('http://' + adminHost + ':' + loggingPort + '/log/').readOnly();
 
   // Templates and common definitions
 
@@ -557,15 +561,17 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
 // Custom 'Settings' page
 
-function settingsController($scope, $location, $stateParams, notification) {
+function settingsController($scope, NgAdminConfiguration, $stateParams, notification) {
     // notification is the service used to display notifications on the top of the screen
-    this.address = 'http://' + $location.$$host + ':3211';
+    this.config = NgAdminConfiguration;
+    this.address = this.config().baseApiUrl();
     this.notification = notification;
 };
 settingsController.prototype.save = function() {
     this.notification.log('Saving settings');
+    this.config().baseApiUrl(this.address);
 };
-settingsController.inject = ['$location', '$stateParams', 'notification'];
+settingsController.inject = ['NgAdminConfiguration', '$stateParams', 'notification'];
 
 var settingsControllerTemplate =
     '<div class="row"><div class="col-lg-12"><div class="page-header">' +
@@ -575,7 +581,6 @@ var settingsControllerTemplate =
 
     '<form class="form-horizontal" ng-submit="controller.save()">' +
 
-/*
         '<div>' +
             '<div class="form-field form-group">' +
                 '<label class="col-sm-2 control-label">Query API</label>' +
@@ -584,7 +589,6 @@ var settingsControllerTemplate =
                 '</div>' +
             '</div>' +
         '</div>' +
-*/
 
         '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><ma-submit-button label="SAVE_CHANGES" class="ng-isolate-scope"><button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span>&nbsp;<span class="hidden-xs ng-scope" translate="SAVE_CHANGES">Save changes</span></button></ma-submit-button></div></div>' +
 

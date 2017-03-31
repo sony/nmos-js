@@ -541,11 +541,64 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .addChild(nga.menu(receivers).icon('<span class="glyphicon glyphicon-list"></span>'))
     .addChild(nga.menu(subscriptions).icon('<span class="glyphicon glyphicon-list"></span>'))
     .addChild(nga.menu(logs).icon('<span class="glyphicon glyphicon-list"></span>'))
+    .addChild(nga.menu()
+      .icon('<span class="glyphicon glyphicon-cog"></span>')
+      .title('Settings')
+      .link('/settings')
+      .active(function(path) {
+        return path.indexOf('/settings') === 0;
+      }))
   );
 
   // attach the admin application to the DOM and execute it
   nga.configure(admin);
 }]);
+
+// Custom 'Settings' page
+
+function settingsController($scope, $location, $stateParams, notification) {
+    // notification is the service used to display notifications on the top of the screen
+    this.address = 'http://' + $location.$$host + ':3211';
+    this.notification = notification;
+};
+settingsController.prototype.save = function() {
+    this.notification.log('Saving settings');
+};
+settingsController.inject = ['$location', '$stateParams', 'notification'];
+
+var settingsControllerTemplate =
+    '<div class="row"><div class="col-lg-12"><div class="page-header">' +
+        '<ma-view-actions><ma-back-button></ma-back-button></ma-view-actions>' +
+        '<h1>Settings</h1>' +
+    '</div></div></div>' +
+
+    '<form class="form-horizontal" ng-submit="controller.save()">' +
+
+/*
+        '<div>' +
+            '<div class="form-field form-group">' +
+                '<label class="col-sm-2 control-label">Query API</label>' +
+                '<div class="ng-admin-type-string col-sm-10 col-md-8 col-lg-7">' +
+                    '<input type="text" ng-model="controller.address" class="form-control"/>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+*/
+
+        '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><ma-submit-button label="SAVE_CHANGES" class="ng-isolate-scope"><button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span>&nbsp;<span class="hidden-xs ng-scope" translate="SAVE_CHANGES">Save changes</span></button></ma-submit-button></div></div>' +
+
+    '</form>';
+
+myApp.config(function ($stateProvider) {
+    $stateProvider.state('settings', {
+        parent: 'ng-admin',
+        url: '/settings',
+        params: { id: null },
+        controller: settingsController,
+        controllerAs: 'controller',
+        template: settingsControllerTemplate
+    });
+});
 
 // Custom directives to select and connect a Receiver to a Sender
 

@@ -393,7 +393,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('subscription.sender_id', 'reference')
         .targetEntity(senders)
         .targetField(nga.field('label'))
-        .label('Sender'),
+        .label('Sender')
+        .template('<span ng-if="null == value">Disconnected</span><ma-reference-link-column ng-if="null != value" entry="::entry" field="::field" value="::value" datastore="::datastore" class="ng-scope ng-isolate-scope"/>'),
       nga.field('subscription.sender_id.target', 'reference')
         .targetEntity(targets)
         .targetField(nga.field('label'))

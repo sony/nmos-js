@@ -45,6 +45,15 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   // Templates and common definitions
 
+  const LIST_VIEW_ACTIONS = [
+    'filter',
+    '<ma-reload-button label="Reload"/>'
+  ];
+
+  const LIST_ENTRY_ACTIONS = [
+    'show'
+  ];
+  
   const FORMAT_CHOICES = [
     { value: 'urn:x-nmos:format:video', label: 'Video' },
     { value: 'urn:x-nmos:format:audio', label: 'Audio' },
@@ -78,8 +87,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('hostname').sortable(false),
       nga.field('api.versions', 'string').label('Node API Versions').map((versions) => { return versions instanceof Array ? versions.toString() : null; }).sortable(false)
     ])
-    .listActions(['show'])
-    .actions(['filter'])
+    .listActions(LIST_ENTRY_ACTIONS)
+    .actions(LIST_VIEW_ACTIONS)
     .filters([
       nga.field('label')
         .pinned(true)
@@ -127,8 +136,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('label').isDetailLink(true).sortable(false),
       nga.field('type', 'choice').sortable(false).choices(TYPE_CHOICES)
     ])
-    .listActions(['show'])
-    .actions(['filter'])
+    .listActions(LIST_ENTRY_ACTIONS)
+    .actions(LIST_VIEW_ACTIONS)
     .filters([
       nga.field('label')
         .pinned(true)
@@ -183,8 +192,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('label').isDetailLink(true).sortable(false),
       nga.field('format', 'choice').sortable(false).choices()
     ])
-    .listActions(['show'])
-    .actions(['filter'])
+    .listActions(LIST_ENTRY_ACTIONS)
+    .actions(LIST_VIEW_ACTIONS)
     .filters([
       nga.field('label')
         .pinned(true)
@@ -237,8 +246,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('label').isDetailLink(true).sortable(false),
       nga.field('format', 'choice').sortable(false).choices(FORMAT_CHOICES)
     ])
-    .listActions(['show'])
-    .actions(['filter'])
+    .listActions(LIST_ENTRY_ACTIONS)
+    .actions(LIST_VIEW_ACTIONS)
     .filters([
       nga.field('label')
         .pinned(true)
@@ -290,8 +299,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('label').isDetailLink(true).sortable(false),
       nga.field('transport', 'choice').sortable(false).choices(TRANSPORT_CHOICES)
     ])
-    .listActions(['show'])
-    .actions(['filter'])
+    .listActions(LIST_ENTRY_ACTIONS)
+    .actions(LIST_VIEW_ACTIONS)
     .filters([
       nga.field('label')
         .pinned(true)
@@ -338,8 +347,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('format', 'choice').sortable(false).choices(FORMAT_CHOICES),
       nga.field('transport', 'choice').sortable(false).choices(TRANSPORT_CHOICES),
     ])
-    .listActions(['show'])
-    .actions(['filter'])
+    .listActions(LIST_ENTRY_ACTIONS)
+    .actions(LIST_VIEW_ACTIONS)
     .filters([
       nga.field('label')
         .pinned(true)
@@ -424,8 +433,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('persist', 'boolean').sortable(false),
       nga.field('max_update_rate_ms', 'number').label('Max Update Rate (ms)').sortable(false),
     ])
-    .listActions(['show'])
-    .actions(['filter'])
+    .listActions(LIST_ENTRY_ACTIONS)
+    .actions(LIST_VIEW_ACTIONS)
     .filters([
       nga.field('resource_path').label('Resource Path')
         .pinned(true)
@@ -476,8 +485,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       }),
       nga.field('route_parameters.api').label('API').sortable(false)
     ])
-    .listActions(['show'])
-    .actions(['filter'])
+    .listActions(LIST_ENTRY_ACTIONS)
+    .actions(LIST_VIEW_ACTIONS)
     .filters([
       nga.field('timestamp')
         .pinned(true)
@@ -661,6 +670,30 @@ myApp.directive('maConnectButton', ['$http', '$state', 'notification', function 
         '<span class="glyphicon {{0 < value.length ? \'glyphicon-ok\' : \'glyphicon-remove\'}}" aria-hidden="true"></span>' +
         '&nbsp;' +
         '<span class="hidden-xs" translate="{{0 < value.length ? labelConnect : labelDisconnect}}"></span>' +
+      '</a>'
+  };
+}]);
+
+// Custom reload button
+
+myApp.directive('maReloadButton', ['$state', function ($state) {
+  return {
+    restrict: 'E',
+    scope: {
+      size: '@',
+      label: '@'
+    },
+    link: function (scope, element, attrs) {
+      scope.label = scope.label || 'RELOAD';
+      scope.reload = function () {
+        $state.reload();
+      };
+    },
+    template:
+      '<a class="btn btn-default" ng-class="size ? \'btn-\' + size : \'\'" ng-click="reload()">' +
+        '<span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>' +
+        '&nbsp;' +
+        '<span class="hidden-xs" translate="{{label}}"></span>' +
       '</a>'
   };
 }]);

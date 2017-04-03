@@ -53,6 +53,11 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   const LIST_ENTRY_ACTIONS = [
     'show'
   ];
+
+  const SHOW_VIEW_ACTIONS = [
+    'list',
+    '<ma-reload-button label="Reload"/>'
+  ];
   
   const FORMAT_CHOICES = [
     { value: 'urn:x-nmos:format:video', label: 'Video' },
@@ -125,7 +130,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetFields([
           nga.field('label').isDetailLink(true).sortable(false)
         ])
-    ]);
+    ])
+    .actions(SHOW_VIEW_ACTIONS);
 
   admin.addEntity(nodes);
 
@@ -181,7 +187,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         ]),
       nga.field('type', 'choice').choices(TYPE_CHOICES),
       nga.field('version')
-    ]);
+    ])
+    .actions(SHOW_VIEW_ACTIONS);
 
   admin.addEntity(devices);
 
@@ -235,7 +242,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         ]),
       nga.field('tags', 'json'),
       nga.field('version')
-    ]);
+    ])
+    .actions(SHOW_VIEW_ACTIONS);
 
   admin.addEntity(sources);
 
@@ -288,7 +296,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         ]),
       nga.field('tags', 'json'),
       nga.field('version')
-    ]);
+    ])
+    .actions(SHOW_VIEW_ACTIONS);
 
   admin.addEntity(flows);
 
@@ -335,7 +344,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('transport', 'choice').choices(TRANSPORT_CHOICES),
       nga.field('manifest_href').template('<a href="{{value}}">{{value}}</a>').label('Manifest Address'),
       nga.field('version')
-    ]);
+    ])
+    .actions(SHOW_VIEW_ACTIONS);
 
   admin.addEntity(senders);
 
@@ -421,7 +431,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('format', 'choice').choices(FORMAT_CHOICES),
       nga.field('transport', 'choice').choices(TRANSPORT_CHOICES),
       nga.field('version')
-    ]);
+    ])
+    .actions(SHOW_VIEW_ACTIONS);
 
   admin.addEntity(receivers);
 
@@ -461,7 +472,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('params', 'json'),
       nga.field('ws_href').template('<a href="{{value}}">{{value}}</a>').label('WebSocket Address'),
       nga.field('id').isDetailLink(false).label('ID'),
-    ]);
+    ])
+    .actions(SHOW_VIEW_ACTIONS);
 
   admin.addEntity(subscriptions);
 
@@ -527,7 +539,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('source_location', 'json'),
       nga.field('thread_id').label('Thread ID'),
       nga.field('id').isDetailLink(false).label('ID')
-    ]);
+    ])
+    .actions(SHOW_VIEW_ACTIONS);
 
   admin.addEntity(logs);
 

@@ -393,10 +393,16 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   receivers.showView()
     .prepare(['entry', 'Restangular', 'datastore', function(entry, Restangular, datastore) {
-      // should probably use two queries to find Senders that have both the same transport as this Receiver and Flows with the same format
-      Restangular.all('senders').getList().then((senders) => {
-        datastore.setEntries('targets', senders.data);
-        datastore.setEntries(targets.uniqueId + '_choices', senders.data.map(senders => { return { value: senders.id, label: senders.label }; }));
+      // have to perform a kind of 'join' to find Senders that have both a transport matching this Receiver and a Flow with a matching format
+      Restangular.all('senders').getList({ _filters: { transport: entry.values.transport } }).then((senders) => {
+        senders.data.map(sender => {
+          Restangular.one('flows', sender.flow_id).get().then((flow) => {
+            if (flow.data.format.startsWith(entry.values.format)) {
+              datastore.addEntry('targets', sender);
+              datastore.addEntry(targets.uniqueId + '_choices', { value: sender.id, label: sender.label });
+            }
+          });
+        });
       });
       Restangular.one('devices', entry.values.device_id).get().then((device) => {
         Restangular.one('nodes', device.data.node_id).get().then((node) => {

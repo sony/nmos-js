@@ -393,10 +393,14 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   receivers.showView()
     .prepare(['entry', 'Restangular', 'datastore', function(entry, Restangular, datastore) {
+      // make sure we're using the right base URL (receivers, senders, flows, devices, and nodes shouldn't all have different baseApiUrl() so just use admin, the app)
+      var adminRestangular = Restangular.withConfig(function(RestangularConfigurer) {
+        RestangularConfigurer.setBaseUrl(admin.baseApiUrl());
+      });
       // have to perform a kind of 'join' to find Senders that have both a transport matching this Receiver and a Flow with a matching format
-      Restangular.all('senders').getList({ _filters: { transport: entry.values.transport } }).then((senders) => {
+      adminRestangular.all('senders').getList({ _filters: { transport: entry.values.transport } }).then((senders) => {
         senders.data.map(sender => {
-          Restangular.one('flows', sender.flow_id).get().then((flow) => {
+          adminRestangular.one('flows', sender.flow_id).get().then((flow) => {
             if (flow.data.format.startsWith(entry.values.format)) {
               datastore.addEntry('targets', sender);
               datastore.addEntry(targets.uniqueId + '_choices', { value: sender.id, label: sender.label });
@@ -404,8 +408,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
           });
         });
       });
-      Restangular.one('devices', entry.values.device_id).get().then((device) => {
-        Restangular.one('nodes', device.data.node_id).get().then((node) => {
+      adminRestangular.one('devices', entry.values.device_id).get().then((device) => {
+        adminRestangular.one('nodes', device.data.node_id).get().then((node) => {
           // should use the node api version here
           datastore.addEntry('target_href', node.data.href + ('/' === node.data.href.substr(-1) ? '' : '/') + 'x-nmos/node/v1.0/receivers/' + entry.values.id + '/target');
         });

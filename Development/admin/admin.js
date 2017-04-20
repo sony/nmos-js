@@ -8,7 +8,7 @@
 
 "use strict";
 
-var myApp = angular.module('myApp', ['ng-admin']);
+var myApp = angular.module('myApp', ['ng-admin', 'angularUserSettings']);
 
 myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
@@ -591,19 +591,28 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   nga.configure(admin);
 }]);
 
-// Custom 'Settings' page
+// Custom 'Settings' page (and initial run-time configuration)
 
-function settingsController($scope, NgAdminConfiguration, $stateParams, notification) {
+myApp.run(['NgAdminConfiguration', '$userSettings', function (NgAdminConfiguration, $userSettings) {
+  var queryUrl = $userSettings.get('queryUrl');
+  if (queryUrl) {
+    NgAdminConfiguration().baseApiUrl(queryUrl);
+  }
+}]);
+
+function settingsController($scope, NgAdminConfiguration, $stateParams, notification, $userSettings) {
     // notification is the service used to display notifications on the top of the screen
     this.config = NgAdminConfiguration;
     this.address = this.config().baseApiUrl();
     this.notification = notification;
+    this.userSettings = $userSettings;
 };
 settingsController.prototype.save = function() {
     this.notification.log('Saving settings');
     this.config().baseApiUrl(this.address);
+    this.userSettings.set('queryUrl', this.address);
 };
-settingsController.inject = ['NgAdminConfiguration', '$stateParams', 'notification'];
+settingsController.inject = ['NgAdminConfiguration', '$stateParams', 'notification', '$userSettings'];
 
 var settingsControllerTemplate =
     '<div class="row"><div class="col-lg-12"><div class="page-header">' +

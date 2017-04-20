@@ -1,25 +1,20 @@
-// Steps to add new endpoint to admin
-// 1. Create entity: var x = nga.entity('xs').readOnly();
-// 2. Create list view with fields/labels/listActions/filters
-// 3. Create show view with title/fields/labels/listActions/references
-// 4. Add entity to admin: admin.addEntity(x);
-// 5. Add menu child: .addChild(nga.menu(x).icon('<span class="glyphicon glyphicon-list"></span>'))
-// 6. (optional) Add dashboard collection: .addCollection(nga.collection(x).fields(x.listView().fields()))
-
 "use strict";
 
 var myApp = angular.module('myApp', ['ng-admin', 'angularUserSettings']);
 
 myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
-  // Application, mostly just using the Query API on the same host as this Admin UI
+  // Application, mostly just using the Query API (by default, on the same host as this Admin UI, but loaded from $userSettings at run-time)
+  // Logging API is on a different port on the same host
 
   var adminHost = window.location.hostname;
   var queryPort = 3211;
   var loggingPort = 5106;
 
-  var admin = nga.application('sea-lion')
-    .baseApiUrl('http://' + adminHost + ':' + queryPort + '/x-nmos/query/v1.0/');
+  var queryUrl = 'http://' + adminHost + ':' + queryPort + '/x-nmos/query/v1.0/';
+  var loggingUrl = 'http://' + adminHost + ':' + loggingPort + '/log/';
+
+  var admin = nga.application('sea-lion').baseApiUrl(queryUrl);
 
   // my modern CSS voodoo is sorely lacking
   admin.header(
@@ -40,8 +35,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   var senders = nga.entity('senders').readOnly();
   var receivers = nga.entity('receivers').readOnly();
   var subscriptions = nga.entity('subscriptions').readOnly();
-  // Logging API is on a different port on the same host
-  var logs = nga.entity('events').label('Logs').baseApiUrl('http://' + adminHost + ':' + loggingPort + '/log/').readOnly();
+  var logs = nga.entity('events').label('Logs').baseApiUrl(loggingUrl).readOnly();
 
   // Templates and common definitions
 
@@ -601,49 +595,49 @@ myApp.run(['NgAdminConfiguration', '$userSettings', function (NgAdminConfigurati
 }]);
 
 function settingsController($scope, NgAdminConfiguration, $stateParams, notification, $userSettings) {
-    // notification is the service used to display notifications on the top of the screen
-    this.config = NgAdminConfiguration;
-    this.address = this.config().baseApiUrl();
-    this.notification = notification;
-    this.userSettings = $userSettings;
+  // notification is the service used to display notifications on the top of the screen
+  this.config = NgAdminConfiguration;
+  this.address = this.config().baseApiUrl();
+  this.notification = notification;
+  this.userSettings = $userSettings;
 };
 settingsController.prototype.save = function() {
-    this.notification.log('Saving settings');
-    this.config().baseApiUrl(this.address);
-    this.userSettings.set('queryUrl', this.address);
+  this.notification.log('Saving settings');
+  this.config().baseApiUrl(this.address);
+  this.userSettings.set('queryUrl', this.address);
 };
 settingsController.inject = ['NgAdminConfiguration', '$stateParams', 'notification', '$userSettings'];
 
 var settingsControllerTemplate =
-    '<div class="row"><div class="col-lg-12"><div class="page-header">' +
-        '<ma-view-actions><ma-back-button></ma-back-button></ma-view-actions>' +
-        '<h1>Settings</h1>' +
-    '</div></div></div>' +
+  '<div class="row"><div class="col-lg-12"><div class="page-header">' +
+    '<ma-view-actions><ma-back-button></ma-back-button></ma-view-actions>' +
+    '<h1>Settings</h1>' +
+  '</div></div></div>' +
 
-    '<form class="form-horizontal" ng-submit="controller.save()">' +
+  '<form class="form-horizontal" ng-submit="controller.save()">' +
 
-        '<div>' +
-            '<div class="form-field form-group">' +
-                '<label class="col-sm-2 control-label">Query API</label>' +
-                '<div class="ng-admin-type-string col-sm-10 col-md-8 col-lg-7">' +
-                    '<input type="text" ng-model="controller.address" class="form-control"/>' +
-                '</div>' +
-            '</div>' +
+    '<div>' +
+      '<div class="form-field form-group">' +
+        '<label class="col-sm-2 control-label">Query API</label>' +
+        '<div class="ng-admin-type-string col-sm-10 col-md-8 col-lg-7">' +
+          '<input type="text" ng-model="controller.address" class="form-control"/>' +
         '</div>' +
+      '</div>' +
+    '</div>' +
 
-        '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><ma-submit-button label="SAVE_CHANGES" class="ng-isolate-scope"><button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span>&nbsp;<span class="hidden-xs ng-scope" translate="SAVE_CHANGES">Save changes</span></button></ma-submit-button></div></div>' +
+    '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><ma-submit-button label="SAVE_CHANGES" class="ng-isolate-scope"><button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span>&nbsp;<span class="hidden-xs ng-scope" translate="SAVE_CHANGES">Save changes</span></button></ma-submit-button></div></div>' +
 
-    '</form>';
+  '</form>';
 
 myApp.config(function ($stateProvider) {
-    $stateProvider.state('settings', {
-        parent: 'ng-admin',
-        url: '/settings',
-        params: { id: null },
-        controller: settingsController,
-        controllerAs: 'controller',
-        template: settingsControllerTemplate
-    });
+  $stateProvider.state('settings', {
+    parent: 'ng-admin',
+    url: '/settings',
+    params: { id: null },
+    controller: settingsController,
+    controllerAs: 'controller',
+    template: settingsControllerTemplate
+  });
 });
 
 // Custom directives to select and connect a Receiver to a Sender
@@ -761,25 +755,25 @@ myApp.config(['RestangularProvider', function (RestangularProvider) {
 // Use NMOS error response body
 
 const HttpErrorDecorator = ($delegate, $translate, notification) => {
-    $delegate.errorMessage = error => {
-        return {
-            message: undefined === error.data ? '' :
-                error.data.error + ' (' + error.data.code + ')'
-                + (error.data.debug ? '<br/>' + error.data.debug : '')
-        };
+  $delegate.errorMessage = error => {
+    return {
+      message: undefined === error.data ? '' :
+        error.data.error + ' (' + error.data.code + ')'
+        + (error.data.debug ? '<br/>' + error.data.debug : '')
     };
+  };
 
-    $delegate.handle403Error = error => {
-        $translate('STATE_FORBIDDEN_ERROR', $delegate.errorMessage(error)).then($delegate.displayError);
-        throw error;
-    };
+  $delegate.handle403Error = error => {
+    $translate('STATE_FORBIDDEN_ERROR', $delegate.errorMessage(error)).then($delegate.displayError);
+    throw error;
+  };
 
-    $delegate.handleDefaultError = error => {
-        $translate('STATE_CHANGE_ERROR', $delegate.errorMessage(error)).then($delegate.displayError);
-        throw error;
-    };
+  $delegate.handleDefaultError = error => {
+    $translate('STATE_CHANGE_ERROR', $delegate.errorMessage(error)).then($delegate.displayError);
+    throw error;
+  };
 
-	  return $delegate;
+  return $delegate;
 }
 
 HttpErrorDecorator.$inject = ['$delegate', '$translate', 'notification'];

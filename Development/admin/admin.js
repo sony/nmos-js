@@ -11,7 +11,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   var queryPort = 3211;
   var loggingPort = 5106;
 
-  var queryUrl = 'http://' + adminHost + ':' + queryPort + '/x-nmos/query/v1.0/';
+  var queryUrl = 'http://' + adminHost + ':' + queryPort + '/x-nmos/query/v1.2/';
   var loggingUrl = 'http://' + adminHost + ':' + loggingPort + '/log/';
 
   var admin = nga.application('sea-lion').baseApiUrl(queryUrl);
@@ -161,8 +161,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetEntity(nodes)
         .targetField(nga.field('label'))
         .label('Node'),
-      nga.field('receivers', 'referenced_list')
-        .targetEntity(receivers)
+      nga.field('sources', 'referenced_list')
+        .targetEntity(sources)
         .targetReferenceField('device_id')
         .targetFields([
           nga.field('label').isDetailLink(true).sortable(false)
@@ -173,12 +173,13 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetFields([
           nga.field('label').isDetailLink(true).sortable(false)
         ]),
-      nga.field('sources', 'referenced_list')
-        .targetEntity(sources)
+      nga.field('receivers', 'referenced_list')
+        .targetEntity(receivers)
         .targetReferenceField('device_id')
         .targetFields([
           nga.field('label').isDetailLink(true).sortable(false)
         ]),
+      nga.field('controls', 'json'),
       nga.field('type', 'choice').choices(TYPE_CHOICES),
       nga.field('version')
     ])
@@ -337,6 +338,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('description'),
       nga.field('transport', 'choice').choices(TRANSPORT_CHOICES),
       nga.field('manifest_href').template('<a href="{{value}}">{{value}}</a>').label('Manifest Address'),
+      nga.field('interface_bindings', 'json'),
       nga.field('version')
     ])
     .actions(SHOW_VIEW_ACTIONS);
@@ -393,6 +395,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       });
       // have to perform a kind of 'join' to find Senders that have both a transport matching this Receiver and a Flow with a matching format
       adminRestangular.all('senders').getList({ _filters: { transport: entry.values.transport } }).then((senders) => {
+      // if transport is "urn:x-nmos:transport:rtp" need to get and merge Senders with the ".mcast" and ".ucast" variants
         senders.data.map(sender => {
           adminRestangular.one('flows', sender.flow_id).get().then((flow) => {
             if (flow.data.format.startsWith(entry.values.format)) {
@@ -406,6 +409,11 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         adminRestangular.one('nodes', device.data.node_id).get().then((node) => {
           // should use the node api version here
           datastore.addEntry('target_href', node.data.href + ('/' === node.data.href.substr(-1) ? '' : '/') + 'x-nmos/node/v1.0/receivers/' + entry.values.id + '/target');
+
+          var conman = device.data.controls.find((control) => { return "urn:x-nmos:control:sr-ctrl/v1.0" === control.type; });
+          if (undefined !== conman) {
+            datastore.addEntry('conman_href', conman.href + ('/' === conman.href.substr(-1) ? '' : '/') + 'single/receivers/' + entry.values.id + '/');
+          }
         });
       });
     }])
@@ -434,6 +442,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('caps', 'json').label('Capabilities'),
       nga.field('format', 'choice').choices(FORMAT_CHOICES),
       nga.field('transport', 'choice').choices(TRANSPORT_CHOICES),
+      nga.field('interface_bindings', 'json'),
       nga.field('version')
     ])
     .actions(SHOW_VIEW_ACTIONS);
@@ -682,10 +691,61 @@ myApp.directive('maConnectButton', ['$http', '$state', 'notification', function 
       scope.labelConnect = scope.labelConnect || 'CONNECT';
       scope.labelDisconnect = scope.labelDisconnect || 'DISCONNECT';
       scope.connect = function () {
+        var conman_href = scope.datastore().getFirstEntry('conman_href');
         var target_href = scope.datastore().getFirstEntry('target_href');
-        var sender = scope.datastore().getEntries('targets').find(sender => { return sender.id === scope.value; }) || {};
-        $http.put(scope.datastore().getFirstEntry('target_href'), sender)
-          .then(
+        var sender = scope.datastore().getEntries('targets').find(sender => { return sender.id === scope.value; });
+
+        var connect;
+
+        if (null == conman_href) {
+          console.log("Using Node API /target");
+          connect = $http.put(target_href, null == sender ? {} : sender);
+        }
+        else {
+          console.log("Using Connection Management API");
+          if (null == sender) {
+            // disconnect
+            connect = $http.patch(conman_href + 'staged/transportparams', {
+                transport_params: [
+                  { rtp_enabled: false } // one entry per 'leg' for ST2022-7 (discover from interface_bindings on the receiver)
+                ],
+                sender_id: null
+              });
+/*
+            connect = $http.put(conman_href + 'staged/transportfile', {
+                session_description: { // session_description becomes transport_file soon
+                  data: null,
+                  type: "application/sdp",
+                  by_reference: false
+                },
+                // other possibilities for disconnect...
+                //session_description: { data: null },
+                //session_description: {},
+                //session_description: null,
+                sender_id: null
+              });
+*/
+/*
+            connect = $http.put(conman_href + 'staged/transportfile', {});
+*/
+          }
+          else {
+            // connect
+            connect = $http.put(conman_href + 'staged/transportfile', {
+                session_description: { // session_description becomes transport_file soon
+                  data: sender.manifest_href,
+                  type: "application/sdp",
+                  by_reference: true
+                },
+                sender_id: sender.id
+              });
+          }
+          connect = connect.then(() => {
+              return $http.post(conman_href + 'activate', { mode: "activate_immediate" });
+            });
+        }
+
+        connect.then(
             () => { $state.reload(); },
             (error) => { notification.log(error.data.error, { addnCls: 'humane-flatty-error' }); }
           );

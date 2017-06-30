@@ -52,7 +52,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     'list',
     '<ma-reload-button label="Reload"/>'
   ];
-  
+
   const FORMAT_CHOICES = [
     { value: 'urn:x-nmos:format:video', label: 'Video' },
     { value: 'urn:x-nmos:format:audio', label: 'Audio' },
@@ -72,11 +72,108 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     { value: 'urn:x-nmos:device:pipeline', label: 'Pipeline' }
   ];
 
+  const INTERLACE_MODE_CHOICES = [
+    { value: 'progressive', label: 'Progressive' },
+    { value: 'interlaced_tff', label: 'Interlaced, top field first' },
+    { value: 'interlaced_bff', label: 'Interlaced, bottom field first' },
+    { value: 'interlaced_psf', label: 'Progressive segmented frame' }
+  ];
+
+  const COLORSPACE_CHOICES = [
+    { value: 'BT601', label: 'ITU-R Recommendation BT.601 (SD)' },
+    { value: 'BT709', label: 'ITU-R Recommendation BT.709 (HD)' },
+    { value: 'BT2020', label: 'ITU-R Recommendation BT.2020 (UHD)' },
+    { value: 'BT2100', label: 'ITU-R Recommendation BT.2100 (HDR)' }
+  ];
+
+  const TRANSFER_CHARACTERISTIC_CHOICES = [
+    { value: 'SDR', label: 'SDR (Standard Dynamic Range)' },
+    { value: 'HLG', label: 'HLG (Hybrid Log-Gamma)' },
+    { value: 'PQ', label: 'PQ (Perceptual Quantizer)' }
+  ];
+
   const FILTER_TEMPLATE =
     '<div class="input-group">' +
       '<input type="text" ng-model="value" placeholder="{{field._label == null ? field._name.substr(0,1).toUpperCase() + field._name.substr(1) : field._label}}" class="form-control"></input>' +
       '<span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span>' +
     '</div>';
+
+  const RESOURCE_TITLE_EXPRESSION = 
+    'entry.values.label != \'\' ? entry.values.label : entry.values.id + \'(unlabelled)\'';
+
+  const RESOURCE_TITLE_TEMPLATE =
+    '{{' + RESOURCE_TITLE_EXPRESSION + '}}';
+
+  const URL_VALUE_TEMPLATE =
+    '<a href="{{value}}">{{value}}</a>';
+
+  const RATIONAL_VALUE_EXPRESSION =
+    'value.numerator + \':\' + value.denominator';
+
+  const RATIONAL_VALUE_TEMPLATE =
+    '<span ng-if="value">{{' + RATIONAL_VALUE_EXPRESSION + '}}</span>';
+
+  function horizontalRuleField() {
+    return nga.field('').template('<hr/>', true);
+  }
+
+  
+  function resourceCoreFields() {
+    return [
+      nga.field('id').isDetailLink(false).label('ID'),
+      nga.field('version'),
+      nga.field('label'),
+      nga.field('description'),
+      nga.field('tags', 'json')
+    ];
+  }
+
+  const RESOURCE_TARGET_FIELD =
+    nga.field('label').isDetailLink(true).sortable(false).template(
+      '<a ui-sref="{{detailState}}(detailStateParams)">' +
+        '<ma-string-column value="' + RESOURCE_TITLE_EXPRESSION + '"></ma-string-column>' +
+      '</a>'
+    );
+
+  function resourceTitleTemplate(resourceType) {
+    return resourceType + ": " + RESOURCE_TITLE_TEMPLATE;
+  }
+
+  function spanIf(format, mediaType, content) {
+    const span =
+      '<span ' +
+        'ng-if="' +
+          'entry.values.format == \'' + format + '\'' +
+          (mediaType !== undefined ? ' && entry.values.media_type == \'' + mediaType + '\'' : '') +
+        '">' +
+        content +
+      '</span>';
+    return span;
+  }
+
+  function showItemTemplate(format, mediaType) {
+    return spanIf(
+      format,
+      mediaType,
+      '<ma-show-item field="::field" entry="::entry" entity="::showController.entity" datastore="::showController.dataStore"></ma-show-item>'
+    );
+  }
+
+  function showStringItemTemplate(expression, format, mediaType) {
+    return spanIf(
+      format,
+      mediaType,
+      // expand ma-show-item with ma-string-column of expression
+      '<div class="col-lg-12 form-group">' +
+      '    <label class="col-sm-2 control-label">{{ field.label() | translate }}</label>' +
+      '    <div class="show-value" ng-class="(field.getCssClasses(entry) || \'col-sm-10 col-md-8 col-lg-7\')">' +
+      '        <div ng-class="::\'ng-admin-field-\' + field.name() + \' \' + \'ng-admin-type-string\'">' +
+      '            <ma-string-column value="value = entry.values[field.name()]; ' + expression + '"></ma-string-column>' +
+      '        </div>' +
+      '    </div>' +
+      '</div>'
+    );
+  }
 
   // Nodes list view
 
@@ -106,24 +203,22 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   // Node show view
 
   nodes.showView()
-    .title('Node: {{entry.values.label}}')
+    .title(resourceTitleTemplate('Node'))
     .fields([
-      nga.field('label'),
-      nga.field('id').isDetailLink(false).label('ID'),
+      resourceCoreFields(),
+      nga.field('href').template(URL_VALUE_TEMPLATE).label('Address'),
       nga.field('hostname'),
-      nga.field('href').template('<a href="{{value}}">{{value}}</a>').label('Address'),
       nga.field('api.versions', 'json').label('Node API Versions'),
       nga.field('api.endpoints', 'json').label('Node API Address Fragments'),
+      nga.field('caps', 'json').label('Capabilities'), // (not yet defined)
       nga.field('services', 'json'),
       nga.field('clocks', 'json'),
       nga.field('interfaces', 'json'),
-      nga.field('version'),
-      nga.field('devices', 'referenced_list') // display list of related devices
+      horizontalRuleField(),
+      nga.field('devices', 'referenced_list')
         .targetEntity(devices)
         .targetReferenceField('node_id')
-        .targetFields([
-          nga.field('label').isDetailLink(true).sortable(false)
-        ])
+        .targetFields([RESOURCE_TARGET_FIELD])
     ])
     .actions(SHOW_VIEW_ACTIONS);
 
@@ -153,35 +248,35 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   // Devices show view
 
   devices.showView()
-    .title('Device: {{entry.values.label}}')
+    .title(resourceTitleTemplate('Device'))
     .fields([
-      nga.field('label'),
-      nga.field('id').isDetailLink(false).label('ID'),
+      resourceCoreFields(),
+      nga.field('type', 'choice').choices(TYPE_CHOICES),
       nga.field('node_id', 'reference')
         .targetEntity(nodes)
         .targetField(nga.field('label'))
         .label('Node'),
+      // 'senders' and 'receivers' are being deprecated in v1.2, and easily replaced by the equivalent 'refererenced_list' fields below
+      //nga.field('senders', 'reference_many')
+      //  .targetEntity(senders)
+      //  .targetField(RESOURCE_TARGET_FIELD),
+      //nga.field('receivers', 'referenced_many')
+      //  .targetEntity(receivers)
+      //  .targetField(RESOURCE_TARGET_FIELD),
+      nga.field('controls', 'json'),
+      horizontalRuleField(),
       nga.field('sources', 'referenced_list')
         .targetEntity(sources)
         .targetReferenceField('device_id')
-        .targetFields([
-          nga.field('label').isDetailLink(true).sortable(false)
-        ]),
+        .targetFields([RESOURCE_TARGET_FIELD]),
       nga.field('senders', 'referenced_list')
         .targetEntity(senders)
         .targetReferenceField('device_id')
-        .targetFields([
-          nga.field('label').isDetailLink(true).sortable(false)
-        ]),
+        .targetFields([RESOURCE_TARGET_FIELD]),
       nga.field('receivers', 'referenced_list')
         .targetEntity(receivers)
         .targetReferenceField('device_id')
-        .targetFields([
-          nga.field('label').isDetailLink(true).sortable(false)
-        ]),
-      nga.field('controls', 'json'),
-      nga.field('type', 'choice').choices(TYPE_CHOICES),
-      nga.field('version')
+        .targetFields([RESOURCE_TARGET_FIELD])
     ])
     .actions(SHOW_VIEW_ACTIONS);
 
@@ -214,29 +309,26 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   // Source show view
 
   sources.showView()
-    .title('Source: {{entry.values.label}}')
+    .title(resourceTitleTemplate('Source'))
     .fields([
-      nga.field('label'),
-      nga.field('id').isDetailLink(false).label('ID'),
+      resourceCoreFields(),
+      nga.field('grain_rate', 'json').template(RATIONAL_VALUE_TEMPLATE),
+      nga.field('caps', 'json').label('Capabilities'), // (not yet defined)
       nga.field('device_id', 'reference')
         .targetEntity(devices)
-        .targetField(nga.field('label'))
+        .targetField(RESOURCE_TARGET_FIELD)
         .label('Device'),
-      nga.field('caps', 'json').label('Capabilities'),
-      nga.field('description'),
-      nga.field('format', 'choice').choices(FORMAT_CHOICES),
       nga.field('parents', 'reference_many') // TODO: format this like a 'referenced_list'
         .targetEntity(sources)
-        .targetField(nga.field('label'))
-        .label('Parents'),
+        .targetField(RESOURCE_TARGET_FIELD),
+      nga.field('clock_name'),
+      nga.field('format', 'choice').choices(FORMAT_CHOICES),
+      nga.field('channels', 'json').template(showItemTemplate('urn:x-nmos:format:audio'), true),
+      horizontalRuleField(),
       nga.field('flows', 'referenced_list')
         .targetEntity(flows)
         .targetReferenceField('source_id')
-        .targetFields([
-          nga.field('label').isDetailLink(true).sortable(false)
-        ]),
-      nga.field('tags', 'json'),
-      nga.field('version')
+        .targetFields([RESOURCE_TARGET_FIELD])
     ])
     .actions(SHOW_VIEW_ACTIONS);
 
@@ -269,28 +361,42 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   // Flow show view
 
   flows.showView()
-    .title('Flow: {{entry.values.label}}')
+    .title(resourceTitleTemplate('Flow'))
     .fields([
-      nga.field('label'),
-      nga.field('id').isDetailLink(false).label('ID'),
+      resourceCoreFields(),
+      nga.field('grain_rate', 'json').template(RATIONAL_VALUE_TEMPLATE),
       nga.field('source_id', 'reference')
         .targetEntity(sources)
-        .targetField(nga.field('label'))
+        .targetField(RESOURCE_TARGET_FIELD)
         .label('Source'),
-      nga.field('description'),
-      nga.field('format', 'choice').choices(FORMAT_CHOICES),
+      nga.field('device_id', 'reference')
+        .targetEntity(devices)
+        .targetField(RESOURCE_TARGET_FIELD)
+        .label('Device'),
       nga.field('parents', 'reference_many')
         .targetEntity(flows)
-        .targetField(nga.field('label'))
-        .label('Parents'),
+        .targetField(RESOURCE_TARGET_FIELD),
+      nga.field('format', 'choice').choices(FORMAT_CHOICES),
+      nga.field('media_type'),
+      // flow_audio.json
+      nga.field('sample_rate', 'json').template(showStringItemTemplate(RATIONAL_VALUE_EXPRESSION, 'urn:x-nmos:format:audio'), true),
+      // flow_audio_raw.json
+      nga.field('bit_depth').template(showItemTemplate('urn:x-nmos:format:audio'), true),
+      // flow_sdianc_data.json
+      nga.field('DID_SDID', 'json').template(showItemTemplate('urn:x-nmos:format:data', 'video/smpte291'), true),
+      // flow_video.json
+      nga.field('frame_width').template(showItemTemplate('urn:x-nmos:format:video'), true),
+      nga.field('frame_height').template(showItemTemplate('urn:x-nmos:format:video'), true),
+      nga.field('interlace_mode', 'choice').choices(INTERLACE_MODE_CHOICES).template(showItemTemplate('urn:x-nmos:format:video'), true),
+      nga.field('colorspace', 'choice').choices(COLORSPACE_CHOICES).template(showItemTemplate('urn:x-nmos:format:video'), true),
+      nga.field('transfer_characteristic', 'choice').choices(TRANSFER_CHARACTERISTIC_CHOICES).template(showItemTemplate('urn:x-nmos:format:video'), true),
+      // flow_video_raw.json
+      nga.field('components', 'json').template(showItemTemplate('urn:x-nmos:format:video', 'video/raw'), true),
+      horizontalRuleField(),
       nga.field('senders', 'referenced_list')
         .targetEntity(senders)
         .targetReferenceField('flow_id')
-        .targetFields([
-          nga.field('label').isDetailLink(true).sortable(false)
-        ]),
-      nga.field('tags', 'json'),
-      nga.field('version')
+        .targetFields([RESOURCE_TARGET_FIELD])
     ])
     .actions(SHOW_VIEW_ACTIONS);
 
@@ -323,23 +429,21 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   // Sender show view
 
   senders.showView()
-    .title('Sender: {{entry.values.label}}')
+    .title(resourceTitleTemplate('Sender'))
     .fields([
-      nga.field('label'),
-      nga.field('id').isDetailLink(false).label('ID'),
-      nga.field('device_id', 'reference')
-        .targetEntity(devices)
-        .targetField(nga.field('label'))
-        .label('Device'),
+      resourceCoreFields(),
+      nga.field('caps', 'json').label('Capabilities'), // being added in v1.2
       nga.field('flow_id', 'reference')
         .targetEntity(flows)
-        .targetField(nga.field('label'))
+        .targetField(RESOURCE_TARGET_FIELD)
         .label('Flow'),
-      nga.field('description'),
       nga.field('transport', 'choice').choices(TRANSPORT_CHOICES),
-      nga.field('manifest_href').template('<a href="{{value}}">{{value}}</a>').label('Manifest Address'),
-      nga.field('interface_bindings', 'json'),
-      nga.field('version')
+      nga.field('device_id', 'reference')
+        .targetEntity(devices)
+        .targetField(RESOURCE_TARGET_FIELD)
+        .label('Device'),
+      nga.field('manifest_href').template(URL_VALUE_TEMPLATE).label('Manifest Address'),
+      nga.field('interface_bindings', 'json') // being added in v1.2
     ])
     .actions(SHOW_VIEW_ACTIONS);
 
@@ -417,33 +521,29 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         });
       });
     }])
-    .title('Receiver: {{entry.values.label}}')
+    .title(resourceTitleTemplate('Receiver'))
     .fields([
-      nga.field('label'),
-      nga.field('id').isDetailLink(false).label('ID'),
+      resourceCoreFields(),
       nga.field('device_id', 'reference')
         .targetEntity(devices)
-        .targetField(nga.field('label'))
+        .targetField(RESOURCE_TARGET_FIELD)
         .label('Device'),
+      nga.field('transport', 'choice').choices(TRANSPORT_CHOICES),
+      nga.field('interface_bindings', 'json'), // being added in v1.2
       nga.field('subscription.sender_id', 'reference')
         .targetEntity(senders)
-        .targetField(nga.field('label'))
+        .targetField(RESOURCE_TARGET_FIELD)
         .label('Sender')
         .template('<span ng-if="null == value">Disconnected</span><ma-reference-link-column ng-if="null != value" entry="::entry" field="::field" value="::value" datastore="::datastore" class="ng-scope ng-isolate-scope"/>'),
       nga.field('subscription.sender_id.target', 'reference')
         .targetEntity(targets)
-        .targetField(nga.field('label'))
+        .targetField(RESOURCE_TARGET_FIELD)
         .label('')
         .remoteComplete(true, { refreshDelay: 300 })
         .attributes({ placeholder: 'Select a Sender to connect...' })
         .template(CONNECT_TEMPLATE),
-      nga.field('tags', 'json'),
-      nga.field('description'),
-      nga.field('caps', 'json').label('Capabilities'),
       nga.field('format', 'choice').choices(FORMAT_CHOICES),
-      nga.field('transport', 'choice').choices(TRANSPORT_CHOICES),
-      nga.field('interface_bindings', 'json'),
-      nga.field('version')
+      nga.field('caps', 'json').label('Capabilities')
     ])
     .actions(SHOW_VIEW_ACTIONS);
 
@@ -479,12 +579,13 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   subscriptions.showView()
     .title('Subscription: {{entry.values.resource_path}}')
     .fields([
-      nga.field('resource_path'),
-      nga.field('persist', 'boolean'),
-      nga.field('max_update_rate_ms', 'number').label('Max Update Rate (ms)'),
-      nga.field('params', 'json'),
-      nga.field('ws_href').template('<a href="{{value}}">{{value}}</a>').label('WebSocket Address'),
       nga.field('id').isDetailLink(false).label('ID'),
+      nga.field('ws_href').template(URL_VALUE_TEMPLATE).label('WebSocket Address'),
+      nga.field('max_update_rate_ms', 'number').label('Max Update Rate (ms)'),
+      nga.field('persist', 'boolean'),
+      nga.field('secure', 'boolean'), // added in v1.1
+      nga.field('resource_path'),
+      nga.field('params', 'json')
     ])
     .actions(SHOW_VIEW_ACTIONS);
 

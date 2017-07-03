@@ -1,5 +1,19 @@
 "use strict";
 
+// See https://github.com/marmelab/admin-config/blob/master/src/Utils/stringUtils.js
+function camelCase(text) {
+  if (!text) {
+    return text;
+  }
+
+  let f = text.charAt(0).toUpperCase();
+  text = f + text.substr(1);
+
+  return text.replace(/[-_.\s](.)/g, function (match, group1) {
+    return ' ' + group1.toUpperCase();
+  });
+}
+
 var myApp = angular.module('myApp', ['ng-admin', 'angularUserSettings']);
 
 myApp.config(['NgAdminConfigurationProvider', function (nga) {
@@ -93,16 +107,21 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   ];
 
   const FILTER_TEMPLATE =
-    '<div class="input-group">' +
-      '<input type="text" ng-model="value" placeholder="{{field._label == null ? field._name.substr(0,1).toUpperCase() + field._name.substr(1) : field._label}}" class="form-control"></input>' +
-      '<span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span>' +
-    '</div>';
+    `<div class="input-group">
+      <input type="text" ng-model="value" placeholder="{{field._label == null ? field._name.substr(0,1).toUpperCase() + field._name.substr(1) : field._label}}" class="form-control"></input>
+      <span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span>
+    </div>`;
 
   const RESOURCE_TITLE_EXPRESSION = 
-    'entry.values.label != \'\' ? entry.values.label : entry.values.id + \'(unlabelled)\'';
+    "entry.values.label != '' ? entry.values.label : entry.values.id + '(unlabelled)'";
 
   const RESOURCE_TITLE_TEMPLATE =
-    '{{' + RESOURCE_TITLE_EXPRESSION + '}}';
+    `{{${RESOURCE_TITLE_EXPRESSION}}}`;
+
+  // This should be done by creating a custom field view and overriding 'json' type
+  // See https://github.com/marmelab/ng-admin/blob/master/doc/Custom-types.md#overriding-existing-types
+  const PRETTY_JSON_TEMPLATE =
+    `<ma-pretty-json-column value="::value"></ma-pretty-json-column>`;
 
   const URL_VALUE_TEMPLATE =
     '<a href="{{value}}">{{value}}</a>';
@@ -111,28 +130,27 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     'value.numerator + \':\' + value.denominator';
 
   const RATIONAL_VALUE_TEMPLATE =
-    '<span ng-if="value">{{' + RATIONAL_VALUE_EXPRESSION + '}}</span>';
+    `<span ng-if="value">{{${RATIONAL_VALUE_EXPRESSION}}}</span>`;
 
   function horizontalRuleField() {
     return nga.field('').template('<hr/>', true);
   }
 
-  
   function resourceCoreFields() {
     return [
       nga.field('id').isDetailLink(false).label('ID'),
       nga.field('version'),
       nga.field('label'),
       nga.field('description'),
-      nga.field('tags', 'json')
+      nga.field('tags', 'json').template(PRETTY_JSON_TEMPLATE)
     ];
   }
 
   const RESOURCE_TARGET_FIELD =
     nga.field('label').isDetailLink(true).sortable(false).template(
-      '<a ui-sref="{{detailState}}(detailStateParams)">' +
-        '<ma-string-column value="' + RESOURCE_TITLE_EXPRESSION + '"></ma-string-column>' +
-      '</a>'
+      `<a ui-sref="{{detailState}}(detailStateParams)">
+        <ma-string-column value="${RESOURCE_TITLE_EXPRESSION}"></ma-string-column>
+      </a>`
     );
 
   function resourceTitleTemplate(resourceType) {
@@ -159,19 +177,35 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     );
   }
 
+  function showPrettyJsonItemTemplate(format, mediaType) {
+    return spanIf(
+      format,
+      mediaType,
+      // expand ma-show-item with ma-pretty-json-column of expression
+      `<div class="col-lg-12 form-group">
+          <label class="col-sm-2 control-label">{{ field.label() | translate }}</label>
+          <div class="show-value" ng-class="(field.getCssClasses(entry) || 'col-sm-10 col-md-8 col-lg-7')">
+              <div ng-class="::'ng-admin-field-' + field.name() + ' ' + 'ng-admin-type-json'">
+                  <ma-pretty-json-column value="entry.values[field.name()]"></ma-pretty-json-column>
+              </div>
+          </div>
+      </div>`
+    );
+  }
+
   function showStringItemTemplate(expression, format, mediaType) {
     return spanIf(
       format,
       mediaType,
       // expand ma-show-item with ma-string-column of expression
-      '<div class="col-lg-12 form-group">' +
-      '    <label class="col-sm-2 control-label">{{ field.label() | translate }}</label>' +
-      '    <div class="show-value" ng-class="(field.getCssClasses(entry) || \'col-sm-10 col-md-8 col-lg-7\')">' +
-      '        <div ng-class="::\'ng-admin-field-\' + field.name() + \' \' + \'ng-admin-type-string\'">' +
-      '            <ma-string-column value="value = entry.values[field.name()]; ' + expression + '"></ma-string-column>' +
-      '        </div>' +
-      '    </div>' +
-      '</div>'
+      `<div class="col-lg-12 form-group">
+          <label class="col-sm-2 control-label">{{ field.label() | translate }}</label>
+          <div class="show-value" ng-class="(field.getCssClasses(entry) || 'col-sm-10 col-md-8 col-lg-7')">
+              <div ng-class="::'ng-admin-field-' + field.name() + ' ' + 'ng-admin-type-string'">
+                  <ma-string-column value="value = entry.values[field.name()]; ${expression}"></ma-string-column>
+              </div>
+          </div>
+      </div>`
     );
   }
 
@@ -192,7 +226,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('hostname')
         .pinned(false)
         .template(FILTER_TEMPLATE),
-      nga.field('api.versions', 'json').label('Node API Versions')
+      nga.field('api.versions', 'json').template(PRETTY_JSON_TEMPLATE).label('Node API Versions')
         .pinned(false)
         .template(FILTER_TEMPLATE),
       nga.field('id').label('ID')
@@ -208,12 +242,12 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       resourceCoreFields(),
       nga.field('href').template(URL_VALUE_TEMPLATE).label('Address'),
       nga.field('hostname'),
-      nga.field('api.versions', 'json').label('Node API Versions'),
-      nga.field('api.endpoints', 'json').label('Node API Address Fragments'),
-      nga.field('caps', 'json').label('Capabilities'), // (not yet defined)
-      nga.field('services', 'json'),
-      nga.field('clocks', 'json'),
-      nga.field('interfaces', 'json'),
+      nga.field('api.versions', 'json').template(PRETTY_JSON_TEMPLATE).label('Node API Versions'),
+      nga.field('api.endpoints', 'json').template(PRETTY_JSON_TEMPLATE).label('Node API Address Fragments'),
+      nga.field('caps', 'json').template(PRETTY_JSON_TEMPLATE).label('Capabilities'), // (not yet defined)
+      nga.field('services', 'json').template(PRETTY_JSON_TEMPLATE),
+      nga.field('clocks', 'json').template(PRETTY_JSON_TEMPLATE),
+      nga.field('interfaces', 'json').template(PRETTY_JSON_TEMPLATE),
       horizontalRuleField(),
       nga.field('devices', 'referenced_list')
         .targetEntity(devices)
@@ -263,7 +297,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       //nga.field('receivers', 'referenced_many')
       //  .targetEntity(receivers)
       //  .targetField(RESOURCE_TARGET_FIELD),
-      nga.field('controls', 'json'),
+      nga.field('controls', 'json').template(PRETTY_JSON_TEMPLATE),
       horizontalRuleField(),
       nga.field('sources', 'referenced_list')
         .targetEntity(sources)
@@ -313,7 +347,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .fields([
       resourceCoreFields(),
       nga.field('grain_rate', 'json').template(RATIONAL_VALUE_TEMPLATE),
-      nga.field('caps', 'json').label('Capabilities'), // (not yet defined)
+      nga.field('caps', 'json').template(PRETTY_JSON_TEMPLATE).label('Capabilities'), // (not yet defined)
       nga.field('device_id', 'reference')
         .targetEntity(devices)
         .targetField(RESOURCE_TARGET_FIELD)
@@ -323,7 +357,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetField(RESOURCE_TARGET_FIELD),
       nga.field('clock_name'),
       nga.field('format', 'choice').choices(FORMAT_CHOICES),
-      nga.field('channels', 'json').template(showItemTemplate('urn:x-nmos:format:audio'), true),
+      nga.field('channels', 'json').template(showPrettyJsonItemTemplate('urn:x-nmos:format:audio'), true),
       horizontalRuleField(),
       nga.field('flows', 'referenced_list')
         .targetEntity(flows)
@@ -383,7 +417,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       // flow_audio_raw.json
       nga.field('bit_depth').template(showItemTemplate('urn:x-nmos:format:audio'), true),
       // flow_sdianc_data.json
-      nga.field('DID_SDID', 'json').template(showItemTemplate('urn:x-nmos:format:data', 'video/smpte291'), true),
+      nga.field('DID_SDID', 'json').template(showPrettyJsonItemTemplate('urn:x-nmos:format:data', 'video/smpte291'), true),
       // flow_video.json
       nga.field('frame_width').template(showItemTemplate('urn:x-nmos:format:video'), true),
       nga.field('frame_height').template(showItemTemplate('urn:x-nmos:format:video'), true),
@@ -391,7 +425,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('colorspace', 'choice').choices(COLORSPACE_CHOICES).template(showItemTemplate('urn:x-nmos:format:video'), true),
       nga.field('transfer_characteristic', 'choice').choices(TRANSFER_CHARACTERISTIC_CHOICES).template(showItemTemplate('urn:x-nmos:format:video'), true),
       // flow_video_raw.json
-      nga.field('components', 'json').template(showItemTemplate('urn:x-nmos:format:video', 'video/raw'), true),
+      nga.field('components', 'json').template(showPrettyJsonItemTemplate('urn:x-nmos:format:video', 'video/raw'), true),
       horizontalRuleField(),
       nga.field('senders', 'referenced_list')
         .targetEntity(senders)
@@ -432,7 +466,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .title(resourceTitleTemplate('Sender'))
     .fields([
       resourceCoreFields(),
-      nga.field('caps', 'json').label('Capabilities'), // being added in v1.2
+      nga.field('caps', 'json').template(PRETTY_JSON_TEMPLATE).label('Capabilities'), // being added in v1.2
       nga.field('flow_id', 'reference')
         .targetEntity(flows)
         .targetField(RESOURCE_TARGET_FIELD)
@@ -443,7 +477,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetField(RESOURCE_TARGET_FIELD)
         .label('Device'),
       nga.field('manifest_href').template(URL_VALUE_TEMPLATE).label('Manifest Address'),
-      nga.field('interface_bindings', 'json') // being added in v1.2
+      nga.field('interface_bindings', 'json').template(PRETTY_JSON_TEMPLATE) // being added in v1.2
     ])
     .actions(SHOW_VIEW_ACTIONS);
 
@@ -479,14 +513,14 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   // Receiver show view
 
+  // Would like to have an ma-reference-field which is what is used for the editionView
+  // but I haven't been able to work out how to populate the choices in the showView :-(
+  // <ma-reference-field entry="entry" field="::field" value="value" datastore="::datastore"/>
   const CONNECT_TEMPLATE =
-    '<div class="input-group">' +
-      // would like to have an ma-reference-field which is what is used for the editionView
-      // but I haven't been able to work out how to populate the choices in the showView :-(
-      //'<ma-reference-field entry="entry" field="::field" value="value" datastore="::datastore"/>' +
-      '<ma-connect-field entry="entry" field="::field" value="value" datastore="::datastore"/>' +
-      '<span class="input-group-btn" style="padding-left: 12px"><ma-connect-button entry="entry" value="value" datastore="::datastore" label-connect="Connect" label-disconnect="Disconnect"/></span>' +
-    '</div>';
+    `<div class="input-group">
+      <ma-connect-field entry="entry" field="::field" value="value" datastore="::datastore"/>
+      <span class="input-group-btn" style="padding-left: 12px"><ma-connect-button entry="entry" value="value" datastore="::datastore" label-connect="Connect" label-disconnect="Disconnect"/></span>
+    </div>`;
 
   // duplicate entity required due to ng-admin bug, e.g. https://github.com/marmelab/ng-admin/issues/1207
   var targets = nga.entity('senders').readOnly();
@@ -529,7 +563,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetField(RESOURCE_TARGET_FIELD)
         .label('Device'),
       nga.field('transport', 'choice').choices(TRANSPORT_CHOICES),
-      nga.field('interface_bindings', 'json'), // being added in v1.2
+      nga.field('interface_bindings', 'json').template(PRETTY_JSON_TEMPLATE), // being added in v1.2
       nga.field('subscription.sender_id', 'reference')
         .targetEntity(senders)
         .targetField(RESOURCE_TARGET_FIELD)
@@ -543,7 +577,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .attributes({ placeholder: 'Select a Sender to connect...' })
         .template(CONNECT_TEMPLATE),
       nga.field('format', 'choice').choices(FORMAT_CHOICES),
-      nga.field('caps', 'json').label('Capabilities')
+      nga.field('caps', 'json').template(PRETTY_JSON_TEMPLATE).label('Capabilities')
     ])
     .actions(SHOW_VIEW_ACTIONS);
 
@@ -585,7 +619,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('persist', 'boolean'),
       nga.field('secure', 'boolean'), // added in v1.1
       nga.field('resource_path'),
-      nga.field('params', 'json')
+      nga.field('params', 'json').template(PRETTY_JSON_TEMPLATE)
     ])
     .actions(SHOW_VIEW_ACTIONS);
 
@@ -650,7 +684,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('route_parameters.resourceId').label('Resource ID'),
       nga.field('http_method').label('HTTP Method'),
       nga.field('request_uri').label('Request URI'),
-      nga.field('source_location', 'json'),
+      nga.field('source_location', 'json').template(PRETTY_JSON_TEMPLATE),
       nga.field('thread_id').label('Thread ID'),
       nga.field('id').isDetailLink(false).label('ID')
     ])
@@ -719,25 +753,31 @@ settingsController.prototype.save = function() {
 settingsController.inject = ['NgAdminConfiguration', '$stateParams', 'notification', '$userSettings'];
 
 var settingsControllerTemplate =
-  '<div class="row"><div class="col-lg-12"><div class="page-header">' +
-    '<ma-view-actions><ma-back-button></ma-back-button></ma-view-actions>' +
-    '<h1>Settings</h1>' +
-  '</div></div></div>' +
+  `<div class="row"><div class="col-lg-12"><div class="page-header">
+    <ma-view-actions><ma-back-button></ma-back-button></ma-view-actions>
+    <h1>Settings</h1>
+  </div></div></div>
 
-  '<form class="form-horizontal" ng-submit="controller.save()">' +
+  <form class="form-horizontal" ng-submit="controller.save()">
 
-    '<div>' +
-      '<div class="form-field form-group">' +
-        '<label class="col-sm-2 control-label">Query API</label>' +
-        '<div class="ng-admin-type-string col-sm-10 col-md-8 col-lg-7">' +
-          '<input type="text" ng-model="controller.address" class="form-control"/>' +
-        '</div>' +
-      '</div>' +
-    '</div>' +
+    <div>
+      <div class="form-field form-group">
+        <label class="col-sm-2 control-label">Query API</label>
+        <div class="ng-admin-type-string col-sm-10 col-md-8 col-lg-7">
+          <input type="text" ng-model="controller.address" class="form-control"/>
+        </div>
+      </div>
+    </div>
 
-    '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><ma-submit-button label="SAVE_CHANGES" class="ng-isolate-scope"><button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span>&nbsp;<span class="hidden-xs ng-scope" translate="SAVE_CHANGES">Save changes</span></button></ma-submit-button></div></div>' +
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <ma-submit-button label="SAVE_CHANGES" class="ng-isolate-scope">
+          <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span>&nbsp;<span class="hidden-xs ng-scope" translate="SAVE_CHANGES">Save changes</span></button>
+        </ma-submit-button>
+      </div>
+    </div>
 
-  '</form>';
+  </form>`;
 
 myApp.config(function ($stateProvider) {
   $stateProvider.state('settings', {
@@ -853,11 +893,11 @@ myApp.directive('maConnectButton', ['$http', '$state', 'notification', function 
       };
     },
     template:
-      '<a class="btn btn-default" ng-class="size ? \'btn-\' + size : \'\'" ng-click="connect()">' +
-        '<span class="glyphicon {{0 < value.length ? \'glyphicon-ok\' : \'glyphicon-remove\'}}" aria-hidden="true"></span>' +
-        '&nbsp;' +
-        '<span class="hidden-xs" translate="{{0 < value.length ? labelConnect : labelDisconnect}}"></span>' +
-      '</a>'
+      `<a class="btn btn-default" ng-class="size ? 'btn-' + size : ''" ng-click="connect()">
+        <span class="glyphicon {{0 < value.length ? 'glyphicon-ok' : 'glyphicon-remove'}}" aria-hidden="true"></span>
+        &nbsp;
+        <span class="hidden-xs" translate="{{0 < value.length ? labelConnect : labelDisconnect}}"></span>
+      </a>`
   };
 }]);
 
@@ -877,13 +917,79 @@ myApp.directive('maReloadButton', ['$state', function ($state) {
       };
     },
     template:
-      '<a class="btn btn-default" ng-class="size ? \'btn-\' + size : \'\'" ng-click="reload()">' +
-        '<span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>' +
-        '&nbsp;' +
-        '<span class="hidden-xs" translate="{{label}}"></span>' +
-      '</a>'
+      `<a class="btn btn-default" ng-class="size ? 'btn-' + size : ''" ng-click="reload()">
+        <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
+        &nbsp;
+        <span class="hidden-xs" translate="{{label}}"></span>
+      </a>`
   };
 }]);
+
+// Custom pretty JSON column
+
+myApp.directive('maPrettyJsonColumn', function ($compile) {
+  return {
+    restrict: 'E',
+    scope: {
+      value: '&',
+    },
+    link: function(scope, element) {
+      scope.guessType = function(obj) {
+        var type = Object.prototype.toString.call(obj);
+
+        if (type === "[object Object]") {
+          return "Object";
+        }
+
+        if (type === "[object Array]") {
+          return "Array";
+        }
+
+        return "Literal";
+      };
+
+      // Haven't been able to work out how best to use 'global' utility functions like camelCase in templates (implement a service?)
+      // nor to allow these templates to be passed in, with these defaults, and then pass them on recursively :-(
+      scope.camelCase = camelCase;
+      scope.keyTemplate = '{{camelCase(key)}}';
+      scope.literalTemplate = '{{val}}';
+      // So for now, 'override' here
+      scope.keyTemplate = `{{key === 'gmid' ? 'GMID' : key === 'href' ? 'Address' : camelCase(key)}}`;
+      scope.literalTemplate = `<a ng-if="val.startsWith('http')" href="{{val}}">{{val}}</a><span ng-if="!val.startsWith('http')">{{val}}</span>`;
+
+      var template =
+        `<span ng-switch="guessType(value())">
+          <table class="table table-condensed" ng-switch-when="Array">
+            <tbody>
+              <tr ng-repeat="val in value() track by $index">
+                <td ng-switch="guessType(val)">
+                  <ma-pretty-json-column ng-switch-when="Object" value="::val"></ma-pretty-json-column>
+                  <ma-pretty-json-column ng-switch-when="Array" value="::val"></ma-pretty-json-column>
+                  <span ng-switch-when="Literal">${scope.literalTemplate}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <table class="table table-condensed table-bordered" ng-switch-when="Object">
+            <tbody>
+              <tr ng-repeat="(key, val) in value() track by key">
+                <th class="active">${scope.keyTemplate}</th>
+                <td ng-switch="guessType(val)">
+                  <ma-pretty-json-column ng-switch-when="Object" value="::val"></ma-pretty-json-column>
+                  <ma-pretty-json-column ng-switch-when="Array" value="::val"></ma-pretty-json-column>
+                  <span ng-switch-when="Literal">${scope.literalTemplate}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </span>`;
+
+      var newElement = angular.element(template);
+      $compile(newElement)(scope);
+      element.replaceWith(newElement);
+    }
+  }
+});
 
 // Intercept ng-admin REST flavour and adapt for NMOS flavour
 

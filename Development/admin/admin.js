@@ -21,7 +21,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   // Application, mostly just using the Query API (by default, on the same host as this Admin UI, but loaded from $userSettings at run-time)
   // Logging API is on a different port on the same host
 
-  var adminHost = window.location.hostname;
+  var adminHost = window.location.hostname || "localhost";
   var queryPort = 3211;
   var loggingPort = 5106;
 
@@ -133,7 +133,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     `<span ng-if="value">{{${RATIONAL_VALUE_EXPRESSION}}}</span>`;
 
   function horizontalRuleField() {
-    return nga.field('').template('<hr/>', true);
+    return nga.field('').template('<div class="col-lg-12 form-group"><hr/></div>', true);
   }
 
   function resourceCoreFields() {
@@ -142,7 +142,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       nga.field('version'),
       nga.field('label'),
       nga.field('description'),
-      nga.field('tags', 'json').template(PRETTY_JSON_TEMPLATE)
+      nga.field('tags', 'json').template(PRETTY_JSON_TEMPLATE),
+      horizontalRuleField()
     ];
   }
 
@@ -294,7 +295,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       //nga.field('senders', 'reference_many')
       //  .targetEntity(senders)
       //  .targetField(RESOURCE_TARGET_FIELD),
-      //nga.field('receivers', 'referenced_many')
+      //nga.field('receivers', 'reference_many')
       //  .targetEntity(receivers)
       //  .targetField(RESOURCE_TARGET_FIELD),
       nga.field('controls', 'json').template(PRETTY_JSON_TEMPLATE),

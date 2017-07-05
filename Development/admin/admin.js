@@ -818,7 +818,7 @@ myApp.directive('maConnectField', [function () {
 
 // relies on 'target_href' and 'targets' being in the datastore
 // could potentially use Restangular to make the request? and use the ng-admin HttpErrorService?
-myApp.directive('maConnectButton', ['$http', '$state', 'notification', function ($http, $state, notification) {
+myApp.directive('maConnectButton', ['$http', '$state', '$translate', 'notification', function ($http, $state, $translate, notification) {
   return {
     restrict: 'E',
     scope: {
@@ -847,49 +847,35 @@ myApp.directive('maConnectButton', ['$http', '$state', 'notification', function 
           console.log("Using Connection Management API");
           if (null == sender) {
             // disconnect
-            connect = $http.patch(conman_href + 'staged/transportparams', {
-                transport_params: [
-                  { rtp_enabled: false } // one entry per 'leg' for ST2022-7 (discover from interface_bindings on the receiver)
-                ],
-                sender_id: null
+            connect = $http.patch(conman_href + 'staged', {
+                master_enabled: false
               });
-/*
-            connect = $http.put(conman_href + 'staged/transportfile', {
-                session_description: { // session_description becomes transport_file soon
-                  data: null,
-                  type: "application/sdp",
-                  by_reference: false
-                },
-                // other possibilities for disconnect...
-                //session_description: { data: null },
-                //session_description: {},
-                //session_description: null,
-                sender_id: null
-              });
-*/
-/*
-            connect = $http.put(conman_href + 'staged/transportfile', {});
-*/
           }
           else {
             // connect
-            connect = $http.put(conman_href + 'staged/transportfile', {
-                session_description: { // session_description becomes transport_file soon
-                  data: sender.manifest_href,
-                  type: "application/sdp",
-                  by_reference: true
+            connect = $http.get(sender.manifest_href).then((response) => {
+              return $http.put(conman_href + 'staged', {
+                sender_id: sender.id,
+                master_enable: true,
+                activation: {
+                  mode: "activate_immediate"
                 },
-                sender_id: sender.id
+                transport_file: {
+                  type: "application/sdp",
+                  data: response.data
+                }
               });
-          }
-          connect = connect.then(() => {
-              return $http.post(conman_href + 'activate', { mode: "activate_immediate" });
             });
+          }
         }
 
         connect.then(
-            () => { $state.reload(); },
-            (error) => { notification.log(error.data.error, { addnCls: 'humane-flatty-error' }); }
+          () => { $state.reload(); },
+          (error) => { $translate('STATE_CHANGE_ERROR',
+            null == error.data ? '' :
+              error.data.error + ' (' + error.data.code + ')'
+              + (error.data.debug ? '<br/>' + error.data.debug : ''))
+            .then((message) => notification.log(message, { addnCls: 'humane-flatty-error' })); }
           );
       };
     },

@@ -139,7 +139,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   function resourceCoreFields() {
     return [
       nga.field('id').isDetailLink(false).label('ID'),
-      nga.field('version'),
+      nga.field('version').template('{{value}} ({{sn = value.split(":", 2); (1e3 * sn[0] + sn[1] / 1e6) | date: "yyyy-MM-dd hh:mm:ss.sss"}})'),
       nga.field('label'),
       nga.field('description'),
       nga.field('tags', 'json').template(PRETTY_JSON_TEMPLATE),

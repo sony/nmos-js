@@ -681,6 +681,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         }),
       nga.field('message'),
       nga.field('route_parameters.api').label('API'),
+      nga.field('route_parameters.version').label('Version'),
       nga.field('route_parameters.resourceType').label('Resource Type'),
       nga.field('route_parameters.resourceId').label('Resource ID'),
       nga.field('http_method').label('HTTP Method'),
@@ -942,7 +943,7 @@ myApp.directive('maPrettyJsonColumn', function ($compile) {
       scope.literalTemplate = '{{val}}';
       // So for now, 'override' here
       scope.keyTemplate = `{{key === 'gmid' ? 'GMID' : key === 'href' ? 'Address' : camelCase(key)}}`;
-      scope.literalTemplate = `<a ng-if="val.startsWith('http')" href="{{val}}">{{val}}</a><span ng-if="!val.startsWith('http')">{{val}}</span>`;
+      scope.literalTemplate = `<a ng-if="val.startsWith('http:') || val.startsWith('https:')" href="{{val}}">{{val}}</a><span ng-if="!(val.startsWith('http:') || val.startsWith('https:'))">{{val}}</span>`;
 
       var template =
         `<span ng-switch="guessType(value())">

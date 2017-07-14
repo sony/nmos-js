@@ -549,9 +549,12 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
           // should use the node api version here
           datastore.addEntry('target_href', node.data.href + ('/' === node.data.href.substr(-1) ? '' : '/') + 'x-nmos/node/v1.0/receivers/' + entry.values.id + '/target');
 
-          var conman = device.data.controls.find((control) => { return "urn:x-nmos:control:sr-ctrl/v1.0" === control.type; });
-          if (undefined !== conman) {
-            datastore.addEntry('conman_href', conman.href + ('/' === conman.href.substr(-1) ? '' : '/') + 'single/receivers/' + entry.values.id + '/');
+          // device controls property was introduced in v1.1
+          if (undefined !== device.data.controls) {
+            var conman = device.data.controls.find((control) => { return "urn:x-nmos:control:sr-ctrl/v1.0" === control.type; });
+            if (undefined !== conman) {
+              datastore.addEntry('conman_href', conman.href + ('/' === conman.href.substr(-1) ? '' : '/') + 'single/receivers/' + entry.values.id + '/');
+            }
           }
         });
       });

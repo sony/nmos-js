@@ -852,13 +852,17 @@ myApp.directive('maConnectButton', ['$http', '$state', '$translate', 'notificati
           if (null == sender) {
             // disconnect
             connect = $http.patch(conman_href + 'staged', {
-                master_enabled: false
+                //sender_id: null,
+                master_enabled: false,
+                activation: {
+                  mode: "activate_immediate"
+                }
               });
           }
           else {
             // connect
             connect = $http.get(sender.manifest_href).then((response) => {
-              return $http.put(conman_href + 'staged', {
+              return $http.patch(conman_href + 'staged', {
                 sender_id: sender.id,
                 master_enable: true,
                 activation: {

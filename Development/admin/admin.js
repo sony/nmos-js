@@ -139,7 +139,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   function resourceCoreFields() {
     return [
       nga.field('id').isDetailLink(false).label('ID'),
-      nga.field('version').template('{{value}} ({{sn = value.split(":", 2); (1e3 * sn[0] + sn[1] / 1e6) | date: "yyyy-MM-dd hh:mm:ss.sss"}})'),
+      nga.field('version').template('{{value}} ({{sn = value.split(":", 2); (1e3 * sn[0] + sn[1] / 1e6) | date: "yyyy-MM-dd HH:mm:ss.sss"}})'),
       nga.field('label'),
       nga.field('description'),
       nga.field('tags', 'json').template(PRETTY_JSON_TEMPLATE),
@@ -478,7 +478,14 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetField(RESOURCE_TARGET_FIELD)
         .label('Device'),
       nga.field('manifest_href').template(URL_VALUE_TEMPLATE).label('Manifest Address'),
-      nga.field('interface_bindings', 'json').template(PRETTY_JSON_TEMPLATE) // being added in v1.2
+      nga.field('interface_bindings', 'json').template(PRETTY_JSON_TEMPLATE), // being added in v1.2
+      nga.field('subscription.receiver_id', 'reference') // being added in v1.2
+        .targetEntity(receivers)
+        .targetField(RESOURCE_TARGET_FIELD)
+        .label('Receiver')
+        .template('<span ng-if="null == value">Disconnected, or multicast mode</span><ma-reference-link-column ng-if="null != value" entry="::entry" field="::field" value="::value" datastore="::datastore" class="ng-scope ng-isolate-scope"/>'),
+      nga.field('subscription.active', 'boolean') // being added in v1.2
+        .label('Active')
     ])
     .actions(SHOW_VIEW_ACTIONS);
 
@@ -573,6 +580,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         .targetField(RESOURCE_TARGET_FIELD)
         .label('Sender')
         .template('<span ng-if="null == value">Disconnected</span><ma-reference-link-column ng-if="null != value" entry="::entry" field="::field" value="::value" datastore="::datastore" class="ng-scope ng-isolate-scope"/>'),
+      nga.field('subscription.active', 'boolean') // being added in v1.2
+        .label('Active'),
       nga.field('subscription.sender_id.target', 'reference')
         .targetEntity(targets)
         .targetField(RESOURCE_TARGET_FIELD)
@@ -853,7 +862,7 @@ myApp.directive('maConnectButton', ['$http', '$state', '$translate', 'notificati
             // disconnect
             connect = $http.patch(conman_href + 'staged', {
                 //sender_id: null,
-                master_enabled: false,
+                master_enable: false,
                 activation: {
                   mode: "activate_immediate"
                 }

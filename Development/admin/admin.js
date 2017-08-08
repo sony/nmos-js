@@ -14,6 +14,16 @@ function camelCase(text) {
   });
 }
 
+// Construct a URL for the Query API from its mDNS record
+function getQueryUrl(values) {
+  // address may be null if the host wasn't resolved
+  if (!values.address) {
+    return '';
+  }
+  // just picks out the last api_ver
+  return values['txt.api_proto'] + '://' + (values.address.indexOf(':') == -1 ? values.address : '[' + values.address + ']') + ':' + values.port + '/x-nmos/query/' + values['txt.api_ver'].substr(-4) + '/';
+};
+
 var myApp = angular.module('myApp', ['ng-admin', 'angularUserSettings']);
 
 myApp.config(['NgAdminConfigurationProvider', function (nga) {
@@ -22,9 +32,11 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   // Logging API is on a different port on the same host
 
   var adminHost = window.location.hostname || "localhost";
+  var mdnsPort = 3214;
   var queryPort = 3211;
   var loggingPort = 5106;
 
+  var mdnsUrl = 'http://' + adminHost + ':' + mdnsPort + '/x-mdns/';
   var queryUrl = 'http://' + adminHost + ':' + queryPort + '/x-nmos/query/v1.2/';
   var loggingUrl = 'http://' + adminHost + ':' + loggingPort + '/log/';
 
@@ -50,6 +62,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   var receivers = nga.entity('receivers').readOnly();
   var subscriptions = nga.entity('subscriptions').readOnly();
   var logs = nga.entity('events').label('Logs').baseApiUrl(loggingUrl).readOnly();
+  var queryApis = nga.entity('_nmos-query._tcp').label('Query APIs').baseApiUrl(mdnsUrl).readOnly();
 
   // Templates and common definitions
 
@@ -717,6 +730,28 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
   admin.addEntity(logs);
 
+  // Query APIs list view
+
+  // there's no "id" field but the name should be unique?
+  queryApis.identifier(nga.field('name'));
+
+  queryApis.listView()
+    .title('Query APIs List')
+    .fields([
+//      nga.field('name').isDetailLink(true).sortable(false),
+      nga.field('name').sortable(false),
+      nga.field('address').label('Host Address').sortable(false),
+      nga.field('port').sortable(false),
+      nga.field('txt.api_proto').label('Protocol').sortable(false),
+      nga.field('txt.api_ver').label('API Versions').sortable(false),
+      nga.field('txt.pri', 'number').label('Priority').sortable(false),
+      nga.field('href').template(URL_VALUE_TEMPLATE).label('Address').sortable(false).map((value, values) => { return getQueryUrl(values); })
+    ])
+    .listActions(['<ma-apply-query-api-button label="Apply" entry="::entry" size="xs"/>'])
+    .actions(['<ma-reload-button label="Reload"/>']);
+
+  admin.addEntity(queryApis);
+
   // Dashboard
 
   admin.dashboard(nga.dashboard()
@@ -744,14 +779,47 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .addChild(nga.menu()
       .icon('<span class="glyphicon glyphicon-cog"></span>')
       .title('Settings')
-      .link('/settings')
-      .active(function(path) {
-        return path.indexOf('/settings') === 0;
-      }))
+      .addChild(nga.menu(queryApis).icon('<span class="glyphicon glyphicon-cog"></span>'))
+      .addChild(nga.menu()
+        .icon('<span class="glyphicon glyphicon-cog"></span>')
+        .title('Miscellaneous')
+        .link('/settings')
+        .active(function(path) {
+          return path.indexOf('/settings') === 0;
+        })
+      )
+    )
   );
 
   // attach the admin application to the DOM and execute it
   nga.configure(admin);
+}]);
+
+// Custom apply button
+
+myApp.directive('maApplyQueryApiButton', ['NgAdminConfiguration', '$userSettings', function (NgAdminConfiguration, $userSettings) {
+  return {
+    restrict: 'E',
+    scope: {
+      entry: '=?',
+      size: '@',
+      label: '@'
+    },
+    link: function (scope, element, attrs) {
+      scope.label = scope.label || 'APPLY';
+      scope.apply = function () {
+        var address = getQueryUrl(scope.entry.values);
+        NgAdminConfiguration().baseApiUrl(address);
+        $userSettings.set('queryUrl', address);
+      };
+    },
+    template:
+      `<a class="btn btn-default" ng-class="size ? 'btn-' + size : ''" ng-click="apply()">
+        <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+        &nbsp;
+        <span class="hidden-xs" translate="{{label}}"></span>
+      </a>`
+  };
 }]);
 
 // Custom 'Settings' page (and initial run-time configuration)

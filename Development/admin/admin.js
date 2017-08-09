@@ -552,16 +552,19 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       var adminRestangular = Restangular.withConfig(function(RestangularConfigurer) {
         RestangularConfigurer.setBaseUrl(admin.baseApiUrl());
       });
-      // perform a kind of 'join' to find Senders that have both a transport matching this Receiver and a Flow with a matching format
+      // perform a kind of 'join' to find Senders that have both a transport matching this Receiver and a Flow with a matching format and media_type
       // but first, if transport is "urn:x-nmos:transport:rtp", need to get and merge Senders with the ".mcast" and ".ucast" variants
       var getSenders = adminRestangular.all('senders').getList({ _filters: { transport: entry.values.transport } });
       if (entry.values.transport === 'urn:x-nmos:transport:rtp') {
-        getSenders.then((senders) => {
+        getSenders = getSenders.then((senders) => {
           return adminRestangular.all('senders').getList({ _filters: { transport: 'urn:x-nmos:transport:rtp.mcast' } }).then((mcast) => {
-            return adminRestangular.all('senders').getList({ _filters: { transport: 'urn:x-nmos:transport:rtp.ucast' } }).then((ucast) => {
-              senders.data.push(...mcast.data, ...ucast.data);
-              return senders;
-            });
+            senders.data.push(...mcast.data);
+            return senders;
+          });
+        }).then((senders) => {
+          return adminRestangular.all('senders').getList({ _filters: { transport: 'urn:x-nmos:transport:rtp.ucast' } }).then((ucast) => {
+            senders.data.push(...ucast.data);
+            return senders;
           });
         });
       }
@@ -569,8 +572,11 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         senders.data.map(sender => {
           adminRestangular.one('flows', sender.flow_id).get().then((flow) => {
             if (flow.data.format.startsWith(entry.values.format)) {
-              datastore.addEntry('targets', sender);
-              datastore.addEntry(targets.uniqueId + '_choices', { value: sender.id, label: sender.label });
+              // caps.media_types property was introduced in v1.1
+              if (undefined === entry.values.caps.media_types || entry.values.caps.media_types.indexOf(flow.data.media_type) != -1) {
+                datastore.addEntry('targets', sender);
+                datastore.addEntry(targets.uniqueId + '_choices', { value: sender.id, label: sender.label });
+              }
             }
           });
         });

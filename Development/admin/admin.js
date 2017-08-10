@@ -744,17 +744,31 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   queryApis.listView()
     .title('Query APIs List')
     .fields([
-//      nga.field('name').isDetailLink(true).sortable(false),
-      nga.field('name').sortable(false),
+      nga.field('name').isDetailLink(true).sortable(false),
       nga.field('address').label('Host Address').sortable(false),
       nga.field('port').sortable(false),
       nga.field('txt.api_proto').label('Protocol').sortable(false),
       nga.field('txt.api_ver').label('API Versions').sortable(false),
-      nga.field('txt.pri', 'number').label('Priority').sortable(false),
-      nga.field('href').template(URL_VALUE_TEMPLATE).label('Address').sortable(false).map((value, values) => { return getQueryUrl(values); })
+      nga.field('txt.pri', 'number').label('Priority').sortable(false)
     ])
-    .listActions(['<ma-apply-query-api-button label="Apply" entry="::entry" size="xs"/>'])
+    .listActions(['<ma-connect-query-api-button label="Connect" entry="::entry" size="xs"/>'])
     .actions(['<ma-reload-button label="Reload"/>']);
+
+  // Query APIs show view
+
+  queryApis.showView()
+    .title('Query API: {{entry.values.name}}')
+    .fields([
+      nga.field('name'),
+      nga.field('address').label('Host Address'),
+      nga.field('port'),
+      nga.field('txt.api_proto').label('Protocol'),
+      nga.field('txt.api_ver').label('API Versions'),
+      nga.field('txt.pri', 'number').label('Priority'),
+      horizontalRuleField(),
+      nga.field('href').template(URL_VALUE_TEMPLATE + ' <ma-connect-query-api-button label="Connect" entry="::entry" size="small"/>').label('Address').map((value, values) => { return getQueryUrl(values); })
+    ])
+    .actions(SHOW_VIEW_ACTIONS);
 
   admin.addEntity(queryApis);
 
@@ -801,9 +815,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   nga.configure(admin);
 }]);
 
-// Custom apply button
+// Custom button to connect to a Query API
 
-myApp.directive('maApplyQueryApiButton', ['NgAdminConfiguration', '$userSettings', function (NgAdminConfiguration, $userSettings) {
+myApp.directive('maConnectQueryApiButton', ['NgAdminConfiguration', '$userSettings', function (NgAdminConfiguration, $userSettings) {
   return {
     restrict: 'E',
     scope: {
@@ -813,15 +827,15 @@ myApp.directive('maApplyQueryApiButton', ['NgAdminConfiguration', '$userSettings
     },
     link: function (scope, element, attrs) {
       scope.label = scope.label || 'APPLY';
-      scope.apply = function () {
+      scope.connect = function () {
         var address = getQueryUrl(scope.entry.values);
         NgAdminConfiguration().baseApiUrl(address);
         $userSettings.set('queryUrl', address);
       };
     },
     template:
-      `<a class="btn btn-default" ng-class="size ? 'btn-' + size : ''" ng-click="apply()">
-        <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+      `<a class="btn btn-default" ng-class="size ? 'btn-' + size : ''" ng-click="connect()">
+        <span class="glyphicon glyphicon-transfer" aria-hidden="true"></span>
         &nbsp;
         <span class="hidden-xs" translate="{{label}}"></span>
       </a>`

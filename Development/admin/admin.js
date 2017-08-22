@@ -1109,17 +1109,37 @@ myApp.config(['RestangularProvider', function (RestangularProvider) {
       // Sorting
       delete params._sortField;
       delete params._sortDir;
-      // Query parameters
-      if (params._filters) {
-        if (what != 'events') params['query.match_type'] = 'substr,icase';  // sea-lion private parameter to allow partial match functionality
-        for (var filter in params._filters) {
-          params[filter] = params._filters[filter];
-        }
-        delete params._filters;
-      }
     }
-    return { params: params };
+    return { url: url, params: params };
   });
+}]);
+
+// Restangular will URI-encode each of the params, so we need to modify the request url directly.
+// However, "Restangular doesn't allow to modify the URL of an outgoing request, so in order
+// to achieve that you must use an interceptor on the $http Angular service."
+// See https://github.com/marmelab/ng-admin/blob/master/doc/API-mapping.md#nested-relationships-urls
+myApp.config(['$httpProvider', function($httpProvider) {
+    $httpProvider.interceptors.push(function() {
+        return {
+            request: function(config) {
+                // Query parameters
+                if (config.params && config.params._filters) {
+                  var rql = Object.entries(config.params._filters).filter(([key, value]) => {
+                    return undefined !== value;
+                  }).map(([key, value]) => {
+                    // for other implementations besides sea-lion we'd have to use "eq" or "contains" as appropriate
+                    // and accept exact matching
+                    return 'matches(' + encodeURIComponent(key) + ',string:' + encodeURIComponent(value) + ',i)';
+                  }).join(',');
+                  if (rql) {
+                    config.url += '?query.rql=and(' + rql + ')';
+                  }
+                  delete config.params._filters;
+                }
+                return config;
+            },
+        };
+    });
 }]);
 
 // Use NMOS error response body

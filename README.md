@@ -9,19 +9,16 @@ This repository contains an implementation of a small part of the [AMWA Networke
 
 This software is a **work in progress**, tracking the ongoing development of the NMOS specifications in the AMWA Networked Media Incubator. For more information about AMWA, NMOS and the Networked Media Incubator, please refer to http://amwa.tv/.
 
-- The [admin module](Development/admin) includes implementations of an NMOS Client, utilising the NMOS Node, Registration and Query APIs, and the NMOS Connection API.
+- The [admin module](Development/admin) includes an implementation of an NMOS Client as a web application, utilising the NMOS Node, Registration and Query APIs, and the NMOS Connection API.
 - This web application has a few additional features utilising the extensions provided by the [nmos-cpp](https://github.com/sony/nmos-cpp) implementation of an NMOS Registration & Discovery System (RDS).
 
 The [repository structure](Documents/Repository-Structure.md), and the [external dependencies](Documents/Dependencies.md), are outlined in the documentation.
 
 ### Getting Started
 
-The client can be used standalone, by opening admin/index.html in a web browser, directly from the filesystem.
+The client can be used standalone, by opening [admin/index.html](Development/admin/index.html) in a web browser, directly from a local filesystem.
 
-It can also be embedded in the nmos-cpp registry. Simply clone both repositories at the same level.
-
-- nmos-cpp
-- nmos-js
+The web application can also be embedded in the nmos-cpp-registry application. Simply clone both repositories so that the nmos-cpp and nmos-js directories are at the same level and rebuild the nmos-cpp-registry application.
 
 ## Work In Progress
 

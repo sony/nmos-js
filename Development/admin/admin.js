@@ -45,9 +45,9 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   // my modern CSS voodoo is sorely lacking
   admin.header(
     '<div class="navbar-header ng-scope">' +
-      '<img src="./images/sonyLogo.png" style="height:50px" alt="Sony Logo"/><img src="./images/seaLion.png" style="height:50px" alt="sea-lion"/>' +
+      '<img src="./images/sea-lion.png" style="height:50px" alt="This project was formerly known as sea-lion."/>' +
       '<a class="navbar-brand" style="float:none" href="#" ng-click="appController.displayHome()">' +
-        'sea-lion' +
+        'An NMOS Client in JavaScript' +
       '</a>' +
     '</div>'
     );
@@ -817,7 +817,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
 // Custom button to connect to a Query API
 
-myApp.directive('maConnectQueryApiButton', ['NgAdminConfiguration', '$userSettings', function (NgAdminConfiguration, $userSettings) {
+myApp.directive('maConnectQueryApiButton', ['NgAdminConfiguration', '$userSettings', 'Restangular', '$location', '$state', '$translate', 'notification', function (NgAdminConfiguration, $userSettings, Restangular, $location, $state, $translate, notification) {
   return {
     restrict: 'E',
     scope: {
@@ -831,6 +831,25 @@ myApp.directive('maConnectQueryApiButton', ['NgAdminConfiguration', '$userSettin
         var address = getQueryUrl(scope.entry.values);
         NgAdminConfiguration().baseApiUrl(address);
         $userSettings.set('queryUrl', address);
+
+        var adminRestangular = Restangular.withConfig(function(RestangularConfigurer) {
+          RestangularConfigurer.setBaseUrl(address);
+        });
+        adminRestangular.all('subscriptions').post({
+          max_update_rate_ms: 1000,
+          resource_path: "/receivers",
+          params: {},
+          persist: false,
+          secure: false
+        }).then((subscription) => {
+          var querySocket = new WebSocket(subscription.data.ws_href);
+          querySocket.onmessage = (event) => {
+            // why is $state.includes("receivers") undefined?
+            if ($location.path().startsWith("/receivers")) {
+              $state.reload();
+            }
+          }
+        });
       };
     },
     template:
@@ -857,6 +876,9 @@ function settingsController($scope, NgAdminConfiguration, $stateParams, notifica
   this.address = this.config().baseApiUrl();
   this.notification = notification;
   this.userSettings = $userSettings;
+  $scope.$watch('userSettings', function(newValue, oldValue) {
+    console.log($scope.userSettings);
+  });
 };
 settingsController.prototype.save = function() {
   this.notification.log('Saving settings');
@@ -986,7 +1008,8 @@ myApp.directive('maConnectButton', ['$http', '$state', '$translate', 'notificati
         }
 
         connect.then(
-          () => { $state.reload(); },
+//          () => { $state.reload(); },
+          () => {},
           (error) => { $translate('STATE_CHANGE_ERROR',
             null == error.data ? '' :
               error.data.error + ' (' + error.data.code + ')'
@@ -1110,7 +1133,7 @@ myApp.config(['RestangularProvider', function (RestangularProvider) {
       delete params._sortField;
       delete params._sortDir;
     }
-    return { url: url, params: params };
+    return { params: params };
   });
 }]);
 
@@ -1127,7 +1150,7 @@ myApp.config(['$httpProvider', function($httpProvider) {
                   var rql = Object.entries(config.params._filters).filter(([key, value]) => {
                     return undefined !== value;
                   }).map(([key, value]) => {
-                    // for other implementations besides sea-lion we'd have to use "eq" or "contains" as appropriate
+                    // for other implementations besides nmos-cpp we'd have to use "eq" or "contains" as appropriate
                     // and accept exact matching
                     return 'matches(' + encodeURIComponent(key) + ',string:' + encodeURIComponent(value) + ',i)';
                   }).join(',');

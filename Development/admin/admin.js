@@ -1132,6 +1132,13 @@ myApp.config(['RestangularProvider', function (RestangularProvider) {
       // Sorting
       delete params._sortField;
       delete params._sortDir;
+      // Simple relationship queries using 'id' properties can be achieved without using RQL
+      for (var filter in params._filters) {
+        if ((filter === 'id' || filter.endsWith('_id')) && params._filters[filter].length == 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'.length) {
+          params[filter] = params._filters[filter];
+          delete params._filters[filter];
+        }
+      }
     }
     return { params: params };
   });

@@ -554,6 +554,8 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
       });
       // perform a kind of 'join' to find Senders that have both a transport matching this Receiver and a Flow with a matching format and media_type
       // but first, if transport is "urn:x-nmos:transport:rtp", need to get and merge Senders with the ".mcast" and ".ucast" variants
+      datastore.setEntries('targets', []);
+      datastore.setEntries(targets.uniqueId + '_choices', []);
       var getSenders = adminRestangular.all('senders').getList({ _filters: { transport: entry.values.transport } });
       if (entry.values.transport === 'urn:x-nmos:transport:rtp') {
         getSenders = getSenders.then((senders) => {

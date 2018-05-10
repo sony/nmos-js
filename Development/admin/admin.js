@@ -16,12 +16,17 @@ function camelCase(text) {
 
 // Construct a URL for the Query API from its mDNS record
 function getQueryUrl(values) {
-  // address may be null if the host wasn't resolved
-  if (!values.address) {
+  // addresses may be empty if the host wasn't resolved
+  if (!values.addresses || 0 >= values.length) {
     return '';
   }
-  // just picks out the last api_ver
-  return values['txt.api_proto'] + '://' + (values.address.indexOf(':') == -1 ? values.address : '[' + values.address + ']') + ':' + values.port + '/x-nmos/query/' + values['txt.api_ver'].substr(-4) + '/';
+
+  // just pick out the first address
+  var address = values.addresses[0];
+  // just pick out the last api_ver
+  var api_ver = values['txt.api_ver'].substr(-4);
+
+  return values['txt.api_proto'] + '://' + (address.indexOf(':') == -1 ? address : '[' + address + ']') + ':' + values.port + '/x-nmos/query/' + api_ver + '/';
 };
 
 var myApp = angular.module('myApp', ['ng-admin', 'angularUserSettings']);
@@ -36,7 +41,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
   var queryPort = 3211;
   var loggingPort = 5106;
 
-  var mdnsUrl = 'http://' + adminHost + ':' + mdnsPort + '/x-mdns/';
+  var mdnsUrl = 'http://' + adminHost + ':' + mdnsPort + '/x-dns-sd/v1.0/';
   var queryUrl = 'http://' + adminHost + ':' + queryPort + '/x-nmos/query/v1.2/';
   var loggingUrl = 'http://' + adminHost + ':' + loggingPort + '/log/';
 
@@ -747,7 +752,6 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .title('Query APIs List')
     .fields([
       nga.field('name').isDetailLink(true).sortable(false),
-      nga.field('address').label('Host Address').sortable(false),
       nga.field('port').sortable(false),
       nga.field('txt.api_proto').label('Protocol').sortable(false),
       nga.field('txt.api_ver').label('API Versions').sortable(false),
@@ -762,7 +766,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     .title('Query API: {{entry.values.name}}')
     .fields([
       nga.field('name'),
-      nga.field('address').label('Host Address'),
+      nga.field('addresses').template(PRETTY_JSON_TEMPLATE).label('Host Addresses'),
       nga.field('port'),
       nga.field('txt.api_proto').label('Protocol'),
       nga.field('txt.api_ver').label('API Versions'),

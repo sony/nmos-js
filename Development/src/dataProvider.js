@@ -94,31 +94,23 @@ export const changePaging = newLimit => {
 const convertDataProviderRequestToHTTP = (type, resource, params) => {
     switch (type) {
         case 'FIRST': {
-            var first_link = LINK_HEADER.match(
-                /(?<=(<\b))[^>]*?(?=(>; rel="f))/gm
-            ).toString();
-            return { url: first_link };
+            var m = LINK_HEADER.match(/<([^>]+)>; rel="first"/)
+            return { url: m ? m[1] : null };
         }
 
         case 'LAST': {
-            var last_link = LINK_HEADER.match(
-                /(?<=(<\b))[^>]*?(?=(>; rel="l))/gm
-            ).toString();
-            return { url: last_link };
+            var m = LINK_HEADER.match(/<([^>]+)>; rel="last"/)
+            return { url: m ? m[1] : null };
         }
 
         case 'NEXT': {
-            var next_link = LINK_HEADER.match(
-                /(?<=(<\b))[^>]*?(?=(>; rel="n))/gm
-            ).toString();
-            return { url: next_link };
+            var m = LINK_HEADER.match(/<([^>]+)>; rel="next"/)
+            return { url: m ? m[1] : null };
         }
 
         case 'PREV': {
-            var prev_link = LINK_HEADER.match(
-                /(?<=(<\b))[^>]*?(?=(>; rel="p))/gm
-            ).toString();
-            return { url: prev_link };
+            var m = LINK_HEADER.match(/<([^>]+)>; rel="prev"/)
+            return { url: m ? m[1] : null };
         }
 
         case GET_ONE: {

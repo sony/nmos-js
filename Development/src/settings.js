@@ -27,7 +27,6 @@ class Settings extends React.Component {
     }
 
     handleClickQuery = state => () => {
-        this.messageGenerator('', 'Query');
         this.setState({ open: true, ...state });
         this.queryApiSave();
     };
@@ -38,37 +37,31 @@ class Settings extends React.Component {
     };
 
     handleClickEvents = state => () => {
-        this.messageGenerator('', 'Query');
         this.setState({ open: true, ...state });
         this.eventFunctionSave();
     };
 
     handleClickResetEvents = state => () => {
-        this.messageGenerator('', 'Query');
         this.setState({ open: true, ...state });
         this.eventFunctionReset();
     };
 
     handleClickDns = state => () => {
-        this.messageGenerator('', 'dns');
         this.setState({ open: true, ...state });
         this.dnsSave();
     };
 
     handleClickResetDns = state => () => {
-        this.messageGenerator('', 'dns');
         this.setState({ open: true, ...state });
         this.dnsReset();
     };
 
     handleClickPaging = state => () => {
-        this.messageGenerator({ x }, 'Paging');
         this.setState({ open: true, ...state });
         this.pagingSave();
     };
 
     handleClickResetPaging = state => () => {
-        this.messageGenerator({ x }, 'Paging');
         this.setState({ open: true, ...state });
         this.pagingReset();
     };
@@ -84,17 +77,15 @@ class Settings extends React.Component {
         this.setState({ rql: event.target.checked }, function() {
             if (!this.state.rql) {
                 cookies.set('RQL', false, { path: '/' });
-                this.messageGenerator('RQL Disabled', 'Rql');
+                x = 'RQL Disabled';
             }
             if (this.state.rql) {
                 cookies.set('RQL', true, { path: '/' });
-                this.messageGenerator('RQL Enabled', 'Rql');
+                x = 'RQL Enabled';
             }
             this.setState({ open: true, ...state });
         });
     };
-
-    messageGenerator = (string, type) => {};
 
     queryApiSave = () => {
         x = document.getElementById('queryApiInput').value;

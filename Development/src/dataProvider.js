@@ -94,22 +94,22 @@ export const changePaging = newLimit => {
 const convertDataProviderRequestToHTTP = (type, resource, params) => {
     switch (type) {
         case 'FIRST': {
-            var m = LINK_HEADER.match(/<([^>]+)>; rel="first"/)
+            let m = LINK_HEADER.match(/<([^>]+)>; rel="first"/);
             return { url: m ? m[1] : null };
         }
 
         case 'LAST': {
-            var m = LINK_HEADER.match(/<([^>]+)>; rel="last"/)
+            let m = LINK_HEADER.match(/<([^>]+)>; rel="last"/);
             return { url: m ? m[1] : null };
         }
 
         case 'NEXT': {
-            var m = LINK_HEADER.match(/<([^>]+)>; rel="next"/)
+            let m = LINK_HEADER.match(/<([^>]+)>; rel="next"/);
             return { url: m ? m[1] : null };
         }
 
         case 'PREV': {
-            var m = LINK_HEADER.match(/<([^>]+)>; rel="prev"/)
+            let m = LINK_HEADER.match(/<([^>]+)>; rel="prev"/);
             return { url: m ? m[1] : null };
         }
 
@@ -137,19 +137,16 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 }
             } else {
                 var matchParams = [];
-                var idFilter = '';
                 for (const [key, value] of Object.entries(params.filter)) {
-                    console.log(typeof value);
                     var parsedValue = encodeURIComponent(value);
-                    parsedValue = parsedValue.split('%2C'); //splits comma seperated values
+                    parsedValue = parsedValue.split('%2C'); //splits comma separated values
                     for (var i = 0; i < parsedValue.length; i++) {
-                        if (key === 'id') {
-                            idFilter += 'id=' + parsedValue[i];
-                        } else if (key === 'level') {
+                        if (key === 'level') {
                             matchParams.push(
                                 'eq(' + key + ',' + parsedValue[i] + ')'
                             );
                         } else {
+                            //almost everything else is a string for which partial matches are useful
                             matchParams.push(
                                 'matches(' +
                                     key +
@@ -160,18 +157,16 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                         }
                     }
                 }
-
                 var rqlFilter = matchParams.join(',');
-                var rqlAnd = '';
                 if (rqlFilter) {
-                    rqlAnd = 'query.rql=and(' + rqlFilter + ')';
+                    queryParams.push('query.rql=and(' + rqlFilter + ')');
                 }
-                queryParams.push(rqlAnd + idFilter);
             }
 
             if (pagingLimit && resource !== 'events') {
                 queryParams.push(
-                    'paging.order=update&paging.limit=' + pagingLimit
+                    'paging.order=update',
+                    'paging.limit=' + pagingLimit
                 );
             }
 
@@ -181,22 +176,33 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             };
         }
         case GET_MANY: {
-            var total_query =
-                'query.rql=or(' +
-                params.ids
-                    .map(id => 'matches(id,string:' + id + ',i)')
-                    .join(',') +
-                ')';
-            return { url: `${API_URL}/${resource}?${total_query}` };
+            if (cookies.get('RQL') !== 'false') {
+                //!false is used as the initial no cookie state has the rql toggle in the enabled state
+                var total_query =
+                    'query.rql=or(' +
+                    params.ids
+                        .map(id => 'eq(id,' + id + ')')
+                        .join(',') +
+                    ')';
+                return { url: `${API_URL}/${resource}?${total_query}` };
+            } else {
+                total_query = "id=" + params.ids[0];
+                //hmm, need to make multiple requests if we have to match one at a time with basic query syntax
+                return { url: `${API_URL}/${resource}?${total_query}` };
+            }
         }
         case GET_MANY_REFERENCE: {
             if (params.target !== '' && params[params.source] !== '') {
-                total_query =
-                    'query.rql=matches(' +
-                    params.target +
-                    ',string:' +
-                    params[params.source] +
-                    ',i)';
+                if (cookies.get('RQL') !== 'false') {
+                    total_query =
+                        'query.rql=matches(' +
+                        params.target +
+                        ',string:' +
+                        params[params.source] +
+                        ',i)';
+                } else {
+                    total_query = params.target + '=' + params[params.source];
+                }
                 total_query += '&paging.limit=1000';
                 return { url: `${API_URL}/${resource}?${total_query}` };
             } else {
@@ -223,6 +229,15 @@ const convertHTTPResponseToDataProvider = (
 ) => {
     const { headers, json } = response;
     LINK_HEADER = headers.get('Link');
+    if (LINK_HEADER !== null && LINK_HEADER.match(/<([^>]+)>; rel="next"/)) {
+        if (LINK_HEADER.match(/<([^>]+)>; rel="first"/)) {
+            cookies.set('Pagination', 'enabled', { path: '/' });
+        } else {
+            cookies.set('Pagination', 'partial', { path: '/' });
+        }
+    } else {
+        cookies.set('Pagination', 'disabled', { path: '/' });
+    }
     switch (type) {
         case GET_ONE:
             if (resource === 'queryapis') {

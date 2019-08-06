@@ -101,11 +101,11 @@ class Settings extends React.Component {
     eventFunctionSave = () => {
         x = document.getElementById('loggingApiInput').value;
         document.getElementById('loggingApiInput').placeholder = x;
-        returnChangeQuery('Events Query API', x);
+        returnChangeQuery('Logging API', x);
     };
 
     eventFunctionReset = () => {
-        x = returnChangeQuery('Events Query API', 'reset');
+        x = returnChangeQuery('Logging API', 'reset');
         document.getElementById('loggingApiInput').value = x;
     };
 
@@ -205,10 +205,7 @@ class Settings extends React.Component {
                                 borderRadius: '3px',
                                 border: 'solid 1px grey',
                             }}
-                            defaultValue={returnChangeQuery(
-                                'Events Query API',
-                                ''
-                            )}
+                            defaultValue={returnChangeQuery('Logging API', '')}
                         />
                         <input
                             type="button"

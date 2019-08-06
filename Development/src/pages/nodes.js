@@ -14,6 +14,7 @@ import {
     SingleFieldList,
     UrlField,
     Title,
+    Button,
 } from 'react-admin';
 import {
     CardActions,
@@ -35,6 +36,7 @@ import cloneElement from 'react';
 import VersionField from '../components/VersionField';
 import MapTags from '../components/TagsField';
 import ExternalLinkIcon from '@material-ui/icons/OpenInNew';
+import JsonIcon from '../components/JsonIcon';
 
 const cookies = new Cookies();
 
@@ -100,6 +102,14 @@ export class NodesList extends React.Component {
                 <Card>
                     <Title title={'Nodes'} />
                     <CardContent>
+                        <Button
+                            label={'Raw'}
+                            href={this.state.data.url}
+                            style={{ float: 'right' }}
+                            title={'View raw'}
+                        >
+                            <JsonIcon />
+                        </Button>
                         <Table>
                             <TableHead>
                                 <TableRow>
@@ -198,7 +208,16 @@ export class NodesList extends React.Component {
 }
 
 const NodesTitle = ({ record }) => {
-    return <span>Node: {record ? record.label ? `${record.label}` : `${record.id}` : 'Unknown'}</span>;
+    return (
+        <span>
+            Node:
+            {record
+                ? record.label
+                    ? `${record.label}`
+                    : `${record.id}`
+                : 'Unknown'}
+        </span>
+    );
 };
 
 const ItemArrayField = ({ className, source, record = {} }) => (
@@ -217,15 +236,14 @@ ItemArrayField.defaultProps = {
 
 const ChipConditionalLabel = ({ record, source, ...props }) => {
     props.clickable = true;
-    return (
-        record ? record[source] ? (
+    return record ? (
+        record[source] ? (
             <ChipField {...{ record, source, ...props }} />
         ) : (
             <ChipField {...{ record, source: 'id', ...props }} />
-        ) : null
-    );
+        )
+    ) : null;
 };
-
 
 const cardActionStyle = {
     zIndex: 2,
@@ -248,8 +266,17 @@ export const StringToLabelObject = ({ record, children, ...rest }) =>
         ...rest,
     });
 
-const NodesShowActions = ({ basePath }) => (
+const NodesShowActions = ({ basePath, data, resource }) => (
     <CardActions title={<NodesTitle />} style={cardActionStyle}>
+        {data ? (
+            <Button
+                label={'Raw'}
+                href={cookies.get('Query API') + '/' + resource + '/' + data.id}
+                title={'View raw'}
+            >
+                <JsonIcon />
+            </Button>
+        ) : null}
         <ListButton title={'Return to ' + basePath} basePath={basePath} />
     </CardActions>
 );

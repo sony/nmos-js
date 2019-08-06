@@ -27,7 +27,7 @@ const SettingsShowActions = ({ basePath }) => (
     </CardActions>
 );
 
-const SettingsPagination2 = () => {
+const SettingsPagination = () => {
     return (
         <p>
             <br />
@@ -71,7 +71,7 @@ export const SettingsList = props => (
         title={<SettingsTitle />}
         actions={<SettingsActions />}
         bulkActionButtons={false}
-        pagination={<SettingsPagination2 />}
+        pagination={<SettingsPagination />}
         {...props}
     >
         <Datagrid>

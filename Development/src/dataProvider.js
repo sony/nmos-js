@@ -13,7 +13,7 @@ import Cookies from 'universal-cookie';
 var API_URL = '';
 
 var LINK_HEADER = '';
-const EVENTS_API = 'Events Query API';
+const LOGGING_API = 'Logging API';
 const QUERY_API = 'Query API';
 const DNS_API = 'DNS-SD API';
 
@@ -22,7 +22,7 @@ const cookies = new Cookies();
 function defaultUrl(api) {
     var path = window.location.protocol + '//' + window.location.host;
     switch (api) {
-        case EVENTS_API:
+        case LOGGING_API:
             path += '/log/v1.0';
             return path;
         case QUERY_API:
@@ -42,7 +42,7 @@ function returnUrl(resource) {
     var api;
     switch (resource) {
         case 'events':
-            api = EVENTS_API;
+            api = LOGGING_API;
             break;
         case 'queryapis':
             api = DNS_API;
@@ -180,13 +180,11 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 //!false is used as the initial no cookie state has the rql toggle in the enabled state
                 var total_query =
                     'query.rql=or(' +
-                    params.ids
-                        .map(id => 'eq(id,' + id + ')')
-                        .join(',') +
+                    params.ids.map(id => 'eq(id,' + id + ')').join(',') +
                     ')';
                 return { url: `${API_URL}/${resource}?${total_query}` };
             } else {
-                total_query = "id=" + params.ids[0];
+                total_query = 'id=' + params.ids[0];
                 //hmm, need to make multiple requests if we have to match one at a time with basic query syntax
                 return { url: `${API_URL}/${resource}?${total_query}` };
             }
@@ -222,6 +220,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
 };
 
 const convertHTTPResponseToDataProvider = (
+    url,
     response,
     type,
     resource,
@@ -243,18 +242,20 @@ const convertHTTPResponseToDataProvider = (
             if (resource === 'queryapis') {
                 json.id = json.name;
             }
-            return { data: json };
+            return { url: url, data: json };
 
         case GET_LIST:
             if (resource === 'queryapis') {
                 json.map(_ => (_.id = _.name));
             }
             return {
+                url: url,
                 data: json,
-                total: json.length,
+                total: json ? json.length : 0,
             };
         case GET_MANY_REFERENCE:
             return {
+                url: url,
                 data: json,
                 total: 'unknown',
             };
@@ -263,7 +264,7 @@ const convertHTTPResponseToDataProvider = (
             if (resource === 'queryapis') {
                 json.map(_ => (_.id = _.name));
             }
-            return { data: json };
+            return { url: url, data: json };
     }
 };
 
@@ -275,6 +276,6 @@ export default (type, resource, params) => {
         params
     );
     return fetchJson(url, options).then(response =>
-        convertHTTPResponseToDataProvider(response, type, resource, params)
+        convertHTTPResponseToDataProvider(url, response, type, resource, params)
     );
 };

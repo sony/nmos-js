@@ -36,8 +36,7 @@ class PaginationButton extends React.Component {
         } else {
             // paginationSupport === 'partial'
             this.enabled =
-                this.props.label === 'NEXT' ||
-                this.props.label === 'PREV';
+                this.props.label === 'NEXT' || this.props.label === 'PREV';
         }
     }
 

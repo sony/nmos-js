@@ -9,8 +9,10 @@ import {
     ShowButton,
     UrlField,
     FunctionField,
+    Button,
 } from 'react-admin';
 import { hr } from '@material-ui/core';
+import Cookies from 'universal-cookie';
 import {
     CardActions,
     Card,
@@ -25,6 +27,9 @@ import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
 import MapTags from '../components/TagsField';
+import JsonIcon from '../components/JsonIcon';
+
+const cookies = new Cookies();
 
 export class SubscriptionsList extends React.Component {
     constructor(props) {
@@ -87,6 +92,14 @@ export class SubscriptionsList extends React.Component {
                 <Card>
                     <Title title={'Subscriptions'} />
                     <CardContent>
+                        <Button
+                            label={'Raw'}
+                            href={this.state.data.url}
+                            style={{ float: 'right' }}
+                            title={'View raw'}
+                        >
+                            <JsonIcon />
+                        </Button>
                         <Table>
                             <TableHead>
                                 <TableRow>
@@ -183,7 +196,16 @@ export class SubscriptionsList extends React.Component {
 }
 
 const SubscriptionsTitle = ({ record }) => {
-    return <span>Subscription : {record ? record.label ? `${record.label}` : `${record.id}` : 'Unknown'}</span>;
+    return (
+        <span>
+            Subscription :
+            {record
+                ? record.label
+                    ? `${record.label}`
+                    : `${record.id}`
+                : 'Unknown'}
+        </span>
+    );
 };
 
 const cardActionStyle = {
@@ -191,8 +213,17 @@ const cardActionStyle = {
     float: 'right',
 };
 
-const SubscriptionsShowActions = ({ basePath }) => (
+const SubscriptionsShowActions = ({ basePath, data, resource }) => (
     <CardActions title={<SubscriptionsTitle />} style={cardActionStyle}>
+        {data ? (
+            <Button
+                label={'Raw'}
+                href={cookies.get('Query API') + '/' + resource + '/' + data.id}
+                title={'View raw'}
+            >
+                <JsonIcon />
+            </Button>
+        ) : null}
         <ListButton basePath={basePath} />
     </CardActions>
 );

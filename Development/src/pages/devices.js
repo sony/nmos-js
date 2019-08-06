@@ -16,6 +16,7 @@ import {
     UrlField,
     ShowButton,
     SimpleShowLayout,
+    Button,
 } from 'react-admin';
 import {
     CardActions,
@@ -35,6 +36,7 @@ import FilterField from '../components/FilterField';
 import VersionField from '../components/VersionField';
 import MapTags from '../components/TagsField';
 import '../index.css';
+import JsonIcon from '../components/JsonIcon';
 
 const cookies = new Cookies();
 
@@ -91,6 +93,14 @@ export class DevicesList extends React.Component {
                 <Card>
                     <Title title={'Devices'} />
                     <CardContent>
+                        <Button
+                            label={'Raw'}
+                            href={this.state.data.url}
+                            style={{ float: 'right' }}
+                            title={'View raw'}
+                        >
+                            <JsonIcon />
+                        </Button>
                         <Table>
                             <TableHead>
                                 <TableRow>
@@ -162,18 +172,27 @@ export class DevicesList extends React.Component {
 }
 
 const DevicesTitle = ({ record }) => {
-    return <span>Device: {record ? record.label ? `${record.label}` : `${record.id}` : 'Unknown'}</span>;
+    return (
+        <span>
+            Device:
+            {record
+                ? record.label
+                    ? `${record.label}`
+                    : `${record.id}`
+                : 'Unknown'}
+        </span>
+    );
 };
 
 const ChipConditionalLabel = ({ record, source, ...props }) => {
     props.clickable = true;
-    return (
-        record ? record[source] ? (
+    return record ? (
+        record[source] ? (
             <ChipField {...{ record, source, ...props }} />
         ) : (
             <ChipField {...{ record, source: 'id', ...props }} />
-        ) : null
-    );
+        )
+    ) : null;
 };
 
 const cardActionStyle = {
@@ -186,8 +205,17 @@ const QueryVersion = () => {
     return url.match(/([^/]+)(?=\/?$)/g)[0];
 };
 
-const DevicesShowActions = ({ basePath }) => (
+const DevicesShowActions = ({ basePath, data, resource }) => (
     <CardActions title={<DevicesTitle />} style={cardActionStyle}>
+        {data ? (
+            <Button
+                label={'Raw'}
+                href={cookies.get('Query API') + '/' + resource + '/' + data.id}
+                title={'View raw'}
+            >
+                <JsonIcon />
+            </Button>
+        ) : null}
         <ListButton title={'Return to ' + basePath} basePath={basePath} />
     </CardActions>
 );

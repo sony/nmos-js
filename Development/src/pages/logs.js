@@ -12,8 +12,10 @@ import {
     UrlField,
     ShowButton,
     Show,
+    Button,
 } from 'react-admin';
 import { hr } from '@material-ui/core';
+import Cookies from 'universal-cookie';
 import {
     CardActions,
     Card,
@@ -28,6 +30,9 @@ import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
 import MapTags from '../components/TagsField';
+import JsonIcon from '../components/JsonIcon';
+
+const cookies = new Cookies();
 
 const EventsTitle = ({ record }) => {
     return <span>Log: {record ? `${record.timestamp}` : ''}</span>;
@@ -36,12 +41,6 @@ const cardActionStyle = {
     zIndex: 2,
     float: 'right',
 };
-
-const EventsShowActions = ({ basePath }) => (
-    <CardActions title={<EventsTitle />} style={cardActionStyle}>
-        <ListButton title={'Return to ' + basePath} basePath={basePath} />
-    </CardActions>
-);
 
 export class EventsList extends React.Component {
     constructor(props) {
@@ -96,6 +95,14 @@ export class EventsList extends React.Component {
                 <Card>
                     <Title title={'Logs'} />
                     <CardContent>
+                        <Button
+                            label={'Raw'}
+                            href={this.state.data.url}
+                            style={{ float: 'right' }}
+                            title={'View raw'}
+                        >
+                            <JsonIcon />
+                        </Button>
                         <Table>
                             <TableHead>
                                 <TableRow>
@@ -211,6 +218,23 @@ export class EventsList extends React.Component {
         }
     }
 }
+
+const EventsShowActions = ({ basePath, data, resource }) => (
+    <CardActions title={<EventsTitle />} style={cardActionStyle}>
+        {data ? (
+            <Button
+                label={'Raw'}
+                href={
+                    cookies.get('Logging API') + '/' + resource + '/' + data.id
+                }
+                title={'View raw'}
+            >
+                <JsonIcon />
+            </Button>
+        ) : null}
+        <ListButton title={'Return to ' + basePath} basePath={basePath} />
+    </CardActions>
+);
 
 export const EventsShow = props => (
     <Show title={<EventsTitle />} actions={<EventsShowActions />} {...props}>

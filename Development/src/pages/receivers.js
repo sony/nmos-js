@@ -15,6 +15,7 @@ import {
     DisabledInput,
     ShowButton,
     SimpleShowLayout,
+    Button,
 } from 'react-admin';
 import { hr } from '@material-ui/core';
 import get from 'lodash/get';
@@ -34,6 +35,7 @@ import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
 import VersionField from '../components/VersionField';
 import MapTags from '../components/TagsField';
+import JsonIcon from '../components/JsonIcon';
 
 const cookies = new Cookies();
 
@@ -90,6 +92,14 @@ export class ReceiversList extends React.Component {
                 <Card>
                     <Title title={'Receivers'} />
                     <CardContent>
+                        <Button
+                            label={'Raw'}
+                            href={this.state.data.url}
+                            style={{ float: 'right' }}
+                            title={'View raw'}
+                        >
+                            <JsonIcon />
+                        </Button>
                         <Table>
                             <TableHead>
                                 <TableRow>
@@ -171,7 +181,16 @@ export class ReceiversList extends React.Component {
 }
 
 const ReceiversTitle = ({ record }) => {
-    return <span>Receiver: {record ? record.label ? `${record.label}` : `${record.id}` : 'Unknown'}</span>;
+    return (
+        <span>
+            Receiver:
+            {record
+                ? record.label
+                    ? `${record.label}`
+                    : `${record.id}`
+                : 'Unknown'}
+        </span>
+    );
 };
 
 const ItemArrayField = ({ className, source, record = {} }) => (
@@ -190,13 +209,13 @@ ItemArrayField.defaultProps = {
 
 const ChipConditionalLabel = ({ record, source, ...props }) => {
     props.clickable = true;
-    return (
-        record ? record[source] ? (
+    return record ? (
+        record[source] ? (
             <ChipField {...{ record, source, ...props }} />
         ) : (
             <ChipField {...{ record, source: 'id', ...props }} />
-        ) : null
-    );
+        )
+    ) : null;
 };
 
 const cardActionStyle = {
@@ -209,8 +228,17 @@ const QueryVersion = () => {
     return url.match(/([^/]+)(?=\/?$)/g)[0];
 };
 
-const ReceiversShowActions = ({ basePath }) => (
+const ReceiversShowActions = ({ basePath, data, resource }) => (
     <CardActions title={<ReceiversTitle />} style={cardActionStyle}>
+        {data ? (
+            <Button
+                label={'Raw'}
+                href={cookies.get('Query API') + '/' + resource + '/' + data.id}
+                title={'View raw'}
+            >
+                <JsonIcon />
+            </Button>
+        ) : null}
         <ListButton title={'Return to ' + basePath} basePath={basePath} />
     </CardActions>
 );

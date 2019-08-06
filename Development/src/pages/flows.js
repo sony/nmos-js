@@ -15,6 +15,7 @@ import {
     ArrayField,
     ShowButton,
     SimpleShowLayout,
+    Button,
 } from 'react-admin';
 import get from 'lodash/get';
 import Cookies from 'universal-cookie';
@@ -33,6 +34,7 @@ import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
 import VersionField from '../components/VersionField';
 import MapTags from '../components/TagsField';
+import JsonIcon from '../components/JsonIcon';
 
 const cookies = new Cookies();
 
@@ -88,6 +90,14 @@ export class FlowsList extends React.Component {
                 <Card>
                     <Title title={'Flows'} />
                     <CardContent>
+                        <Button
+                            label={'Raw'}
+                            href={this.state.data.url}
+                            style={{ float: 'right' }}
+                            title={'View raw'}
+                        >
+                            <JsonIcon />
+                        </Button>
                         <Table>
                             <TableHead>
                                 <TableRow>
@@ -159,7 +169,16 @@ export class FlowsList extends React.Component {
 }
 
 const FlowsTitle = ({ record }) => {
-    return <span>Flow: {record ? record.label ? `${record.label}` : `${record.id}` : 'Unknown'}</span>;
+    return (
+        <span>
+            Flow:
+            {record
+                ? record.label
+                    ? `${record.label}`
+                    : `${record.id}`
+                : 'Unknown'}
+        </span>
+    );
 };
 
 const ItemArrayField = ({ className, source, record = {} }) => (
@@ -176,13 +195,13 @@ ItemArrayField.defaultProps = {
 
 const ChipConditionalLabel = ({ record, source, ...props }) => {
     props.clickable = true;
-    return (
-        record ? record[source] ? (
+    return record ? (
+        record[source] ? (
             <ChipField {...{ record, source, ...props }} />
         ) : (
             <ChipField {...{ record, source: 'id', ...props }} />
-        ) : null
-    );
+        )
+    ) : null;
 };
 
 const cardActionStyle = {
@@ -195,8 +214,17 @@ const QueryVersion = () => {
     return url.match(/([^/]+)(?=\/?$)/g)[0];
 };
 
-const FlowsShowActions = ({ basePath }) => (
+const FlowsShowActions = ({ basePath, data, resource }) => (
     <CardActions title={<FlowsTitle />} style={cardActionStyle}>
+        {data ? (
+            <Button
+                label={'Raw'}
+                href={cookies.get('Query API') + '/' + resource + '/' + data.id}
+                title={'View raw'}
+            >
+                <JsonIcon />
+            </Button>
+        ) : null}
         <ListButton title={'Return to ' + basePath} basePath={basePath} />
     </CardActions>
 );

@@ -21,9 +21,9 @@ The web application can also be embedded in the nmos-cpp-registry application. C
 
 ## Work In Progress
 
-The implementation is functional and has been used successfully in several Networked Media Incubator workshop "plug-fests", interoperating with other NMOS implementations.
-
-The implementation is incomplete in some areas. Development is ongoing! The NMOS specifications are being continuously developed, as enhancements are proposed and prototyped by the Incubator participants.
+The **master** branch has recently been switched to a [react-admin](https://github.com/marmelab/react-admin)-based implementation, which functions as an NMOS Registry browser, using the IS-04 Query API.
+Connection management support, using the IS-05 Connection API, is currently being developed for this implementation.
+The earlier [ng-admin](https://github.com/marmelab/ng-admin)-based implementation that included connection management is available on the **ng-admin** branch, but is not being developed further.
 
 ### Active Development
 

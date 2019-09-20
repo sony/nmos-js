@@ -94,22 +94,22 @@ export const changePaging = newLimit => {
 const convertDataProviderRequestToHTTP = (type, resource, params) => {
     switch (type) {
         case 'FIRST': {
-            let m = LINK_HEADER.match(/<([^>]+)>; rel="first"/);
+            let m = LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="first"/);
             return { url: m ? m[1] : null };
         }
 
         case 'LAST': {
-            let m = LINK_HEADER.match(/<([^>]+)>; rel="last"/);
+            let m = LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="last"/);
             return { url: m ? m[1] : null };
         }
 
         case 'NEXT': {
-            let m = LINK_HEADER.match(/<([^>]+)>; rel="next"/);
+            let m = LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="next"/);
             return { url: m ? m[1] : null };
         }
 
         case 'PREV': {
-            let m = LINK_HEADER.match(/<([^>]+)>; rel="prev"/);
+            let m = LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="prev"/);
             return { url: m ? m[1] : null };
         }
 
@@ -230,8 +230,8 @@ const convertHTTPResponseToDataProvider = (
 ) => {
     const { headers, json } = response;
     LINK_HEADER = headers.get('Link');
-    if (LINK_HEADER !== null && LINK_HEADER.match(/<([^>]+)>; rel="next"/)) {
-        if (LINK_HEADER.match(/<([^>]+)>; rel="first"/)) {
+    if (LINK_HEADER !== null && LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="next"/)) {
+        if (LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="first"/)) {
             cookies.set('Pagination', 'enabled', { path: '/' });
         } else {
             cookies.set('Pagination', 'partial', { path: '/' });

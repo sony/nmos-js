@@ -1,30 +1,26 @@
 import React from 'react';
 import {
-    Title,
-    TextField,
-    FunctionField,
-    TextInput,
-    Edit,
-    ListButton,
-    SimpleForm,
-    DisabledInput,
-    SimpleShowLayout,
-    UrlField,
-    ShowButton,
-    Show,
     Button,
+    FunctionField,
+    ListButton,
+    Show,
+    ShowButton,
+    SimpleShowLayout,
+    TextField,
+    Title,
+    UrlField,
 } from 'react-admin';
 import { hr } from '@material-ui/core';
 import Cookies from 'universal-cookie';
 import {
-    CardActions,
     Card,
+    CardActions,
     CardContent,
     Table,
+    TableBody,
+    TableCell,
     TableHead,
     TableRow,
-    TableCell,
-    TableBody,
 } from '@material-ui/core';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
@@ -58,17 +54,17 @@ export class EventsList extends React.Component {
     }
 
     async firstLoad() {
-        var params = {
+        const params = {
             filter: {},
             pagination: { page: 1, perPage: 10 },
             sort: { field: 'timestamp', order: 'DESC' },
         };
-        var dataObject = await dataProvider('GET_LIST', 'events', params);
+        const dataObject = await dataProvider('GET_LIST', 'events', params);
         this.setState({ data: dataObject });
     }
 
     async nextPage(label) {
-        var dataObject = await dataProvider(label, 'events');
+        const dataObject = await dataProvider(label, 'events');
         this.setState({ data: dataObject });
     }
 
@@ -82,10 +78,10 @@ export class EventsList extends React.Component {
     }
 
     async filterPage() {
-        var params = {
+        const params = {
             filter: this.filterObject,
         };
-        var dataObject = await dataProvider('GET_LIST', 'events', params);
+        const dataObject = await dataProvider('GET_LIST', 'events', params);
         this.setState({ data: dataObject });
     }
 
@@ -178,16 +174,12 @@ export class EventsList extends React.Component {
                                                 label={item.timestamp}
                                             />
                                         </TableCell>
-                                        <TableCell align="right">
-                                            {item.level}
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            {item.message}
-                                        </TableCell>
-                                        <TableCell align="right">
+                                        <TableCell>{item.level}</TableCell>
+                                        <TableCell>{item.message}</TableCell>
+                                        <TableCell>
                                             {item.request_uri}
                                         </TableCell>
-                                        <TableCell align="right">
+                                        <TableCell>
                                             {item.http_method}
                                         </TableCell>
                                     </TableRow>
@@ -214,7 +206,7 @@ export class EventsList extends React.Component {
                 </Card>
             );
         } else {
-            return <div></div>;
+            return <div />;
         }
     }
 }
@@ -267,23 +259,4 @@ export const EventsShow = props => (
             <TextField source="id" />
         </SimpleShowLayout>
     </Show>
-);
-
-export const EventsEdit = props => (
-    <Edit title={<EventsTitle />} {...props}>
-        <SimpleForm>
-            <DisabledInput source="timestamp" />
-            <TextInput source="level" />
-            <TextInput source="level_name" />
-            <TextInput source="thread_id" />
-            <TextInput source="source_location.file" />
-            <TextInput source="source_location.line" />
-            <TextInput source="source_location.line" />
-            <TextInput source="source_location.function" />
-            <TextInput source="message" />
-            <DisabledInput source="http_method" />
-            <TextInput source="id" />
-            <TextInput source="cursor" />
-        </SimpleForm>
-    </Edit>
 );

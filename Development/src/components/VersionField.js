@@ -10,10 +10,9 @@ const VersionField = ({ source, record = {} }) => (
 );
 
 function VersionConversion(record) {
-    var sn = record.version.split(':', 2);
-    var timestamp = new Date(1e3 * sn[0] + sn[1] / 1e6);
-    var value = dayjs(timestamp).format('YYYY-MM-DD HH:mm:ss.SSS');
-    return value;
+    const sn = record.version.split(':', 2);
+    const timestamp = new Date(1e3 * sn[0] + sn[1] / 1e6);
+    return dayjs(timestamp).format('YYYY-MM-DD HH:mm:ss.SSS');
 }
 
 VersionField.defaultProps = {

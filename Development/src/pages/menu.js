@@ -21,7 +21,7 @@ import CompareArrowsIcon from '@material-ui/icons/CompareArrows';
 import DvrIcon from '@material-ui/icons/Dvr';
 import SettingsIcon from '@material-ui/icons/Settings';
 import QueryIcon from '@material-ui/icons/HelpOutline';
-import { MenuItem, MenuList } from '@material-ui/core';
+import { MenuItem, MenuList, Paper } from '@material-ui/core';
 
 const styles = theme => ({
     root: {
@@ -31,7 +31,7 @@ const styles = theme => ({
 });
 
 const settingStyle = {
-    padding: '13px 15px',
+    padding: '16px',
 };
 
 class NestedList extends React.Component {
@@ -60,155 +60,85 @@ class NestedList extends React.Component {
                         <ListItemText primary="Settings" />
                         {this.state.open ? <ExpandLess /> : <ExpandMore />}
                     </ListItem>
-                    <Collapse in={this.state.open} timeout="auto" unmountOnExit>
-                        <List component="div" style={settingStyle}>
-                            <NavLink
-                                to="../../settings"
-                                style={{
-                                    paddingTop: '0',
-                                    textDecoration: 'none',
-                                }}
-                            >
-                                <MenuItem>
+                    <Paper>
+                        <Collapse
+                            in={this.state.open}
+                            timeout="auto"
+                            unmountOnExit
+                        >
+                            <List component="div">
+                                <MenuItem component={NavLink} to={'/settings'}>
                                     <ListItemIcon>
                                         <BuildIcon />
                                     </ListItemIcon>
                                     <ListItemText primary="General" />
                                 </MenuItem>
-                            </NavLink>
-                            <NavLink
-                                to="../../queryapis"
-                                style={{
-                                    textDecoration: 'none',
-                                }}
-                            >
-                                <MenuItem>
+                                <MenuItem component={NavLink} to={'/queryapis'}>
                                     <ListItemIcon>
                                         <QueryIcon />
                                     </ListItemIcon>
                                     <ListItemText primary="Query APIs" />
                                 </MenuItem>
-                            </NavLink>
-                        </List>
-                    </Collapse>
-                    <div></div>
-
-                    <NavLink
-                        to="../../nodes"
-                        style={{
-                            textDecoration: 'none',
-                        }}
-                    >
-                        <MenuItem>
-                            <ListItemIcon>
-                                <DvrIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Nodes" />
-                        </MenuItem>
-                    </NavLink>
-                    <div></div>
-                    <NavLink
-                        to="../../devices"
-                        style={{
-                            textDecoration: 'none',
-                        }}
-                    >
-                        <MenuItem>
-                            <ListItemIcon>
-                                <SettingsCellIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Devices" />
-                        </MenuItem>
-                    </NavLink>
-                    <div></div>
-
-                    <NavLink
-                        to="../../sources"
-                        style={{
-                            textDecoration: 'none',
-                        }}
-                    >
-                        <MenuItem>
-                            <ListItemIcon>
-                                <SettingsInputAntennaIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Sources" />
-                        </MenuItem>
-                    </NavLink>
-                    <div></div>
-                    <NavLink
-                        to="../../flows"
-                        style={{
-                            textDecoration: 'none',
-                        }}
-                    >
-                        <MenuItem>
-                            <ListItemIcon>
-                                <CompareArrowsIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Flows" />
-                        </MenuItem>
-                    </NavLink>
-                    <div></div>
-
-                    <NavLink
-                        to="../../senders"
-                        style={{
-                            textDecoration: 'none',
-                        }}
-                    >
-                        <MenuItem>
-                            <ListItemIcon>
-                                <CallMadeIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Senders" />
-                        </MenuItem>
-                    </NavLink>
-                    <div></div>
-
-                    <NavLink
-                        to="../../receivers"
-                        style={{
-                            textDecoration: 'none',
-                        }}
-                    >
-                        <MenuItem>
-                            <ListItemIcon>
-                                <CallReceivedIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Receivers" />
-                        </MenuItem>
-                    </NavLink>
-                    <div></div>
-                    <NavLink
-                        to="../../subscriptions"
-                        style={{
-                            textDecoration: 'none',
-                        }}
-                    >
-                        <MenuItem>
-                            <ListItemIcon>
-                                <SwapVertIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Subscriptions" />
-                        </MenuItem>
-                    </NavLink>
-                    <div></div>
-                    <div></div>
-                    <NavLink
-                        to="../../events"
-                        style={{
-                            textDecoration: 'none',
-                        }}
-                    >
-                        <MenuItem>
-                            <ListItemIcon>
-                                <AnnouncementIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Logs" />
-                        </MenuItem>
-                    </NavLink>
-                    <div></div>
+                            </List>
+                        </Collapse>
+                    </Paper>
+                    <div />
+                    <MenuItem component={NavLink} to={'/nodes'}>
+                        <ListItemIcon>
+                            <DvrIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Nodes" />
+                    </MenuItem>
+                    <div />
+                    <MenuItem component={NavLink} to={'/devices'}>
+                        <ListItemIcon>
+                            <SettingsCellIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Devices" />
+                    </MenuItem>
+                    <div />
+                    <MenuItem component={NavLink} to={'/sources'}>
+                        <ListItemIcon>
+                            <SettingsInputAntennaIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Sources" />
+                    </MenuItem>
+                    <div />
+                    <MenuItem component={NavLink} to={'/flows'}>
+                        <ListItemIcon>
+                            <CompareArrowsIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Flows" />
+                    </MenuItem>
+                    <div />
+                    <MenuItem component={NavLink} to={'/senders'}>
+                        <ListItemIcon>
+                            <CallMadeIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Senders" />
+                    </MenuItem>
+                    <div />
+                    <MenuItem component={NavLink} to={'/receivers'}>
+                        <ListItemIcon>
+                            <CallReceivedIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Receivers" />
+                    </MenuItem>
+                    <div />
+                    <MenuItem component={NavLink} to={'/subscriptions'}>
+                        <ListItemIcon>
+                            <SwapVertIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Subscriptions" />
+                    </MenuItem>
+                    <div />
+                    <MenuItem component={NavLink} to={'/events'}>
+                        <ListItemIcon>
+                            <AnnouncementIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Logs" />
+                    </MenuItem>
+                    <div />
                 </MenuList>
             </div>
         );

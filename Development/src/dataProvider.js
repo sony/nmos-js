@@ -1,18 +1,18 @@
 import {
+    CREATE,
+    DELETE,
     GET_LIST,
-    GET_ONE,
     GET_MANY,
     GET_MANY_REFERENCE,
-    CREATE,
+    GET_ONE,
     UPDATE,
-    DELETE,
     fetchUtils,
 } from 'react-admin';
 import Cookies from 'universal-cookie';
 
-var API_URL = '';
+let API_URL = '';
 
-var LINK_HEADER = '';
+let LINK_HEADER = '';
 const LOGGING_API = 'Logging API';
 const QUERY_API = 'Query API';
 const DNS_API = 'DNS-SD API';
@@ -20,7 +20,7 @@ const DNS_API = 'DNS-SD API';
 const cookies = new Cookies();
 
 function defaultUrl(api) {
-    var path = window.location.protocol + '//' + window.location.host;
+    let path = window.location.protocol + '//' + window.location.host;
     switch (api) {
         case LOGGING_API:
             path += '/log/v1.0';
@@ -38,8 +38,8 @@ function defaultUrl(api) {
 }
 
 function returnUrl(resource) {
-    var url;
-    var api;
+    let url;
+    let api;
     switch (resource) {
         case 'events':
             api = LOGGING_API;
@@ -80,7 +80,7 @@ export const queryRqlMode = whatMode => {
 };
 
 export const changePaging = newLimit => {
-    var paging_limit = cookies.get('Paging Limit');
+    let paging_limit = cookies.get('Paging Limit');
     if (newLimit === 'valueRequest') {
         if (paging_limit) {
             return paging_limit;
@@ -122,8 +122,8 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
         }
 
         case GET_LIST: {
-            var pagingLimit = cookies.get('Paging Limit');
-            var queryParams = [];
+            const pagingLimit = cookies.get('Paging Limit');
+            const queryParams = [];
 
             API_URL = returnUrl(resource);
 
@@ -136,11 +136,11 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                     queryParams.push(key + '=' + value);
                 }
             } else {
-                var matchParams = [];
+                const matchParams = [];
                 for (const [key, value] of Object.entries(params.filter)) {
-                    var parsedValue = encodeURIComponent(value);
+                    let parsedValue = encodeURIComponent(value);
                     parsedValue = parsedValue.split('%2C'); //splits comma separated values
-                    for (var i = 0; i < parsedValue.length; i++) {
+                    for (let i = 0; i < parsedValue.length; i++) {
                         if (key === 'level') {
                             matchParams.push(
                                 'eq(' + key + ',' + parsedValue[i] + ')'
@@ -157,7 +157,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                         }
                     }
                 }
-                var rqlFilter = matchParams.join(',');
+                const rqlFilter = matchParams.join(',');
                 if (rqlFilter) {
                     queryParams.push('query.rql=and(' + rqlFilter + ')');
                 }
@@ -170,15 +170,16 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 );
             }
 
-            var query = queryParams.join('&');
+            const query = queryParams.join('&');
             return {
                 url: `${API_URL}/${resource}?${query}`,
             };
         }
         case GET_MANY: {
+            let total_query;
             if (cookies.get('RQL') !== 'false') {
                 //!false is used as the initial no cookie state has the rql toggle in the enabled state
-                var total_query =
+                total_query =
                     'query.rql=or(' +
                     params.ids.map(id => 'eq(id,' + id + ')').join(',') +
                     ')';
@@ -190,6 +191,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             }
         }
         case GET_MANY_REFERENCE: {
+            let total_query;
             if (params.target !== '' && params[params.source] !== '') {
                 if (cookies.get('RQL') !== 'false') {
                     total_query =

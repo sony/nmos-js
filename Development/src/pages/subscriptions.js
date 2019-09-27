@@ -1,27 +1,27 @@
 import React from 'react';
 import {
-    Title,
     BooleanField,
-    TextField,
+    Button,
+    FunctionField,
     ListButton,
-    SimpleShowLayout,
     Show,
     ShowButton,
+    SimpleShowLayout,
+    TextField,
+    Title,
     UrlField,
-    FunctionField,
-    Button,
 } from 'react-admin';
 import { hr } from '@material-ui/core';
 import Cookies from 'universal-cookie';
 import {
-    CardActions,
     Card,
+    CardActions,
     CardContent,
     Table,
+    TableBody,
+    TableCell,
     TableHead,
     TableRow,
-    TableCell,
-    TableBody,
 } from '@material-ui/core';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
@@ -47,12 +47,12 @@ export class SubscriptionsList extends React.Component {
     }
 
     async firstLoad() {
-        var params = {
+        const params = {
             filter: {},
             pagination: { page: 1, perPage: 10 },
             sort: { field: 'timestamp', order: 'DESC' },
         };
-        var dataObject = await dataProvider(
+        const dataObject = await dataProvider(
             'GET_LIST',
             'subscriptions',
             params
@@ -61,7 +61,7 @@ export class SubscriptionsList extends React.Component {
     }
 
     async nextPage(label) {
-        var dataObject = await dataProvider(label, 'subscriptions');
+        const dataObject = await dataProvider(label, 'subscriptions');
         this.setState({ data: dataObject });
     }
 
@@ -75,10 +75,10 @@ export class SubscriptionsList extends React.Component {
     }
 
     async filterPage() {
-        var params = {
+        const params = {
             filter: this.filterObject,
         };
-        var dataObject = await dataProvider(
+        const dataObject = await dataProvider(
             'GET_LIST',
             'subscriptions',
             params
@@ -151,21 +151,16 @@ export class SubscriptionsList extends React.Component {
                                                 label={item.resource_path}
                                             />
                                         </TableCell>
-                                        <TableCell align="right">
+                                        <TableCell>
                                             <BooleanField
                                                 record={item}
                                                 source="persist"
                                             />
                                         </TableCell>
-                                        <TableCell
-                                            align="right"
-                                            label="Max Update Rate (ms)"
-                                        >
+                                        <TableCell label="Max Update Rate (ms)">
                                             {item.max_update_rate_ms}
                                         </TableCell>
-                                        <TableCell align="right">
-                                            {item.id}
-                                        </TableCell>
+                                        <TableCell>{item.id}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -190,7 +185,7 @@ export class SubscriptionsList extends React.Component {
                 </Card>
             );
         } else {
-            return <div></div>;
+            return <div />;
         }
     }
 }

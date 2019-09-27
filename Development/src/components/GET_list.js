@@ -1,4 +1,4 @@
-import { GET_LIST, Button } from 'react-admin';
+import { Button, GET_LIST } from 'react-admin';
 import React from 'react';
 import dataProvider from '../dataProvider';
 

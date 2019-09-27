@@ -2,61 +2,61 @@ Object.defineProperty(exports, '__esModule', {
     value: true,
 });
 
-var _defineProperty2 = require('babel-runtime/helpers/defineProperty');
+const _defineProperty2 = require('babel-runtime/helpers/defineProperty');
 
-var _defineProperty3 = _interopRequireDefault(_defineProperty2);
+const _defineProperty3 = _interopRequireDefault(_defineProperty2);
 
-var _extends2 = require('babel-runtime/helpers/extends');
+const _extends2 = require('babel-runtime/helpers/extends');
 
-var _extends3 = _interopRequireDefault(_extends2);
+const _extends3 = _interopRequireDefault(_extends2);
 
-var _objectWithoutProperties2 = require('babel-runtime/helpers/objectWithoutProperties');
+const _objectWithoutProperties2 = require('babel-runtime/helpers/objectWithoutProperties');
 
-var _objectWithoutProperties3 = _interopRequireDefault(
+const _objectWithoutProperties3 = _interopRequireDefault(
     _objectWithoutProperties2
 );
 
-var _react = require('react');
+const _react = require('react');
 
-var _react2 = _interopRequireDefault(_react);
+const _react2 = _interopRequireDefault(_react);
 
-var _propTypes = require('prop-types');
+const _propTypes = require('prop-types');
 
-var _propTypes2 = _interopRequireDefault(_propTypes);
+const _propTypes2 = _interopRequireDefault(_propTypes);
 
-var _compose = require('recompose/compose');
+const _compose = require('recompose/compose');
 
-var _compose2 = _interopRequireDefault(_compose);
+const _compose2 = _interopRequireDefault(_compose);
 
-var _Button = require('@material-ui/core/Button');
+const _Button = require('@material-ui/core/Button');
 
-var _Button2 = _interopRequireDefault(_Button);
+const _Button2 = _interopRequireDefault(_Button);
 
-var _Tooltip = require('@material-ui/core/Tooltip');
+const _Tooltip = require('@material-ui/core/Tooltip');
 
-var _Tooltip2 = _interopRequireDefault(_Tooltip);
+const _Tooltip2 = _interopRequireDefault(_Tooltip);
 
-var _IconButton = require('@material-ui/core/IconButton');
+const _IconButton = require('@material-ui/core/IconButton');
 
-var _IconButton2 = _interopRequireDefault(_IconButton);
+const _IconButton2 = _interopRequireDefault(_IconButton);
 
-var _styles = require('@material-ui/core/styles');
+const _styles = require('@material-ui/core/styles');
 
-var _classnames2 = require('classnames');
+const _classnames2 = require('classnames');
 
-var _classnames3 = _interopRequireDefault(_classnames2);
+const _classnames3 = _interopRequireDefault(_classnames2);
 
-var _raCore = require('ra-core');
+const _raCore = require('ra-core');
 
-var _Responsive = require('ra-ui-materialui/esm/layout/Responsive');
+const _Responsive = require('ra-ui-materialui/esm/layout/Responsive');
 
-var _Responsive2 = _interopRequireDefault(_Responsive);
+const _Responsive2 = _interopRequireDefault(_Responsive);
 
 function _interopRequireDefault(obj) {
     return obj && obj.__esModule ? obj : { default: obj };
 }
 
-var styles = {
+const styles = {
     button: {
         display: 'inline-flex',
         alignItems: 'center',
@@ -78,10 +78,10 @@ var styles = {
     },
 };
 
-var Button = function Button(_ref) {
-    var _classnames;
+const Button = function Button(_ref) {
+    let _classnames;
 
-    var _ref$alignIcon = _ref.alignIcon,
+    const _ref$alignIcon = _ref.alignIcon,
         alignIcon = _ref$alignIcon === undefined ? 'left' : _ref$alignIcon,
         children = _ref.children,
         _ref$classes = _ref.classes,
@@ -178,7 +178,7 @@ Button.propTypes = {
     translate: _propTypes2.default.func.isRequired,
 };
 
-var enhance = (0, _compose2.default)(
+let enhance = (0, _compose2.default)(
     (0, _styles.withStyles)(styles),
     _raCore.translate
 );

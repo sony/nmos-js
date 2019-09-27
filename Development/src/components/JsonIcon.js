@@ -1,17 +1,17 @@
-var _interopRequireDefault = require('../../node_modules/@babel/runtime/helpers/interopRequireDefault');
+let _interopRequireDefault = require('../../node_modules/@babel/runtime/helpers/interopRequireDefault');
 
 Object.defineProperty(exports, '__esModule', {
     value: true,
 });
 exports.default = void 0;
 
-var _react = _interopRequireDefault(require('react'));
+const _react = _interopRequireDefault(require('react'));
 
-var _createSvgIcon = _interopRequireDefault(
+const _createSvgIcon = _interopRequireDefault(
     require('../../node_modules/@material-ui/icons/utils/createSvgIcon')
 );
 
-var _default = (0, _createSvgIcon.default)(
+const _default = (0, _createSvgIcon.default)(
     _react.default.createElement(
         'g',
         null,

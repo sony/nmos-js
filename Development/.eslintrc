@@ -15,7 +15,21 @@
         "react",
         "react-hooks"
     ],
+    "parserOptions": {
+        "ecmaVersion": 6,
+        "ecmaFeatures": {
+            "jsx": true
+        }
+    },
     "rules": {
+        "sort-imports": ["error", {
+            "ignoreCase": false,
+            "ignoreDeclarationSort": true,
+            "ignoreMemberSort": false,
+            "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
+        }],
+        "no-var": "warn",
+        "eol-last": ["error", "always"],
         "no-use-before-define": "off",
         "prettier/prettier": "error"
     }

@@ -1,33 +1,33 @@
 import React from 'react';
 import {
-    Title,
-    TextField,
-    FunctionField,
-    ShowController,
-    ShowView,
-    ChipField,
-    SingleFieldList,
     ArrayField,
+    Button,
+    ChipField,
     Datagrid,
+    FunctionField,
+    ListButton,
     ReferenceArrayField,
     ReferenceField,
     ReferenceManyField,
-    ListButton,
-    SimpleShowLayout,
     ShowButton,
-    Button,
+    ShowController,
+    ShowView,
+    SimpleShowLayout,
+    SingleFieldList,
+    TextField,
+    Title,
 } from 'react-admin';
 import get from 'lodash/get';
 import Cookies from 'universal-cookie';
 import {
-    CardActions,
     Card,
+    CardActions,
     CardContent,
     Table,
+    TableBody,
+    TableCell,
     TableHead,
     TableRow,
-    TableCell,
-    TableBody,
 } from '@material-ui/core';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
@@ -54,15 +54,15 @@ export class SourcesList extends React.Component {
     }
 
     async firstLoad() {
-        var params = {
+        const params = {
             filter: {},
         };
-        var dataObject = await dataProvider('GET_LIST', 'sources', params);
+        const dataObject = await dataProvider('GET_LIST', 'sources', params);
         this.setState({ data: dataObject });
     }
 
     async nextPage(label) {
-        var dataObject = await dataProvider(label, 'sources');
+        const dataObject = await dataProvider(label, 'sources');
         this.setState({ data: dataObject });
     }
 
@@ -76,10 +76,10 @@ export class SourcesList extends React.Component {
     }
 
     async filterPage() {
-        var params = {
+        const params = {
             filter: this.filterObject,
         };
-        var dataObject = await dataProvider('GET_LIST', 'sources', params);
+        const dataObject = await dataProvider('GET_LIST', 'sources', params);
         this.setState({ data: dataObject });
     }
 
@@ -160,7 +160,7 @@ export class SourcesList extends React.Component {
                 </Card>
             );
         } else {
-            return <div></div>;
+            return <div />;
         }
     }
 }
@@ -180,7 +180,7 @@ const SourcesTitle = ({ record }) => {
 const ItemArrayField = ({ className, source, record = {} }) => (
     <div>
         {get(record, source).map(item => (
-            <div key={item} className={className}></div>
+            <div key={item} className={className} />
         ))}
     </div>
 );
@@ -248,7 +248,7 @@ export const SourcesShow = props => (
                         }
                     />
                     <hr />
-                    {controllerProps.record && QueryVersion !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
                         <FunctionField
                             label="Grain rate"
                             render={record =>
@@ -262,7 +262,7 @@ export const SourcesShow = props => (
                             }
                         />
                     )}
-                    {controllerProps.record && QueryVersion !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
                         <TextField label="Clock Name" source="clock_name" />
                     )}
                     <TextField source="format" />

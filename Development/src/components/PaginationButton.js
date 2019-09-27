@@ -27,7 +27,7 @@ class PaginationButton extends React.Component {
         this.firstLoad();
     }
     async firstLoad() {
-        var paginationSupport = cookies.get('Pagination');
+        const paginationSupport = cookies.get('Pagination');
 
         if (paginationSupport === 'enabled') {
             this.enabled = true;

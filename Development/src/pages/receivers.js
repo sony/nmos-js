@@ -1,34 +1,30 @@
 import React from 'react';
 import {
-    Title,
-    TextField,
-    TextInput,
-    ShowController,
-    ShowView,
-    ChipField,
     BooleanField,
-    ReferenceField,
+    Button,
+    ChipField,
     FunctionField,
     ListButton,
-    Edit,
-    SimpleForm,
-    DisabledInput,
+    ReferenceField,
     ShowButton,
+    ShowController,
+    ShowView,
     SimpleShowLayout,
-    Button,
+    TextField,
+    Title,
 } from 'react-admin';
 import { hr } from '@material-ui/core';
 import get from 'lodash/get';
 import Cookies from 'universal-cookie';
 import {
-    CardActions,
     Card,
+    CardActions,
     CardContent,
     Table,
+    TableBody,
+    TableCell,
     TableHead,
     TableRow,
-    TableCell,
-    TableBody,
 } from '@material-ui/core';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
@@ -55,17 +51,17 @@ export class ReceiversList extends React.Component {
     }
 
     async firstLoad() {
-        var params = {
+        const params = {
             filter: {},
             pagination: { page: 1, perPage: 10 },
             sort: { field: 'id', order: 'DESC' },
         };
-        var dataObject = await dataProvider('GET_LIST', 'receivers', params);
+        const dataObject = await dataProvider('GET_LIST', 'receivers', params);
         this.setState({ data: dataObject });
     }
 
     async nextPage(label) {
-        var dataObject = await dataProvider(label, 'receivers');
+        const dataObject = await dataProvider(label, 'receivers');
         this.setState({ data: dataObject });
     }
 
@@ -79,10 +75,10 @@ export class ReceiversList extends React.Component {
     }
 
     async filterPage() {
-        var params = {
+        const params = {
             filter: this.filterObject,
         };
-        var dataObject = await dataProvider('GET_LIST', 'receivers', params);
+        const dataObject = await dataProvider('GET_LIST', 'receivers', params);
         this.setState({ data: dataObject });
     }
 
@@ -144,12 +140,8 @@ export class ReceiversList extends React.Component {
                                                 label={item.label}
                                             />
                                         </TableCell>
-                                        <TableCell align="right">
-                                            {item.format}
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            {item.transport}
-                                        </TableCell>
+                                        <TableCell>{item.format}</TableCell>
+                                        <TableCell>{item.transport}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -175,7 +167,7 @@ export class ReceiversList extends React.Component {
                 </Card>
             );
         } else {
-            return <div></div>;
+            return <div />;
         }
     }
 }
@@ -267,7 +259,7 @@ export const ReceiversShow = props => (
                     />
                     <hr />
                     <TextField source="transport" />
-                    {controllerProps.record && QueryVersion === 'v1.2' && (
+                    {controllerProps.record && QueryVersion() === 'v1.2' && (
                         <ItemArrayField
                             label="Interface Bindings"
                             source="interface_bindings"
@@ -288,14 +280,14 @@ export const ReceiversShow = props => (
                             />
                         )}
                     <TextField source="format" />
-                    {controllerProps.record && QueryVersion === 'v1.2' && (
+                    {controllerProps.record && QueryVersion() === 'v1.2' && (
                         <BooleanField
                             label="Subscription Active"
                             source="subscription.active"
                         />
                     )}
                     {controllerProps.record &&
-                        (QueryVersion === 'v1.2' &&
+                        (QueryVersion() === 'v1.2' &&
                             controllerProps.record.subscription.active) && (
                             <ReferenceField
                                 label="Sender"
@@ -319,19 +311,4 @@ export const ReceiversShow = props => (
             </ShowView>
         )}
     </ShowController>
-);
-
-export const ReceiversEdit = props => (
-    <Edit title={<ReceiversTitle />} {...props}>
-        <SimpleForm>
-            <DisabledInput source="caps.media_types" />
-            <TextInput source="description" />
-            <TextInput source="device_id" />
-            <TextInput source="format" />
-            <TextInput source="id" />
-            <TextInput source="label" />
-            <DisabledInput source="subscription.active" />
-            <DisabledInput source="subscription.sender_id" />
-        </SimpleForm>
-    </Edit>
 );

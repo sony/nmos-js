@@ -2,11 +2,11 @@ import React from 'react';
 import Snackbar from '@material-ui/core/Snackbar';
 import Cookies from 'universal-cookie';
 
-import { returnChangeQuery, changePaging } from './dataProvider';
-import { Switch, FormControlLabel } from '@material-ui/core';
+import { changePaging, returnChangeQuery } from './dataProvider';
+import { FormControlLabel, Switch } from '@material-ui/core';
 
 const cookies = new Cookies();
-var x = '';
+let x = '';
 
 class Settings extends React.Component {
     state = {
@@ -175,7 +175,7 @@ class Settings extends React.Component {
                                 border: 'solid 1px grey',
                             }}
                             defaultValue={returnChangeQuery('Query API', '')}
-                        ></input>
+                        />
                         <input
                             type="button"
                             id="myButton5"

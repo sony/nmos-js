@@ -1,30 +1,30 @@
 import React from 'react';
 import {
+    ArrayField,
+    Button,
+    ChipField,
     Datagrid,
-    TextField,
+    FunctionField,
+    ListButton,
+    ReferenceManyField,
+    ShowButton,
     ShowController,
     ShowView,
-    ListButton,
-    ChipField,
-    ReferenceManyField,
     SimpleShowLayout,
-    ShowButton,
-    ArrayField,
-    FunctionField,
     SingleFieldList,
-    UrlField,
+    TextField,
     Title,
-    Button,
+    UrlField,
 } from 'react-admin';
 import {
-    CardActions,
     Card,
+    CardActions,
     CardContent,
     Table,
+    TableBody,
+    TableCell,
     TableHead,
     TableRow,
-    TableCell,
-    TableBody,
 } from '@material-ui/core';
 
 import get from 'lodash/get';
@@ -32,7 +32,6 @@ import Cookies from 'universal-cookie';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
-import cloneElement from 'react';
 import VersionField from '../components/VersionField';
 import MapTags from '../components/TagsField';
 import ExternalLinkIcon from '@material-ui/icons/OpenInNew';
@@ -56,17 +55,17 @@ export class NodesList extends React.Component {
     }
 
     async firstLoad() {
-        var params = {
+        const params = {
             filter: {},
             pagination: { page: 1, perPage: 10 },
             sort: { field: 'id', order: 'DESC' },
         };
-        var dataObject = await dataProvider('GET_LIST', 'nodes', params);
+        const dataObject = await dataProvider('GET_LIST', 'nodes', params);
         this.setState({ data: dataObject });
     }
 
     async nextPage(label) {
-        var dataObject = await dataProvider(label, 'nodes');
+        const dataObject = await dataProvider(label, 'nodes');
         this.setState({ data: dataObject });
     }
 
@@ -80,10 +79,10 @@ export class NodesList extends React.Component {
     }
 
     async filterPage() {
-        var params = {
+        const params = {
             filter: this.filterObject,
         };
-        var dataObject = await dataProvider('GET_LIST', 'nodes', params);
+        const dataObject = await dataProvider('GET_LIST', 'nodes', params);
         this.setState({ data: dataObject });
     }
 
@@ -251,20 +250,13 @@ const cardActionStyle = {
 };
 
 function buildLink(record) {
-    var link = record.protocol + '://' + record.host + ':' + record.port;
-    return link;
+    return record.protocol + '://' + record.host + ':' + record.port;
 }
 
 const QueryVersion = () => {
     let url = cookies.get('Query API');
     return url.match(/([^/]+)(?=\/?$)/g)[0];
 };
-
-export const StringToLabelObject = ({ record, children, ...rest }) =>
-    cloneElement(children, {
-        record: { label: record },
-        ...rest,
-    });
 
 const NodesShowActions = ({ basePath, data, resource }) => (
     <CardActions title={<NodesTitle />} style={cardActionStyle}>
@@ -306,13 +298,13 @@ export const NodesShow = props => (
                     <hr />
                     <UrlField style={{ fontSize: '14px' }} source="href" />
                     <TextField source="hostname" />
-                    {controllerProps.record && QueryVersion !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
                         <ItemArrayField
                             label="API Versions"
                             source="api.versions"
                         />
                     )}
-                    {controllerProps.record && QueryVersion !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
                         <ArrayField
                             label=" API Endpoints"
                             source="api.endpoints"
@@ -341,7 +333,7 @@ export const NodesShow = props => (
                             </Datagrid>
                         </ArrayField>
                     )}
-                    {controllerProps.record && QueryVersion !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
                         <ArrayField source="clocks">
                             <Datagrid>
                                 <TextField source="name" />
@@ -350,7 +342,7 @@ export const NodesShow = props => (
                         </ArrayField>
                     )}
                     {controllerProps.record &&
-                        QueryVersion !== 'v1.0' && (
+                        QueryVersion() !== 'v1.0' && (
                             <TextField source="description" />
                         ) && (
                             <ArrayField source="services">
@@ -360,7 +352,7 @@ export const NodesShow = props => (
                                 </Datagrid>
                             </ArrayField>
                         )}
-                    {controllerProps.record && QueryVersion === 'v1.2' && (
+                    {controllerProps.record && QueryVersion() === 'v1.2' && (
                         <ArrayField label="Interfaces" source="interfaces">
                             <Datagrid>
                                 <TextField source="chassis_id" />

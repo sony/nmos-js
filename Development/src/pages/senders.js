@@ -1,30 +1,30 @@
 import React from 'react';
 import {
-    Title,
-    TextField,
+    BooleanField,
+    Button,
+    ChipField,
+    FunctionField,
+    ListButton,
+    ReferenceField,
+    ShowButton,
     ShowController,
     ShowView,
-    ListButton,
-    FunctionField,
-    BooleanField,
-    ReferenceField,
-    ChipField,
-    UrlField,
-    ShowButton,
     SimpleShowLayout,
-    Button,
+    TextField,
+    Title,
+    UrlField,
 } from 'react-admin';
 import { hr } from '@material-ui/core';
 import Cookies from 'universal-cookie';
 import {
-    CardActions,
     Card,
+    CardActions,
     CardContent,
     Table,
+    TableBody,
+    TableCell,
     TableHead,
     TableRow,
-    TableCell,
-    TableBody,
 } from '@material-ui/core';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
@@ -52,17 +52,17 @@ export class SendersList extends React.Component {
     }
 
     async firstLoad() {
-        var params = {
+        const params = {
             filter: {},
             pagination: { page: 1, perPage: 10 },
             sort: { field: 'id', order: 'DESC' },
         };
-        var dataObject = await dataProvider('GET_LIST', 'senders', params);
+        const dataObject = await dataProvider('GET_LIST', 'senders', params);
         this.setState({ data: dataObject });
     }
 
     async nextPage(label) {
-        var dataObject = await dataProvider(label, 'senders');
+        const dataObject = await dataProvider(label, 'senders');
         this.setState({ data: dataObject });
     }
 
@@ -76,10 +76,10 @@ export class SendersList extends React.Component {
     }
 
     async filterPage() {
-        var params = {
+        const params = {
             filter: this.filterObject,
         };
-        var dataObject = await dataProvider('GET_LIST', 'senders', params);
+        const dataObject = await dataProvider('GET_LIST', 'senders', params);
         this.setState({ data: dataObject });
     }
 
@@ -134,9 +134,7 @@ export class SendersList extends React.Component {
                                                 label={item.label}
                                             />
                                         </TableCell>
-                                        <TableCell align="right">
-                                            {item.transport}
-                                        </TableCell>
+                                        <TableCell>{item.transport}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -162,7 +160,7 @@ export class SendersList extends React.Component {
                 </Card>
             );
         } else {
-            return <div></div>;
+            return <div />;
         }
     }
 }
@@ -254,7 +252,7 @@ export const SendersShow = props => (
                     />
                     <hr />
                     {controllerProps.record &&
-                        (QueryVersion === 'v1.2' &&
+                        (QueryVersion() === 'v1.2' &&
                             controllerProps.record.subscription.active) && (
                             <TextField
                                 label="Subscription Receiver ID"
@@ -267,10 +265,10 @@ export const SendersShow = props => (
                         source="manifest_href"
                     />
                     <TextField source="transport" />
-                    {controllerProps.record && QueryVersion === 'v1.2' && (
+                    {controllerProps.record && QueryVersion() === 'v1.2' && (
                         <ItemArrayField source="interface_bindings" />
                     )}
-                    {controllerProps.record && QueryVersion === 'v1.2' && (
+                    {controllerProps.record && QueryVersion() === 'v1.2' && (
                         <BooleanField
                             label="Subscription Active"
                             source="subscription.active"
@@ -294,7 +292,7 @@ export const SendersShow = props => (
                         <ChipConditionalLabel source="label" />
                     </ReferenceField>
                     {controllerProps.record &&
-                        (QueryVersion === 'v1.2' &&
+                        (QueryVersion() === 'v1.2' &&
                             controllerProps.record.subscription.active) && (
                             <ReferenceField
                                 label="Receiver"

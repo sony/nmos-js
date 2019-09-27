@@ -1,13 +1,13 @@
 import React from 'react';
 import {
-    TextField,
-    RichTextField,
     Datagrid,
-    Show,
     List,
-    SimpleShowLayout,
     ListButton,
+    RichTextField,
+    Show,
     ShowButton,
+    SimpleShowLayout,
+    TextField,
 } from 'react-admin';
 import ConnectButton from '../components/ConnectButton';
 import { CardActions, hr } from '@material-ui/core';

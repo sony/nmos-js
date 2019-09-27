@@ -10,7 +10,7 @@ import { SendersList, SendersShow } from './pages/senders';
 import { ReceiversList, ReceiversShow } from './pages/receivers';
 import { EventsList, EventsShow } from './pages/logs';
 import { SubscriptionsList, SubscriptionsShow } from './pages/subscriptions';
-import { SettingsShow, SettingsList } from './pages/queryapis';
+import { SettingsList, SettingsShow } from './pages/queryapis';
 import dataProvider from './dataProvider';
 
 import AnnouncementIcon from '@material-ui/icons/Announcement';

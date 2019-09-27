@@ -1,33 +1,33 @@
 import React from 'react';
 import {
-    Title,
+    ArrayField,
+    Button,
+    ChipField,
     Datagrid,
-    TextField,
-    ShowController,
-    ShowView,
+    FunctionField,
+    ListButton,
     ReferenceArrayField,
     ReferenceField,
-    SingleFieldList,
     ReferenceManyField,
-    ChipField,
-    ListButton,
-    FunctionField,
-    ArrayField,
     ShowButton,
+    ShowController,
+    ShowView,
     SimpleShowLayout,
-    Button,
+    SingleFieldList,
+    TextField,
+    Title,
 } from 'react-admin';
 import get from 'lodash/get';
 import Cookies from 'universal-cookie';
 import {
-    CardActions,
     Card,
+    CardActions,
     CardContent,
     Table,
+    TableBody,
+    TableCell,
     TableHead,
     TableRow,
-    TableCell,
-    TableBody,
 } from '@material-ui/core';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
@@ -54,17 +54,17 @@ export class FlowsList extends React.Component {
     }
 
     async firstLoad() {
-        var params = {
+        const params = {
             filter: {},
             pagination: { page: 1, perPage: 10 },
             sort: { field: 'id', order: 'DESC' },
         };
-        var dataObject = await dataProvider('GET_LIST', 'flows', params);
+        const dataObject = await dataProvider('GET_LIST', 'flows', params);
         this.setState({ data: dataObject });
     }
 
     async nextPage(label) {
-        var dataObject = await dataProvider(label, 'flows');
+        const dataObject = await dataProvider(label, 'flows');
         this.setState({ data: dataObject });
     }
 
@@ -78,10 +78,10 @@ export class FlowsList extends React.Component {
     }
 
     async filterPage() {
-        var params = {
+        const params = {
             filter: this.filterObject,
         };
-        var dataObject = await dataProvider('GET_LIST', 'flows', params);
+        const dataObject = await dataProvider('GET_LIST', 'flows', params);
         this.setState({ data: dataObject });
     }
     render() {
@@ -135,9 +135,7 @@ export class FlowsList extends React.Component {
                                                 label={item.label}
                                             />
                                         </TableCell>
-                                        <TableCell align="right">
-                                            {item.format}
-                                        </TableCell>
+                                        <TableCell>{item.format}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -163,7 +161,7 @@ export class FlowsList extends React.Component {
                 </Card>
             );
         } else {
-            return <div></div>;
+            return <div />;
         }
     }
 }
@@ -184,7 +182,7 @@ const FlowsTitle = ({ record }) => {
 const ItemArrayField = ({ className, source, record = {} }) => (
     <div>
         {get(record, source).map(item => (
-            <div key={item} className={className}></div>
+            <div key={item} className={className} />
         ))}
     </div>
 );
@@ -253,11 +251,11 @@ export const FlowsShow = props => (
                     />
                     <hr />
                     <TextField source="format" />
-                    {controllerProps.record && QueryVersion !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
                         <TextField label="Media Types" source="media_type" />
                     )}
                     {controllerProps.record &&
-                        QueryVersion !== 'v1.0' &&
+                        QueryVersion() !== 'v1.0' &&
                         controllerProps.record.format ===
                             'urn:x-nmos:format:video' && (
                             <TextField
@@ -266,7 +264,7 @@ export const FlowsShow = props => (
                             />
                         )}
                     {controllerProps.record &&
-                        QueryVersion !== 'v1.0' &&
+                        QueryVersion() !== 'v1.0' &&
                         controllerProps.record.format ===
                             'urn:x-nmos:format:video' && (
                             <TextField
@@ -275,7 +273,7 @@ export const FlowsShow = props => (
                             />
                         )}
                     {controllerProps.record &&
-                        QueryVersion !== 'v1.0' &&
+                        QueryVersion() !== 'v1.0' &&
                         controllerProps.record.format ===
                             'urn:x-nmos:format:video' && (
                             <TextField
@@ -284,13 +282,13 @@ export const FlowsShow = props => (
                             />
                         )}
                     {controllerProps.record &&
-                    QueryVersion !== 'v1.0' &&
+                    QueryVersion() !== 'v1.0' &&
                     controllerProps.record.format ===
                         'urn:x-nmos:format:video' ? (
                         <TextField source="colorspace" />
                     ) : null}
                     {controllerProps.record &&
-                    QueryVersion !== 'v1.0' &&
+                    QueryVersion() !== 'v1.0' &&
                     controllerProps.record.format ===
                         'urn:x-nmos:format:video' ? (
                         <ArrayField source="components">
@@ -316,7 +314,7 @@ export const FlowsShow = props => (
                         </SingleFieldList>
                     </ReferenceArrayField>
                     {controllerProps.record &&
-                        QueryVersion !== 'v1.0' && (
+                        QueryVersion() !== 'v1.0' && (
                             <TextField
                                 label="Transfer Characteristic"
                                 source="transfer_characteristic"

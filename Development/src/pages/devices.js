@@ -1,32 +1,32 @@
 import React from 'react';
 import {
-    Datagrid,
-    Title,
+    ArrayField,
+    Button,
     ChipField,
+    Datagrid,
+    FunctionField,
+    ListButton,
+    ReferenceArrayField,
+    ReferenceField,
+    ReferenceManyField,
+    ShowButton,
     ShowController,
     ShowView,
-    ReferenceManyField,
-    ReferenceArrayField,
-    SingleFieldList,
-    ListButton,
-    FunctionField,
-    TextField,
-    ArrayField,
-    ReferenceField,
-    UrlField,
-    ShowButton,
     SimpleShowLayout,
-    Button,
+    SingleFieldList,
+    TextField,
+    Title,
+    UrlField,
 } from 'react-admin';
 import {
-    CardActions,
     Card,
+    CardActions,
     CardContent,
     Table,
+    TableBody,
+    TableCell,
     TableHead,
     TableRow,
-    TableCell,
-    TableBody,
 } from '@material-ui/core';
 import get from 'lodash/get';
 import Cookies from 'universal-cookie';
@@ -56,17 +56,17 @@ export class DevicesList extends React.Component {
     }
 
     async firstLoad() {
-        var params = {
+        const params = {
             filter: {},
             pagination: { page: 1, perPage: 10 },
             sort: { field: 'id', order: 'DESC' },
         };
-        var dataObject = await dataProvider('GET_LIST', 'devices', params);
+        const dataObject = await dataProvider('GET_LIST', 'devices', params);
         this.setState({ data: dataObject });
     }
 
     async nextPage(label) {
-        var dataObject = await dataProvider(label, 'devices');
+        const dataObject = await dataProvider(label, 'devices');
         this.setState({ data: dataObject });
     }
 
@@ -80,10 +80,10 @@ export class DevicesList extends React.Component {
     }
 
     async filterPage() {
-        var params = {
+        const params = {
             filter: this.filterObject,
         };
-        var dataObject = await dataProvider('GET_LIST', 'devices', params);
+        const dataObject = await dataProvider('GET_LIST', 'devices', params);
         this.setState({ data: dataObject });
     }
 
@@ -138,9 +138,7 @@ export class DevicesList extends React.Component {
                                                 label={item.label}
                                             />
                                         </TableCell>
-                                        <TableCell align="right">
-                                            {item.type}
-                                        </TableCell>
+                                        <TableCell>{item.type}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -166,7 +164,7 @@ export class DevicesList extends React.Component {
                 </Card>
             );
         } else {
-            return <div></div>;
+            return <div />;
         }
     }
 }
@@ -257,7 +255,7 @@ export const DevicesShow = props => (
                     />
                     <hr />
                     <TextField source="type" />
-                    {controllerProps.record && QueryVersion !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
                         <ArrayField source="controls">
                             <Datagrid>
                                 <UrlField source="href" />

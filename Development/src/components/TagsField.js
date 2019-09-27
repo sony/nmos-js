@@ -1,18 +1,18 @@
 import React from 'react';
 import {
     Table,
+    TableBody,
+    TableCell,
     TableHead,
     TableRow,
-    TableCell,
-    TableBody,
 } from '@material-ui/core';
 
 function MapTags(record) {
     if (record == null) {
         return null;
     }
-    var keys = Object.keys(record.tags);
-    var arr = [];
+    const keys = Object.keys(record.tags);
+    let arr = [];
     keys.forEach(key => {
         arr.push({ key: key, value: record.tags[key] });
     });

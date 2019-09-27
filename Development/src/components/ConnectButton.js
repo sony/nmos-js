@@ -5,7 +5,8 @@ import { returnChangeQuery } from '../dataProvider';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { Snackbar } from '@material-ui/core';
 
-var longQuery = '';
+let longQuery = '';
+
 class ConnectButtonSnackbar extends React.Component {
     state = {
         open: false,

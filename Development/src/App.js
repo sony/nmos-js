@@ -36,7 +36,7 @@ const App = () => (
         <Resource name="Settings" list={Dashboard} icon={SettingsIcon} />
         <Resource
             name="queryapis"
-            label="Query API's"
+            label="Query APIs"
             options={{ label: 'Query APIs' }}
             list={SettingsList}
             show={SettingsShow}

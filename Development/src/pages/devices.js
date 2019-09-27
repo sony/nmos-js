@@ -242,20 +242,24 @@ export const DevicesShow = props => (
             >
                 <SimpleShowLayout>
                     <TextField label="ID" source="id" />
-                    <VersionField label="Version" source="version" />
+                    <VersionField source="version" />
                     <TextField source="label" />
-                    <TextField source="description" />
-                    <FunctionField
-                        label="Tags"
-                        render={record =>
-                            Object.keys(record.tags).length > 0
-                                ? MapTags(record)
-                                : null
-                        }
-                    />
+                    {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                        <TextField source="description" />
+                    )}
+                    {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                        <FunctionField
+                            label="Tags"
+                            render={record =>
+                                Object.keys(record.tags).length > 0
+                                    ? MapTags(record)
+                                    : null
+                            }
+                        />
+                    )}
                     <hr />
                     <TextField source="type" />
-                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() >= 'v1.1' && (
                         <ArrayField source="controls">
                             <Datagrid>
                                 <UrlField source="href" />
@@ -273,7 +277,6 @@ export const DevicesShow = props => (
                     </ReferenceField>
                     <ReferenceArrayField
                         allowEmpty={true}
-                        label="Receivers"
                         source="receivers"
                         reference="receivers"
                         linkType="show"
@@ -285,7 +288,6 @@ export const DevicesShow = props => (
                     <ReferenceArrayField
                         allowEmpty={true}
                         clickable="true"
-                        label="Senders"
                         source="senders"
                         reference="senders"
                         linkType="show"
@@ -318,6 +320,7 @@ export const DevicesShow = props => (
                         </SingleFieldList>
                     </ReferenceManyField>
                     <ReferenceManyField
+                        clickable="true"
                         label="Sources"
                         reference="sources"
                         target="device_id"
@@ -328,6 +331,7 @@ export const DevicesShow = props => (
                         </SingleFieldList>
                     </ReferenceManyField>
                     <ReferenceManyField
+                        clickable="true"
                         label="Flows"
                         reference="flows"
                         target="device_id"

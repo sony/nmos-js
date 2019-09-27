@@ -239,7 +239,7 @@ export const SendersShow = props => (
             >
                 <SimpleShowLayout>
                     <TextField label="ID" source="id" />
-                    <VersionField label="Version" source="version" />
+                    <VersionField source="version" />
                     <TextField source="label" />
                     <TextField source="description" />
                     <FunctionField
@@ -251,24 +251,16 @@ export const SendersShow = props => (
                         }
                     />
                     <hr />
-                    {controllerProps.record &&
-                        (QueryVersion() === 'v1.2' &&
-                            controllerProps.record.subscription.active) && (
-                            <TextField
-                                label="Subscription Receiver ID"
-                                source="subscription.receiver_id"
-                            />
-                        )}
+                    <TextField source="transport" />
                     <UrlField
                         style={{ fontSize: '14px' }}
                         label="Manifest Href"
                         source="manifest_href"
                     />
-                    <TextField source="transport" />
-                    {controllerProps.record && QueryVersion() === 'v1.2' && (
+                    {controllerProps.record && QueryVersion() >= 'v1.2' && (
                         <ItemArrayField source="interface_bindings" />
                     )}
-                    {controllerProps.record && QueryVersion() === 'v1.2' && (
+                    {controllerProps.record && QueryVersion() >= 'v1.2' && (
                         <BooleanField
                             label="Subscription Active"
                             source="subscription.active"
@@ -292,8 +284,8 @@ export const SendersShow = props => (
                         <ChipConditionalLabel source="label" />
                     </ReferenceField>
                     {controllerProps.record &&
-                        (QueryVersion() === 'v1.2' &&
-                            controllerProps.record.subscription.active) && (
+                        QueryVersion() >= 'v1.2' &&
+                        controllerProps.record.subscription.receiver_id && (
                             <ReferenceField
                                 label="Receiver"
                                 source="subscription.receiver_id"

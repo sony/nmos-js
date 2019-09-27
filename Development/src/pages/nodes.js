@@ -113,7 +113,6 @@ export class NodesList extends React.Component {
                             <TableHead>
                                 <TableRow>
                                     <TableCell
-                                        id="yeet"
                                         style={{
                                             minWidth: '240px',
                                             paddingLeft: '32px',
@@ -132,13 +131,17 @@ export class NodesList extends React.Component {
                                             setFilter={this.setFilter}
                                         />
                                     </TableCell>
-                                    <TableCell style={{ minWidth: '280px' }}>
-                                        API Versions{' '}
-                                        <FilterField
-                                            name="api.versions"
-                                            setFilter={this.setFilter}
-                                        />
-                                    </TableCell>
+                                    {QueryVersion() >= 'v1.1' && (
+                                        <TableCell
+                                            style={{ minWidth: '280px' }}
+                                        >
+                                            API Versions{' '}
+                                            <FilterField
+                                                name="api.versions"
+                                                setFilter={this.setFilter}
+                                            />
+                                        </TableCell>
+                                    )}
                                     <TableCell style={{ minWidth: '255px' }}>
                                         Node ID{' '}
                                         <FilterField
@@ -162,9 +165,11 @@ export class NodesList extends React.Component {
                                             />
                                         </TableCell>
                                         <TableCell>{item.hostname}</TableCell>
-                                        <TableCell>
-                                            {item.api.versions.join(', ')}
-                                        </TableCell>
+                                        {QueryVersion() >= 'v1.1' && (
+                                            <TableCell>
+                                                {item.api.versions.join(', ')}
+                                            </TableCell>
+                                        )}
                                         <TableCell
                                             onDoubleClick={() =>
                                                 this.copyField(item.id)
@@ -284,27 +289,31 @@ export const NodesShow = props => (
             >
                 <SimpleShowLayout>
                     <TextField label="ID" source="id" />
-                    <VersionField label="Version" source="version" />
+                    <VersionField source="version" />
                     <TextField source="label" />
-                    <TextField source="description" />
-                    <FunctionField
-                        label="Tags"
-                        render={record =>
-                            Object.keys(record.tags).length > 0
-                                ? MapTags(record)
-                                : null
-                        }
-                    />
+                    {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                        <TextField source="description" />
+                    )}
+                    {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                        <FunctionField
+                            label="Tags"
+                            render={record =>
+                                Object.keys(record.tags).length > 0
+                                    ? MapTags(record)
+                                    : null
+                            }
+                        />
+                    )}
                     <hr />
                     <UrlField style={{ fontSize: '14px' }} source="href" />
                     <TextField source="hostname" />
-                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() >= 'v1.1' && (
                         <ItemArrayField
                             label="API Versions"
                             source="api.versions"
                         />
                     )}
-                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() >= 'v1.1' && (
                         <ArrayField
                             label=" API Endpoints"
                             source="api.endpoints"
@@ -333,7 +342,7 @@ export const NodesShow = props => (
                             </Datagrid>
                         </ArrayField>
                     )}
-                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() >= 'v1.1' && (
                         <ArrayField source="clocks">
                             <Datagrid>
                                 <TextField source="name" />
@@ -341,18 +350,13 @@ export const NodesShow = props => (
                             </Datagrid>
                         </ArrayField>
                     )}
-                    {controllerProps.record &&
-                        QueryVersion() !== 'v1.0' && (
-                            <TextField source="description" />
-                        ) && (
-                            <ArrayField source="services">
-                                <Datagrid>
-                                    <UrlField source="href" label="Address" />
-                                    <TextField source="type" />
-                                </Datagrid>
-                            </ArrayField>
-                        )}
-                    {controllerProps.record && QueryVersion() === 'v1.2' && (
+                    <ArrayField source="services">
+                        <Datagrid>
+                            <UrlField source="href" label="Address" />
+                            <TextField source="type" />
+                        </Datagrid>
+                    </ArrayField>
+                    {controllerProps.record && QueryVersion() >= 'v1.2' && (
                         <ArrayField label="Interfaces" source="interfaces">
                             <Datagrid>
                                 <TextField source="chassis_id" />

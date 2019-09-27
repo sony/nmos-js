@@ -246,7 +246,7 @@ export const ReceiversShow = props => (
             >
                 <SimpleShowLayout>
                     <TextField label="ID" source="id" />
-                    <VersionField label="Version" source="version" />
+                    <VersionField source="version" />
                     <TextField source="label" />
                     <TextField source="description" />
                     <FunctionField
@@ -259,7 +259,7 @@ export const ReceiversShow = props => (
                     />
                     <hr />
                     <TextField source="transport" />
-                    {controllerProps.record && QueryVersion() === 'v1.2' && (
+                    {controllerProps.record && QueryVersion() >= 'v1.2' && (
                         <ItemArrayField
                             label="Interface Bindings"
                             source="interface_bindings"
@@ -280,15 +280,15 @@ export const ReceiversShow = props => (
                             />
                         )}
                     <TextField source="format" />
-                    {controllerProps.record && QueryVersion() === 'v1.2' && (
+                    {controllerProps.record && QueryVersion() >= 'v1.2' && (
                         <BooleanField
                             label="Subscription Active"
                             source="subscription.active"
                         />
                     )}
                     {controllerProps.record &&
-                        (QueryVersion() === 'v1.2' &&
-                            controllerProps.record.subscription.active) && (
+                        QueryVersion() >= 'v1.2' &&
+                        controllerProps.record.subscription.sender_id && (
                             <ReferenceField
                                 label="Sender"
                                 source="subscription.sender_id"

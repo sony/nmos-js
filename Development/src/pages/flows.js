@@ -238,7 +238,7 @@ export const FlowsShow = props => (
             >
                 <SimpleShowLayout>
                     <TextField label="ID" source="id" />
-                    <VersionField label="Version" source="version" />
+                    <VersionField source="version" />
                     <TextField source="label" />
                     <TextField source="description" />
                     <FunctionField
@@ -251,11 +251,11 @@ export const FlowsShow = props => (
                     />
                     <hr />
                     <TextField source="format" />
-                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
-                        <TextField label="Media Types" source="media_type" />
+                    {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                        <TextField label="Media Type" source="media_type" />
                     )}
                     {controllerProps.record &&
-                        QueryVersion() !== 'v1.0' &&
+                        QueryVersion() >= 'v1.1' &&
                         controllerProps.record.format ===
                             'urn:x-nmos:format:video' && (
                             <TextField
@@ -264,7 +264,7 @@ export const FlowsShow = props => (
                             />
                         )}
                     {controllerProps.record &&
-                        QueryVersion() !== 'v1.0' &&
+                        QueryVersion() >= 'v1.1' &&
                         controllerProps.record.format ===
                             'urn:x-nmos:format:video' && (
                             <TextField
@@ -273,7 +273,7 @@ export const FlowsShow = props => (
                             />
                         )}
                     {controllerProps.record &&
-                        QueryVersion() !== 'v1.0' &&
+                        QueryVersion() >= 'v1.1' &&
                         controllerProps.record.format ===
                             'urn:x-nmos:format:video' && (
                             <TextField
@@ -282,24 +282,36 @@ export const FlowsShow = props => (
                             />
                         )}
                     {controllerProps.record &&
-                    QueryVersion() !== 'v1.0' &&
-                    controllerProps.record.format ===
-                        'urn:x-nmos:format:video' ? (
-                        <TextField source="colorspace" />
-                    ) : null}
+                        QueryVersion() >= 'v1.1' &&
+                        controllerProps.record.format ===
+                            'urn:x-nmos:format:video' && (
+                            <TextField source="colorspace" />
+                        )}
                     {controllerProps.record &&
-                    QueryVersion() !== 'v1.0' &&
-                    controllerProps.record.format ===
-                        'urn:x-nmos:format:video' ? (
-                        <ArrayField source="components">
-                            <Datagrid>
-                                <TextField source="name" />
-                                <TextField source="height" />
-                                <TextField source="width" />
-                                <TextField source="bit_depth" />
-                            </Datagrid>
-                        </ArrayField>
-                    ) : null}
+                        QueryVersion() >= 'v1.1' &&
+                        controllerProps.record.format ===
+                            'urn:x-nmos:format:video' && (
+                            <ArrayField source="components">
+                                <Datagrid>
+                                    <TextField source="name" />
+                                    <TextField source="height" />
+                                    <TextField source="width" />
+                                    <TextField
+                                        label="Bit Depth"
+                                        source="bit_depth"
+                                    />
+                                </Datagrid>
+                            </ArrayField>
+                        )}
+                    {controllerProps.record &&
+                        QueryVersion() >= 'v1.1' &&
+                        controllerProps.record.format ===
+                            'urn:x-nmos:format:video' && (
+                            <TextField
+                                label="Transfer Characteristic"
+                                source="transfer_characteristic"
+                            />
+                        )}
                     <hr />
                     <ReferenceArrayField
                         allowEmpty={true}
@@ -313,22 +325,16 @@ export const FlowsShow = props => (
                             <ChipConditionalLabel source="label" />
                         </SingleFieldList>
                     </ReferenceArrayField>
-                    {controllerProps.record &&
-                        QueryVersion() !== 'v1.0' && (
-                            <TextField
-                                label="Transfer Characteristic"
-                                source="transfer_characteristic"
-                            />
-                        ) && (
-                            <ReferenceField
-                                label="Device"
-                                source="device_id"
-                                reference="devices"
-                                linkType="show"
-                            >
-                                <ChipConditionalLabel source="label" />
-                            </ReferenceField>
-                        )}
+                    {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                        <ReferenceField
+                            label="Device"
+                            source="device_id"
+                            reference="devices"
+                            linkType="show"
+                        >
+                            <ChipConditionalLabel source="label" />
+                        </ReferenceField>
+                    )}
                     <ReferenceField
                         label="Source"
                         source="source_id"

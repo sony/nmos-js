@@ -236,7 +236,7 @@ export const SourcesShow = props => (
             >
                 <SimpleShowLayout>
                     <TextField label="ID" source="id" />
-                    <VersionField label="Version" source="version" />
+                    <VersionField source="version" />
                     <TextField source="label" />
                     <TextField source="description" />
                     <FunctionField
@@ -248,9 +248,9 @@ export const SourcesShow = props => (
                         }
                     />
                     <hr />
-                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() >= 'v1.1' && (
                         <FunctionField
-                            label="Grain rate"
+                            label="Grain Rate"
                             render={record =>
                                 record.grain_rate
                                     ? `${record.grain_rate.numerator} : ${
@@ -262,22 +262,21 @@ export const SourcesShow = props => (
                             }
                         />
                     )}
-                    {controllerProps.record && QueryVersion() !== 'v1.0' && (
+                    {controllerProps.record && QueryVersion() >= 'v1.1' && (
                         <TextField label="Clock Name" source="clock_name" />
                     )}
                     <TextField source="format" />
-                    {controllerProps.record !== undefined ? (
+                    {controllerProps.record &&
+                        QueryVersion() >= 'v1.1' &&
                         controllerProps.record.format ===
-                            'urn:x-nmos:format:audio' &&
-                        controllerProps.record.channels ? (
+                            'urn:x-nmos:format:audio' && (
                             <ArrayField source="channels">
                                 <Datagrid>
                                     <TextField source="label" />
                                     <TextField source="symbol" />
                                 </Datagrid>
                             </ArrayField>
-                        ) : null
-                    ) : null}
+                        )}
                     <hr />
                     <ReferenceArrayField
                         allowEmpty={true}

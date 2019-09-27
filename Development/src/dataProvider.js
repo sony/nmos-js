@@ -230,7 +230,10 @@ const convertHTTPResponseToDataProvider = (
 ) => {
     const { headers, json } = response;
     LINK_HEADER = headers.get('Link');
-    if (LINK_HEADER !== null && LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="next"/)) {
+    if (
+        LINK_HEADER !== null &&
+        LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="next"/)
+    ) {
         if (LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="first"/)) {
             cookies.set('Pagination', 'enabled', { path: '/' });
         } else {

@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+    ArrayField,
     BooleanField,
     Button,
     ChipField,
@@ -9,17 +10,20 @@ import {
     ShowButton,
     ShowController,
     ShowView,
-    SimpleShowLayout,
+    Tab,
+    TabbedShowLayout,
     TextField,
     Title,
 } from 'react-admin';
-import { hr } from '@material-ui/core';
 import get from 'lodash/get';
 import Cookies from 'universal-cookie';
 import {
     Card,
     CardActions,
     CardContent,
+    Collapse,
+    FormControlLabel,
+    Switch,
     Table,
     TableBody,
     TableCell,
@@ -32,6 +36,8 @@ import FilterField from '../components/FilterField';
 import VersionField from '../components/VersionField';
 import MapTags from '../components/TagsField';
 import JsonIcon from '../components/JsonIcon';
+import TransportParamsCardsGrid from '../components/TransportParams';
+import ReactJson from 'react-json-view';
 
 const cookies = new Cookies();
 
@@ -235,6 +241,31 @@ const ReceiversShowActions = ({ basePath, data, resource }) => (
     </CardActions>
 );
 
+function JSONViewer({ endpoint, ...controllerProps }) {
+    const [checked, setChecked] = React.useState(false);
+    const handleChange = () => {
+        setChecked(prev => !prev);
+    };
+    return (
+        <div>
+            <FormControlLabel
+                control={<Switch checked={checked} onChange={handleChange} />}
+                label={'Show JSON'}
+            />
+            <Collapse in={checked}>
+                <Card>
+                    <CardContent>
+                        <ReactJson
+                            src={get(controllerProps.record, `${endpoint}`)}
+                            enableClipboard={false}
+                        />
+                    </CardContent>
+                </Card>
+            </Collapse>
+        </div>
+    );
+}
+
 export const ReceiversShow = props => (
     <ShowController {...props}>
         {controllerProps => (
@@ -244,70 +275,144 @@ export const ReceiversShow = props => (
                 title={<ReceiversTitle />}
                 actions={<ReceiversShowActions />}
             >
-                <SimpleShowLayout>
-                    <TextField label="ID" source="id" />
-                    <VersionField source="version" />
-                    <TextField source="label" />
-                    <TextField source="description" />
-                    <FunctionField
-                        label="Tags"
-                        render={record =>
-                            Object.keys(record.tags).length > 0
-                                ? MapTags(record)
-                                : null
-                        }
-                    />
-                    <hr />
-                    <TextField source="transport" />
-                    {controllerProps.record && QueryVersion() >= 'v1.2' && (
-                        <ItemArrayField
-                            label="Interface Bindings"
-                            source="interface_bindings"
+                <TabbedShowLayout>
+                    <Tab label="Summary">
+                        <TextField label="ID" source="id" />
+                        <VersionField source="version" />
+                        <TextField source="label" />
+                        <TextField source="description" />
+                        <FunctionField
+                            label="Tags"
+                            render={record =>
+                                Object.keys(record.tags).length > 0
+                                    ? MapTags(record)
+                                    : null
+                            }
                         />
-                    )}
-                    {controllerProps.record &&
-                        controllerProps.record.caps.media_types && (
+                        <hr />
+                        <TextField source="transport" />
+                        {controllerProps.record && QueryVersion() >= 'v1.2' && (
                             <ItemArrayField
-                                label="Caps Media Types"
-                                source="caps.media_types"
+                                label="Interface Bindings"
+                                source="interface_bindings"
                             />
                         )}
-                    {controllerProps.record &&
-                        controllerProps.record.caps.event_types && (
-                            <ItemArrayField
-                                label="Caps Event Types"
-                                source="caps.event_types"
+                        {controllerProps.record &&
+                            controllerProps.record.caps.media_types && (
+                                <ItemArrayField
+                                    label="Caps Media Types"
+                                    source="caps.media_types"
+                                />
+                            )}
+                        {controllerProps.record &&
+                            controllerProps.record.caps.event_types && (
+                                <ItemArrayField
+                                    label="Caps Event Types"
+                                    source="caps.event_types"
+                                />
+                            )}
+                        <TextField source="format" />
+                        {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                            <BooleanField
+                                label="Subscription Active"
+                                source="subscription.active"
                             />
                         )}
-                    <TextField source="format" />
-                    {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                        {controllerProps.record &&
+                            QueryVersion() >= 'v1.2' &&
+                            controllerProps.record.subscription.sender_id && (
+                                <ReferenceField
+                                    label="Sender"
+                                    source="subscription.sender_id"
+                                    reference="senders"
+                                    linkType="show"
+                                >
+                                    <ChipConditionalLabel source="label" />
+                                </ReferenceField>
+                            )}
+                        <hr />
+                        <ReferenceField
+                            label="Device"
+                            source="device_id"
+                            reference="devices"
+                            linkType="show"
+                        >
+                            <ChipConditionalLabel source="label" />
+                        </ReferenceField>
+                    </Tab>
+                    <Tab label="Active" path="active">
+                        <TextField label="ID" source="id" />
+                        <TextField
+                            label="Sender ID"
+                            source="$active.sender_id"
+                        />
                         <BooleanField
-                            label="Subscription Active"
-                            source="subscription.active"
+                            label="Master Enable"
+                            source="$active.master_enable"
                         />
-                    )}
-                    {controllerProps.record &&
-                        QueryVersion() >= 'v1.2' &&
-                        controllerProps.record.subscription.sender_id && (
-                            <ReferenceField
-                                label="Sender"
-                                source="subscription.sender_id"
-                                reference="senders"
-                                linkType="show"
-                            >
-                                <ChipConditionalLabel source="label" />
-                            </ReferenceField>
-                        )}
-                    <hr />
-                    <ReferenceField
-                        label="Device"
-                        source="device_id"
-                        reference="devices"
-                        linkType="show"
-                    >
-                        <ChipConditionalLabel source="label" />
-                    </ReferenceField>
-                </SimpleShowLayout>
+                        <TextField
+                            label="Activation Time"
+                            source="$active.activation.activation_time"
+                        />
+                        <TextField
+                            label="Mode"
+                            source="$active.activation.mode"
+                        />
+                        <TextField
+                            label="Requested Time"
+                            source="$active.activation.requested_time"
+                        />
+                        <TextField
+                            label="Transport Type"
+                            source="$transporttype"
+                        />
+                        <ArrayField
+                            label="Transport Parameters"
+                            source="$active.transport_params"
+                        >
+                            <TransportParamsCardsGrid
+                                record={controllerProps.record}
+                            />
+                        </ArrayField>
+                        <JSONViewer endpoint="$active" />
+                    </Tab>
+                    <Tab label="Staged" path="staged">
+                        <TextField label="ID" source="id" />
+                        <TextField
+                            label="Sender ID"
+                            source="$staged.sender_id"
+                        />
+                        <BooleanField
+                            label="Master Enable"
+                            source="$staged.master_enable"
+                        />
+                        <TextField
+                            label="Activation Time"
+                            source="$staged.activation.activation_time"
+                        />
+                        <TextField
+                            label="Mode"
+                            source="$staged.activation.mode"
+                        />
+                        <TextField
+                            label="Requested Time"
+                            source="$staged.activation.requested_time"
+                        />
+                        <TextField
+                            label="Transport Type"
+                            source="$transporttype"
+                        />
+                        <ArrayField
+                            label="Transport Parameters"
+                            source="$staged.transport_params"
+                        >
+                            <TransportParamsCardsGrid
+                                record={controllerProps.record}
+                            />
+                        </ArrayField>
+                        <JSONViewer endpoint="$staged" />
+                    </Tab>
+                </TabbedShowLayout>
             </ShowView>
         )}
     </ShowController>

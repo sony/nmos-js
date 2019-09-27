@@ -221,13 +221,13 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
     }
 };
 
-const convertHTTPResponseToDataProvider = (
+async function convertHTTPResponseToDataProvider(
     url,
     response,
     type,
     resource,
     params
-) => {
+) {
     const { headers, json } = response;
     LINK_HEADER = headers.get('Link');
     if (
@@ -246,6 +246,60 @@ const convertHTTPResponseToDataProvider = (
         case GET_ONE:
             if (resource === 'queryapis') {
                 json.id = json.name;
+            }
+            if (resource === 'receivers') {
+                API_URL = returnUrl('receivers');
+                let receiverJSONData = await fetch(
+                    `${API_URL}/receivers/${params.id}`
+                ).then(result => result.json());
+
+                let deviceJSONData;
+                if (receiverJSONData.hasOwnProperty('device_id')) {
+                    API_URL = returnUrl('devices');
+                    deviceJSONData = await fetch(
+                        `${API_URL}/devices/${receiverJSONData.device_id}`
+                    ).then(result => result.json());
+                } else {
+                    return null;
+                }
+
+                let ctrlAddress = {};
+                let nodeAddress;
+                if (deviceJSONData.hasOwnProperty('controls')) {
+                    for (let i in deviceJSONData.controls)
+                        ctrlAddress[deviceJSONData.controls[i]['type']] =
+                            deviceJSONData.controls[i]['href'];
+                } else {
+                    return null;
+                }
+                if (
+                    ctrlAddress['urn:x-nmos:control:sr-ctrl/v1.1'] !== undefined
+                ) {
+                    nodeAddress =
+                        ctrlAddress['urn:x-nmos:control:sr-ctrl/v1.1'];
+                } else {
+                    nodeAddress =
+                        ctrlAddress['urn:x-nmos:control:sr-ctrl/v1.0'];
+                }
+
+                let receiverEndpoints = [
+                    'active',
+                    'constraints',
+                    'staged',
+                    'transporttype',
+                ];
+                let endpointsJSONData = [];
+                for (let i = 0; i < receiverEndpoints.length; i++) {
+                    endpointsJSONData[i] = await fetch(
+                        `${nodeAddress}/single/receivers/${params.id}/${receiverEndpoints[i]}/`
+                    ).then(result => result.json());
+                }
+
+                json.$active = endpointsJSONData[0];
+                json.$contstraints = endpointsJSONData[1];
+                json.$staged = endpointsJSONData[2];
+                json.$transporttype = endpointsJSONData[3];
+                json.$nodeAddress = `${nodeAddress}`;
             }
             return { url: url, data: json };
 
@@ -271,9 +325,9 @@ const convertHTTPResponseToDataProvider = (
             }
             return { url: url, data: json };
     }
-};
+}
 
-export default (type, resource, params) => {
+export default async (type, resource, params) => {
     const { fetchJson } = fetchUtils;
     const { url, options } = convertDataProviderRequestToHTTP(
         type,

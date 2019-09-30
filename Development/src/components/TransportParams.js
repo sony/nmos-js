@@ -32,6 +32,7 @@ const WebSocketType = ({ dataObject }) => {
                                             label="Connection URI"
                                         />
                                     )}
+                                    {params_ext.length !== 0 && <hr />}
                                     {params_ext.map(value => {
                                         return (
                                             <TextField
@@ -118,6 +119,7 @@ const MQTTType = ({ dataObject }) => {
                                             label="Connection Status Broker Topic"
                                         />
                                     )}
+                                    {params_ext.length !== 0 && <hr />}
                                     {params_ext.map(value => {
                                         return (
                                             <TextField
@@ -164,6 +166,14 @@ const RTPType = ({ dataObject }) => {
                             <CardContent>
                                 <SimpleShowLayout record={dataObject[i]}>
                                     {dataObject[i].hasOwnProperty(
+                                        'rtp_enabled'
+                                    ) && (
+                                        <BooleanField
+                                            source="rtp_enabled"
+                                            label="RTP Enabled"
+                                        />
+                                    )}
+                                    {dataObject[i].hasOwnProperty(
                                         'source_ip'
                                     ) && (
                                         <TextField
@@ -197,10 +207,18 @@ const RTPType = ({ dataObject }) => {
                                     )}
                                     {dataObject[i].hasOwnProperty(
                                         'fec_enabled'
+                                    ) && <hr /> && (
+                                            <BooleanField
+                                                source="fec_enabled"
+                                                label="FEC Enabled"
+                                            />
+                                        )}
+                                    {dataObject[i].hasOwnProperty(
+                                        'fec_mode'
                                     ) && (
-                                        <BooleanField
-                                            source="fec_enabled"
-                                            label="FEC Enabled"
+                                        <TextField
+                                            source="fec_mode"
+                                            label="FEC Mode"
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
@@ -209,14 +227,6 @@ const RTPType = ({ dataObject }) => {
                                         <TextField
                                             source="fec_destination_ip"
                                             label="FEC Destination IP"
-                                        />
-                                    )}
-                                    {dataObject[i].hasOwnProperty(
-                                        'fec_mode'
-                                    ) && (
-                                        <TextField
-                                            source="fec_mode"
-                                            label="FEC Mode"
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
@@ -236,21 +246,13 @@ const RTPType = ({ dataObject }) => {
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
-                                        'rtp_enabled'
-                                    ) && (
-                                        <BooleanField
-                                            source="rtp_enabled"
-                                            label="RTP Enabled"
-                                        />
-                                    )}
-                                    {dataObject[i].hasOwnProperty(
                                         'rtcp_enabled'
-                                    ) && (
-                                        <BooleanField
-                                            source="rtcp_enabled"
-                                            label="RTCP Enabled"
-                                        />
-                                    )}
+                                    ) && <hr /> && (
+                                            <BooleanField
+                                                source="rtcp_enabled"
+                                                label="RTCP Enabled"
+                                            />
+                                        )}
                                     {dataObject[i].hasOwnProperty(
                                         'rtcp_destination_ip'
                                     ) && (
@@ -267,6 +269,7 @@ const RTPType = ({ dataObject }) => {
                                             label="RTCP Destination Port"
                                         />
                                     )}
+                                    {params_ext.length !== 0 && <hr />}
                                     {params_ext.map(value => {
                                         return (
                                             <TextField

@@ -247,10 +247,10 @@ async function convertHTTPResponseToDataProvider(
             if (resource === 'queryapis') {
                 json.id = json.name;
             }
-            if (resource === 'receivers') {
-                API_URL = returnUrl('receivers');
+            if (resource === 'receivers' || resource === 'senders') {
+                API_URL = returnUrl(resource);
                 let receiverJSONData = await fetch(
-                    `${API_URL}/receivers/${params.id}`
+                    `${API_URL}/${resource}/${params.id}`
                 ).then(result => result.json());
 
                 let deviceJSONData;
@@ -277,15 +277,24 @@ async function convertHTTPResponseToDataProvider(
                     connectionAddresses['urn:x-nmos:control:sr-ctrl/v1.1'] ||
                     connectionAddresses['urn:x-nmos:control:sr-ctrl/v1.0'];
 
-                let receiverEndpoints = [
-                    'active',
-                    'constraints',
-                    'staged',
-                    'transporttype',
-                ];
-                for (let i in receiverEndpoints) {
-                    json[`$${receiverEndpoints[i]}`] = await fetch(
-                        `${connectionAddress}/single/receivers/${params.id}/${receiverEndpoints[i]}/`
+                const endpoints = {
+                    receivers: [
+                        'active',
+                        'constraints',
+                        'staged',
+                        'transporttype',
+                    ],
+                    senders: [
+                        'active',
+                        'constraints',
+                        'staged',
+                        'transporttype',
+                        'transportfile',
+                    ],
+                };
+                for (let i in endpoints[resource]) {
+                    json[`$${endpoints[resource][i]}`] = await fetch(
+                        `${connectionAddress}/single/${resource}/${params.id}/${endpoints[resource][i]}/`
                     ).then(result => result.json());
                 }
             }

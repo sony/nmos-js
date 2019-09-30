@@ -8,7 +8,6 @@ import {
     SimpleShowLayout,
     TextField,
     Title,
-    UrlField,
 } from 'react-admin';
 import { hr } from '@material-ui/core';
 import Cookies from 'universal-cookie';
@@ -140,7 +139,7 @@ export class EventsList extends React.Component {
                                         />
                                     </TableCell>
                                     <TableCell style={{ paddingRight: '6px' }}>
-                                        Request uri{' '}
+                                        Request URI{' '}
                                         <FilterField
                                             name="request_uri"
                                             setFilter={this.setFilter}
@@ -152,7 +151,7 @@ export class EventsList extends React.Component {
                                             paddingRight: '6px',
                                         }}
                                     >
-                                        Http method{' '}
+                                        HTTP Method{' '}
                                         <FilterField
                                             width="20px"
                                             name="http_method"
@@ -233,7 +232,7 @@ export const EventsShow = props => (
         <SimpleShowLayout>
             <TextField source="timestamp" />
             <TextField source="level" />
-            <TextField source="level_name" />
+            <TextField source="level_name" label="Level Name" />
             <TextField source="message" />
             <FunctionField
                 label="Tags"
@@ -245,18 +244,18 @@ export const EventsShow = props => (
                         : null
                 }
             />
-            <TextField source="http_method" />
-            <UrlField source="request_uri" />
+            <TextField source="http_method" label="HTTP Method" />
+            <TextField source="request_uri" label="Request URI" />
             <hr />
-            <TextField source="source_location.file" label="Source file" />
-            <TextField source="source_location.line" label="Source line" />
+            <TextField source="source_location.file" label="Source File" />
+            <TextField source="source_location.line" label="Source Line" />
             <TextField
                 source="source_location.function"
-                label="Source function"
+                label="Source Function"
             />
             <hr />
-            <TextField source="thread_id" />
-            <TextField source="id" />
+            <TextField source="thread_id" label="Thread ID" />
+            <TextField source="id" label="ID" />
         </SimpleShowLayout>
     </Show>
 );

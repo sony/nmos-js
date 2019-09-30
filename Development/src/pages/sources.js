@@ -168,7 +168,7 @@ export class SourcesList extends React.Component {
 const SourcesTitle = ({ record }) => {
     return (
         <span>
-            Source:
+            Source:{' '}
             {record
                 ? record.label
                     ? `${record.label}`

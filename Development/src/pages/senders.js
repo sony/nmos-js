@@ -168,7 +168,7 @@ export class SendersList extends React.Component {
 const SendersTitle = ({ record }) => {
     return (
         <span>
-            Sender:
+            Sender:{' '}
             {record
                 ? record.label
                     ? `${record.label}`
@@ -254,7 +254,7 @@ export const SendersShow = props => (
                     <TextField source="transport" />
                     <UrlField
                         style={{ fontSize: '14px' }}
-                        label="Manifest Href"
+                        label="Manifest Address"
                         source="manifest_href"
                     />
                     {controllerProps.record && QueryVersion() >= 'v1.2' && (

@@ -172,7 +172,7 @@ export class DevicesList extends React.Component {
 const DevicesTitle = ({ record }) => {
     return (
         <span>
-            Device:
+            Device:{' '}
             {record
                 ? record.label
                     ? `${record.label}`
@@ -262,7 +262,7 @@ export const DevicesShow = props => (
                     {controllerProps.record && QueryVersion() >= 'v1.1' && (
                         <ArrayField source="controls">
                             <Datagrid>
-                                <UrlField source="href" />
+                                <UrlField source="href" label="Address" />
                                 <TextField source="type" />
                             </Datagrid>
                         </ArrayField>

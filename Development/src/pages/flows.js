@@ -169,7 +169,7 @@ export class FlowsList extends React.Component {
 const FlowsTitle = ({ record }) => {
     return (
         <span>
-            Flow:
+            Flow:{' '}
             {record
                 ? record.label
                     ? `${record.label}`

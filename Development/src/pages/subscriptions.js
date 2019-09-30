@@ -193,7 +193,7 @@ export class SubscriptionsList extends React.Component {
 const SubscriptionsTitle = ({ record }) => {
     return (
         <span>
-            Subscription :
+            Subscription:{' '}
             {record
                 ? record.label
                     ? `${record.label}`

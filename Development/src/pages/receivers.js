@@ -181,7 +181,7 @@ export class ReceiversList extends React.Component {
 const ReceiversTitle = ({ record }) => {
     return (
         <span>
-            Receiver:
+            Receiver:{' '}
             {record
                 ? record.label
                     ? `${record.label}`

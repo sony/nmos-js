@@ -78,7 +78,7 @@ export const SettingsList = props => (
             <ShowButton label="" />
 
             <TextField source="name" sortable={false} />
-            <TextField label="Port" source="port" sortable={false} />
+            <TextField source="port" sortable={false} />
             <TextField
                 label="API Versions"
                 source="txt.api_ver"

@@ -214,7 +214,7 @@ export class NodesList extends React.Component {
 const NodesTitle = ({ record }) => {
     return (
         <span>
-            Node:
+            Node:{' '}
             {record
                 ? record.label
                     ? `${record.label}`
@@ -305,7 +305,7 @@ export const NodesShow = props => (
                         />
                     )}
                     <hr />
-                    <UrlField style={{ fontSize: '14px' }} source="href" />
+                    <UrlField source="href" label="Address" />
                     <TextField source="hostname" />
                     {controllerProps.record && QueryVersion() >= 'v1.1' && (
                         <ItemArrayField
@@ -357,11 +357,11 @@ export const NodesShow = props => (
                         </Datagrid>
                     </ArrayField>
                     {controllerProps.record && QueryVersion() >= 'v1.2' && (
-                        <ArrayField label="Interfaces" source="interfaces">
+                        <ArrayField source="interfaces">
                             <Datagrid>
-                                <TextField source="chassis_id" />
+                                <TextField source="chassis_id" label="Chassis ID" />
                                 <TextField source="name" />
-                                <TextField source="port_id" />
+                                <TextField source="port_id" label="Port ID" />
                             </Datagrid>
                         </ArrayField>
                     )}

@@ -359,7 +359,10 @@ export const NodesShow = props => (
                     {controllerProps.record && QueryVersion() >= 'v1.2' && (
                         <ArrayField source="interfaces">
                             <Datagrid>
-                                <TextField source="chassis_id" label="Chassis ID" />
+                                <TextField
+                                    source="chassis_id"
+                                    label="Chassis ID"
+                                />
                                 <TextField source="name" />
                                 <TextField source="port_id" label="Port ID" />
                             </Datagrid>

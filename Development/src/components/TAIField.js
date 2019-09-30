@@ -5,9 +5,9 @@ import get from 'lodash/get';
 const TAIField = ({ record, source = {} }) => (
     <span style={{ fontSize: '14px' }}>
         {record[source]}
-        &emsp;
-        {get(record, `${source}`) != null && (
+        {get(record, source) != null && (
             <span style={{ color: 'grey' }}>
+                {' '}
                 ({TAIConversion(record, source)})
             </span>
         )}

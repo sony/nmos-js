@@ -249,15 +249,15 @@ async function convertHTTPResponseToDataProvider(
             }
             if (resource === 'receivers' || resource === 'senders') {
                 API_URL = returnUrl(resource);
-                let receiverJSONData = await fetch(
+                let resourceJSONData = await fetch(
                     `${API_URL}/${resource}/${params.id}`
                 ).then(result => result.json());
 
                 let deviceJSONData;
-                if (receiverJSONData.hasOwnProperty('device_id')) {
+                if (resourceJSONData.hasOwnProperty('device_id')) {
                     API_URL = returnUrl('devices');
                     deviceJSONData = await fetch(
-                        `${API_URL}/devices/${receiverJSONData.device_id}`
+                        `${API_URL}/devices/${resourceJSONData.device_id}`
                     ).then(result => result.json());
                 } else {
                     return { url: url, data: json };
@@ -276,6 +276,8 @@ async function convertHTTPResponseToDataProvider(
                 connectionAddress =
                     connectionAddresses['urn:x-nmos:control:sr-ctrl/v1.1'] ||
                     connectionAddresses['urn:x-nmos:control:sr-ctrl/v1.0'];
+                if (!connectionAddress) return { url: url, data: json };
+                json.$connectionAPI = `${connectionAddress}`;
 
                 const endpoints = {
                     receivers: [
@@ -293,7 +295,7 @@ async function convertHTTPResponseToDataProvider(
                     ],
                 };
                 for (let i in endpoints[resource]) {
-                    json[`$${endpoints[resource][i]}`] = await fetch(
+                    json['$' + endpoints[resource][i]] = await fetch(
                         `${connectionAddress}/single/${resource}/${params.id}/${endpoints[resource][i]}/`
                     ).then(result => result.json());
                 }

@@ -3,10 +3,9 @@ import get from 'lodash/get';
 import { BooleanField, SimpleShowLayout, TextField } from 'react-admin';
 import { Card, CardContent, Grid } from '@material-ui/core';
 
-const WebSocketTypeReceiver = ({ dataObject }) => {
-    const params_websocket = ['connection_authorization', 'connection_uri'];
+const MQTTSender = ({ dataObject }) => {
     const params_ext = Object.keys(dataObject[0]).filter(function(x) {
-        return params_websocket.indexOf(x) < 0;
+        return x.startsWith('ext_');
     });
     return (
         <div>
@@ -17,74 +16,19 @@ const WebSocketTypeReceiver = ({ dataObject }) => {
                             <CardContent>
                                 <SimpleShowLayout record={dataObject[i]}>
                                     {dataObject[i].hasOwnProperty(
-                                        'connection_authorization'
+                                        'destination_host'
                                     ) && (
-                                        <BooleanField
-                                            source="connection_authorization"
-                                            label="Connection Authorization"
+                                        <TextField
+                                            source="destination_host"
+                                            label="Destination Host"
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
-                                        'connection_uri'
+                                        'destination_port'
                                     ) && (
                                         <TextField
-                                            source="connection_uri"
-                                            label="Connection URI"
-                                        />
-                                    )}
-                                    {params_ext.length !== 0 && <hr />}
-                                    {params_ext.map(value => {
-                                        return (
-                                            <TextField
-                                                record={dataObject[i]}
-                                                source={`${value}`}
-                                            />
-                                        );
-                                    })}
-                                </SimpleShowLayout>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                ))}
-            </Grid>
-        </div>
-    );
-};
-
-const MQTTTypeReceiver = ({ dataObject }) => {
-    const params_mqtt = [
-        'source_host',
-        'source_port',
-        'broker_protocol',
-        'broker_authorization',
-        'broker_topic',
-        'connection_status_broker_topic',
-    ];
-    const params_ext = Object.keys(dataObject[0]).filter(function(x) {
-        return params_mqtt.indexOf(x) < 0;
-    });
-    return (
-        <div>
-            <Grid container spacing={3}>
-                {Object.keys(dataObject).map(i => (
-                    <Grid item sm>
-                        <Card key={i}>
-                            <CardContent>
-                                <SimpleShowLayout record={dataObject[i]}>
-                                    {dataObject[i].hasOwnProperty(
-                                        'source_host'
-                                    ) && (
-                                        <TextField
-                                            source="source_host"
-                                            label="Source Host"
-                                        />
-                                    )}
-                                    {dataObject[i].hasOwnProperty(
-                                        'source_port'
-                                    ) && (
-                                        <TextField
-                                            source="source_port"
-                                            label="Source Port"
+                                            source="destination_port"
+                                            label="Destination Port"
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
@@ -138,24 +82,9 @@ const MQTTTypeReceiver = ({ dataObject }) => {
     );
 };
 
-const RTPTypeReceiver = ({ dataObject }) => {
-    const params_rtp = [
-        'source_ip',
-        'multicast_ip',
-        'interface_ip',
-        'destination_port',
-        'fec_enabled',
-        'fec_destination_ip',
-        'fec_mode',
-        'fec1D_destination_port',
-        'fec2D_destination_port',
-        'rtcp_destination_ip',
-        'rtcp_enabled',
-        'rtcp_destination_port',
-        'rtp_enabled',
-    ];
+const RTPSender = ({ dataObject }) => {
     const params_ext = Object.keys(dataObject[0]).filter(function(x) {
-        return params_rtp.indexOf(x) < 0;
+        return x.startsWith('ext_');
     });
     return (
         <div>
@@ -182,19 +111,19 @@ const RTPTypeReceiver = ({ dataObject }) => {
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
-                                        'multicast_ip'
+                                        'destination_ip'
                                     ) && (
                                         <TextField
-                                            source="multicast_ip"
-                                            label="Multicast IP"
+                                            source="destination_ip"
+                                            label="Destination IP"
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
-                                        'interface_ip'
+                                        'source_port'
                                     ) && (
                                         <TextField
-                                            source="interface_ip"
-                                            label="Interface IP"
+                                            source="source_port"
+                                            label="Source Port"
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
@@ -214,6 +143,22 @@ const RTPTypeReceiver = ({ dataObject }) => {
                                             />
                                         )}
                                     {dataObject[i].hasOwnProperty(
+                                        'fec_destination_ip'
+                                    ) && (
+                                        <TextField
+                                            source="fec_destination_ip"
+                                            label="FEC Destination IP"
+                                        />
+                                    )}
+                                    {dataObject[i].hasOwnProperty(
+                                        'fec_type'
+                                    ) && (
+                                        <TextField
+                                            source="fec_type"
+                                            label="FEC Type"
+                                        />
+                                    )}
+                                    {dataObject[i].hasOwnProperty(
                                         'fec_mode'
                                     ) && (
                                         <TextField
@@ -222,11 +167,19 @@ const RTPTypeReceiver = ({ dataObject }) => {
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
-                                        'fec_destination_ip'
+                                        'fec_block_width'
                                     ) && (
                                         <TextField
-                                            source="fec_destination_ip"
-                                            label="FEC Destination IP"
+                                            source="fec_block_width"
+                                            label="FEC Block Width"
+                                        />
+                                    )}
+                                    {dataObject[i].hasOwnProperty(
+                                        'fec_block_height'
+                                    ) && (
+                                        <TextField
+                                            source="fec_block_height"
+                                            label="FEC Block Height"
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
@@ -243,6 +196,22 @@ const RTPTypeReceiver = ({ dataObject }) => {
                                         <TextField
                                             source="fec2D_destination_port"
                                             label="FEC2D Destination Port"
+                                        />
+                                    )}
+                                    {dataObject[i].hasOwnProperty(
+                                        'fec1D_source_port'
+                                    ) && (
+                                        <TextField
+                                            source="fec1D_source_port"
+                                            label="FEC1D source Port"
+                                        />
+                                    )}
+                                    {dataObject[i].hasOwnProperty(
+                                        'fec2D_source_port'
+                                    ) && (
+                                        <TextField
+                                            source="fec2D_source_port"
+                                            label="FEC2D Source Port"
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
@@ -269,6 +238,14 @@ const RTPTypeReceiver = ({ dataObject }) => {
                                             label="RTCP Destination Port"
                                         />
                                     )}
+                                    {dataObject[i].hasOwnProperty(
+                                        'rtcp_source_port'
+                                    ) && (
+                                        <TextField
+                                            source="rtcp_source_port"
+                                            label="RTCP Source Port"
+                                        />
+                                    )}
                                     {params_ext.length !== 0 && <hr />}
                                     {params_ext.map(value => {
                                         return (
@@ -288,22 +265,69 @@ const RTPTypeReceiver = ({ dataObject }) => {
     );
 };
 
-const TransportParamsCardsGrid = ({ ids, record }) => {
+const WebSocketSender = ({ dataObject }) => {
+    const params_ext = Object.keys(dataObject[0]).filter(function(x) {
+        return x.startsWith('ext_');
+    });
+    return (
+        <div>
+            <Grid container spacing={3}>
+                {Object.keys(dataObject).map(i => (
+                    <Grid item sm>
+                        <Card key={i}>
+                            <CardContent>
+                                <SimpleShowLayout record={dataObject[i]}>
+                                    {dataObject[i].hasOwnProperty(
+                                        'connection_authorization'
+                                    ) && (
+                                        <BooleanField
+                                            source="connection_authorization"
+                                            label="Connection Authorization"
+                                        />
+                                    )}
+                                    {dataObject[i].hasOwnProperty(
+                                        'connection_uri'
+                                    ) && (
+                                        <TextField
+                                            source="connection_uri"
+                                            label="Connection URI"
+                                        />
+                                    )}
+                                    {params_ext.length !== 0 && <hr />}
+                                    {params_ext.map(value => {
+                                        return (
+                                            <TextField
+                                                record={dataObject[i]}
+                                                source={`${value}`}
+                                            />
+                                        );
+                                    })}
+                                </SimpleShowLayout>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                ))}
+            </Grid>
+        </div>
+    );
+};
+
+const SenderTransportParamsCardsGrid = ({ ids, record }) => {
     const type = get(record, '$transporttype');
     const dataObject = [];
     for (let i in ids) {
         dataObject.push(JSON.parse(ids[i]));
     }
     switch (type) {
-        case 'urn:x-nmos:transport:rtp':
-            return <RTPTypeReceiver dataObject={dataObject} />;
-        case 'urn:x-nmos:transport:websocket':
-            return <WebSocketTypeReceiver dataObject={dataObject} />;
         case 'urn:x-nmos:transport:mqtt':
-            return <MQTTTypeReceiver dataObject={dataObject} />;
+            return <MQTTSender dataObject={dataObject} />;
+        case 'urn:x-nmos:transport:rtp':
+            return <RTPSender dataObject={dataObject} />;
+        case 'urn:x-nmos:transport:websocket':
+            return <WebSocketSender dataObject={dataObject} />;
         default:
             return <b>Unknown Type</b>;
     }
 };
 
-export default TransportParamsCardsGrid;
+export default SenderTransportParamsCardsGrid;

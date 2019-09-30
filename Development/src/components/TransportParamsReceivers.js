@@ -3,7 +3,7 @@ import get from 'lodash/get';
 import { BooleanField, SimpleShowLayout, TextField } from 'react-admin';
 import { Card, CardContent, Grid } from '@material-ui/core';
 
-const WebSocketType = ({ dataObject }) => {
+const WebSocketTypeReceiver = ({ dataObject }) => {
     const params_websocket = ['connection_authorization', 'connection_uri'];
     const params_ext = Object.keys(dataObject[0]).filter(function(x) {
         return params_websocket.indexOf(x) < 0;
@@ -51,7 +51,7 @@ const WebSocketType = ({ dataObject }) => {
     );
 };
 
-const MQTTType = ({ dataObject }) => {
+const MQTTTypeReceiver = ({ dataObject }) => {
     const params_mqtt = [
         'source_host',
         'source_port',
@@ -138,7 +138,7 @@ const MQTTType = ({ dataObject }) => {
     );
 };
 
-const RTPType = ({ dataObject }) => {
+const RTPTypeReceiver = ({ dataObject }) => {
     const params_rtp = [
         'source_ip',
         'multicast_ip',
@@ -296,11 +296,11 @@ const TransportParamsCardsGrid = ({ ids, record }) => {
     }
     switch (type) {
         case 'urn:x-nmos:transport:rtp':
-            return <RTPType dataObject={dataObject} />;
+            return <RTPTypeReceiver dataObject={dataObject} />;
         case 'urn:x-nmos:transport:websocket':
-            return <WebSocketType dataObject={dataObject} />;
+            return <WebSocketTypeReceiver dataObject={dataObject} />;
         case 'urn:x-nmos:transport:mqtt':
-            return <MQTTType dataObject={dataObject} />;
+            return <MQTTTypeReceiver dataObject={dataObject} />;
         default:
             return <b>Unknown Type</b>;
     }

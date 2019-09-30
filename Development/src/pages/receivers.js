@@ -33,10 +33,10 @@ import {
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
-import VersionField from '../components/VersionField';
+import TAIField from '../components/TAIField';
 import MapTags from '../components/TagsField';
 import JsonIcon from '../components/JsonIcon';
-import TransportParamsCardsGrid from '../components/TransportParams';
+import TransportParamsCardsGrid from '../components/TransportParamsReceivers';
 import ReactJson from 'react-json-view';
 
 const cookies = new Cookies();
@@ -257,7 +257,6 @@ function JSONViewer({ endpoint, ...controllerProps }) {
                     <CardContent>
                         <ReactJson
                             src={get(controllerProps.record, `${endpoint}`)}
-                            enableClipboard={false}
                         />
                     </CardContent>
                 </Card>
@@ -278,7 +277,7 @@ export const ReceiversShow = props => (
                 <TabbedShowLayout>
                     <Tab label="Summary">
                         <TextField label="ID" source="id" />
-                        <VersionField source="version" />
+                        <TAIField source="version" />
                         <TextField source="label" />
                         <TextField source="description" />
                         <FunctionField
@@ -351,16 +350,16 @@ export const ReceiversShow = props => (
                             source="$active.master_enable"
                         />
                         <TextField
-                            label="Activation Time"
-                            source="$active.activation.activation_time"
-                        />
-                        <TextField
                             label="Mode"
                             source="$active.activation.mode"
                         />
-                        <TextField
+                        <TAIField
                             label="Requested Time"
                             source="$active.activation.requested_time"
+                        />
+                        <TAIField
+                            label="Activation Time"
+                            source="$active.activation.activation_time"
                         />
                         <TextField
                             label="Transport Type"
@@ -387,16 +386,16 @@ export const ReceiversShow = props => (
                             source="$staged.master_enable"
                         />
                         <TextField
-                            label="Activation Time"
-                            source="$staged.activation.activation_time"
-                        />
-                        <TextField
                             label="Mode"
                             source="$staged.activation.mode"
                         />
-                        <TextField
+                        <TAIField
                             label="Requested Time"
                             source="$staged.activation.requested_time"
+                        />
+                        <TAIField
+                            label="Activation Time"
+                            source="$staged.activation.activation_time"
                         />
                         <TextField
                             label="Transport Type"

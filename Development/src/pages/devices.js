@@ -33,7 +33,7 @@ import Cookies from 'universal-cookie';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
-import VersionField from '../components/VersionField';
+import TAIField from '../components/TAIField';
 import MapTags from '../components/TagsField';
 import '../index.css';
 import JsonIcon from '../components/JsonIcon';
@@ -242,7 +242,7 @@ export const DevicesShow = props => (
             >
                 <SimpleShowLayout>
                     <TextField label="ID" source="id" />
-                    <VersionField source="version" />
+                    <TAIField source="version" />
                     <TextField source="label" />
                     {controllerProps.record && QueryVersion() >= 'v1.1' && (
                         <TextField source="description" />

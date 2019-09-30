@@ -260,27 +260,22 @@ async function convertHTTPResponseToDataProvider(
                         `${API_URL}/devices/${receiverJSONData.device_id}`
                     ).then(result => result.json());
                 } else {
-                    return null;
+                    return { url: url, data: json };
                 }
 
-                let ctrlAddress = {};
-                let nodeAddress;
+                let connectionAddresses = {};
+                let connectionAddress;
                 if (deviceJSONData.hasOwnProperty('controls')) {
                     for (let i in deviceJSONData.controls)
-                        ctrlAddress[deviceJSONData.controls[i]['type']] =
-                            deviceJSONData.controls[i]['href'];
+                        connectionAddresses[
+                            deviceJSONData.controls[i]['type']
+                        ] = deviceJSONData.controls[i]['href'];
                 } else {
-                    return null;
+                    return { url: url, data: json };
                 }
-                if (
-                    ctrlAddress['urn:x-nmos:control:sr-ctrl/v1.1'] !== undefined
-                ) {
-                    nodeAddress =
-                        ctrlAddress['urn:x-nmos:control:sr-ctrl/v1.1'];
-                } else {
-                    nodeAddress =
-                        ctrlAddress['urn:x-nmos:control:sr-ctrl/v1.0'];
-                }
+                connectionAddress =
+                    connectionAddresses['urn:x-nmos:control:sr-ctrl/v1.1'] ||
+                    connectionAddresses['urn:x-nmos:control:sr-ctrl/v1.0'];
 
                 let receiverEndpoints = [
                     'active',
@@ -288,18 +283,11 @@ async function convertHTTPResponseToDataProvider(
                     'staged',
                     'transporttype',
                 ];
-                let endpointsJSONData = [];
-                for (let i = 0; i < receiverEndpoints.length; i++) {
-                    endpointsJSONData[i] = await fetch(
-                        `${nodeAddress}/single/receivers/${params.id}/${receiverEndpoints[i]}/`
+                for (let i in receiverEndpoints) {
+                    json[`$${receiverEndpoints[i]}`] = await fetch(
+                        `${connectionAddress}/single/receivers/${params.id}/${receiverEndpoints[i]}/`
                     ).then(result => result.json());
                 }
-
-                json.$active = endpointsJSONData[0];
-                json.$contstraints = endpointsJSONData[1];
-                json.$staged = endpointsJSONData[2];
-                json.$transporttype = endpointsJSONData[3];
-                json.$nodeAddress = `${nodeAddress}`;
             }
             return { url: url, data: json };
 

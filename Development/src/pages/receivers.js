@@ -2,17 +2,24 @@ import React from 'react';
 import {
     ArrayField,
     BooleanField,
+    BooleanInput,
     Button,
     ChipField,
+    Edit,
+    FormTab,
     FunctionField,
     ReferenceField,
+    SaveButton,
     ShowButton,
     ShowController,
     ShowView,
     Tab,
+    TabbedForm,
     TabbedShowLayout,
     TextField,
+    TextInput,
     Title,
+    Toolbar,
 } from 'react-admin';
 import get from 'lodash/get';
 import Cookies from 'universal-cookie';
@@ -367,4 +374,31 @@ export const ReceiversShow = props => (
             </ShowView>
         )}
     </ShowController>
+);
+
+const PostEditToolbar = props => (
+    <Toolbar {...props}>
+        <SaveButton />
+    </Toolbar>
+);
+
+export const ReceiversEdit = props => (
+    <Edit {...props} title={<ReceiversTitle />}>
+        <TabbedForm toolbar={<PostEditToolbar />}>
+            <FormTab label="staged">
+                <TextField label="ID" source="id" />
+                <TextInput label="Sender ID" source="$staged.sender_id" />
+                <BooleanInput
+                    label="Master Enable"
+                    source="$staged.master_enable"
+                />
+                <TextInput label="Mode" source="$staged.activation.mode" />
+                <TextInput
+                    label="Requested Time"
+                    source="$staged.activation.requested_time"
+                />
+                <ReceiverTransportParamsCardsGrid />
+            </FormTab>
+        </TabbedForm>
+    </Edit>
 );

@@ -210,7 +210,15 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             }
         }
         case UPDATE:
-            return '';
+            delete params.data.$staged.activation.activation_time;
+            const options = {
+                method: 'PATCH',
+                body: JSON.stringify(params.data.$staged),
+            };
+            return {
+                url: `${params.data.$connectionAPI}/single/receivers/${params.data.id}/staged`,
+                options: options,
+            };
         case CREATE:
             return '';
         case DELETE:
@@ -317,6 +325,9 @@ async function convertHTTPResponseToDataProvider(
                 data: json,
                 total: 'unknown',
             };
+        case UPDATE:
+            console.log(params.data.$staged);
+            return { data: { ...params.data.$staged, id: json.id } };
         default:
             //used for prev, next, first, last
             if (resource === 'queryapis') {

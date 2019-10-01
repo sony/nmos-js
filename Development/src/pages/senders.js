@@ -1,24 +1,24 @@
 import React from 'react';
 import {
+    ArrayField,
     BooleanField,
     Button,
     ChipField,
     FunctionField,
-    ListButton,
     ReferenceField,
     ShowButton,
     ShowController,
     ShowView,
-    SimpleShowLayout,
+    Tab,
+    TabbedShowLayout,
     TextField,
     Title,
     UrlField,
 } from 'react-admin';
-import { hr } from '@material-ui/core';
+import get from 'lodash/get';
 import Cookies from 'universal-cookie';
 import {
     Card,
-    CardActions,
     CardContent,
     Table,
     TableBody,
@@ -29,10 +29,12 @@ import {
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
-import VersionField from '../components/VersionField';
+import TAIField from '../components/TAIField';
 import MapTags from '../components/TagsField';
-import get from 'lodash/get';
 import JsonIcon from '../components/JsonIcon';
+import SenderTransportParamsCardsGrid from '../components/SenderTransportParams';
+import ConnectionShowActions from '../components/ConnectionShowActions'
+import JSONViewer from '../components/JSONViewer';
 
 const cookies = new Cookies();
 
@@ -203,30 +205,10 @@ const ChipConditionalLabel = ({ record, source, ...props }) => {
     ) : null;
 };
 
-const cardActionStyle = {
-    zIndex: 2,
-    float: 'right',
-};
-
 const QueryVersion = () => {
     let url = cookies.get('Query API');
     return url.match(/([^/]+)(?=\/?$)/g)[0];
 };
-
-const SendersShowActions = ({ basePath, data, resource }) => (
-    <CardActions title={<SendersTitle />} style={cardActionStyle}>
-        {data ? (
-            <Button
-                label={'Raw'}
-                href={cookies.get('Query API') + '/' + resource + '/' + data.id}
-                title={'View raw'}
-            >
-                <JsonIcon />
-            </Button>
-        ) : null}
-        <ListButton title={'Return to ' + basePath} basePath={basePath} />
-    </CardActions>
-);
 
 export const SendersShow = props => (
     <ShowController {...props}>
@@ -235,67 +217,141 @@ export const SendersShow = props => (
                 {...props}
                 {...controllerProps}
                 title={<SendersTitle />}
-                actions={<SendersShowActions />}
+                actions={<ConnectionShowActions />}
             >
-                <SimpleShowLayout>
-                    <TextField label="ID" source="id" />
-                    <VersionField source="version" />
-                    <TextField source="label" />
-                    <TextField source="description" />
-                    <FunctionField
-                        label="Tags"
-                        render={record =>
-                            Object.keys(record.tags).length > 0
-                                ? MapTags(record)
-                                : null
-                        }
-                    />
-                    <hr />
-                    <TextField source="transport" />
-                    <UrlField
-                        style={{ fontSize: '14px' }}
-                        label="Manifest Address"
-                        source="manifest_href"
-                    />
-                    {controllerProps.record && QueryVersion() >= 'v1.2' && (
-                        <ItemArrayField source="interface_bindings" />
-                    )}
-                    {controllerProps.record && QueryVersion() >= 'v1.2' && (
-                        <BooleanField
-                            label="Subscription Active"
-                            source="subscription.active"
+                <TabbedShowLayout>
+                    <Tab label="Summary">
+                        <TextField label="ID" source="id" />
+                        <TAIField source="version" />
+                        <TextField source="label" />
+                        <TextField source="description" />
+                        <FunctionField
+                            label="Tags"
+                            render={record =>
+                                Object.keys(record.tags).length > 0
+                                    ? MapTags(record)
+                                    : null
+                            }
                         />
-                    )}
-                    <hr />
-                    <ReferenceField
-                        label="Flow"
-                        source="flow_id"
-                        reference="flows"
-                        linkType="show"
-                    >
-                        <ChipConditionalLabel source="label" />
-                    </ReferenceField>
-                    <ReferenceField
-                        label="Device"
-                        source="device_id"
-                        reference="devices"
-                        linkType="show"
-                    >
-                        <ChipConditionalLabel source="label" />
-                    </ReferenceField>
-                    {controllerProps.record &&
-                        QueryVersion() >= 'v1.2' &&
-                        controllerProps.record.subscription.receiver_id && (
-                            <ReferenceField
-                                label="Receiver"
-                                source="subscription.receiver_id"
-                                reference="receivers"
-                                linkType="show"
-                            >
-                                <ChipConditionalLabel source="label" />
-                            </ReferenceField>
+                        <hr />
+                        <TextField source="transport" />
+                        <UrlField
+                            style={{ fontSize: '14px' }}
+                            label="Manifest Address"
+                            source="manifest_href"
+                        />
+                        {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                            <ItemArrayField source="interface_bindings" />
                         )}
-                </SimpleShowLayout>
+                        {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                            <BooleanField
+                                label="Subscription Active"
+                                source="subscription.active"
+                            />
+                        )}
+                        <hr />
+                        <ReferenceField
+                            label="Flow"
+                            source="flow_id"
+                            reference="flows"
+                            linkType="show"
+                        >
+                            <ChipConditionalLabel source="label" />
+                        </ReferenceField>
+                        <ReferenceField
+                            label="Device"
+                            source="device_id"
+                            reference="devices"
+                            linkType="show"
+                        >
+                            <ChipConditionalLabel source="label" />
+                        </ReferenceField>
+                        {controllerProps.record &&
+                            QueryVersion() >= 'v1.2' &&
+                            controllerProps.record.subscription.receiver_id && (
+                                <ReferenceField
+                                    label="Receiver"
+                                    source="subscription.receiver_id"
+                                    reference="receivers"
+                                    linkType="show"
+                                >
+                                    <ChipConditionalLabel source="label" />
+                                </ReferenceField>
+                            )}
+                    </Tab>
+                    <Tab label="Active" path="active">
+                        <TextField label="ID" source="id" />
+                        <TextField
+                            label="Receiver ID"
+                            source="$active.receiver_id"
+                        />
+                        <BooleanField
+                            label="Master Enable"
+                            source="$active.master_enable"
+                        />
+                        <TextField
+                            label="Mode"
+                            source="$active.activation.mode"
+                        />
+                        <TAIField
+                            label="Requested Time"
+                            source="$active.activation.requested_time"
+                        />
+                        <TAIField
+                            label="Activation Time"
+                            source="$active.activation.activation_time"
+                        />
+                        <TextField
+                            label="Transport Type"
+                            source="$transporttype"
+                        />
+                        <ArrayField
+                            label="Transport Parameters"
+                            source="$active.transport_params"
+                        >
+                            <SenderTransportParamsCardsGrid
+                                record={controllerProps.record}
+                            />
+                        </ArrayField>
+                        <JSONViewer endpoint="$active" />
+                    </Tab>
+                    <Tab label="Staged" path="staged">
+                        <TextField label="ID" source="id" />
+                        <TextField
+                            label="Receiver ID"
+                            source="staged.receiver_id"
+                        />
+                        <BooleanField
+                            label="Master Enable"
+                            source="$staged.master_enable"
+                        />
+                        <TextField
+                            label="Mode"
+                            source="$staged.activation.mode"
+                        />
+                        <TAIField
+                            label="Requested Time"
+                            source="$staged.activation.requested_time"
+                        />
+                        <TAIField
+                            label="Activation Time"
+                            source="$staged.activation.activation_time"
+                        />
+                        <TextField
+                            label="Transport Type"
+                            source="$transporttype"
+                        />
+                        <ArrayField
+                            label="Transport Parameters"
+                            source="$staged.transport_params"
+                        >
+                            <SenderTransportParamsCardsGrid
+                                record={controllerProps.record}
+                            />
+                        </ArrayField>
+                        <JSONViewer endpoint="$staged" />
+                    </Tab>
+                </TabbedShowLayout>
             </ShowView>
         )}
     </ShowController>

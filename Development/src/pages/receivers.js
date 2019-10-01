@@ -5,7 +5,6 @@ import {
     Button,
     ChipField,
     FunctionField,
-    ListButton,
     ReferenceField,
     ShowButton,
     ShowController,
@@ -19,11 +18,7 @@ import get from 'lodash/get';
 import Cookies from 'universal-cookie';
 import {
     Card,
-    CardActions,
     CardContent,
-    Collapse,
-    FormControlLabel,
-    Switch,
     Table,
     TableBody,
     TableCell,
@@ -33,11 +28,12 @@ import {
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
-import VersionField from '../components/VersionField';
+import TAIField from '../components/TAIField';
 import MapTags from '../components/TagsField';
 import JsonIcon from '../components/JsonIcon';
-import TransportParamsCardsGrid from '../components/TransportParams';
-import ReactJson from 'react-json-view';
+import ReceiverTransportParamsCardsGrid from '../components/ReceiverTransportParams';
+import ConnectionShowActions from '../components/ConnectionShowActions';
+import JSONViewer from '../components/JSONViewer';
 
 const cookies = new Cookies();
 
@@ -216,55 +212,10 @@ const ChipConditionalLabel = ({ record, source, ...props }) => {
     ) : null;
 };
 
-const cardActionStyle = {
-    zIndex: 2,
-    float: 'right',
-};
-
 const QueryVersion = () => {
     let url = cookies.get('Query API');
     return url.match(/([^/]+)(?=\/?$)/g)[0];
 };
-
-const ReceiversShowActions = ({ basePath, data, resource }) => (
-    <CardActions title={<ReceiversTitle />} style={cardActionStyle}>
-        {data ? (
-            <Button
-                label={'Raw'}
-                href={cookies.get('Query API') + '/' + resource + '/' + data.id}
-                title={'View raw'}
-            >
-                <JsonIcon />
-            </Button>
-        ) : null}
-        <ListButton title={'Return to ' + basePath} basePath={basePath} />
-    </CardActions>
-);
-
-function JSONViewer({ endpoint, ...controllerProps }) {
-    const [checked, setChecked] = React.useState(false);
-    const handleChange = () => {
-        setChecked(prev => !prev);
-    };
-    return (
-        <div>
-            <FormControlLabel
-                control={<Switch checked={checked} onChange={handleChange} />}
-                label={'Show JSON'}
-            />
-            <Collapse in={checked}>
-                <Card>
-                    <CardContent>
-                        <ReactJson
-                            src={get(controllerProps.record, `${endpoint}`)}
-                            enableClipboard={false}
-                        />
-                    </CardContent>
-                </Card>
-            </Collapse>
-        </div>
-    );
-}
 
 export const ReceiversShow = props => (
     <ShowController {...props}>
@@ -273,12 +224,12 @@ export const ReceiversShow = props => (
                 {...props}
                 {...controllerProps}
                 title={<ReceiversTitle />}
-                actions={<ReceiversShowActions />}
+                actions={<ConnectionShowActions />}
             >
                 <TabbedShowLayout>
                     <Tab label="Summary">
                         <TextField label="ID" source="id" />
-                        <VersionField source="version" />
+                        <TAIField source="version" />
                         <TextField source="label" />
                         <TextField source="description" />
                         <FunctionField
@@ -351,16 +302,16 @@ export const ReceiversShow = props => (
                             source="$active.master_enable"
                         />
                         <TextField
-                            label="Activation Time"
-                            source="$active.activation.activation_time"
-                        />
-                        <TextField
                             label="Mode"
                             source="$active.activation.mode"
                         />
-                        <TextField
+                        <TAIField
                             label="Requested Time"
                             source="$active.activation.requested_time"
+                        />
+                        <TAIField
+                            label="Activation Time"
+                            source="$active.activation.activation_time"
                         />
                         <TextField
                             label="Transport Type"
@@ -370,7 +321,7 @@ export const ReceiversShow = props => (
                             label="Transport Parameters"
                             source="$active.transport_params"
                         >
-                            <TransportParamsCardsGrid
+                            <ReceiverTransportParamsCardsGrid
                                 record={controllerProps.record}
                             />
                         </ArrayField>
@@ -387,16 +338,16 @@ export const ReceiversShow = props => (
                             source="$staged.master_enable"
                         />
                         <TextField
-                            label="Activation Time"
-                            source="$staged.activation.activation_time"
-                        />
-                        <TextField
                             label="Mode"
                             source="$staged.activation.mode"
                         />
-                        <TextField
+                        <TAIField
                             label="Requested Time"
                             source="$staged.activation.requested_time"
+                        />
+                        <TAIField
+                            label="Activation Time"
+                            source="$staged.activation.activation_time"
                         />
                         <TextField
                             label="Transport Type"
@@ -406,7 +357,7 @@ export const ReceiversShow = props => (
                             label="Transport Parameters"
                             source="$staged.transport_params"
                         >
-                            <TransportParamsCardsGrid
+                            <ReceiverTransportParamsCardsGrid
                                 record={controllerProps.record}
                             />
                         </ArrayField>

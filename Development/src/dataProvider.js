@@ -247,59 +247,58 @@ async function convertHTTPResponseToDataProvider(
             if (resource === 'queryapis') {
                 json.id = json.name;
             }
-            if (resource === 'receivers') {
-                API_URL = returnUrl('receivers');
-                let receiverJSONData = await fetch(
-                    `${API_URL}/receivers/${params.id}`
+            if (resource === 'receivers' || resource === 'senders') {
+                API_URL = returnUrl(resource);
+                let resourceJSONData = await fetch(
+                    `${API_URL}/${resource}/${params.id}`
                 ).then(result => result.json());
 
                 let deviceJSONData;
-                if (receiverJSONData.hasOwnProperty('device_id')) {
+                if (resourceJSONData.hasOwnProperty('device_id')) {
                     API_URL = returnUrl('devices');
                     deviceJSONData = await fetch(
-                        `${API_URL}/devices/${receiverJSONData.device_id}`
+                        `${API_URL}/devices/${resourceJSONData.device_id}`
                     ).then(result => result.json());
                 } else {
-                    return null;
+                    return { url: url, data: json };
                 }
 
-                let ctrlAddress = {};
-                let nodeAddress;
+                let connectionAddresses = {};
+                let connectionAddress;
                 if (deviceJSONData.hasOwnProperty('controls')) {
                     for (let i in deviceJSONData.controls)
-                        ctrlAddress[deviceJSONData.controls[i]['type']] =
-                            deviceJSONData.controls[i]['href'];
+                        connectionAddresses[
+                            deviceJSONData.controls[i]['type']
+                        ] = deviceJSONData.controls[i]['href'];
                 } else {
-                    return null;
+                    return { url: url, data: json };
                 }
-                if (
-                    ctrlAddress['urn:x-nmos:control:sr-ctrl/v1.1'] !== undefined
-                ) {
-                    nodeAddress =
-                        ctrlAddress['urn:x-nmos:control:sr-ctrl/v1.1'];
-                } else {
-                    nodeAddress =
-                        ctrlAddress['urn:x-nmos:control:sr-ctrl/v1.0'];
-                }
+                connectionAddress =
+                    connectionAddresses['urn:x-nmos:control:sr-ctrl/v1.1'] ||
+                    connectionAddresses['urn:x-nmos:control:sr-ctrl/v1.0'];
+                if (!connectionAddress) return { url: url, data: json };
+                json.$connectionAPI = `${connectionAddress}`;
 
-                let receiverEndpoints = [
-                    'active',
-                    'constraints',
-                    'staged',
-                    'transporttype',
-                ];
-                let endpointsJSONData = [];
-                for (let i = 0; i < receiverEndpoints.length; i++) {
-                    endpointsJSONData[i] = await fetch(
-                        `${nodeAddress}/single/receivers/${params.id}/${receiverEndpoints[i]}/`
+                const endpoints = {
+                    receivers: [
+                        'active',
+                        'constraints',
+                        'staged',
+                        'transporttype',
+                    ],
+                    senders: [
+                        'active',
+                        'constraints',
+                        'staged',
+                        'transporttype',
+                        'transportfile',
+                    ],
+                };
+                for (let i in endpoints[resource]) {
+                    json['$' + endpoints[resource][i]] = await fetch(
+                        `${connectionAddress}/single/${resource}/${params.id}/${endpoints[resource][i]}/`
                     ).then(result => result.json());
                 }
-
-                json.$active = endpointsJSONData[0];
-                json.$contstraints = endpointsJSONData[1];
-                json.$staged = endpointsJSONData[2];
-                json.$transporttype = endpointsJSONData[3];
-                json.$nodeAddress = `${nodeAddress}`;
             }
             return { url: url, data: json };
 

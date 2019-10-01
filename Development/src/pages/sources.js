@@ -32,7 +32,7 @@ import {
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
-import VersionField from '../components/VersionField';
+import TAIField from '../components/TAIField';
 import MapTags from '../components/TagsField';
 import JsonIcon from '../components/JsonIcon';
 
@@ -236,7 +236,7 @@ export const SourcesShow = props => (
             >
                 <SimpleShowLayout>
                     <TextField label="ID" source="id" />
-                    <VersionField source="version" />
+                    <TAIField source="version" />
                     <TextField source="label" />
                     <TextField source="description" />
                     <FunctionField

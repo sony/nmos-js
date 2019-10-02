@@ -302,6 +302,18 @@ async function convertHTTPResponseToDataProvider(
                         'transportfile',
                     ],
                 };
+
+                const connectionAPIVersion = connectionAddress.split('/').pop();
+                if (connectionAPIVersion.startsWith('v1.0')) {
+                    for (let i in endpoints) {
+                        let index = endpoints[i].indexOf('transporttype');
+                        if (index > -1) {
+                            endpoints[i].splice(index, 1);
+                        }
+                    }
+                    json.$transporttype = 'urn:x-nmos:transport:rtp';
+                }
+
                 for (let i in endpoints[resource]) {
                     json['$' + endpoints[resource][i]] = await fetch(
                         `${connectionAddress}/single/${resource}/${params.id}/${endpoints[resource][i]}/`

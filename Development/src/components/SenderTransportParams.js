@@ -1,7 +1,15 @@
 import React from 'react';
 import get from 'lodash/get';
-import { BooleanField, SimpleShowLayout, TextField } from 'react-admin';
+import {
+    ArrayInput,
+    BooleanField,
+    BooleanInput,
+    SimpleShowLayout,
+    TextField,
+    TextInput,
+} from 'react-admin';
 import { Card, CardContent, Grid } from '@material-ui/core';
+import { CardFormIterator } from './CardFormIterator';
 
 const MQTTSender = ({ dataObject }) => {
     const params_ext = Object.keys(dataObject[0]).filter(function(x) {
@@ -265,6 +273,72 @@ const RTPSender = ({ dataObject }) => {
     );
 };
 
+const RTPSenderEdit = () => {
+    return (
+        <div>
+            <ArrayInput
+                label="Transport Parameters"
+                source="$staged.transport_params"
+            >
+                <CardFormIterator disableRemove disableAdd>
+                    <TextInput source="source_ip" label="Source IP" />
+                    <TextInput source="destination_ip" label="Destination IP" />
+                    <TextInput source="source_port" label="Source Port" />
+                    <TextInput
+                        source="destination_port"
+                        label="Destination Port"
+                    />
+                    <BooleanInput source="fec_enabled" label="FEC Enabled" />
+                    <TextInput
+                        source="fec_destination_ip"
+                        label="FEC Destination IP"
+                    />
+                    <TextInput source="fec_type" label="FEC Type" />
+                    <TextInput source="fec_mode" label="FEC Mode" />
+                    <TextInput
+                        source="fec_block_width"
+                        label="FEC Block Width"
+                    />
+                    <TextInput
+                        source="fec_block_height"
+                        label="FEC Block Height"
+                    />
+                    <TextInput
+                        source="fec1D_destination_port"
+                        label="FEC1D Destination Port"
+                    />
+                    <TextInput
+                        source="fec2D_destination_port"
+                        label="FEC2D Destination Port"
+                    />
+                    <TextInput
+                        source="fec1D_source_port"
+                        label="FEC1D Source Port"
+                    />
+                    <TextInput
+                        source="fec2D_source_port"
+                        label="FEC2D Source Port"
+                    />
+                    <BooleanInput source="rtcp_enabled" label="RTCP Enabled" />
+                    <TextInput
+                        source="rtcp_destination_ip"
+                        label="RTCP Destination IP"
+                    />
+                    <TextInput
+                        source="rtcp_destination_port"
+                        label="RTCP Destination Port"
+                    />
+                    <TextInput
+                        source="rtcp_source_port"
+                        label="RTCP Source Port"
+                    />
+                    <BooleanInput source="rtp_enabled" label="RTP Enabled" />
+                </CardFormIterator>
+            </ArrayInput>
+        </div>
+    );
+};
+
 const WebSocketSender = ({ dataObject }) => {
     const params_ext = Object.keys(dataObject[0]).filter(function(x) {
         return x.startsWith('ext_');
@@ -318,15 +392,28 @@ const SenderTransportParamsCardsGrid = ({ ids, record }) => {
     for (let i in ids) {
         dataObject.push(JSON.parse(ids[i]));
     }
-    switch (type) {
-        case 'urn:x-nmos:transport:mqtt':
-            return <MQTTSender dataObject={dataObject} />;
-        case 'urn:x-nmos:transport:rtp':
-            return <RTPSender dataObject={dataObject} />;
-        case 'urn:x-nmos:transport:websocket':
-            return <WebSocketSender dataObject={dataObject} />;
-        default:
-            return <b>Unknown Type</b>;
+    if (ids) {
+        switch (type) {
+            case 'urn:x-nmos:transport:mqtt':
+                return <MQTTSender dataObject={dataObject} />;
+            case 'urn:x-nmos:transport:rtp':
+                return <RTPSender dataObject={dataObject} />;
+            case 'urn:x-nmos:transport:websocket':
+                return <WebSocketSender dataObject={dataObject} />;
+            default:
+                return <b>Unknown Type</b>;
+        }
+    } else {
+        switch (type) {
+            case 'urn:x-nmos:transport:mqtt':
+                return <b>Placeholder</b>;
+            case 'urn:x-nmos:transport:rtp':
+                return <RTPSenderEdit />;
+            case 'urn:x-nmos:transport:websocket':
+                return <b>Placeholder</b>;
+            default:
+                return <b>Unknown Type</b>;
+        }
     }
 };
 

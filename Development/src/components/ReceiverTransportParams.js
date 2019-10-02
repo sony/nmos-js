@@ -225,7 +225,7 @@ const RTPReceiver = ({ dataObject }) => {
     );
 };
 
-const RTPReceiverEdit = ({ ...rest }) => {
+const RTPReceiverEdit = () => {
     return (
         <div>
             <ArrayInput
@@ -233,15 +233,9 @@ const RTPReceiverEdit = ({ ...rest }) => {
                 source="$staged.transport_params"
             >
                 <CardFormIterator disableRemove disableAdd>
-                    <TextInput source="source_ip" label="Source IP address" />
-                    <TextInput
-                        source="multicast_ip"
-                        label="Multicast IP address"
-                    />
-                    <TextInput
-                        source="interface_ip"
-                        label="Interface IP address"
-                    />
+                    <TextInput source="source_ip" label="Source IP" />
+                    <TextInput source="multicast_ip" label="Multicast IP" />
+                    <TextInput source="interface_ip" label="Interface IP" />
                     <TextInput
                         source="destination_port"
                         label="Destination Port"

@@ -216,7 +216,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 body: JSON.stringify(params.data.$staged),
             };
             return {
-                url: `${params.data.$connectionAPI}/single/receivers/${params.data.id}/staged`,
+                url: `${params.data.$connectionAPI}/single/${resource}/${params.data.id}/staged`,
                 options: options,
             };
         case CREATE:
@@ -338,7 +338,6 @@ async function convertHTTPResponseToDataProvider(
                 total: 'unknown',
             };
         case UPDATE:
-            console.log(params.data.$staged);
             return { data: { ...params.data.$staged, id: json.id } };
         default:
             //used for prev, next, first, last

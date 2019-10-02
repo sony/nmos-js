@@ -2,17 +2,24 @@ import React from 'react';
 import {
     ArrayField,
     BooleanField,
+    BooleanInput,
     Button,
     ChipField,
+    Edit,
+    FormTab,
     FunctionField,
     ReferenceField,
+    SaveButton,
     ShowButton,
     ShowController,
     ShowView,
     Tab,
+    TabbedForm,
     TabbedShowLayout,
     TextField,
+    TextInput,
     Title,
+    Toolbar,
     UrlField,
 } from 'react-admin';
 import get from 'lodash/get';
@@ -33,7 +40,7 @@ import TAIField from '../components/TAIField';
 import MapTags from '../components/TagsField';
 import JsonIcon from '../components/JsonIcon';
 import SenderTransportParamsCardsGrid from '../components/SenderTransportParams';
-import ConnectionShowActions from '../components/ConnectionShowActions'
+import ConnectionShowActions from '../components/ConnectionShowActions';
 import JSONViewer from '../components/JSONViewer';
 
 const cookies = new Cookies();
@@ -355,4 +362,31 @@ export const SendersShow = props => (
             </ShowView>
         )}
     </ShowController>
+);
+
+const PostEditToolbar = props => (
+    <Toolbar {...props}>
+        <SaveButton />
+    </Toolbar>
+);
+
+export const SendersEdit = props => (
+    <Edit {...props} title={<SendersTitle />}>
+        <TabbedForm toolbar={<PostEditToolbar />}>
+            <FormTab label="staged">
+                <TextField label="ID" source="id" />
+                <TextInput label="Receiver ID" source="$staged.receiver_id" />
+                <BooleanInput
+                    label="Master Enable"
+                    source="$staged.master_enable"
+                />
+                <TextInput label="Mode" source="$staged.activation.mode" />
+                <TextInput
+                    label="Requested Time"
+                    source="$staged.activation.requested_time"
+                />
+                <SenderTransportParamsCardsGrid />
+            </FormTab>
+        </TabbedForm>
+    </Edit>
 );

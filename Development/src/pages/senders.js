@@ -9,6 +9,7 @@ import {
     FormTab,
     FunctionField,
     ReferenceField,
+    RichTextField,
     SaveButton,
     ShowButton,
     ShowController,
@@ -32,6 +33,7 @@ import {
     TableCell,
     TableHead,
     TableRow,
+    Typography,
 } from '@material-ui/core';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
@@ -358,6 +360,13 @@ export const SendersShow = props => (
                         </ArrayField>
                         <JSONViewer endpoint="$staged" />
                     </Tab>
+                    {get(controllerProps.record, '$transportfile') && (
+                        <Tab label="Transport File">
+                            <Typography inline>
+                                {get(controllerProps.record, '$transportfile')}
+                            </Typography>
+                        </Tab>
+                    )}
                 </TabbedShowLayout>
             </ShowView>
         )}

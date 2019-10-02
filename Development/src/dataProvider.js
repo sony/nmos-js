@@ -229,6 +229,49 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
     }
 };
 
+async function getEndpoints(json, resource, connectionAddress, params) {
+    const endpoints = {
+        receivers: ['active', 'constraints', 'staged', 'transporttype'],
+        senders: [
+            'active',
+            'constraints',
+            'staged',
+            'transporttype',
+            'transportfile',
+        ],
+    };
+
+    if (endpoints[resource].includes('transportfile')) {
+        json['$transportfile'] = await fetch(
+            `${connectionAddress}/single/senders/${params.id}/transportfile/`,
+            {
+                headers: {
+                    Accept: 'application/sdp',
+                },
+            }
+        ).then(function(response) {
+            return response.text();
+        });
+        endpoints[resource] = endpoints[resource].filter(
+            item => item !== 'transportfile'
+        );
+    }
+
+    const connectionAPIVersion = connectionAddress.split('/').pop();
+    if (connectionAPIVersion.startsWith('v1.0')) {
+        endpoints[resource] = endpoints[resource].filter(
+            item => item !== 'transporttype'
+        );
+        json.$transporttype = 'urn:x-nmos:transport:rtp';
+    }
+
+    for (let i in endpoints[resource]) {
+        json['$' + endpoints[resource][i]] = await fetch(
+            `${connectionAddress}/single/${resource}/${params.id}/${endpoints[resource][i]}/`
+        ).then(result => result.json());
+    }
+}
+
 async function convertHTTPResponseToDataProvider(
     url,
     response,
@@ -287,38 +330,7 @@ async function convertHTTPResponseToDataProvider(
                 if (!connectionAddress) return { url: url, data: json };
                 json.$connectionAPI = `${connectionAddress}`;
 
-                const endpoints = {
-                    receivers: [
-                        'active',
-                        'constraints',
-                        'staged',
-                        'transporttype',
-                    ],
-                    senders: [
-                        'active',
-                        'constraints',
-                        'staged',
-                        'transporttype',
-                        'transportfile',
-                    ],
-                };
-
-                const connectionAPIVersion = connectionAddress.split('/').pop();
-                if (connectionAPIVersion.startsWith('v1.0')) {
-                    for (let i in endpoints) {
-                        let index = endpoints[i].indexOf('transporttype');
-                        if (index > -1) {
-                            endpoints[i].splice(index, 1);
-                        }
-                    }
-                    json.$transporttype = 'urn:x-nmos:transport:rtp';
-                }
-
-                for (let i in endpoints[resource]) {
-                    json['$' + endpoints[resource][i]] = await fetch(
-                        `${connectionAddress}/single/${resource}/${params.id}/${endpoints[resource][i]}/`
-                    ).then(result => result.json());
-                }
+                await getEndpoints(json, resource, connectionAddress, params);
             }
             return { url: url, data: json };
 

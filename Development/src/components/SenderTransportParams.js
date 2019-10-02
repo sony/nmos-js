@@ -389,10 +389,10 @@ const WebSocketSender = ({ dataObject }) => {
 const SenderTransportParamsCardsGrid = ({ ids, record }) => {
     const type = get(record, '$transporttype');
     const dataObject = [];
-    for (let i in ids) {
-        dataObject.push(JSON.parse(ids[i]));
-    }
     if (ids) {
+        for (let i in ids) {
+            dataObject.push(JSON.parse(ids[i]));
+        }
         switch (type) {
             case 'urn:x-nmos:transport:mqtt':
                 return <MQTTSender dataObject={dataObject} />;

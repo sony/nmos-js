@@ -7798,10 +7798,10 @@ querystringify@^2.1.1:
   resolved "https://registry.yarnpkg.com/querystringify/-/querystringify-2.1.1.tgz#60e5a5fd64a7f8bfa4d2ab2ed6fdf4c85bad154e"
   integrity sha512-w7fLxIRCRT7U8Qu53jQnJyPkYZIaR4n5151KMfcJlO/A9397Wxb1amJvROTK6TOnp7PfoAmg/qXiNHI+08jRfA==
 
-ra-core@^2.9.5:
-  version "2.9.5"
-  resolved "https://registry.yarnpkg.com/ra-core/-/ra-core-2.9.5.tgz#63861650a3e564b2dd0d1540ffed17b0751cf798"
-  integrity sha512-YncSBw1RBqvFQbWAmnw1zBAZfrRA9nc4kyTGENAPQcy2uctbyGtihZMndIDYsmLvM8OwNmY8Ld4ZDcu12XPAHA==
+ra-core@^2.9.6:
+  version "2.9.6"
+  resolved "https://registry.yarnpkg.com/ra-core/-/ra-core-2.9.6.tgz#6e8f28d47a39182d8a28447fff4d32783a2b5cf2"
+  integrity sha512-Pr6UEuejWOfIcppZGuFD6AHKPyvFMq6gnYvr62iuOMO5W3WOX5fS3Hy1lDcsKv/4y8BEz9UaKrqEhkTH3GBS7g==
   dependencies:
     classnames "~2.2.5"
     date-fns "^1.29.0"
@@ -7821,31 +7821,15 @@ ra-core@^2.9.5:
     redux-saga "~0.16.0"
     reselect "~3.0.0"
 
-ra-data-json-server@^2.3.1:
-  version "2.9.5"
-  resolved "https://registry.yarnpkg.com/ra-data-json-server/-/ra-data-json-server-2.9.5.tgz#58c4202cea8e9c5b8bf6c7adefc3f5b20c01a04f"
-  integrity sha512-zm5bfDXFYZeiO66fzbRjlHMFTHnEtbP6BZgtVoCCVY5DON06uqzNqCEnds1ljvq4lrKOZX0HWY+UECU7zms6FA==
-  dependencies:
-    query-string "~5.1.1"
-    ra-core "^2.9.5"
-
-ra-data-simple-rest@^2.3.1:
-  version "2.9.5"
-  resolved "https://registry.yarnpkg.com/ra-data-simple-rest/-/ra-data-simple-rest-2.9.5.tgz#8c4e2c0db59c4d4a440343177421edbf22224e6d"
-  integrity sha512-3rtjWwNuGuHYUr/FOyQlvjtCL1Pdkuu6+J3nyKaCR0t5N5n+qLcVX6c+tkld9KuhjKfjb/ua00MYk1OyaH6FBg==
-  dependencies:
-    query-string "~5.1.1"
-    ra-core "^2.9.5"
-
 ra-language-english@^2.9.3:
   version "2.9.3"
   resolved "https://registry.yarnpkg.com/ra-language-english/-/ra-language-english-2.9.3.tgz#346528ad8bc54c16ba23c011b7866d98541c6d7b"
   integrity sha512-ni923vBW0V+vMfo1NoaF8Bhk/T7GZdAyoO3J5B+/czQKCGh3bFm7D3xZExf/0NB/e/TmYUEy4noVQ+SsflY7ew==
 
-ra-ui-materialui@^2.9.5:
-  version "2.9.5"
-  resolved "https://registry.yarnpkg.com/ra-ui-materialui/-/ra-ui-materialui-2.9.5.tgz#58e56838100038980c74b9f7a37f8f3308a551ea"
-  integrity sha512-kZX5sXoKDFSdJzneTlcI8HFwRXjRHGYWtj7SOGmXMb+n4rd83J2CHTIHMWQT5mWt8+0gmC4U2XliUgWDT1KhSQ==
+ra-ui-materialui@2.9.6, ra-ui-materialui@^2.9.6:
+  version "2.9.6"
+  resolved "https://registry.yarnpkg.com/ra-ui-materialui/-/ra-ui-materialui-2.9.6.tgz#2d1f93cb2b478451141cae6fc8b9cc60cc4bff6e"
+  integrity sha512-F1vMh8cgvOiafSh4ie2aICXiF8KhrBi5hz72dMoeNAQzzNW/rqvTN90M4EgW/kmyrf6XyQFFEmcwVlD1VBvC4w==
   dependencies:
     "@material-ui/core" "^1.4.0"
     "@material-ui/icons" "^1.0.0"
@@ -7856,7 +7840,7 @@ ra-ui-materialui@^2.9.5:
     material-ui-chip-input "1.0.0-beta.6 - 1.0.0-beta.8"
     papaparse "^4.1.4"
     prop-types "~15.6.1"
-    ra-core "^2.9.5"
+    ra-core "^2.9.6"
     react-autosuggest "^9.4.2"
     react-dropzone "~4.0.1"
     react-headroom "^2.2.4"
@@ -7937,14 +7921,14 @@ rc@^1.0.1, rc@^1.1.6, rc@^1.2.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-react-admin@^2.3.1:
-  version "2.9.5"
-  resolved "https://registry.yarnpkg.com/react-admin/-/react-admin-2.9.5.tgz#69cae0721227cba302f100520502d0bb67cd43b6"
-  integrity sha512-0JelbF6OkTnAqSZQUG6xw1wXGvTbjTH/FfnkhU7rrUARj5kfpKPzmO0Qsp4ai6r3TE3iajmlN+g5ul9zdejgWQ==
+react-admin@2.9.6:
+  version "2.9.6"
+  resolved "https://registry.yarnpkg.com/react-admin/-/react-admin-2.9.6.tgz#ee5d4198a03d9cbc157a10ecaa901464b54ae3b6"
+  integrity sha512-AhhsbJxabP9SaA1hBAY12fEVL0GxlBPld+vcVAlThtb0zy8HVlUxdD1pqKcNnWClFmKsgP0LFEalcZP+vcgkzQ==
   dependencies:
-    ra-core "^2.9.5"
+    ra-core "^2.9.6"
     ra-language-english "^2.9.3"
-    ra-ui-materialui "^2.9.5"
+    ra-ui-materialui "^2.9.6"
 
 react-autosuggest@^9.4.2:
   version "9.4.3"

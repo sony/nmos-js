@@ -360,18 +360,35 @@ export const SendersShow = props => (
                         </ArrayField>
                         <JSONViewer endpoint="$staged" />
                     </Tab>
-                    {get(controllerProps.record, '$transportfile') && (
-                        <Tab label="Transport File">
-                            <Typography inline>
-                                {get(controllerProps.record, '$transportfile')}
-                            </Typography>
-                        </Tab>
-                    )}
+                    <TransportFileTab
+                        controllerProps={controllerProps}
+                        path="sdp"
+                    />
                 </TabbedShowLayout>
             </ShowView>
         )}
     </ShowController>
 );
+
+const TransportFileTab = ({ controllerProps, ...props }) => {
+    const str = get(controllerProps.record, '$transportfile');
+    if (typeof str !== 'string') return false;
+    try {
+        const result = JSON.parse(str);
+        const type = Object.prototype.toString.call(result);
+        return type === '[object Object]' || type === '[object Array]';
+    } catch (err) {
+        return (
+            <Tab label="Transport File" {...props}>
+                <Typography>
+                    <pre style={{ fontFamily: 'inherit' }}>
+                        {get(controllerProps.record, '$transportfile')}
+                    </pre>
+                </Typography>
+            </Tab>
+        );
+    }
+};
 
 const PostEditToolbar = props => (
     <Toolbar {...props}>

@@ -8,6 +8,7 @@ import {
     UPDATE,
     fetchUtils,
 } from 'react-admin';
+import get from 'lodash/get';
 import Cookies from 'universal-cookie';
 
 let API_URL = '';
@@ -211,9 +212,15 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
         }
         case UPDATE:
             delete params.data.$staged.activation.activation_time;
+
+            if (get(params.data, '$staged.transport_file.data') === '') {
+                delete params.data.$staged.transport_file;
+                console.log(params.data);
+            }
+
             const options = {
                 method: 'PATCH',
-                body: JSON.stringify(params.data.$staged),
+                body: JSON.stringify(get(params.data, '$staged')),
             };
             return {
                 url: `${params.data.$connectionAPI}/single/${resource}/${params.data.id}/staged`,
@@ -367,7 +374,21 @@ export default async (type, resource, params) => {
         resource,
         params
     );
-    return fetchJson(url, options).then(response =>
-        convertHTTPResponseToDataProvider(url, response, type, resource, params)
+    return fetchJson(url, options).then(
+        response =>
+            convertHTTPResponseToDataProvider(
+                url,
+                response,
+                type,
+                resource,
+                params
+            ),
+        response => {
+            return Promise.reject(
+                new Error(
+                    `${response.body.error} - ${response.body.code} - (${response.body.debug})`
+                )
+            );
+        }
     );
 };

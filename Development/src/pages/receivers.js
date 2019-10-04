@@ -44,6 +44,7 @@ import JsonIcon from '../components/JsonIcon';
 import ReceiverTransportParamsCardsGrid from '../components/ReceiverTransportParams';
 import ConnectionShowActions from '../components/ConnectionShowActions';
 import JSONViewer from '../components/JSONViewer';
+import TransportFileViewer from '../components/TransportFileViewer';
 
 const cookies = new Cookies();
 
@@ -403,6 +404,7 @@ const ShowActiveTab = ({ controllerProps, ...props }) => {
                         record={controllerProps.record}
                     />
                 </ArrayField>
+                <TransportFileViewer endpoint="$active.transport_file.data" />
                 <JSONViewer endpoint="$active" />
             </SimpleShowLayout>
         </ShowView>
@@ -442,6 +444,7 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
                         record={controllerProps.record}
                     />
                 </ArrayField>
+                <TransportFileViewer endpoint="$staged.transport_file.data" />
                 <JSONViewer endpoint="$staged" />
             </SimpleShowLayout>
         </ShowView>
@@ -469,12 +472,6 @@ export const ReceiversEdit = props => {
                         component={Link}
                         to={`${props.basePath}/${props.id}/`}
                     />
-                    <Tab
-                        label="Transport File"
-                        value={`${props.match.url}/transportfile`}
-                        component={Link}
-                        to={`${props.basePath}/${props.id}/transportfile`}
-                    />
                 </Tabs>
             </AppBar>
             <Route
@@ -482,17 +479,12 @@ export const ReceiversEdit = props => {
                 path={`${props.basePath}/${props.id}/`}
                 render={() => <EditStagedTab {...props} />}
             />
-            <Route
-                exact
-                path={`${props.basePath}/${props.id}/transportfile`}
-                render={() => <EditTransportFileTab {...props} />}
-            />
         </div>
     );
 };
 
 const EditStagedTab = props => (
-    <Edit {...props} title={<ReceiversTitle />}>
+    <Edit {...props} undoable={false} title={<ReceiversTitle />}>
         <SimpleForm toolbar={<PostEditToolbar />}>
             <TextField label="ID" source="id" />
             <TextInput label="Sender ID" source="$staged.sender_id" />
@@ -506,17 +498,10 @@ const EditStagedTab = props => (
                 source="$staged.activation.requested_time"
             />
             <ReceiverTransportParamsCardsGrid />
-        </SimpleForm>
-    </Edit>
-);
-
-const EditTransportFileTab = props => (
-    <Edit {...props} title={<ReceiversTitle />}>
-        <SimpleForm toolbar={<PostEditToolbar />}>
-            <TextInput label="Sender ID" source="$staged.sender_id" />
             <LongTextInput
                 label="Transport File"
                 source="$staged.transport_file.data"
+                resettable
             />
         </SimpleForm>
     </Edit>

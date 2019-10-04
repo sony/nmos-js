@@ -34,7 +34,6 @@ import {
     TableHead,
     TableRow,
     Tabs,
-    Typography,
 } from '@material-ui/core';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
@@ -45,6 +44,7 @@ import JsonIcon from '../components/JsonIcon';
 import SenderTransportParamsCardsGrid from '../components/SenderTransportParams';
 import ConnectionShowActions from '../components/ConnectionShowActions';
 import JSONViewer from '../components/JSONViewer';
+import TransportFileViewer from '../components/TransportFileViewer';
 
 const cookies = new Cookies();
 
@@ -215,18 +215,6 @@ const ChipConditionalLabel = ({ record, source, ...props }) => {
     ) : null;
 };
 
-function transportFileDoesNotExist(controllerProps) {
-    const str = get(controllerProps.record, '$transportfile');
-    if (typeof str !== 'string') return false;
-    try {
-        const result = JSON.parse(str);
-        const type = Object.prototype.toString.call(result);
-        return type === '[object Object]' || type === '[object Array]';
-    } catch (err) {
-        return false;
-    }
-}
-
 export const SendersShow = props => {
     return (
         <ShowController {...props}>
@@ -256,12 +244,6 @@ export const SendersShow = props => {
                                 component={Link}
                                 to={`${props.basePath}/${props.id}/show/staged`}
                             />
-                            <Tab
-                                label="Transport File"
-                                value={`${props.match.url}/transportfile`}
-                                component={Link}
-                                to={`${props.basePath}/${props.id}/show/transportfile`}
-                            />
                         </Tabs>
                     </AppBar>
                     <Route
@@ -289,16 +271,6 @@ export const SendersShow = props => {
                         path={`${props.basePath}/${props.id}/show/staged`}
                         render={() => (
                             <ShowStagedTab
-                                {...props}
-                                controllerProps={controllerProps}
-                            />
-                        )}
-                    />
-                    <Route
-                        exact
-                        path={`${props.basePath}/${props.id}/show/transportfile`}
-                        render={() => (
-                            <ShowTransportFileTab
                                 {...props}
                                 controllerProps={controllerProps}
                             />
@@ -420,6 +392,7 @@ const ShowActiveTab = ({ controllerProps, ...props }) => {
                         record={controllerProps.record}
                     />
                 </ArrayField>
+                <TransportFileViewer endpoint="$transportfile" />
                 <JSONViewer endpoint="$active" />
             </SimpleShowLayout>
         </ShowView>
@@ -465,25 +438,6 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
     );
 };
 
-const ShowTransportFileTab = ({ controllerProps, ...props }) => {
-    return (
-        <ShowView
-            {...props}
-            {...controllerProps}
-            title={<SendersTitle />}
-            actions={<ConnectionShowActions />}
-        >
-            <SimpleShowLayout>
-                <Typography>
-                    <pre style={{ fontFamily: 'inherit' }}>
-                        {get(controllerProps.record, '$transportfile')}
-                    </pre>
-                </Typography>
-            </SimpleShowLayout>
-        </ShowView>
-    );
-};
-
 const PostEditToolbar = props => (
     <Toolbar {...props}>
         <SaveButton />
@@ -517,7 +471,7 @@ export const SendersEdit = props => {
 };
 
 const EditStagedTab = props => (
-    <Edit {...props} title={<SendersTitle />}>
+    <Edit {...props} undoable={false} title={<SendersTitle />}>
         <SimpleForm toolbar={<PostEditToolbar />}>
             <TextField label="ID" source="id" />
             <TextInput label="Receiver ID" source="$staged.receiver_id" />

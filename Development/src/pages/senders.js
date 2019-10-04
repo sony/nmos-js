@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link, Route } from 'react-router-dom';
 import {
     ArrayField,
     BooleanField,
@@ -227,55 +228,82 @@ function transportFileDoesNotExist(controllerProps) {
 }
 
 export const SendersShow = props => {
-    const [tabIndex, setTabIndex] = React.useState(0);
-
-    const handleChange = (event, newValue) => {
-        setTabIndex(newValue);
-    };
-
     return (
         <ShowController {...props}>
             {controllerProps => (
                 <div>
                     <AppBar position="static" color="default">
                         <Tabs
-                            value={tabIndex}
+                            value={props.location.pathname}
                             indicatorColor="primary"
                             textColor="primary"
-                            onChange={handleChange}
                         >
-                            <Tab label="Summary" />
-                            <Tab label="Active" />
-                            <Tab label="Staged" />
-                            {!transportFileDoesNotExist(controllerProps) && (
-                                <Tab label="Transport File" />
-                            )}
+                            <Tab
+                                label="Summary"
+                                value={`${props.match.url}`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/`}
+                            />
+                            <Tab
+                                label="Active"
+                                value={`${props.match.url}/active`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/active`}
+                            />
+                            <Tab
+                                label="Staged"
+                                value={`${props.match.url}/staged`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/staged`}
+                            />
+                            <Tab
+                                label="Transport File"
+                                value={`${props.match.url}/transportfile`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/transportfile`}
+                            />
                         </Tabs>
                     </AppBar>
-                    {tabIndex === 0 && (
-                        <ShowSummaryTab
-                            {...props}
-                            controllerProps={controllerProps}
-                        />
-                    )}
-                    {tabIndex === 1 && (
-                        <ShowActiveTab
-                            {...props}
-                            controllerProps={controllerProps}
-                        />
-                    )}
-                    {tabIndex === 2 && (
-                        <ShowStagedTab
-                            {...props}
-                            controllerProps={controllerProps}
-                        />
-                    )}
-                    {tabIndex === 3 && (
-                        <ShowTransportFileTab
-                            {...props}
-                            controllerProps={controllerProps}
-                        />
-                    )}
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/`}
+                        render={() => (
+                            <ShowSummaryTab
+                                {...props}
+                                controllerProps={controllerProps}
+                            />
+                        )}
+                    />
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/active`}
+                        render={() => (
+                            <ShowActiveTab
+                                {...props}
+                                controllerProps={controllerProps}
+                            />
+                        )}
+                    />
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/staged`}
+                        render={() => (
+                            <ShowStagedTab
+                                {...props}
+                                controllerProps={controllerProps}
+                            />
+                        )}
+                    />
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/transportfile`}
+                        render={() => (
+                            <ShowTransportFileTab
+                                {...props}
+                                controllerProps={controllerProps}
+                            />
+                        )}
+                    />
                 </div>
             )}
         </ShowController>
@@ -463,48 +491,46 @@ const PostEditToolbar = props => (
 );
 
 export const SendersEdit = props => {
-    const [tabIndex, setTabIndex] = React.useState(0);
-
-    const handleChange = (event, newValue) => {
-        setTabIndex(newValue);
-    };
-
     return (
         <div>
             <AppBar position="static" color="default">
                 <Tabs
-                    value={tabIndex}
+                    value={props.location.pathname}
                     indicatorColor="primary"
                     textColor="primary"
-                    onChange={handleChange}
                 >
-                    <Tab label="Staged" />
+                    <Tab
+                        label="Staged"
+                        value={`${props.match.url}`}
+                        component={Link}
+                        to={`${props.basePath}/${props.id}/`}
+                    />
                 </Tabs>
             </AppBar>
-            {tabIndex === 0 && (
-                <Edit {...props} title={<SendersTitle />}>
-                    <SimpleForm toolbar={<PostEditToolbar />}>
-                        <TextField label="ID" source="id" />
-                        <TextInput
-                            label="Receiver ID"
-                            source="$staged.receiver_id"
-                        />
-                        <BooleanInput
-                            label="Master Enable"
-                            source="$staged.master_enable"
-                        />
-                        <TextInput
-                            label="Mode"
-                            source="$staged.activation.mode"
-                        />
-                        <TextInput
-                            label="Requested Time"
-                            source="$staged.activation.requested_time"
-                        />
-                        <SenderTransportParamsCardsGrid />
-                    </SimpleForm>
-                </Edit>
-            )}
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/`}
+                render={() => <EditStagedTab {...props} />}
+            />
         </div>
     );
 };
+
+const EditStagedTab = props => (
+    <Edit {...props} title={<SendersTitle />}>
+        <SimpleForm toolbar={<PostEditToolbar />}>
+            <TextField label="ID" source="id" />
+            <TextInput label="Receiver ID" source="$staged.receiver_id" />
+            <BooleanInput
+                label="Master Enable"
+                source="$staged.master_enable"
+            />
+            <TextInput label="Mode" source="$staged.activation.mode" />
+            <TextInput
+                label="Requested Time"
+                source="$staged.activation.requested_time"
+            />
+            <SenderTransportParamsCardsGrid />
+        </SimpleForm>
+    </Edit>
+);

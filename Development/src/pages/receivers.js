@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link, Route } from 'react-router-dom';
 import {
     ArrayField,
     BooleanField,
@@ -7,6 +8,7 @@ import {
     ChipField,
     Edit,
     FunctionField,
+    LongTextInput,
     ReferenceField,
     SaveButton,
     ShowButton,
@@ -226,46 +228,66 @@ const QueryVersion = () => {
 };
 
 export const ReceiversShow = props => {
-    const [tabIndex, setTabIndex] = React.useState(0);
-
-    const handleChange = (event, newValue) => {
-        setTabIndex(newValue);
-    };
-
     return (
         <ShowController {...props}>
             {controllerProps => (
                 <div>
                     <AppBar position="static" color="default">
                         <Tabs
-                            value={tabIndex}
+                            value={props.location.pathname}
                             indicatorColor="primary"
                             textColor="primary"
-                            onChange={handleChange}
                         >
-                            <Tab label="Summary" />
-                            <Tab label="Active" />
-                            <Tab label="Staged" />
+                            <Tab
+                                label="Summary"
+                                value={`${props.match.url}`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/`}
+                            />
+                            <Tab
+                                label="Active"
+                                value={`${props.match.url}/active`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/active`}
+                            />
+                            <Tab
+                                label="Staged"
+                                value={`${props.match.url}/staged`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/staged`}
+                            />
                         </Tabs>
                     </AppBar>
-                    {tabIndex === 0 && (
-                        <ShowSummaryTab
-                            {...props}
-                            controllerProps={controllerProps}
-                        />
-                    )}
-                    {tabIndex === 1 && (
-                        <ShowActiveTab
-                            {...props}
-                            controllerProps={controllerProps}
-                        />
-                    )}
-                    {tabIndex === 2 && (
-                        <ShowStagedTab
-                            {...props}
-                            controllerProps={controllerProps}
-                        />
-                    )}
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/`}
+                        render={() => (
+                            <ShowSummaryTab
+                                {...props}
+                                controllerProps={controllerProps}
+                            />
+                        )}
+                    />
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/active`}
+                        render={() => (
+                            <ShowActiveTab
+                                {...props}
+                                controllerProps={controllerProps}
+                            />
+                        )}
+                    />
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/staged`}
+                        render={() => (
+                            <ShowStagedTab
+                                {...props}
+                                controllerProps={controllerProps}
+                            />
+                        )}
+                    />
                 </div>
             )}
         </ShowController>
@@ -433,48 +455,69 @@ const PostEditToolbar = props => (
 );
 
 export const ReceiversEdit = props => {
-    const [tabIndex, setTabIndex] = React.useState(0);
-
-    const handleChange = (event, newValue) => {
-        setTabIndex(newValue);
-    };
-
     return (
         <div>
             <AppBar position="static" color="default">
                 <Tabs
-                    value={tabIndex}
+                    value={props.location.pathname}
                     indicatorColor="primary"
                     textColor="primary"
-                    onChange={handleChange}
                 >
-                    <Tab label="Staged" />
+                    <Tab
+                        label="Staged"
+                        value={`${props.match.url}`}
+                        component={Link}
+                        to={`${props.basePath}/${props.id}/`}
+                    />
+                    <Tab
+                        label="Transport File"
+                        value={`${props.match.url}/transportfile`}
+                        component={Link}
+                        to={`${props.basePath}/${props.id}/transportfile`}
+                    />
                 </Tabs>
             </AppBar>
-            {tabIndex === 0 && (
-                <Edit {...props} title={<ReceiversTitle />}>
-                    <SimpleForm toolbar={<PostEditToolbar />}>
-                        <TextField label="ID" source="id" />
-                        <TextInput
-                            label="Sender ID"
-                            source="$staged.sender_id"
-                        />
-                        <BooleanInput
-                            label="Master Enable"
-                            source="$staged.master_enable"
-                        />
-                        <TextInput
-                            label="Mode"
-                            source="$staged.activation.mode"
-                        />
-                        <TextInput
-                            label="Requested Time"
-                            source="$staged.activation.requested_time"
-                        />
-                        <ReceiverTransportParamsCardsGrid />
-                    </SimpleForm>
-                </Edit>
-            )}
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/`}
+                render={() => <EditStagedTab {...props} />}
+            />
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/transportfile`}
+                render={() => <EditTransportFileTab {...props} />}
+            />
         </div>
     );
 };
+
+const EditStagedTab = props => (
+    <Edit {...props} title={<ReceiversTitle />}>
+        <SimpleForm toolbar={<PostEditToolbar />}>
+            <TextField label="ID" source="id" />
+            <TextInput label="Sender ID" source="$staged.sender_id" />
+            <BooleanInput
+                label="Master Enable"
+                source="$staged.master_enable"
+            />
+            <TextInput label="Mode" source="$staged.activation.mode" />
+            <TextInput
+                label="Requested Time"
+                source="$staged.activation.requested_time"
+            />
+            <ReceiverTransportParamsCardsGrid />
+        </SimpleForm>
+    </Edit>
+);
+
+const EditTransportFileTab = props => (
+    <Edit {...props} title={<ReceiversTitle />}>
+        <SimpleForm toolbar={<PostEditToolbar />}>
+            <TextInput label="Sender ID" source="$staged.sender_id" />
+            <LongTextInput
+                label="Transport File"
+                source="$staged.transport_file.data"
+            />
+        </SimpleForm>
+    </Edit>
+);

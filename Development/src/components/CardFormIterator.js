@@ -31,7 +31,6 @@ export class CardFormIterator extends Component {
     render() {
         const {
             basePath,
-            classes = {},
             children,
             fields,
             record,
@@ -42,12 +41,12 @@ export class CardFormIterator extends Component {
         return fields ? (
             <div>
                 <br style={{ lineHeight: 2 }} />
-                <Grid container spacing={3}>
+                <Grid container>
                     {fields.map((member, index) => (
-                        <Grid item sm>
-                            <Card>
-                                <CardContent>
-                                    <section className={classes.form}>
+                        <div>
+                            <Grid item sm>
+                                <Card>
+                                    <CardContent>
                                         {Children.map(
                                             children,
                                             (input, index2) =>
@@ -89,10 +88,10 @@ export class CardFormIterator extends Component {
                                                     />
                                                 ) : null
                                         )}
-                                    </section>
-                                </CardContent>
-                            </Card>
-                        </Grid>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        </div>
                     ))}
                 </Grid>
             </div>

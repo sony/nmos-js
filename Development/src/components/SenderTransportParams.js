@@ -386,6 +386,40 @@ const WebSocketSender = ({ dataObject }) => {
     );
 };
 
+const WebSocketSenderEdit = ({ record }) => {
+    const data = get(record, '$staged.transport_params');
+    const uniqueKeys = Object.keys(
+        data.reduce(function(result, obj) {
+            return Object.assign(result, obj);
+        }, {})
+    );
+    const params_ext = uniqueKeys.filter(function(x) {
+        return x.startsWith('ext_');
+    });
+    return (
+        <div>
+            <ArrayInput
+                label="Transport Parameters"
+                source="$staged.transport_params"
+            >
+                <CardFormIterator disableRemove disableAdd>
+                    <BooleanInput
+                        source="connection_authorization"
+                        label="Connection Authorization"
+                    />
+                    <TextInput source="connection_uri" label="Connection URI" />
+                    {params_ext.length !== 0 && <hr />}
+                    {params_ext.map(value => {
+                        return (
+                            <TextInput record={record} source={`${value}`} />
+                        );
+                    })}
+                </CardFormIterator>
+            </ArrayInput>
+        </div>
+    );
+};
+
 const SenderTransportParamsCardsGrid = ({ ids, record }) => {
     const type = get(record, '$transporttype');
     const dataObject = [];
@@ -410,7 +444,7 @@ const SenderTransportParamsCardsGrid = ({ ids, record }) => {
             case 'urn:x-nmos:transport:rtp':
                 return <RTPSenderEdit />;
             case 'urn:x-nmos:transport:websocket':
-                return <b>Placeholder</b>;
+                return <WebSocketSenderEdit record={record} />;
             default:
                 return <b>Unknown Type</b>;
         }

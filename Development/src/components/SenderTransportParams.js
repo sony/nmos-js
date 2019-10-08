@@ -50,7 +50,7 @@ const MQTTSender = ({ dataObject }) => {
                                     {dataObject[i].hasOwnProperty(
                                         'broker_authorization'
                                     ) && (
-                                        <BooleanField
+                                        <TextField
                                             source="broker_authorization"
                                             label="Broker Authorization"
                                         />
@@ -86,6 +86,56 @@ const MQTTSender = ({ dataObject }) => {
                     </Grid>
                 ))}
             </Grid>
+        </div>
+    );
+};
+
+const MQTTSenderEdit = ({ record }) => {
+    const data = get(record, '$staged.transport_params');
+    const uniqueKeys = Object.keys(
+        data.reduce(function(result, obj) {
+            return Object.assign(result, obj);
+        }, {})
+    );
+    const params_ext = uniqueKeys.filter(function(x) {
+        return x.startsWith('ext_');
+    });
+    return (
+        <div>
+            <ArrayInput
+                label="Transport Parameters"
+                source="$staged.transport_params"
+            >
+                <CardFormIterator disableRemove disableAdd>
+                    <TextInput
+                        source="destination_host"
+                        label="Destination Host"
+                    />
+                    <TextInput
+                        source="destination_port"
+                        label="Destination Port"
+                    />
+                    <TextInput
+                        source="broker_protocol"
+                        label="Broker Protocol"
+                    />
+                    <TextInput
+                        source="broker_authorization"
+                        label="Broker Authorization"
+                    />
+                    <TextInput source="broker_topic" label="Broker Topic" />
+                    <TextInput
+                        source="connection_status_broker_topic"
+                        label="Connection Status Broker Topic"
+                    />
+                    {params_ext.length !== 0 && <hr />}
+                    {params_ext.map(value => {
+                        return (
+                            <TextInput record={record} source={`${value}`} />
+                        );
+                    })}
+                </CardFormIterator>
+            </ArrayInput>
         </div>
     );
 };
@@ -273,7 +323,16 @@ const RTPSender = ({ dataObject }) => {
     );
 };
 
-const RTPSenderEdit = () => {
+const RTPSenderEdit = ({ record }) => {
+    const data = get(record, '$staged.transport_params');
+    const uniqueKeys = Object.keys(
+        data.reduce(function(result, obj) {
+            return Object.assign(result, obj);
+        }, {})
+    );
+    const params_ext = uniqueKeys.filter(function(x) {
+        return x.startsWith('ext_');
+    });
     return (
         <div>
             <ArrayInput
@@ -281,6 +340,7 @@ const RTPSenderEdit = () => {
                 source="$staged.transport_params"
             >
                 <CardFormIterator disableRemove disableAdd>
+                    <BooleanInput source="rtp_enabled" label="RTP Enabled" />
                     <TextInput source="source_ip" label="Source IP" />
                     <TextInput source="destination_ip" label="Destination IP" />
                     <TextInput source="source_port" label="Source Port" />
@@ -332,7 +392,12 @@ const RTPSenderEdit = () => {
                         source="rtcp_source_port"
                         label="RTCP Source Port"
                     />
-                    <BooleanInput source="rtp_enabled" label="RTP Enabled" />
+                    {params_ext.length !== 0 && <hr />}
+                    {params_ext.map(value => {
+                        return (
+                            <TextInput record={record} source={`${value}`} />
+                        );
+                    })}
                 </CardFormIterator>
             </ArrayInput>
         </div>
@@ -440,9 +505,9 @@ const SenderTransportParamsCardsGrid = ({ ids, record }) => {
     } else {
         switch (type) {
             case 'urn:x-nmos:transport:mqtt':
-                return <b>Placeholder</b>;
+                return <MQTTSenderEdit record={record} />;
             case 'urn:x-nmos:transport:rtp':
-                return <RTPSenderEdit />;
+                return <RTPSenderEdit record={record} />;
             case 'urn:x-nmos:transport:websocket':
                 return <WebSocketSenderEdit record={record} />;
             default:

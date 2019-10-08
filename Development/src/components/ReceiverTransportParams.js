@@ -50,7 +50,7 @@ const MQTTReceiver = ({ dataObject }) => {
                                     {dataObject[i].hasOwnProperty(
                                         'broker_authorization'
                                     ) && (
-                                        <BooleanField
+                                        <TextField
                                             source="broker_authorization"
                                             label="Broker Authorization"
                                         />
@@ -86,6 +86,50 @@ const MQTTReceiver = ({ dataObject }) => {
                     </Grid>
                 ))}
             </Grid>
+        </div>
+    );
+};
+
+const MQTTReceiverEdit = ({ record }) => {
+    const data = get(record, '$staged.transport_params');
+    const uniqueKeys = Object.keys(
+        data.reduce(function(result, obj) {
+            return Object.assign(result, obj);
+        }, {})
+    );
+    const params_ext = uniqueKeys.filter(function(x) {
+        return x.startsWith('ext_');
+    });
+    return (
+        <div>
+            <ArrayInput
+                label="Transport Parameters"
+                source="$staged.transport_params"
+            >
+                <CardFormIterator disableRemove disableAdd>
+                    <TextInput source="source_host" label="Source Host" />
+                    <TextInput source="source_port" label="Source Port" />
+                    <TextInput
+                        source="broker_protocol"
+                        label="Broker Protocol"
+                    />
+                    <TextInput
+                        source="broker_authorization"
+                        label="Broker Authorization"
+                    />
+                    <TextInput source="broker_topic" label="Broker Topic" />
+                    <TextInput
+                        source="connection_status_broker_topic"
+                        label="Connection Status Broker Topic"
+                    />
+                    {params_ext.length !== 0 && <hr />}
+                    {params_ext.map(value => {
+                        return (
+                            <TextInput record={record} source={`${value}`} />
+                        );
+                    })}
+                </CardFormIterator>
+            </ArrayInput>
         </div>
     );
 };
@@ -225,7 +269,16 @@ const RTPReceiver = ({ dataObject }) => {
     );
 };
 
-const RTPReceiverEdit = () => {
+const RTPReceiverEdit = ({ record }) => {
+    const data = get(record, '$staged.transport_params');
+    const uniqueKeys = Object.keys(
+        data.reduce(function(result, obj) {
+            return Object.assign(result, obj);
+        }, {})
+    );
+    const params_ext = uniqueKeys.filter(function(x) {
+        return x.startsWith('ext_');
+    });
     return (
         <div>
             <ArrayInput
@@ -233,6 +286,7 @@ const RTPReceiverEdit = () => {
                 source="$staged.transport_params"
             >
                 <CardFormIterator disableRemove disableAdd>
+                    <BooleanInput source="rtp_enabled" label="RTP Enabled" />
                     <TextInput source="source_ip" label="Source IP" />
                     <TextInput source="multicast_ip" label="Multicast IP" />
                     <TextInput source="interface_ip" label="Interface IP" />
@@ -241,11 +295,11 @@ const RTPReceiverEdit = () => {
                         label="Destination Port"
                     />
                     <BooleanInput source="fec_enabled" label="FEC Enabled" />
+                    <TextInput source="fec_mode" label="FEC Mode" />
                     <TextInput
                         source="fec_destination_ip"
                         label="FEC Destination IP"
                     />
-                    <TextInput source="fec_mode" label="FEC Mode" />
                     <TextInput
                         source="fec1D_destination_port"
                         label="FEC1D Destination Port"
@@ -254,7 +308,6 @@ const RTPReceiverEdit = () => {
                         source="fec2D_destination_port"
                         label="FEC2D Destination Port"
                     />
-                    <BooleanInput source="rtp_enabled" label="RTP Enabled" />
                     <BooleanInput source="rtcp_enabled" label="RTCP Enabled" />
                     <TextInput
                         source="rtcp_destination_ip"
@@ -264,6 +317,12 @@ const RTPReceiverEdit = () => {
                         source="rtcp_destination_port"
                         label="RTCP Destination Port"
                     />
+                    {params_ext.length !== 0 && <hr />}
+                    {params_ext.map(value => {
+                        return (
+                            <TextInput record={record} source={`${value}`} />
+                        );
+                    })}
                 </CardFormIterator>
             </ArrayInput>
         </div>
@@ -371,9 +430,9 @@ const ReceiverTransportParamsCardsGrid = ({ ids, record }) => {
     } else {
         switch (type) {
             case 'urn:x-nmos:transport:mqtt':
-                return <b>Placeholder</b>;
+                return <MQTTReceiverEdit record={record} />;
             case 'urn:x-nmos:transport:rtp':
-                return <RTPReceiverEdit />;
+                return <RTPReceiverEdit record={record} />;
             case 'urn:x-nmos:transport:websocket':
                 return <WebSocketReceiverEdit record={record} />;
             default:

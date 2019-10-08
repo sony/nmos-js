@@ -454,10 +454,20 @@ export const SendersEdit = props => {
                     textColor="primary"
                 >
                     <Tab
+                        label="Summary"
+                        component={Link}
+                        to={`${props.basePath}/${props.id}/show/`}
+                    />
+                    <Tab
+                        label="Active"
+                        component={Link}
+                        to={`${props.basePath}/${props.id}/show/active`}
+                    />
+                    <Tab
                         label="Staged"
                         value={`${props.match.url}`}
                         component={Link}
-                        to={`${props.basePath}/${props.id}/`}
+                        to={`${props.basePath}/${props.id}/show/staged`}
                     />
                 </Tabs>
             </AppBar>

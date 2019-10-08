@@ -43,6 +43,7 @@ import MapTags from '../components/TagsField';
 import JsonIcon from '../components/JsonIcon';
 import ReceiverTransportParamsCardsGrid from '../components/ReceiverTransportParams';
 import ConnectionShowActions from '../components/ConnectionShowActions';
+import ConnectionEditActions from '../components/ConnectionEditActions';
 import JSONViewer from '../components/JSONViewer';
 import TransportFileViewer from '../components/TransportFileViewer';
 
@@ -494,9 +495,13 @@ export const ReceiversEdit = props => {
 };
 
 const EditStagedTab = props => (
-    <Edit {...props} undoable={false} title={<ReceiversTitle />}>
+    <Edit
+        {...props}
+        undoable={false}
+        title={<ReceiversTitle />}
+        actions={<ConnectionEditActions id={props.id} />}
+    >
         <SimpleForm toolbar={<PostEditToolbar />}>
-            <TextField label="ID" source="id" />
             <TextInput label="Sender ID" source="$staged.sender_id" />
             <BooleanInput
                 label="Master Enable"

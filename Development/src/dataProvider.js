@@ -413,7 +413,7 @@ async function convertHTTPResponseToDataProvider(
                 total: 'unknown',
             };
         case UPDATE:
-            return { data: { ...params.data.$staged, id: json.id } };
+            return { data: { ...json, id: json.id } };
         default:
             //used for prev, next, first, last
             if (resource === 'queryapis') {

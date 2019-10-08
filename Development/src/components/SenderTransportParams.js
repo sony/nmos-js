@@ -107,27 +107,39 @@ const MQTTSenderEdit = ({ record }) => {
                 source="$staged.transport_params"
             >
                 <CardFormIterator disableRemove disableAdd>
-                    <TextInput
-                        source="destination_host"
-                        label="Destination Host"
-                    />
-                    <TextInput
-                        source="destination_port"
-                        label="Destination Port"
-                    />
-                    <TextInput
-                        source="broker_protocol"
-                        label="Broker Protocol"
-                    />
-                    <TextInput
-                        source="broker_authorization"
-                        label="Broker Authorization"
-                    />
-                    <TextInput source="broker_topic" label="Broker Topic" />
-                    <TextInput
-                        source="connection_status_broker_topic"
-                        label="Connection Status Broker Topic"
-                    />
+                    {uniqueKeys.includes('destination_host') && (
+                        <TextInput
+                            source="destination_host"
+                            label="Destination Host"
+                        />
+                    )}
+                    {uniqueKeys.includes('destination_port') && (
+                        <TextInput
+                            source="destination_port"
+                            label="Destination Port"
+                        />
+                    )}
+                    {uniqueKeys.includes('broker_protocol') && (
+                        <TextInput
+                            source="broker_protocol"
+                            label="Broker Protocol"
+                        />
+                    )}
+                    {uniqueKeys.includes('broker_authorization') && (
+                        <TextInput
+                            source="broker_authorization"
+                            label="Broker Authorization"
+                        />
+                    )}
+                    {uniqueKeys.includes('broker_topic') && (
+                        <TextInput source="broker_topic" label="Broker Topic" />
+                    )}
+                    {uniqueKeys.includes('connection_status_broker_topic') && (
+                        <TextInput
+                            source="connection_status_broker_topic"
+                            label="Connection Status Broker Topic"
+                        />
+                    )}
                     {params_ext.length !== 0 && <hr />}
                     {params_ext.map(value => {
                         return (
@@ -340,58 +352,108 @@ const RTPSenderEdit = ({ record }) => {
                 source="$staged.transport_params"
             >
                 <CardFormIterator disableRemove disableAdd>
-                    <BooleanInput source="rtp_enabled" label="RTP Enabled" />
-                    <TextInput source="source_ip" label="Source IP" />
-                    <TextInput source="destination_ip" label="Destination IP" />
-                    <TextInput source="source_port" label="Source Port" />
-                    <TextInput
-                        source="destination_port"
-                        label="Destination Port"
-                    />
-                    <BooleanInput source="fec_enabled" label="FEC Enabled" />
-                    <TextInput
-                        source="fec_destination_ip"
-                        label="FEC Destination IP"
-                    />
-                    <TextInput source="fec_type" label="FEC Type" />
-                    <TextInput source="fec_mode" label="FEC Mode" />
-                    <TextInput
-                        source="fec_block_width"
-                        label="FEC Block Width"
-                    />
-                    <TextInput
-                        source="fec_block_height"
-                        label="FEC Block Height"
-                    />
-                    <TextInput
-                        source="fec1D_destination_port"
-                        label="FEC1D Destination Port"
-                    />
-                    <TextInput
-                        source="fec2D_destination_port"
-                        label="FEC2D Destination Port"
-                    />
-                    <TextInput
-                        source="fec1D_source_port"
-                        label="FEC1D Source Port"
-                    />
-                    <TextInput
-                        source="fec2D_source_port"
-                        label="FEC2D Source Port"
-                    />
-                    <BooleanInput source="rtcp_enabled" label="RTCP Enabled" />
-                    <TextInput
-                        source="rtcp_destination_ip"
-                        label="RTCP Destination IP"
-                    />
-                    <TextInput
-                        source="rtcp_destination_port"
-                        label="RTCP Destination Port"
-                    />
-                    <TextInput
-                        source="rtcp_source_port"
-                        label="RTCP Source Port"
-                    />
+                    {uniqueKeys.includes('rtp_enabled') && (
+                        <BooleanInput
+                            source="rtp_enabled"
+                            label="RTP Enabled"
+                        />
+                    )}
+                    {uniqueKeys.includes('source_ip') && (
+                        <TextInput source="source_ip" label="Source IP" />
+                    )}
+                    {uniqueKeys.includes('destination_ip') && (
+                        <TextInput
+                            source="destination_ip"
+                            label="Destination IP"
+                        />
+                    )}
+                    {uniqueKeys.includes('source_port') && (
+                        <TextInput source="source_port" label="Source Port" />
+                    )}
+                    {uniqueKeys.includes('destination_port') && (
+                        <TextInput
+                            source="destination_port"
+                            label="Destination Port"
+                        />
+                    )}
+                    {uniqueKeys.includes('fec_enabled') && (
+                        <BooleanInput
+                            source="fec_enabled"
+                            label="FEC Enabled"
+                        />
+                    )}
+                    {uniqueKeys.includes('fec_destination_ip') && (
+                        <TextInput
+                            source="fec_destination_ip"
+                            label="FEC Destination IP"
+                        />
+                    )}
+                    {uniqueKeys.includes('fec_type') && (
+                        <TextInput source="fec_type" label="FEC Type" />
+                    )}
+                    {uniqueKeys.includes('fec_mode') && (
+                        <TextInput source="fec_mode" label="FEC Mode" />
+                    )}
+                    {uniqueKeys.includes('fec_block_width') && (
+                        <TextInput
+                            source="fec_block_width"
+                            label="FEC Block Width"
+                        />
+                    )}
+                    {uniqueKeys.includes('fec_block_height') && (
+                        <TextInput
+                            source="fec_block_height"
+                            label="FEC Block Height"
+                        />
+                    )}
+                    {uniqueKeys.includes('fec1D_destination_port') && (
+                        <TextInput
+                            source="fec1D_destination_port"
+                            label="FEC1D Destination Port"
+                        />
+                    )}
+                    {uniqueKeys.includes('fec2D_destination_port') && (
+                        <TextInput
+                            source="fec2D_destination_port"
+                            label="FEC2D Destination Port"
+                        />
+                    )}
+                    {uniqueKeys.includes('fec1D_source_port') && (
+                        <TextInput
+                            source="fec1D_source_port"
+                            label="FEC1D Source Port"
+                        />
+                    )}
+                    {uniqueKeys.includes('fec2D_source_port') && (
+                        <TextInput
+                            source="fec2D_source_port"
+                            label="FEC2D Source Port"
+                        />
+                    )}
+                    {uniqueKeys.includes('rtcp_enabled') && (
+                        <BooleanInput
+                            source="rtcp_enabled"
+                            label="RTCP Enabled"
+                        />
+                    )}
+                    {uniqueKeys.includes('rtcp_destination_ip') && (
+                        <TextInput
+                            source="rtcp_destination_ip"
+                            label="RTCP Destination IP"
+                        />
+                    )}
+                    {uniqueKeys.includes('rtcp_destination_port') && (
+                        <TextInput
+                            source="rtcp_destination_port"
+                            label="RTCP Destination Port"
+                        />
+                    )}
+                    {uniqueKeys.includes('rtcp_source_port') && (
+                        <TextInput
+                            source="rtcp_source_port"
+                            label="RTCP Source Port"
+                        />
+                    )}
                     {params_ext.length !== 0 && <hr />}
                     {params_ext.map(value => {
                         return (
@@ -468,11 +530,18 @@ const WebSocketSenderEdit = ({ record }) => {
                 source="$staged.transport_params"
             >
                 <CardFormIterator disableRemove disableAdd>
-                    <BooleanInput
-                        source="connection_authorization"
-                        label="Connection Authorization"
-                    />
-                    <TextInput source="connection_uri" label="Connection URI" />
+                    {uniqueKeys.includes('connection_authorization') && (
+                        <BooleanInput
+                            source="connection_authorization"
+                            label="Connection Authorization"
+                        />
+                    )}
+                    {uniqueKeys.includes('connection_uri') && (
+                        <TextInput
+                            source="connection_uri"
+                            label="Connection URI"
+                        />
+                    )}
                     {params_ext.length !== 0 && <hr />}
                     {params_ext.map(value => {
                         return (

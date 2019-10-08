@@ -9,6 +9,9 @@ import {
     fetchUtils,
 } from 'react-admin';
 import get from 'lodash/get';
+import pick from 'lodash/pick';
+import assign from 'lodash/assign';
+import diff from 'deep-diff';
 import Cookies from 'universal-cookie';
 
 let API_URL = '';
@@ -211,16 +214,69 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             }
         }
         case UPDATE:
-            delete params.data.$staged.activation.activation_time;
-
-            if (get(params.data, '$staged.transport_file.data') === '') {
-                delete params.data.$staged.transport_file;
-                console.log(params.data);
+            let patchData = pick(get(params, 'data.$staged'), [
+                'master_enable',
+                'activation.mode',
+                'activation.requested_time',
+            ]);
+            switch (resource) {
+                case 'receivers':
+                    assign(patchData, {
+                        sender_id: get(params, 'data.$staged.sender_id'),
+                    });
+                    break;
+                case 'senders':
+                    assign(patchData, {
+                        receiver_id: get(params, 'data.$staged.receiver_id'),
+                    });
+                    break;
+                default:
+                    break;
+            }
+            const differences = diff(
+                get(params, 'previousData.$staged.transport_params'),
+                get(params, 'data.$staged.transport_params')
+            );
+            if (differences) {
+                let transport_params = Array(
+                    get(params, 'data.$staged.transport_params').length
+                ).fill({});
+                for (const d of differences) {
+                    if (d.kind !== 'N')
+                        transport_params[d.path[0]] = assign(
+                            {},
+                            { [d.path[1]]: d.rhs }
+                        );
+                }
+                assign(patchData, { transport_params });
+            }
+            if (
+                get(params, 'previousData.$staged.transport_file.data') !==
+                get(params, 'data.$staged.transport_file.data')
+            ) {
+                if (get(params.data, '$staged.transport_file.data')) {
+                    assign(patchData, {
+                        transport_file: {
+                            data: get(
+                                params.data,
+                                '$staged.transport_file.data'
+                            ),
+                            type: 'application/sdp',
+                        },
+                    });
+                } else {
+                    assign(patchData, {
+                        transport_file: {
+                            data: null,
+                            type: null,
+                        },
+                    });
+                }
             }
 
             const options = {
                 method: 'PATCH',
-                body: JSON.stringify(get(params.data, '$staged')),
+                body: JSON.stringify(patchData),
             };
             return {
                 url: `${params.data.$connectionAPI}/single/${resource}/${params.data.id}/staged`,

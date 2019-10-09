@@ -12,18 +12,6 @@ import {
 import copy from 'clipboard-copy';
 import get from 'lodash/get';
 
-function transportFileExists(endpoint, props) {
-    const str = get(props.record, '$transportfile');
-    if (typeof str !== 'string') return true;
-    try {
-        const result = JSON.parse(str);
-        const type = Object.prototype.toString.call(result);
-        return type !== '[object Object]' || type !== '[object Array]';
-    } catch (err) {
-        return true;
-    }
-}
-
 const TransportFileViewer = ({ endpoint, ...props }) => {
     const [checked, setChecked] = React.useState(false);
     const [open, setOpen] = React.useState(false);
@@ -40,11 +28,7 @@ const TransportFileViewer = ({ endpoint, ...props }) => {
         setOpen(false);
     };
 
-    if (props.resource === 'senders' && !transportFileExists(endpoint, props)) {
-        return null;
-    }
-
-    if (get(props.record, `${endpoint}`) == null) {
+    if (!get(props.record, `${endpoint}`)) {
         return null;
     }
 

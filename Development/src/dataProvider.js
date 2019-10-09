@@ -218,21 +218,9 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 'master_enable',
                 'activation.mode',
                 'activation.requested_time',
+                'sender_id',
+                'receiver_id',
             ]);
-            switch (resource) {
-                case 'receivers':
-                    assign(patchData, {
-                        sender_id: get(params, 'data.$staged.sender_id'),
-                    });
-                    break;
-                case 'senders':
-                    assign(patchData, {
-                        receiver_id: get(params, 'data.$staged.receiver_id'),
-                    });
-                    break;
-                default:
-                    break;
-            }
             const differences = diff(
                 get(params, 'previousData.$staged.transport_params'),
                 get(params, 'data.$staged.transport_params')
@@ -292,47 +280,45 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
     }
 };
 
-async function getEndpoints(json, resource, connectionAddress, params) {
-    const endpoints = {
-        receivers: ['active', 'constraints', 'staged', 'transporttype'],
-        senders: [
-            'active',
-            'constraints',
-            'staged',
-            'transporttype',
-            'transportfile',
-        ],
-    };
-
-    if (endpoints[resource].includes('transportfile')) {
-        json['$transportfile'] = await fetch(
-            `${connectionAddress}/single/senders/${params.id}/transportfile/`,
-            {
-                headers: {
-                    Accept: 'application/sdp',
-                },
-            }
-        ).then(function(response) {
-            return response.text();
-        });
-        endpoints[resource] = endpoints[resource].filter(
-            item => item !== 'transportfile'
-        );
-    }
-
-    const connectionAPIVersion = connectionAddress.split('/').pop();
-    if (connectionAPIVersion.startsWith('v1.0')) {
-        endpoints[resource] = endpoints[resource].filter(
-            item => item !== 'transporttype'
-        );
-        json.$transporttype = 'urn:x-nmos:transport:rtp';
-    }
-
-    for (let i in endpoints[resource]) {
-        json['$' + endpoints[resource][i]] = await fetch(
-            `${connectionAddress}/single/${resource}/${params.id}/${endpoints[resource][i]}/`
-        ).then(result => result.json());
-    }
+function getEndpoints(connectionAPI) {
+    return new Promise((resolve, reject) => {
+        const endpointData = [];
+        fetch(`${connectionAPI}`)
+            .then(response => response.json())
+            .then(function(endpoints) {
+                if (get(endpoints, 'code')) {
+                    reject(new Error(`${endpoints.error} - ${endpoints.code}`));
+                    return;
+                }
+                Promise.all(
+                    endpoints.map(url =>
+                        fetch(`${connectionAPI}/${url}`)
+                            .then(function(response) {
+                                if (response.ok) {
+                                    return response.text();
+                                }
+                            })
+                            .then(function(text) {
+                                try {
+                                    return JSON.parse(text);
+                                } catch (e) {
+                                    return text;
+                                }
+                            })
+                            .then(function(data) {
+                                endpointData.push({
+                                    [`$${url.slice(0, -1)}`]: data,
+                                });
+                            })
+                            .catch(function(error) {
+                                console.log(error);
+                            })
+                    )
+                ).then(function() {
+                    resolve(endpointData);
+                });
+            });
+    });
 }
 
 async function convertHTTPResponseToDataProvider(
@@ -393,7 +379,18 @@ async function convertHTTPResponseToDataProvider(
                 if (!connectionAddress) return { url: url, data: json };
                 json.$connectionAPI = `${connectionAddress}`;
 
-                await getEndpoints(json, resource, connectionAddress, params);
+                const endpointData = await getEndpoints(
+                    `${connectionAddress}/single/${resource}/${params.id}`
+                );
+                for (let i of endpointData) {
+                    assign(json, i);
+                }
+                // For connection API version 1.0
+                if (!json.hasOwnProperty('$transporttype')) {
+                    assign(json, {
+                        $transporttype: 'urn:x-nmos:transport:rtp',
+                    });
+                }
             }
             return { url: url, data: json };
 

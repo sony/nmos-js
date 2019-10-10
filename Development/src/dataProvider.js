@@ -9,7 +9,8 @@ import {
     fetchUtils,
 } from 'react-admin';
 import get from 'lodash/get';
-import pick from 'lodash/pick';
+import set from 'lodash/set';
+import { set as setJSON } from 'json-ptr';
 import assign from 'lodash/assign';
 import diff from 'deep-diff';
 import Cookies from 'universal-cookie';
@@ -94,6 +95,10 @@ export const changePaging = newLimit => {
     paging_limit = newLimit;
     return paging_limit;
 };
+
+function isNumber(v) {
+    return !isNaN(v) && !isNaN(parseFloat(v));
+}
 
 const convertDataProviderRequestToHTTP = (type, resource, params) => {
     switch (type) {
@@ -214,51 +219,50 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             }
         }
         case UPDATE:
-            let patchData = pick(get(params, 'data.$staged'), [
-                'master_enable',
-                'activation.mode',
-                'activation.requested_time',
-                'sender_id',
-                'receiver_id',
-            ]);
-            const differences = diff(
-                get(params, 'previousData.$staged.transport_params'),
-                get(params, 'data.$staged.transport_params')
+            let differences = [];
+            let allDifferences = diff(
+                get(params, 'previousData.$staged'),
+                get(params, 'data.$staged')
             );
-            if (differences) {
-                let transport_params = Array(
-                    get(params, 'data.$staged.transport_params').length
-                ).fill({});
-                for (const d of differences) {
-                    if (d.kind !== 'N')
-                        transport_params[d.path[0]] = assign(
-                            {},
-                            { [d.path[1]]: d.rhs }
-                        );
+            if (allDifferences !== undefined) {
+                for (const d of allDifferences) {
+                    if (d.rhs === '') {
+                        if (d.lhs !== null) {
+                            differences.push({
+                                kind: d.kind,
+                                lhs: d.lhs,
+                                path: d.path,
+                                rhs: null,
+                            });
+                        }
+                    } else if (isNumber(d.rhs)) {
+                        differences.push({
+                            kind: d.kind,
+                            lhs: d.lhs,
+                            path: d.path,
+                            rhs: Number(d.rhs),
+                        });
+                    } else {
+                        differences.push(d);
+                    }
                 }
-                assign(patchData, { transport_params });
             }
-            if (
-                get(params, 'previousData.$staged.transport_file.data') !==
-                get(params, 'data.$staged.transport_file.data')
-            ) {
-                if (get(params.data, '$staged.transport_file.data')) {
-                    assign(patchData, {
-                        transport_file: {
-                            data: get(
-                                params.data,
-                                '$staged.transport_file.data'
-                            ),
-                            type: 'application/sdp',
-                        },
-                    });
+
+            let patchData = { transport_params: [] };
+            const legs = get(params, 'data.$staged.transport_params').length;
+            for (let i = 0; i < legs; i++) {
+                patchData.transport_params.push({});
+            }
+
+            for (const d of differences) {
+                setJSON(patchData, `/${d.path.join('/')}`, d.rhs, true);
+            }
+
+            if (patchData.hasOwnProperty('transport_file')) {
+                if (get(patchData, 'transport_file.data') === null) {
+                    set(patchData, 'transport_file.type', null);
                 } else {
-                    assign(patchData, {
-                        transport_file: {
-                            data: null,
-                            type: null,
-                        },
-                    });
+                    set(patchData, 'transport_file.type', 'application/sdp');
                 }
             }
 

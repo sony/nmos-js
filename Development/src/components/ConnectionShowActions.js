@@ -40,7 +40,11 @@ export default function ConnectionShowActions({ basePath, data, resource }) {
                     <JsonIcon />
                 </Button>
             ) : null}
-            <ListButton title={'Return to ' + basePath} basePath={basePath} />
+            <ListButton
+                label={'List'}
+                title={'Return to ' + basePath}
+                basePath={basePath}
+            />
             {data ? (
                 <NavLink to={`${basePath}/${data.id}`}>
                     <Button label={'Edit'}>

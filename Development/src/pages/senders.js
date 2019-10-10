@@ -1,3 +1,4 @@
+import copy from 'clipboard-copy';
 import React from 'react';
 import { Link, Route } from 'react-router-dom';
 import {
@@ -30,6 +31,8 @@ import {
     AppBar,
     Card,
     CardContent,
+    Button as MaterialButton,
+    Snackbar,
     Tab,
     Table,
     TableBody,
@@ -37,6 +40,7 @@ import {
     TableHead,
     TableRow,
     Tabs,
+    Typography,
 } from '@material-ui/core';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
@@ -48,7 +52,6 @@ import SenderTransportParamsCardsGrid from '../components/SenderTransportParams'
 import ConnectionShowActions from '../components/ConnectionShowActions';
 import ConnectionEditActions from '../components/ConnectionEditActions';
 import JSONViewer from '../components/JSONViewer';
-import TransportFileViewer from '../components/TransportFileViewer';
 
 const cookies = new Cookies();
 
@@ -248,6 +251,14 @@ export const SendersShow = props => {
                                 component={Link}
                                 to={`${props.basePath}/${props.id}/show/staged`}
                             />
+                            {get(controllerProps.record, '$transportfile') && (
+                                <Tab
+                                    label="Transport File"
+                                    value={`${props.match.url}/transportfile`}
+                                    component={Link}
+                                    to={`${props.basePath}/${props.id}/show/transportfile`}
+                                />
+                            )}
                         </Tabs>
                     </AppBar>
                     <Route
@@ -275,6 +286,16 @@ export const SendersShow = props => {
                         path={`${props.basePath}/${props.id}/show/staged`}
                         render={() => (
                             <ShowStagedTab
+                                {...props}
+                                controllerProps={controllerProps}
+                            />
+                        )}
+                    />
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/transportfile`}
+                        render={() => (
+                            <ShowTransportFileTab
                                 {...props}
                                 controllerProps={controllerProps}
                             />
@@ -396,7 +417,6 @@ const ShowActiveTab = ({ controllerProps, ...props }) => {
                         record={controllerProps.record}
                     />
                 </ArrayField>
-                <TransportFileViewer endpoint="$transportfile" />
                 <JSONViewer endpoint="$active" />
             </SimpleShowLayout>
         </ShowView>
@@ -437,6 +457,47 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
                     />
                 </ArrayField>
                 <JSONViewer endpoint="$staged" />
+            </SimpleShowLayout>
+        </ShowView>
+    );
+};
+
+const ShowTransportFileTab = ({ controllerProps, ...props }) => {
+    const [open, setOpen] = React.useState(false);
+    const handleClick = () => {
+        copy(get(controllerProps.record, `$transportfile`)).then(() => {
+            setOpen(true);
+        });
+    };
+    const handleClose = () => {
+        setOpen(false);
+    };
+    return (
+        <ShowView
+            {...props}
+            {...controllerProps}
+            title={<SendersTitle />}
+            actions={<ConnectionShowActions />}
+        >
+            <SimpleShowLayout>
+                <Typography>
+                    <pre style={{ fontFamily: 'inherit' }}>
+                        {get(controllerProps.record, '$transportfile')}
+                    </pre>
+                </Typography>
+                <MaterialButton
+                    variant="contained"
+                    color="primary"
+                    onClick={handleClick}
+                >
+                    Copy
+                </MaterialButton>
+                <Snackbar
+                    open={open}
+                    onClose={handleClose}
+                    autoHideDuration={3000}
+                    message={<span>Transport File Copied</span>}
+                />
             </SimpleShowLayout>
         </ShowView>
     );

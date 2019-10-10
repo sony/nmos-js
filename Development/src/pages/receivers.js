@@ -1,3 +1,4 @@
+import set from 'lodash/set';
 import React from 'react';
 import { Link, Route } from 'react-router-dom';
 import {
@@ -7,10 +8,12 @@ import {
     Button,
     ChipField,
     Edit,
+    FormDataConsumer,
     FunctionField,
     LongTextInput,
     ReferenceField,
     SaveButton,
+    SelectInput,
     ShowButton,
     ShowController,
     ShowView,
@@ -507,11 +510,54 @@ const EditStagedTab = props => (
                 label="Master Enable"
                 source="$staged.master_enable"
             />
-            <TextInput label="Mode" source="$staged.activation.mode" />
-            <TextInput
-                label="Requested Time"
-                source="$staged.activation.requested_time"
+            <SelectInput
+                label="Activation Mode"
+                source="$staged.activation.mode"
+                choices={[
+                    { id: null, name: 'None' },
+                    {
+                        id: 'activate_immediate',
+                        name: 'Activate Immediate',
+                    },
+                    {
+                        id: 'activate_scheduled_relative',
+                        name: 'Activate Scheduled Relative',
+                    },
+                    {
+                        id: 'activate_scheduled_absolute',
+                        name: 'Activate Scheduled Absolute',
+                    },
+                ]}
             />
+            <FormDataConsumer>
+                {({ formData, ...rest }) => {
+                    switch (get(formData, '$staged.activation.mode')) {
+                        case 'activate_scheduled_relative':
+                            return (
+                                <TextInput
+                                    label="Requested Time"
+                                    source="$staged.activation.requested_time"
+                                    {...rest}
+                                />
+                            );
+                        case 'activate_scheduled_absolute':
+                            return (
+                                <TextInput
+                                    label="Requested Time"
+                                    source="$staged.activation.requested_time"
+                                    {...rest}
+                                />
+                            );
+                        default:
+                            set(
+                                formData,
+                                '$staged.activation.requested_time',
+                                null
+                            );
+                            return null;
+                    }
+                }}
+            </FormDataConsumer>
             <ReceiverTransportParamsCardsGrid />
             <LongTextInput
                 label="Transport File"

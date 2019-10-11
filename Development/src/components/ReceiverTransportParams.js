@@ -4,12 +4,16 @@ import {
     ArrayInput,
     BooleanField,
     BooleanInput,
+    SelectField,
+    SelectInput,
     SimpleShowLayout,
     TextField,
     TextInput,
 } from 'react-admin';
 import { Card, CardContent, Grid } from '@material-ui/core';
 import { CardFormIterator } from './CardFormIterator';
+import CheckIcon from '@material-ui/icons/Check';
+import ClearIcon from '@material-ui/icons/Clear';
 
 const MQTTReceiver = ({ dataObject }) => {
     const params_ext = Object.keys(dataObject[0]).filter(function(x) {
@@ -50,9 +54,20 @@ const MQTTReceiver = ({ dataObject }) => {
                                     {dataObject[i].hasOwnProperty(
                                         'broker_authorization'
                                     ) && (
-                                        <TextField
+                                        <SelectField
                                             source="broker_authorization"
                                             label="Broker Authorization"
+                                            choices={[
+                                                {
+                                                    id: true,
+                                                    name: <CheckIcon />,
+                                                },
+                                                {
+                                                    id: false,
+                                                    name: <ClearIcon />,
+                                                },
+                                                { id: 'auto', name: 'Auto' },
+                                            ]}
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
@@ -120,9 +135,14 @@ const MQTTReceiverEdit = ({ record }) => {
                         />
                     )}
                     {uniqueKeys.includes('broker_authorization') && (
-                        <TextInput
+                        <SelectInput
                             source="broker_authorization"
                             label="Broker Authorization"
+                            choices={[
+                                { id: true, name: <CheckIcon /> },
+                                { id: false, name: <ClearIcon /> },
+                                { id: 'auto', name: 'Auto' },
+                            ]}
                         />
                     )}
                     {uniqueKeys.includes('broker_topic') && (
@@ -391,9 +411,20 @@ const WebSocketReceiver = ({ dataObject }) => {
                                     {dataObject[i].hasOwnProperty(
                                         'connection_authorization'
                                     ) && (
-                                        <BooleanField
+                                        <SelectField
                                             source="connection_authorization"
                                             label="Connection Authorization"
+                                            choices={[
+                                                {
+                                                    id: true,
+                                                    name: <CheckIcon />,
+                                                },
+                                                {
+                                                    id: false,
+                                                    name: <ClearIcon />,
+                                                },
+                                                { id: 'auto', name: 'Auto' },
+                                            ]}
                                         />
                                     )}
                                     {dataObject[i].hasOwnProperty(
@@ -441,9 +472,14 @@ const WebSocketReceiverEdit = ({ record }) => {
             >
                 <CardFormIterator disableRemove disableAdd>
                     {uniqueKeys.includes('connection_authorization') && (
-                        <BooleanInput
+                        <SelectInput
                             source="connection_authorization"
                             label="Connection Authorization"
+                            choices={[
+                                { id: true, name: <CheckIcon /> },
+                                { id: false, name: <ClearIcon /> },
+                                { id: 'auto', name: 'Auto' },
+                            ]}
                         />
                     )}
                     {uniqueKeys.includes('connection_uri') && (

@@ -8,7 +8,7 @@ import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import { Card, CardContent, Grid } from '@material-ui/core';
 import { FormInput } from 'ra-ui-materialui';
-
+// Derived from react-admin component
 export class CardFormIterator extends Component {
     constructor(props) {
         super(props);

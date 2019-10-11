@@ -164,7 +164,11 @@ const MQTTSenderEdit = ({ record }) => {
                     {params_ext.length !== 0 && <hr />}
                     {params_ext.map(value => {
                         return (
-                            <TextInput record={record} source={value} key={value} />
+                            <TextInput
+                                record={record}
+                                source={value}
+                                key={value}
+                            />
                         );
                     })}
                 </CardFormIterator>
@@ -479,7 +483,11 @@ const RTPSenderEdit = ({ record }) => {
                     {params_ext.length !== 0 && <hr />}
                     {params_ext.map(value => {
                         return (
-                            <TextInput record={record} source={value} key={value} />
+                            <TextInput
+                                record={record}
+                                source={value}
+                                key={value}
+                            />
                         );
                     })}
                 </CardFormIterator>
@@ -584,7 +592,11 @@ const WebSocketSenderEdit = ({ record }) => {
                     {params_ext.length !== 0 && <hr />}
                     {params_ext.map(value => {
                         return (
-                            <TextInput record={record} source={value} key={value} />
+                            <TextInput
+                                record={record}
+                                source={value}
+                                key={value}
+                            />
                         );
                     })}
                 </CardFormIterator>

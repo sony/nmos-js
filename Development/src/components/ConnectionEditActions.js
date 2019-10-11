@@ -11,7 +11,11 @@ const cardActionStyle = {
 export default function ConnectionEditActions({ basePath, id }) {
     return (
         <CardActions style={cardActionStyle}>
-            <ShowButton label={'Show'} component={Link} to={`${basePath}/${id}/show/staged`} />
+            <ShowButton
+                label={'Show'}
+                component={Link}
+                to={`${basePath}/${id}/show/staged`}
+            />
         </CardActions>
     );
 }

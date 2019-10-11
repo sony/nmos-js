@@ -1,30 +1,46 @@
+import copy from 'clipboard-copy';
 import React from 'react';
+import { Link, Route } from 'react-router-dom';
 import {
     ArrayField,
     BooleanField,
+    BooleanInput,
     Button,
     ChipField,
+    Edit,
+    FormDataConsumer,
     FunctionField,
     ReferenceField,
+    SaveButton,
+    SelectInput,
     ShowButton,
     ShowController,
     ShowView,
-    Tab,
-    TabbedShowLayout,
+    SimpleForm,
+    SimpleShowLayout,
     TextField,
+    TextInput,
     Title,
+    Toolbar,
     UrlField,
 } from 'react-admin';
 import get from 'lodash/get';
+import set from 'lodash/set';
 import Cookies from 'universal-cookie';
 import {
+    AppBar,
     Card,
     CardContent,
+    Button as MaterialButton,
+    Snackbar,
+    Tab,
     Table,
     TableBody,
     TableCell,
     TableHead,
     TableRow,
+    Tabs,
+    Typography,
 } from '@material-ui/core';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
@@ -33,7 +49,8 @@ import TAIField from '../components/TAIField';
 import MapTags from '../components/TagsField';
 import JsonIcon from '../components/JsonIcon';
 import SenderTransportParamsCardsGrid from '../components/SenderTransportParams';
-import ConnectionShowActions from '../components/ConnectionShowActions'
+import ConnectionShowActions from '../components/ConnectionShowActions';
+import ConnectionEditActions from '../components/ConnectionEditActions';
 import JSONViewer from '../components/JSONViewer';
 
 const cookies = new Cookies();
@@ -205,154 +222,393 @@ const ChipConditionalLabel = ({ record, source, ...props }) => {
     ) : null;
 };
 
+export const SendersShow = props => {
+    return (
+        <ShowController {...props}>
+            {controllerProps => (
+                <div>
+                    <AppBar position="static" color="default">
+                        <Tabs
+                            value={props.location.pathname}
+                            indicatorColor="primary"
+                            textColor="primary"
+                        >
+                            <Tab
+                                label="Summary"
+                                value={`${props.match.url}`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/`}
+                            />
+                            <Tab
+                                label="Active"
+                                value={`${props.match.url}/active`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/active`}
+                            />
+                            <Tab
+                                label="Staged"
+                                value={`${props.match.url}/staged`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/staged`}
+                            />
+                            {get(controllerProps.record, '$transportfile') && (
+                                <Tab
+                                    label="Transport File"
+                                    value={`${props.match.url}/transportfile`}
+                                    component={Link}
+                                    to={`${props.basePath}/${props.id}/show/transportfile`}
+                                />
+                            )}
+                        </Tabs>
+                    </AppBar>
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/`}
+                        render={() => (
+                            <ShowSummaryTab
+                                {...props}
+                                controllerProps={controllerProps}
+                            />
+                        )}
+                    />
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/active`}
+                        render={() => (
+                            <ShowActiveTab
+                                {...props}
+                                controllerProps={controllerProps}
+                            />
+                        )}
+                    />
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/staged`}
+                        render={() => (
+                            <ShowStagedTab
+                                {...props}
+                                controllerProps={controllerProps}
+                            />
+                        )}
+                    />
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/transportfile`}
+                        render={() => (
+                            <ShowTransportFileTab
+                                {...props}
+                                controllerProps={controllerProps}
+                            />
+                        )}
+                    />
+                </div>
+            )}
+        </ShowController>
+    );
+};
+
 const QueryVersion = () => {
     let url = cookies.get('Query API');
     return url.match(/([^/]+)(?=\/?$)/g)[0];
 };
 
-export const SendersShow = props => (
-    <ShowController {...props}>
-        {controllerProps => (
-            <ShowView
-                {...props}
-                {...controllerProps}
-                title={<SendersTitle />}
-                actions={<ConnectionShowActions />}
-            >
-                <TabbedShowLayout>
-                    <Tab label="Summary">
-                        <TextField label="ID" source="id" />
-                        <TAIField source="version" />
-                        <TextField source="label" />
-                        <TextField source="description" />
-                        <FunctionField
-                            label="Tags"
-                            render={record =>
-                                Object.keys(record.tags).length > 0
-                                    ? MapTags(record)
-                                    : null
-                            }
-                        />
-                        <hr />
-                        <TextField source="transport" />
-                        <UrlField
-                            style={{ fontSize: '14px' }}
-                            label="Manifest Address"
-                            source="manifest_href"
-                        />
-                        {controllerProps.record && QueryVersion() >= 'v1.2' && (
-                            <ItemArrayField source="interface_bindings" />
-                        )}
-                        {controllerProps.record && QueryVersion() >= 'v1.2' && (
-                            <BooleanField
-                                label="Subscription Active"
-                                source="subscription.active"
-                            />
-                        )}
-                        <hr />
+const ShowSummaryTab = ({ controllerProps, ...props }) => {
+    return (
+        <ShowView
+            {...props}
+            {...controllerProps}
+            title={<SendersTitle />}
+            actions={<ConnectionShowActions />}
+        >
+            <SimpleShowLayout>
+                <TextField label="ID" source="id" />
+                <TAIField source="version" />
+                <TextField source="label" />
+                <TextField source="description" />
+                <FunctionField
+                    label="Tags"
+                    render={record =>
+                        Object.keys(record.tags).length > 0
+                            ? MapTags(record)
+                            : null
+                    }
+                />
+                <hr />
+                <TextField source="transport" />
+                <UrlField
+                    style={{ fontSize: '14px' }}
+                    label="Manifest Address"
+                    source="manifest_href"
+                />
+                {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                    <ItemArrayField source="interface_bindings" />
+                )}
+                {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                    <BooleanField
+                        label="Subscription Active"
+                        source="subscription.active"
+                    />
+                )}
+                <hr />
+                <ReferenceField
+                    label="Flow"
+                    source="flow_id"
+                    reference="flows"
+                    linkType="show"
+                >
+                    <ChipConditionalLabel source="label" />
+                </ReferenceField>
+                <ReferenceField
+                    label="Device"
+                    source="device_id"
+                    reference="devices"
+                    linkType="show"
+                >
+                    <ChipConditionalLabel source="label" />
+                </ReferenceField>
+                {controllerProps.record &&
+                    QueryVersion() >= 'v1.2' &&
+                    controllerProps.record.subscription.receiver_id && (
                         <ReferenceField
-                            label="Flow"
-                            source="flow_id"
-                            reference="flows"
+                            label="Receiver"
+                            source="subscription.receiver_id"
+                            reference="receivers"
                             linkType="show"
                         >
                             <ChipConditionalLabel source="label" />
                         </ReferenceField>
-                        <ReferenceField
-                            label="Device"
-                            source="device_id"
-                            reference="devices"
-                            linkType="show"
-                        >
-                            <ChipConditionalLabel source="label" />
-                        </ReferenceField>
-                        {controllerProps.record &&
-                            QueryVersion() >= 'v1.2' &&
-                            controllerProps.record.subscription.receiver_id && (
-                                <ReferenceField
-                                    label="Receiver"
-                                    source="subscription.receiver_id"
-                                    reference="receivers"
-                                    linkType="show"
-                                >
-                                    <ChipConditionalLabel source="label" />
-                                </ReferenceField>
-                            )}
-                    </Tab>
-                    <Tab label="Active" path="active">
-                        <TextField label="ID" source="id" />
-                        <TextField
-                            label="Receiver ID"
-                            source="$active.receiver_id"
-                        />
-                        <BooleanField
-                            label="Master Enable"
-                            source="$active.master_enable"
-                        />
-                        <TextField
-                            label="Mode"
-                            source="$active.activation.mode"
-                        />
-                        <TAIField
-                            label="Requested Time"
-                            source="$active.activation.requested_time"
-                        />
-                        <TAIField
-                            label="Activation Time"
-                            source="$active.activation.activation_time"
-                        />
-                        <TextField
-                            label="Transport Type"
-                            source="$transporttype"
-                        />
-                        <ArrayField
-                            label="Transport Parameters"
-                            source="$active.transport_params"
-                        >
-                            <SenderTransportParamsCardsGrid
-                                record={controllerProps.record}
-                            />
-                        </ArrayField>
-                        <JSONViewer endpoint="$active" />
-                    </Tab>
-                    <Tab label="Staged" path="staged">
-                        <TextField label="ID" source="id" />
-                        <TextField
-                            label="Receiver ID"
-                            source="staged.receiver_id"
-                        />
-                        <BooleanField
-                            label="Master Enable"
-                            source="$staged.master_enable"
-                        />
-                        <TextField
-                            label="Mode"
-                            source="$staged.activation.mode"
-                        />
-                        <TAIField
-                            label="Requested Time"
-                            source="$staged.activation.requested_time"
-                        />
-                        <TAIField
-                            label="Activation Time"
-                            source="$staged.activation.activation_time"
-                        />
-                        <TextField
-                            label="Transport Type"
-                            source="$transporttype"
-                        />
-                        <ArrayField
-                            label="Transport Parameters"
-                            source="$staged.transport_params"
-                        >
-                            <SenderTransportParamsCardsGrid
-                                record={controllerProps.record}
-                            />
-                        </ArrayField>
-                        <JSONViewer endpoint="$staged" />
-                    </Tab>
-                </TabbedShowLayout>
-            </ShowView>
-        )}
-    </ShowController>
+                    )}
+                )}
+            </SimpleShowLayout>
+        </ShowView>
+    );
+};
+
+const ShowActiveTab = ({ controllerProps, ...props }) => {
+    return (
+        <ShowView
+            {...props}
+            {...controllerProps}
+            title={<SendersTitle />}
+            actions={<ConnectionShowActions />}
+        >
+            <SimpleShowLayout>
+                <TextField label="ID" source="id" />
+                <TextField label="Receiver ID" source="$active.receiver_id" />
+                <BooleanField
+                    label="Master Enable"
+                    source="$active.master_enable"
+                />
+                <TextField label="Mode" source="$active.activation.mode" />
+                <TAIField
+                    label="Requested Time"
+                    source="$active.activation.requested_time"
+                />
+                <TAIField
+                    label="Activation Time"
+                    source="$active.activation.activation_time"
+                />
+                <TextField label="Transport Type" source="$transporttype" />
+                <ArrayField
+                    label="Transport Parameters"
+                    source="$active.transport_params"
+                >
+                    <SenderTransportParamsCardsGrid
+                        record={controllerProps.record}
+                    />
+                </ArrayField>
+                <JSONViewer endpoint="$active" />
+            </SimpleShowLayout>
+        </ShowView>
+    );
+};
+
+const ShowStagedTab = ({ controllerProps, ...props }) => {
+    return (
+        <ShowView
+            {...props}
+            {...controllerProps}
+            title={<SendersTitle />}
+            actions={<ConnectionShowActions />}
+        >
+            <SimpleShowLayout>
+                <TextField label="ID" source="id" />
+                <TextField label="Receiver ID" source="staged.receiver_id" />
+                <BooleanField
+                    label="Master Enable"
+                    source="$staged.master_enable"
+                />
+                <TextField label="Mode" source="$staged.activation.mode" />
+                <TAIField
+                    label="Requested Time"
+                    source="$staged.activation.requested_time"
+                />
+                <TAIField
+                    label="Activation Time"
+                    source="$staged.activation.activation_time"
+                />
+                <TextField label="Transport Type" source="$transporttype" />
+                <ArrayField
+                    label="Transport Parameters"
+                    source="$staged.transport_params"
+                >
+                    <SenderTransportParamsCardsGrid
+                        record={controllerProps.record}
+                    />
+                </ArrayField>
+                <JSONViewer endpoint="$staged" />
+            </SimpleShowLayout>
+        </ShowView>
+    );
+};
+
+const ShowTransportFileTab = ({ controllerProps, ...props }) => {
+    const [open, setOpen] = React.useState(false);
+    const handleClick = () => {
+        copy(get(controllerProps.record, `$transportfile`)).then(() => {
+            setOpen(true);
+        });
+    };
+    const handleClose = () => {
+        setOpen(false);
+    };
+    return (
+        <ShowView
+            {...props}
+            {...controllerProps}
+            title={<SendersTitle />}
+            actions={<ConnectionShowActions />}
+        >
+            <SimpleShowLayout>
+                <Typography>
+                    <pre style={{ fontFamily: 'inherit' }}>
+                        {get(controllerProps.record, '$transportfile')}
+                    </pre>
+                </Typography>
+                <MaterialButton
+                    variant="contained"
+                    color="primary"
+                    onClick={handleClick}
+                >
+                    Copy
+                </MaterialButton>
+                <Snackbar
+                    open={open}
+                    onClose={handleClose}
+                    autoHideDuration={3000}
+                    message={<span>Transport File Copied</span>}
+                />
+            </SimpleShowLayout>
+        </ShowView>
+    );
+};
+
+const PostEditToolbar = props => (
+    <Toolbar {...props}>
+        <SaveButton />
+    </Toolbar>
 );
+
+export const SendersEdit = props => {
+    return (
+        <div>
+            <AppBar position="static" color="default">
+                <Tabs
+                    value={props.location.pathname}
+                    indicatorColor="primary"
+                    textColor="primary"
+                >
+                    <Tab
+                        label="Summary"
+                        component={Link}
+                        to={`${props.basePath}/${props.id}/show/`}
+                    />
+                    <Tab
+                        label="Active"
+                        component={Link}
+                        to={`${props.basePath}/${props.id}/show/active`}
+                    />
+                    <Tab
+                        label="Staged"
+                        value={`${props.match.url}`}
+                        component={Link}
+                        to={`${props.basePath}/${props.id}/show/staged`}
+                    />
+                </Tabs>
+            </AppBar>
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/`}
+                render={() => <EditStagedTab {...props} />}
+            />
+        </div>
+    );
+};
+
+const EditStagedTab = ({ record, ...props }) => {
+    return (
+        <Edit
+            {...props}
+            undoable={false}
+            title={<SendersTitle />}
+            actions={<ConnectionEditActions id={props.id} />}
+        >
+            <SimpleForm toolbar={<PostEditToolbar />}>
+                <TextInput label="Receiver ID" source="$staged.receiver_id" />
+                <BooleanInput
+                    label="Master Enable"
+                    source="$staged.master_enable"
+                />
+                <SelectInput
+                    label="Activation Mode"
+                    source="$staged.activation.mode"
+                    choices={[
+                        { id: null, name: 'None' },
+                        {
+                            id: 'activate_immediate',
+                            name: 'Activate Immediate',
+                        },
+                        {
+                            id: 'activate_scheduled_relative',
+                            name: 'Activate Scheduled Relative',
+                        },
+                        {
+                            id: 'activate_scheduled_absolute',
+                            name: 'Activate Scheduled Absolute',
+                        },
+                    ]}
+                />
+                <FormDataConsumer>
+                    {({ formData, ...rest }) => {
+                        switch (get(formData, '$staged.activation.mode')) {
+                            case 'activate_scheduled_relative':
+                                return (
+                                    <TextInput
+                                        label="Requested Time"
+                                        source="$staged.activation.requested_time"
+                                        {...rest}
+                                    />
+                                );
+                            case 'activate_scheduled_absolute':
+                                return (
+                                    <TextInput
+                                        label="Requested Time"
+                                        source="$staged.activation.requested_time"
+                                        {...rest}
+                                    />
+                                );
+                            default:
+                                set(
+                                    formData,
+                                    '$staged.activation.requested_time',
+                                    null
+                                );
+                                return null;
+                        }
+                    }}
+                </FormDataConsumer>
+                <SenderTransportParamsCardsGrid />
+            </SimpleForm>
+        </Edit>
+    );
+};

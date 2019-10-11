@@ -24,7 +24,7 @@ export default function JSONViewer({ endpoint, ...controllerProps }) {
                 <Card>
                     <CardContent>
                         <ReactJson
-                            src={get(controllerProps.record, `${endpoint}`)}
+                            src={get(controllerProps.record, endpoint)}
                         />
                     </CardContent>
                 </Card>

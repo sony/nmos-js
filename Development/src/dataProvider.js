@@ -8,6 +8,11 @@ import {
     UPDATE,
     fetchUtils,
 } from 'react-admin';
+import get from 'lodash/get';
+import set from 'lodash/set';
+import { set as setJSON } from 'json-ptr';
+import assign from 'lodash/assign';
+import diff from 'deep-diff';
 import Cookies from 'universal-cookie';
 
 let API_URL = '';
@@ -90,6 +95,10 @@ export const changePaging = newLimit => {
     paging_limit = newLimit;
     return paging_limit;
 };
+
+function isNumber(v) {
+    return !isNaN(v) && !isNaN(parseFloat(v));
+}
 
 const convertDataProviderRequestToHTTP = (type, resource, params) => {
     switch (type) {
@@ -210,7 +219,61 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             }
         }
         case UPDATE:
-            return '';
+            let differences = [];
+            let allDifferences = diff(
+                get(params, 'previousData.$staged'),
+                get(params, 'data.$staged')
+            );
+            if (allDifferences !== undefined) {
+                for (const d of allDifferences) {
+                    if (d.rhs === '') {
+                        if (d.lhs !== null) {
+                            differences.push({
+                                kind: d.kind,
+                                lhs: d.lhs,
+                                path: d.path,
+                                rhs: null,
+                            });
+                        }
+                    } else if (isNumber(d.rhs)) {
+                        differences.push({
+                            kind: d.kind,
+                            lhs: d.lhs,
+                            path: d.path,
+                            rhs: Number(d.rhs),
+                        });
+                    } else {
+                        differences.push(d);
+                    }
+                }
+            }
+
+            let patchData = { transport_params: [] };
+            const legs = get(params, 'data.$staged.transport_params').length;
+            for (let i = 0; i < legs; i++) {
+                patchData.transport_params.push({});
+            }
+
+            for (const d of differences) {
+                setJSON(patchData, `/${d.path.join('/')}`, d.rhs, true);
+            }
+
+            if (patchData.hasOwnProperty('transport_file')) {
+                if (get(patchData, 'transport_file.data') === null) {
+                    set(patchData, 'transport_file.type', null);
+                } else {
+                    set(patchData, 'transport_file.type', 'application/sdp');
+                }
+            }
+
+            const options = {
+                method: 'PATCH',
+                body: JSON.stringify(patchData),
+            };
+            return {
+                url: `${params.data.$connectionAPI}/single/${resource}/${params.data.id}/staged`,
+                options: options,
+            };
         case CREATE:
             return '';
         case DELETE:
@@ -220,6 +283,47 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             return '';
     }
 };
+
+function getEndpoints(connectionAPI) {
+    return new Promise((resolve, reject) => {
+        const endpointData = [];
+        fetch(`${connectionAPI}`)
+            .then(response => response.json())
+            .then(function(endpoints) {
+                if (get(endpoints, 'code')) {
+                    reject(new Error(`${endpoints.error} - ${endpoints.code}`));
+                    return;
+                }
+                Promise.all(
+                    endpoints.map(url =>
+                        fetch(`${connectionAPI}/${url}`)
+                            .then(function(response) {
+                                if (response.ok) {
+                                    return response.text();
+                                }
+                            })
+                            .then(function(text) {
+                                try {
+                                    return JSON.parse(text);
+                                } catch (e) {
+                                    return text;
+                                }
+                            })
+                            .then(function(data) {
+                                endpointData.push({
+                                    [`$${url.slice(0, -1)}`]: data,
+                                });
+                            })
+                            .catch(function(error) {
+                                console.log(error);
+                            })
+                    )
+                ).then(function() {
+                    resolve(endpointData);
+                });
+            });
+    });
+}
 
 async function convertHTTPResponseToDataProvider(
     url,
@@ -279,25 +383,17 @@ async function convertHTTPResponseToDataProvider(
                 if (!connectionAddress) return { url: url, data: json };
                 json.$connectionAPI = `${connectionAddress}`;
 
-                const endpoints = {
-                    receivers: [
-                        'active',
-                        'constraints',
-                        'staged',
-                        'transporttype',
-                    ],
-                    senders: [
-                        'active',
-                        'constraints',
-                        'staged',
-                        'transporttype',
-                        'transportfile',
-                    ],
-                };
-                for (let i in endpoints[resource]) {
-                    json['$' + endpoints[resource][i]] = await fetch(
-                        `${connectionAddress}/single/${resource}/${params.id}/${endpoints[resource][i]}/`
-                    ).then(result => result.json());
+                const endpointData = await getEndpoints(
+                    `${connectionAddress}/single/${resource}/${params.id}`
+                );
+                for (let i of endpointData) {
+                    assign(json, i);
+                }
+                // For connection API version 1.0
+                if (!json.hasOwnProperty('$transporttype')) {
+                    assign(json, {
+                        $transporttype: 'urn:x-nmos:transport:rtp',
+                    });
                 }
             }
             return { url: url, data: json };
@@ -317,6 +413,8 @@ async function convertHTTPResponseToDataProvider(
                 data: json,
                 total: 'unknown',
             };
+        case UPDATE:
+            return { data: { ...json, id: json.id } };
         default:
             //used for prev, next, first, last
             if (resource === 'queryapis') {
@@ -333,7 +431,21 @@ export default async (type, resource, params) => {
         resource,
         params
     );
-    return fetchJson(url, options).then(response =>
-        convertHTTPResponseToDataProvider(url, response, type, resource, params)
+    return fetchJson(url, options).then(
+        response =>
+            convertHTTPResponseToDataProvider(
+                url,
+                response,
+                type,
+                resource,
+                params
+            ),
+        response => {
+            return Promise.reject(
+                new Error(
+                    `${response.body.error} - ${response.body.code} - (${response.body.debug})`
+                )
+            );
+        }
     );
 };

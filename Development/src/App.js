@@ -6,8 +6,8 @@ import { NodesList, NodesShow } from './pages/nodes';
 import { DevicesList, DevicesShow } from './pages/devices';
 import { SourcesList, SourcesShow } from './pages/sources';
 import { FlowsList, FlowsShow } from './pages/flows';
-import { SendersList, SendersShow } from './pages/senders';
-import { ReceiversList, ReceiversShow } from './pages/receivers';
+import { SendersEdit, SendersList, SendersShow } from './pages/senders';
+import { ReceiversEdit, ReceiversList, ReceiversShow } from './pages/receivers';
 import { EventsList, EventsShow } from './pages/logs';
 import { SubscriptionsList, SubscriptionsShow } from './pages/subscriptions';
 import { SettingsList, SettingsShow } from './pages/queryapis';
@@ -70,12 +70,14 @@ const App = () => (
             name="senders"
             list={SendersList}
             show={SendersShow}
+            edit={SendersEdit}
             icon={CallMadeIcon}
         />
         <Resource
             name="receivers"
             list={ReceiversList}
             show={ReceiversShow}
+            edit={ReceiversEdit}
             icon={CallReceivedIcon}
         />
         <Resource

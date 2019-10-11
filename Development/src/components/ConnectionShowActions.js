@@ -1,6 +1,8 @@
 import { CardActions } from '@material-ui/core';
 import { Button, ListButton } from 'ra-ui-materialui';
 import React from 'react';
+import NavLink from 'react-router-dom/NavLink';
+import EditIcon from '@material-ui/icons/Edit';
 import Cookies from 'universal-cookie';
 import JsonIcon from './JsonIcon';
 
@@ -38,7 +40,18 @@ export default function ConnectionShowActions({ basePath, data, resource }) {
                     <JsonIcon />
                 </Button>
             ) : null}
-            <ListButton title={'Return to ' + basePath} basePath={basePath} />
+            <ListButton
+                label={'List'}
+                title={'Return to ' + basePath}
+                basePath={basePath}
+            />
+            {data ? (
+                <NavLink to={`${basePath}/${data.id}`}>
+                    <Button label={'Edit'}>
+                        <EditIcon />
+                    </Button>
+                </NavLink>
+            ) : null}
         </CardActions>
     );
 }

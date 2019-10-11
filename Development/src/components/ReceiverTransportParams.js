@@ -21,10 +21,10 @@ const MQTTReceiver = ({ dataObject }) => {
     });
     return (
         <div>
-            <Grid container spacing={3}>
+            <Grid container>
                 {Object.keys(dataObject).map(i => (
-                    <Grid item sm>
-                        <Card key={i}>
+                    <Grid item sm key={i}>
+                        <Card>
                             <CardContent>
                                 <SimpleShowLayout record={dataObject[i]}>
                                     {dataObject[i].hasOwnProperty(
@@ -91,7 +91,8 @@ const MQTTReceiver = ({ dataObject }) => {
                                         return (
                                             <TextField
                                                 record={dataObject[i]}
-                                                source={`${value}`}
+                                                source={value}
+                                                key={value}
                                             />
                                         );
                                     })}
@@ -157,7 +158,7 @@ const MQTTReceiverEdit = ({ record }) => {
                     {params_ext.length !== 0 && <hr />}
                     {params_ext.map(value => {
                         return (
-                            <TextInput record={record} source={`${value}`} />
+                            <TextInput record={record} source={value} key={value} />
                         );
                     })}
                 </CardFormIterator>
@@ -172,10 +173,10 @@ const RTPReceiver = ({ dataObject }) => {
     });
     return (
         <div>
-            <Grid container spacing={3}>
+            <Grid container>
                 {Object.keys(dataObject).map(i => (
-                    <Grid item sm>
-                        <Card key={i}>
+                    <Grid item sm key={i}>
+                        <Card>
                             <CardContent>
                                 <SimpleShowLayout record={dataObject[i]}>
                                     {dataObject[i].hasOwnProperty(
@@ -287,7 +288,8 @@ const RTPReceiver = ({ dataObject }) => {
                                         return (
                                             <TextField
                                                 record={dataObject[i]}
-                                                source={`${value}`}
+                                                source={value}
+                                                key={value}
                                             />
                                         );
                                     })}
@@ -387,7 +389,7 @@ const RTPReceiverEdit = ({ record }) => {
                     {params_ext.length !== 0 && <hr />}
                     {params_ext.map(value => {
                         return (
-                            <TextInput record={record} source={`${value}`} />
+                            <TextInput record={record} source={value} key={value} />
                         );
                     })}
                 </CardFormIterator>
@@ -402,10 +404,10 @@ const WebSocketReceiver = ({ dataObject }) => {
     });
     return (
         <div>
-            <Grid container spacing={3}>
+            <Grid container>
                 {Object.keys(dataObject).map(i => (
-                    <Grid item sm>
-                        <Card key={i}>
+                    <Grid item sm key={i}>
+                        <Card>
                             <CardContent>
                                 <SimpleShowLayout record={dataObject[i]}>
                                     {dataObject[i].hasOwnProperty(
@@ -440,7 +442,8 @@ const WebSocketReceiver = ({ dataObject }) => {
                                         return (
                                             <TextField
                                                 record={dataObject[i]}
-                                                source={`${value}`}
+                                                source={value}
+                                                key={value}
                                             />
                                         );
                                     })}
@@ -491,7 +494,7 @@ const WebSocketReceiverEdit = ({ record }) => {
                     {params_ext.length !== 0 && <hr />}
                     {params_ext.map(value => {
                         return (
-                            <TextInput record={record} source={`${value}`} />
+                            <TextInput record={record} source={value} key={value} />
                         );
                     })}
                 </CardFormIterator>

@@ -43,7 +43,7 @@ export class CardFormIterator extends Component {
                 <br style={{ lineHeight: 2 }} />
                 <Grid container>
                     {fields.map((member, index) => (
-                        <div>
+                        <div key={index}>
                             <Grid item sm>
                                 <Card>
                                     <CardContent>

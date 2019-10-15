@@ -6,6 +6,7 @@
   "dependencies": {
     "@material-ui/core": "1.5.1",
     "@material-ui/icons": "1.1.1",
+    "@material-ui/styles": "4.3.0",
     "aor-xmysql": "^0.1.2",
     "babel-plugin-transform-es2015-destructuring": "^6.23.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",

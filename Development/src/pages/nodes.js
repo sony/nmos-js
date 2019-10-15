@@ -14,7 +14,6 @@ import {
     SingleFieldList,
     TextField,
     Title,
-    UrlField,
 } from 'react-admin';
 import {
     Card,
@@ -25,6 +24,7 @@ import {
     TableCell,
     TableHead,
     TableRow,
+    Typography,
 } from '@material-ui/core';
 
 import get from 'lodash/get';
@@ -33,6 +33,7 @@ import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
 import TAIField from '../components/TAIField';
+import UrlField from '../components/URLField';
 import MapTags from '../components/TagsField';
 import ExternalLinkIcon from '@material-ui/icons/OpenInNew';
 import JsonIcon from '../components/JsonIcon';
@@ -228,7 +229,7 @@ const ItemArrayField = ({ className, source, record = {} }) => (
     <div>
         {get(record, source).map(item => (
             <div key={item} className={className}>
-                {item}
+                <Typography>{item}</Typography>
             </div>
         ))}
     </div>

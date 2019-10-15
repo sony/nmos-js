@@ -1,17 +1,17 @@
 import React from 'react';
 import dayjs from 'dayjs';
 import get from 'lodash/get';
+import { Typography } from '@material-ui/core';
 
 const TAIField = ({ record, source }) => (
-    <span style={{ fontSize: '14px' }}>
+    <Typography>
         {get(record, source)}
         {get(record, source) != null && (
-            <span style={{ color: 'grey' }}>
-                {' '}
-                ({TAIConversion(record, source)})
-            </span>
+            <Typography color="textSecondary">
+                {TAIConversion(record, source)}
+            </Typography>
         )}
-    </span>
+    </Typography>
 );
 
 function TAIConversion(record, source) {

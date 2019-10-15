@@ -22,7 +22,6 @@ import {
     TextInput,
     Title,
     Toolbar,
-    UrlField,
 } from 'react-admin';
 import get from 'lodash/get';
 import set from 'lodash/set';
@@ -46,6 +45,7 @@ import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
 import TAIField from '../components/TAIField';
+import UrlField from '../components/URLField';
 import MapTags from '../components/TagsField';
 import JsonIcon from '../components/JsonIcon';
 import SenderTransportParamsCardsGrid from '../components/SenderTransportParams';
@@ -201,7 +201,7 @@ const ItemArrayField = ({ className, source, record = {} }) => (
     <div style={{ fontSize: '14px' }}>
         {get(record, source).map((item, i) => (
             <div key={i} className={className}>
-                {item}
+                <Typography>{item}</Typography>
             </div>
         ))}
     </div>

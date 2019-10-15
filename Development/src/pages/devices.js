@@ -16,7 +16,6 @@ import {
     SingleFieldList,
     TextField,
     Title,
-    UrlField,
 } from 'react-admin';
 import {
     Card,
@@ -34,6 +33,7 @@ import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
 import TAIField from '../components/TAIField';
+import UrlField from '../components/URLField';
 import MapTags from '../components/TagsField';
 import '../index.css';
 import JsonIcon from '../components/JsonIcon';

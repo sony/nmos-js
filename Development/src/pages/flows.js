@@ -17,7 +17,6 @@ import {
     TextField,
     Title,
 } from 'react-admin';
-import get from 'lodash/get';
 import Cookies from 'universal-cookie';
 import {
     Card,
@@ -177,18 +176,6 @@ const FlowsTitle = ({ record }) => {
                 : 'Unknown'}
         </span>
     );
-};
-
-const ItemArrayField = ({ className, source, record = {} }) => (
-    <div>
-        {get(record, source).map(item => (
-            <div key={item} className={className} />
-        ))}
-    </div>
-);
-
-ItemArrayField.defaultProps = {
-    addLabel: true,
 };
 
 const ChipConditionalLabel = ({ record, source, ...props }) => {

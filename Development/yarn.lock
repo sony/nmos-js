@@ -173,7 +173,7 @@
     rifm "^0.7.0"
     tslib "^1.9.3"
 
-"@material-ui/styles@^4.2.0":
+"@material-ui/styles@4.3.0", "@material-ui/styles@^4.2.0":
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/@material-ui/styles/-/styles-4.3.0.tgz#27f11fbf061d8a20ad5703acb0dbb0e69cc00345"
   integrity sha512-7yOu+IOvbTVM+LfFJ0c7RZKksSpi2PmPwMhVnAKo1Ca3Nadjd950ALL6WG+R/W3C3GqakUvOqA5OLMvN/8N2jg==

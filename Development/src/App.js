@@ -23,6 +23,7 @@ import DvrIcon from '@material-ui/icons/Dvr';
 import SwapVertIcon from '@material-ui/icons/SwapVert';
 import SettingsIcon from '@material-ui/icons/Settings';
 import SettingsAppIcon from '@material-ui/icons/SettingsApplications';
+import { useTheme } from '@material-ui/styles';
 
 import MyLayout from './MyLayout';
 
@@ -32,6 +33,7 @@ const App = () => (
         icon={SettingsIcon}
         dataProvider={dataProvider}
         nestedItems={[]}
+        theme={useTheme()}
     >
         <Resource name="Settings" list={Dashboard} icon={SettingsIcon} />
         <Resource

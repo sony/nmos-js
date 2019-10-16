@@ -49,6 +49,7 @@ import ConnectionShowActions from '../components/ConnectionShowActions';
 import ConnectionEditActions from '../components/ConnectionEditActions';
 import JSONViewer from '../components/JSONViewer';
 import TransportFileViewer from '../components/TransportFileViewer';
+import ItemArrayField from '../components/ItemArrayField';
 
 const cookies = new Cookies();
 
@@ -200,20 +201,6 @@ const ReceiversTitle = ({ record }) => {
                 : 'Unknown'}
         </span>
     );
-};
-
-const ItemArrayField = ({ className, source, record = {} }) => (
-    <div style={{ fontSize: '14px' }}>
-        {get(record, source).map((item, i) => (
-            <div key={i} className={className}>
-                {item}
-            </div>
-        ))}
-    </div>
-);
-
-ItemArrayField.defaultProps = {
-    addLabel: true,
 };
 
 const ChipConditionalLabel = ({ record, source, ...props }) => {

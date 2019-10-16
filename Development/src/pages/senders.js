@@ -22,7 +22,6 @@ import {
     TextInput,
     Title,
     Toolbar,
-    UrlField,
 } from 'react-admin';
 import get from 'lodash/get';
 import set from 'lodash/set';
@@ -46,12 +45,14 @@ import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
 import TAIField from '../components/TAIField';
+import UrlField from '../components/URLField';
 import MapTags from '../components/TagsField';
 import JsonIcon from '../components/JsonIcon';
 import SenderTransportParamsCardsGrid from '../components/SenderTransportParams';
 import ConnectionShowActions from '../components/ConnectionShowActions';
 import ConnectionEditActions from '../components/ConnectionEditActions';
 import JSONViewer from '../components/JSONViewer';
+import ItemArrayField from '../components/ItemArrayField';
 
 const cookies = new Cookies();
 
@@ -197,20 +198,6 @@ const SendersTitle = ({ record }) => {
     );
 };
 
-const ItemArrayField = ({ className, source, record = {} }) => (
-    <div style={{ fontSize: '14px' }}>
-        {get(record, source).map((item, i) => (
-            <div key={i} className={className}>
-                {item}
-            </div>
-        ))}
-    </div>
-);
-
-ItemArrayField.defaultProps = {
-    addLabel: true,
-};
-
 const ChipConditionalLabel = ({ record, source, ...props }) => {
     props.clickable = true;
     return record ? (
@@ -251,14 +238,18 @@ export const SendersShow = props => {
                                 component={Link}
                                 to={`${props.basePath}/${props.id}/show/staged`}
                             />
-                            {get(controllerProps.record, '$transportfile') && (
-                                <Tab
-                                    label="Transport File"
-                                    value={`${props.match.url}/transportfile`}
-                                    component={Link}
-                                    to={`${props.basePath}/${props.id}/show/transportfile`}
-                                />
-                            )}
+                            <Tab
+                                label="Transport File"
+                                disabled={
+                                    !get(
+                                        controllerProps.record,
+                                        '$transportfile'
+                                    )
+                                }
+                                value={`${props.match.url}/transportfile`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/transportfile`}
+                            />
                         </Tabs>
                     </AppBar>
                     <Route
@@ -296,8 +287,7 @@ export const SendersShow = props => {
                         path={`${props.basePath}/${props.id}/show/transportfile`}
                         render={() => (
                             <ShowTransportFileTab
-                                {...props}
-                                controllerProps={controllerProps}
+                                record={controllerProps.record}
                             />
                         )}
                     />
@@ -462,10 +452,10 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
     );
 };
 
-const ShowTransportFileTab = ({ controllerProps, ...props }) => {
+const ShowTransportFileTab = ({ record }) => {
     const [open, setOpen] = React.useState(false);
     const handleClick = () => {
-        copy(get(controllerProps.record, `$transportfile`)).then(() => {
+        copy(get(record, `$transportfile`)).then(() => {
             setOpen(true);
         });
     };
@@ -474,17 +464,14 @@ const ShowTransportFileTab = ({ controllerProps, ...props }) => {
     };
     return (
         <ShowView
-            {...props}
-            {...controllerProps}
+            record={record}
             title={<SendersTitle />}
             actions={<ConnectionShowActions />}
         >
             <SimpleShowLayout>
-                <Typography>
-                    <pre style={{ fontFamily: 'inherit' }}>
-                        {get(controllerProps.record, '$transportfile')}
-                    </pre>
-                </Typography>
+                <pre style={{ fontFamily: 'inherit' }}>
+                    <Typography>{get(record, '$transportfile')}</Typography>
+                </pre>
                 <MaterialButton
                     variant="contained"
                     color="primary"

@@ -46,11 +46,13 @@ export default function ConnectionShowActions({ basePath, data, resource }) {
                 basePath={basePath}
             />
             {data ? (
-                <NavLink to={`${basePath}/${data.id}`}>
-                    <Button label={'Edit'}>
-                        <EditIcon />
-                    </Button>
-                </NavLink>
+                <Button
+                    label={'Edit'}
+                    component={NavLink}
+                    to={`${basePath}/${data.id}`}
+                >
+                    <EditIcon />
+                </Button>
             ) : null}
         </CardActions>
     );

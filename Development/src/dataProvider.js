@@ -93,6 +93,9 @@ export const changePaging = newLimit => {
         return 'Default';
     }
     paging_limit = newLimit;
+    cookies.set('Paging Limit', paging_limit, {
+        path: '/',
+    });
     return paging_limit;
 };
 
@@ -440,12 +443,16 @@ export default async (type, resource, params) => {
                 resource,
                 params
             ),
-        response => {
-            return Promise.reject(
-                new Error(
-                    `${response.body.error} - ${response.body.code} - (${response.body.debug})`
-                )
-            );
+        error => {
+            if (error.body !== null) {
+                return Promise.reject(
+                    new Error(
+                        `${error.body.error} - ${error.body.code} - (${error.body.debug})`
+                    )
+                );
+            } else {
+                return Promise.reject(error);
+            }
         }
     );
 };

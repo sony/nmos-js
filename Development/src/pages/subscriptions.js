@@ -9,7 +9,6 @@ import {
     SimpleShowLayout,
     TextField,
     Title,
-    UrlField,
 } from 'react-admin';
 import { hr } from '@material-ui/core';
 import Cookies from 'universal-cookie';
@@ -26,6 +25,7 @@ import {
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
+import UrlField from '../components/URLField';
 import MapTags from '../components/TagsField';
 import JsonIcon from '../components/JsonIcon';
 

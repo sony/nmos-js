@@ -10,8 +10,9 @@ import Settings from '../settings';
 export default () => (
     <div>
         <Card>
-            <Typography variant="display3" component="h2" align="center">
-                Welcome to the nmos-js Client
+            <Typography variant="display3" align="center">
+                {/* Non-breaking hyphen*/}
+                Welcome to the nmos&#8209;js Client
             </Typography>
             <CardContent align="center">
                 <img

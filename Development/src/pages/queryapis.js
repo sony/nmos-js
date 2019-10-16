@@ -105,9 +105,9 @@ export const SettingsShow = props => (
             <TextField label="Host Target" source="host_target" />
             <TextField source="port" />
             <hr />
-            <TextField label="TXT Api Proto" source="txt.api_proto" />
-            <TextField labal="TXT Api Ver" source="txt.api_ver" />
-            <TextField source="txt.pri" />
+            <TextField label="API Protocol" source="txt.api_proto" />
+            <TextField label="API Versions" source="txt.api_ver" />
+            <TextField label="Priority" source="txt.pri" />
         </SimpleShowLayout>
     </Show>
 );

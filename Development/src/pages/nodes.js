@@ -24,10 +24,8 @@ import {
     TableCell,
     TableHead,
     TableRow,
-    Typography,
 } from '@material-ui/core';
 
-import get from 'lodash/get';
 import Cookies from 'universal-cookie';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
@@ -37,6 +35,7 @@ import UrlField from '../components/URLField';
 import MapTags from '../components/TagsField';
 import ExternalLinkIcon from '@material-ui/icons/OpenInNew';
 import JsonIcon from '../components/JsonIcon';
+import ItemArrayField from '../components/ItemArrayField';
 
 const cookies = new Cookies();
 
@@ -225,20 +224,6 @@ const NodesTitle = ({ record }) => {
     );
 };
 
-const ItemArrayField = ({ className, source, record = {} }) => (
-    <div>
-        {get(record, source).map(item => (
-            <div key={item} className={className}>
-                <Typography>{item}</Typography>
-            </div>
-        ))}
-    </div>
-);
-
-ItemArrayField.defaultProps = {
-    addLabel: true,
-};
-
 const ChipConditionalLabel = ({ record, source, ...props }) => {
     props.clickable = true;
     return record ? (
@@ -347,7 +332,7 @@ export const NodesShow = props => (
                         <ArrayField source="clocks">
                             <Datagrid>
                                 <TextField source="name" />
-                                <TextField source="ref_type" />
+                                <TextField label="Ref Type" source="ref_type" />
                             </Datagrid>
                         </ArrayField>
                     )}

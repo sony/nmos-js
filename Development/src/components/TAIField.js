@@ -4,14 +4,14 @@ import get from 'lodash/get';
 import { Typography } from '@material-ui/core';
 
 const TAIField = ({ record, source }) => (
-    <Typography>
-        {get(record, source)}
+    <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+        <Typography>{get(record, source)}&emsp;</Typography>
         {get(record, source) != null && (
             <Typography color="textSecondary">
-                {TAIConversion(record, source)}
+                ({TAIConversion(record, source)})
             </Typography>
         )}
-    </Typography>
+    </div>
 );
 
 function TAIConversion(record, source) {

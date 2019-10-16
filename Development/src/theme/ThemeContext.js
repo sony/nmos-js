@@ -1,13 +1,15 @@
 import React from 'react';
 import { ThemeProvider } from '@material-ui/styles';
 import { createMuiTheme } from '@material-ui/core/styles';
-import { lightBlue } from '@material-ui/core/colors';
+import { blue, lightBlue } from '@material-ui/core/colors';
 import Cookies from 'universal-cookie';
 
 const cookies = new Cookies();
 
-const ThemeToggleContext = React.createContext('light');
-export const useTheme = () => React.useContext(ThemeToggleContext);
+export const ThemeContext = React.createContext({
+    theme: 'light',
+    toggleTheme: () => {},
+});
 
 export const AppThemeProvider = ({ children }) => {
     const [themeState, setThemeState] = React.useState({
@@ -18,7 +20,7 @@ export const AppThemeProvider = ({ children }) => {
     const theme = createMuiTheme({
         palette: {
             primary: lightBlue,
-            secondary: lightBlue,
+            secondary: blue,
             type: themeState.mode,
         },
     });
@@ -30,12 +32,12 @@ export const AppThemeProvider = ({ children }) => {
     };
 
     return (
-        <ThemeToggleContext.Provider value={{ toggle: toggleTheme }}>
+        <ThemeContext.Provider
+            value={{ theme: themeState.mode, toggleTheme: toggleTheme }}
+        >
             <ThemeProvider theme={theme}>
                 {React.cloneElement(children, { theme: theme })}
             </ThemeProvider>
-        </ThemeToggleContext.Provider>
+        </ThemeContext.Provider>
     );
 };
-
-export default AppThemeProvider;

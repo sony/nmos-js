@@ -27,7 +27,6 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import get from 'lodash/get';
 import Cookies from 'universal-cookie';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
@@ -217,19 +216,6 @@ const DevicesShowActions = ({ basePath, data, resource }) => (
         <ListButton title={'Return to ' + basePath} basePath={basePath} />
     </CardActions>
 );
-
-const ItemArrayField = ({ className, source, record = {}, reference, t }) => (
-    <div style={{ fontSize: '14px' }}>
-        {get(record, source).map(item => (
-            <div key={item} className={className}>
-                {item}
-            </div>
-        ))}
-    </div>
-);
-ItemArrayField.defaultProps = {
-    addLabel: true,
-};
 
 export const DevicesShow = props => (
     <ShowController {...props}>

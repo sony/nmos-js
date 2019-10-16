@@ -102,11 +102,11 @@ export const SettingsShow = props => (
             <TextField source="name" />
             <hr />
             <RichTextField source="addresses" />
-            <TextField source="host_target" />
+            <TextField label="Host Target" source="host_target" />
             <TextField source="port" />
             <hr />
-            <TextField source="txt.api_proto" />
-            <TextField source="txt.api_ver" />
+            <TextField label="TXT Api Proto" source="txt.api_proto" />
+            <TextField labal="TXT Api Ver" source="txt.api_ver" />
             <TextField source="txt.pri" />
         </SimpleShowLayout>
     </Show>

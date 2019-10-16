@@ -2,7 +2,7 @@ import React from 'react';
 import { Typography } from '@material-ui/core';
 import get from 'lodash/get';
 
-const UrlField = ({ source, record = {} }) => (
+const URLField = ({ record, source }) => (
     <a
         href={get(record, source)}
         target="_blank"
@@ -14,8 +14,8 @@ const UrlField = ({ source, record = {} }) => (
         </Typography>
     </a>
 );
-UrlField.defaultProps = {
+URLField.defaultProps = {
     addLabel: true,
 };
 
-export default UrlField;
+export default URLField;

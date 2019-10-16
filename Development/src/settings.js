@@ -9,12 +9,10 @@ import {
     Switch,
     TextField,
 } from '@material-ui/core';
-import { useTheme as themeHook } from '@material-ui/styles';
 import { withStyles } from '@material-ui/core/styles';
 import Cookies from 'universal-cookie';
 
 import { changePaging, returnChangeQuery } from './dataProvider';
-import { useTheme } from './theme/ThemeContext';
 
 const cookies = new Cookies();
 
@@ -62,7 +60,6 @@ function getBool(cookie) {
 }
 
 const Settings = props => {
-    const theme = themeHook();
     const { classes } = props;
     const [values, setValues] = React.useState({
         queryAPI: returnChangeQuery('Query API', ''),
@@ -70,7 +67,6 @@ const Settings = props => {
         dnssdAPI: returnChangeQuery('DNS-SD API', ''),
         paging: parseInt(changePaging('valueRequest'), 10),
         rql: getBool(cookies.get('RQL')),
-        darkTheme: theme.palette.type === 'dark',
     });
 
     const handleInputChange = name => event => {
@@ -85,15 +81,10 @@ const Settings = props => {
         setOpen(false);
     };
 
-    const themeToggle = useTheme();
-
     const handleSave = () => {
         returnChangeQuery('Query API', values.queryAPI);
         returnChangeQuery('Logging API', values.loggingAPI);
         returnChangeQuery('DNS-SD API', values.dnssdAPI);
-        if (values.darkTheme !== (theme.palette.type === 'dark')) {
-            themeToggle.toggle();
-        }
         if (values.paging) {
             changePaging(values.paging);
         }
@@ -158,16 +149,6 @@ const Settings = props => {
                     <FormControlLabel
                         control={
                             <Switch
-                                checked={values.darkTheme}
-                                onChange={handleSwitchChange('darkTheme')}
-                                color="primary"
-                            />
-                        }
-                        label="Dark Theme"
-                    />
-                    <FormControlLabel
-                        control={
-                            <Switch
                                 checked={values.rql}
                                 onChange={handleSwitchChange('rql')}
                                 color="primary"
@@ -176,13 +157,15 @@ const Settings = props => {
                         label="RQL"
                     />
                 </ListItem>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleSave}
-                >
-                    Save
-                </Button>
+                <ListItem className={classes.listItem}>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleSave}
+                    >
+                        Save
+                    </Button>
+                </ListItem>
             </List>
             <Snackbar
                 open={open}

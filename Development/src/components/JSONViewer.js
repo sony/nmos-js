@@ -11,7 +11,7 @@ import get from 'lodash/get';
 import ReactJson from 'react-json-view';
 
 // Base16 dark theme color palette
-const rjv_dark = {
+const rjvDark = {
     base00: 'rgba(0, 0, 0, 0)',
     base01: '#282828',
     base02: '#383838',
@@ -36,6 +36,11 @@ export default function JSONViewer({ endpoint, ...controllerProps }) {
         setChecked(prev => !prev);
     };
     const theme = useTheme();
+    let rjvTheme;
+    if (theme.palette.type === 'dark') {
+        rjvTheme = rjvDark;
+    } else rjvTheme = 'rjv-default';
+
     return (
         <div>
             <FormControlLabel
@@ -45,28 +50,10 @@ export default function JSONViewer({ endpoint, ...controllerProps }) {
             <Collapse in={checked}>
                 <Card>
                     <CardContent>
-                        {(() => {
-                            if (theme.palette.type === 'dark') {
-                                return (
-                                    <ReactJson
-                                        src={get(
-                                            controllerProps.record,
-                                            endpoint
-                                        )}
-                                        theme={rjv_dark}
-                                    />
-                                );
-                            } else {
-                                return (
-                                    <ReactJson
-                                        src={get(
-                                            controllerProps.record,
-                                            `${endpoint}`
-                                        )}
-                                    />
-                                );
-                            }
-                        })()}
+                        <ReactJson
+                            src={get(controllerProps.record, endpoint)}
+                            theme={rjvTheme}
+                        />
                     </CardContent>
                 </Card>
             </Collapse>

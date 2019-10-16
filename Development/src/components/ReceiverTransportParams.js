@@ -10,12 +10,10 @@ import {
     TextField,
     TextInput,
 } from 'react-admin';
-import { Card, CardContent, Grid } from '@material-ui/core';
+import { Card, CardContent, Divider, Grid } from '@material-ui/core';
 import { CardFormIterator } from './CardFormIterator';
 import CheckIcon from '@material-ui/icons/Check';
 import ClearIcon from '@material-ui/icons/Clear';
-
-const HorizontalRule = () => <hr />;
 
 const MQTTReceiver = ({ dataObject }) => {
     const params_ext = Object.keys(dataObject[0]).filter(function(x) {
@@ -88,9 +86,7 @@ const MQTTReceiver = ({ dataObject }) => {
                                             label="Connection Status Broker Topic"
                                         />
                                     )}
-                                    {params_ext.length !== 0 && (
-                                        <HorizontalRule />
-                                    )}
+                                    {params_ext.length !== 0 && <Divider />}
                                     {params_ext.map(value => {
                                         return (
                                             <TextField
@@ -159,7 +155,7 @@ const MQTTReceiverEdit = ({ record }) => {
                             label="Connection Status Broker Topic"
                         />
                     )}
-                    {params_ext.length !== 0 && <HorizontalRule />}
+                    {params_ext.length !== 0 && <Divider />}
                     {params_ext.map(value => {
                         return (
                             <TextInput
@@ -229,7 +225,7 @@ const RTPReceiver = ({ dataObject }) => {
                                     )}
                                     {dataObject[i].hasOwnProperty(
                                         'fec_enabled'
-                                    ) && <HorizontalRule /> && (
+                                    ) && <Divider /> && (
                                             <BooleanField
                                                 source="fec_enabled"
                                                 label="FEC Enabled"
@@ -269,7 +265,7 @@ const RTPReceiver = ({ dataObject }) => {
                                     )}
                                     {dataObject[i].hasOwnProperty(
                                         'rtcp_enabled'
-                                    ) && <HorizontalRule /> && (
+                                    ) && <Divider /> && (
                                             <BooleanField
                                                 source="rtcp_enabled"
                                                 label="RTCP Enabled"
@@ -291,9 +287,7 @@ const RTPReceiver = ({ dataObject }) => {
                                             label="RTCP Destination Port"
                                         />
                                     )}
-                                    {params_ext.length !== 0 && (
-                                        <HorizontalRule />
-                                    )}
+                                    {params_ext.length !== 0 && <Divider />}
                                     {params_ext.map(value => {
                                         return (
                                             <TextField
@@ -396,7 +390,7 @@ const RTPReceiverEdit = ({ record }) => {
                             label="RTCP Destination Port"
                         />
                     )}
-                    {params_ext.length !== 0 && <HorizontalRule />}
+                    {params_ext.length !== 0 && <Divider />}
                     {params_ext.map(value => {
                         return (
                             <TextInput
@@ -451,9 +445,7 @@ const WebSocketReceiver = ({ dataObject }) => {
                                             label="Connection URI"
                                         />
                                     )}
-                                    {params_ext.length !== 0 && (
-                                        <HorizontalRule />
-                                    )}
+                                    {params_ext.length !== 0 && <Divider />}
                                     {params_ext.map(value => {
                                         return (
                                             <TextField
@@ -507,7 +499,7 @@ const WebSocketReceiverEdit = ({ record }) => {
                             label="Connection URI"
                         />
                     )}
-                    {params_ext.length !== 0 && <HorizontalRule />}
+                    {params_ext.length !== 0 && <Divider />}
                     {params_ext.map(value => {
                         return (
                             <TextInput

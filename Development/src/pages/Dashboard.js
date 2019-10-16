@@ -11,6 +11,7 @@ export default () => (
     <div>
         <Card>
             <Typography variant="display3" align="center">
+                {/* Non-breaking hyphen*/}
                 Welcome to the nmos&#8209;js Client
             </Typography>
             <CardContent align="center">

@@ -274,7 +274,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 body: JSON.stringify(patchData),
             };
             return {
-                url: `${params.data.$connectionAPI}/single/${resource}/${params.data.id}/staged`,
+                url: `${params.data.$connectionAPI}/staged`,
                 options: options,
             };
         case CREATE:
@@ -287,19 +287,43 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
     }
 };
 
-function getEndpoints(connectionAPI) {
+function timeout(ms, promise) {
+    return new Promise(function(resolve, reject) {
+        setTimeout(function() {
+            reject(new Error('Timeout'));
+        }, ms);
+        promise.then(resolve, reject);
+    });
+}
+
+function getEndpoints(addresses, resource, id) {
+    // Looking for the first promise to succeed or all to fail
+    const invertPromise = p => new Promise((res, rej) => p.then(rej, res));
+    const firstOf = ps => invertPromise(Promise.all(ps.map(invertPromise)));
+    const endpointData = [];
+    let connectionAPI;
+
     return new Promise((resolve, reject) => {
-        const endpointData = [];
-        fetch(`${connectionAPI}`)
-            .then(response => response.json())
+        firstOf(
+            addresses.map(function(address) {
+                return timeout(
+                    5000,
+                    fetch(`${address}/single/${resource}/${id}`)
+                );
+            })
+        )
+            .then(function(response) {
+                connectionAPI = response.url;
+                return response.json();
+            })
             .then(function(endpoints) {
                 if (get(endpoints, 'code')) {
                     reject(new Error(`${endpoints.error} - ${endpoints.code}`));
                     return;
                 }
                 Promise.all(
-                    endpoints.map(url =>
-                        fetch(`${connectionAPI}/${url}`)
+                    endpoints.map(endpoint =>
+                        fetch(`${connectionAPI}/${endpoint}`)
                             .then(function(response) {
                                 if (response.ok) {
                                     return response.text();
@@ -314,7 +338,7 @@ function getEndpoints(connectionAPI) {
                             })
                             .then(function(data) {
                                 endpointData.push({
-                                    [`$${url.slice(0, -1)}`]: data,
+                                    [`$${endpoint.slice(0, -1)}`]: data,
                                 });
                             })
                             .catch(function(error) {
@@ -322,8 +346,12 @@ function getEndpoints(connectionAPI) {
                             })
                     )
                 ).then(function() {
+                    endpointData.push({ $connectionAPI: connectionAPI });
                     resolve(endpointData);
                 });
+            })
+            .catch(function(errors) {
+                reject(errors[0]);
             });
     });
 }
@@ -371,24 +399,38 @@ async function convertHTTPResponseToDataProvider(
                 }
 
                 let connectionAddresses = {};
-                let connectionAddress;
-                if (deviceJSONData.hasOwnProperty('controls')) {
-                    for (let i in deviceJSONData.controls)
-                        connectionAddresses[
-                            deviceJSONData.controls[i]['type']
-                        ] = deviceJSONData.controls[i]['href'];
-                } else {
+                deviceJSONData.controls.forEach(function(control) {
+                    const type = control.type.replace('.', '_');
+                    if (type.includes('sr-ctrl')) {
+                        if (!connectionAddresses.hasOwnProperty(type)) {
+                            set(connectionAddresses, type, [control.href]);
+                        } else {
+                            connectionAddresses[type].push(control.href);
+                        }
+                    }
+                });
+
+                const versions = Object.keys(connectionAddresses)
+                    .sort()
+                    .reverse();
+
+                let endpointData;
+                for (let version of versions) {
+                    try {
+                        endpointData = await getEndpoints(
+                            connectionAddresses[version],
+                            resource,
+                            params.id
+                        );
+                    } catch (e) {}
+                    if (endpointData) break;
+                }
+
+                // Return IS-04 if no URL was able to connect
+                if (endpointData === undefined) {
                     return { url: url, data: json };
                 }
-                connectionAddress =
-                    connectionAddresses['urn:x-nmos:control:sr-ctrl/v1.1'] ||
-                    connectionAddresses['urn:x-nmos:control:sr-ctrl/v1.0'];
-                if (!connectionAddress) return { url: url, data: json };
-                json.$connectionAPI = `${connectionAddress}`;
 
-                const endpointData = await getEndpoints(
-                    `${connectionAddress}/single/${resource}/${params.id}`
-                );
                 for (let i of endpointData) {
                     assign(json, i);
                 }
@@ -444,15 +486,12 @@ export default async (type, resource, params) => {
                 params
             ),
         error => {
-            if (error.body !== null) {
-                return Promise.reject(
-                    new Error(
-                        `${error.body.error} - ${error.body.code} - (${error.body.debug})`
-                    )
+            if (error.hasOwnProperty('body.debug')) {
+                throw new Error(
+                    `${error.body.error} - ${error.body.code} - (${error.body.debug})`
                 );
-            } else {
-                return Promise.reject(error);
             }
+            throw error;
         }
     );
 };

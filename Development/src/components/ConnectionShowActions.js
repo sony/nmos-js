@@ -18,15 +18,8 @@ export default function ConnectionShowActions({ basePath, data, resource }) {
     if (data) {
         const tab = window.location.href.split('/').pop();
         json_href = cookies.get('Query API') + '/' + resource + '/' + data.id;
-        if (tab === 'active' || tab === 'staged') {
-            json_href =
-                data.$connectionAPI +
-                '/single/' +
-                resource +
-                '/' +
-                data.id +
-                '/' +
-                tab;
+        if (tab === 'active' || tab === 'staged' || tab === 'transportfile') {
+            json_href = data.$connectionAPI + '/' + tab;
         }
     }
     return (

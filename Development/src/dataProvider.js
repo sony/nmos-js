@@ -410,10 +410,7 @@ async function convertHTTPResponseToDataProvider(
                     }
                 });
                 // Return IS-04 if no Connection API endpoints
-                if (
-                    Object.keys(connectionAddresses).length === 0 &&
-                    connectionAddresses.constructor === Object
-                ) {
+                if (Object.keys(connectionAddresses).length === 0) {
                     return { url: url, data: json };
                 }
 

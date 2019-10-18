@@ -401,7 +401,7 @@ async function convertHTTPResponseToDataProvider(
                 let connectionAddresses = {};
                 deviceJSONData.controls.forEach(function(control) {
                     const type = control.type.replace('.', '_');
-                    if (type.includes('sr-ctrl')) {
+                    if (type.startsWith('urn:x-nmos:control:sr-ctrl')) {
                         if (!connectionAddresses.hasOwnProperty(type)) {
                             set(connectionAddresses, type, [control.href]);
                         } else {
@@ -409,6 +409,13 @@ async function convertHTTPResponseToDataProvider(
                         }
                     }
                 });
+                // Return IS-04 if no Connection API endpoints
+                if (
+                    Object.keys(connectionAddresses).length === 0 &&
+                    connectionAddresses.constructor === Object
+                ) {
+                    return { url: url, data: json };
+                }
 
                 const versions = Object.keys(connectionAddresses)
                     .sort()
@@ -428,13 +435,14 @@ async function convertHTTPResponseToDataProvider(
 
                 // Return IS-04 if no URL was able to connect
                 if (endpointData === undefined) {
+                    set(json, '$connectionAPI', null);
                     return { url: url, data: json };
                 }
 
                 for (let i of endpointData) {
                     assign(json, i);
                 }
-                // For connection API version 1.0
+                // For Connection API v1.0
                 if (!json.hasOwnProperty('$transporttype')) {
                     assign(json, {
                         $transporttype: 'urn:x-nmos:transport:rtp',

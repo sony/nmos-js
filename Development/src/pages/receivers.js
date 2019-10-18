@@ -236,18 +236,23 @@ export const ReceiversShow = props => {
                                 component={Link}
                                 to={`${props.basePath}/${props.id}/show/`}
                             />
-                            <Tab
-                                label="Active"
-                                value={`${props.match.url}/active`}
-                                component={Link}
-                                to={`${props.basePath}/${props.id}/show/active`}
-                            />
-                            <Tab
-                                label="Staged"
-                                value={`${props.match.url}/staged`}
-                                component={Link}
-                                to={`${props.basePath}/${props.id}/show/staged`}
-                            />
+                            {get(controllerProps.record, '$connectionAPI') !==
+                                undefined &&
+                                ['active', 'staged'].map(label => (
+                                    <Tab
+                                        key={label}
+                                        label={label}
+                                        value={`${props.match.url}/${label}`}
+                                        component={Link}
+                                        to={`${props.basePath}/${props.id}/show/${label}`}
+                                        disabled={
+                                            !get(
+                                                controllerProps.record,
+                                                `$${label}`
+                                            )
+                                        }
+                                    />
+                                ))}
                         </Tabs>
                     </AppBar>
                     <Route

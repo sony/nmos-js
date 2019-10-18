@@ -226,30 +226,25 @@ export const SendersShow = props => {
                                 component={Link}
                                 to={`${props.basePath}/${props.id}/show/`}
                             />
-                            <Tab
-                                label="Active"
-                                value={`${props.match.url}/active`}
-                                component={Link}
-                                to={`${props.basePath}/${props.id}/show/active`}
-                            />
-                            <Tab
-                                label="Staged"
-                                value={`${props.match.url}/staged`}
-                                component={Link}
-                                to={`${props.basePath}/${props.id}/show/staged`}
-                            />
-                            <Tab
-                                label="Transport File"
-                                disabled={
-                                    !get(
-                                        controllerProps.record,
-                                        '$transportfile'
+                            {get(controllerProps.record, '$connectionAPI') !==
+                                undefined &&
+                                ['active', 'staged', 'transportfile'].map(
+                                    label => (
+                                        <Tab
+                                            key={label}
+                                            value={`${props.match.url}/${label}`}
+                                            component={Link}
+                                            to={`${props.basePath}/${props.id}/show/${label}`}
+                                            disabled={
+                                                !get(
+                                                    controllerProps.record,
+                                                    `$${label}`
+                                                )
+                                            }
+                                            label={label}
+                                        />
                                     )
-                                }
-                                value={`${props.match.url}/transportfile`}
-                                component={Link}
-                                to={`${props.basePath}/${props.id}/show/transportfile`}
-                            />
+                                )}
                         </Tabs>
                     </AppBar>
                     <Route

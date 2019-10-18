@@ -3,6 +3,7 @@ import { Button, ListButton } from 'ra-ui-materialui';
 import React from 'react';
 import NavLink from 'react-router-dom/NavLink';
 import EditIcon from '@material-ui/icons/Edit';
+import get from 'lodash/get';
 import Cookies from 'universal-cookie';
 import JsonIcon from './JsonIcon';
 
@@ -18,15 +19,8 @@ export default function ConnectionShowActions({ basePath, data, resource }) {
     if (data) {
         const tab = window.location.href.split('/').pop();
         json_href = cookies.get('Query API') + '/' + resource + '/' + data.id;
-        if (tab === 'active' || tab === 'staged') {
-            json_href =
-                data.$connectionAPI +
-                '/single/' +
-                resource +
-                '/' +
-                data.id +
-                '/' +
-                tab;
+        if (tab === 'active' || tab === 'staged' || tab === 'transportfile') {
+            json_href = data.$connectionAPI + '/' + tab;
         }
     }
     return (
@@ -45,7 +39,7 @@ export default function ConnectionShowActions({ basePath, data, resource }) {
                 title={'Return to ' + basePath}
                 basePath={basePath}
             />
-            {data ? (
+            {get(data, '$connectionAPI') != null ? (
                 <Button
                     label={'Edit'}
                     component={NavLink}

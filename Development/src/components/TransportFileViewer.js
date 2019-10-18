@@ -41,10 +41,8 @@ const TransportFileViewer = ({ endpoint, ...props }) => {
             <Collapse in={checked}>
                 <Card>
                     <CardContent>
-                        <Typography>
-                            <pre style={{ fontFamily: 'inherit' }}>
-                                {get(props.record, `${endpoint}`)}
-                            </pre>
+                        <Typography style={{ fontFamily: 'inherit' }}>
+                            {get(props.record, `${endpoint}`)}
                         </Typography>
                         <MaterialButton
                             variant="contained"

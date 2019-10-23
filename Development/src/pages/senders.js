@@ -388,6 +388,7 @@ const ShowActiveTab = ({ controllerProps, ...props }) => {
                 <TAIField
                     label="Requested Time"
                     source="$active.activation.requested_time"
+                    mode="$active.activation.mode"
                 />
                 <TAIField
                     label="Activation Time"
@@ -427,6 +428,7 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
                 <TAIField
                     label="Requested Time"
                     source="$staged.activation.requested_time"
+                    mode="$staged.activation.mode"
                 />
                 <TAIField
                     label="Activation Time"

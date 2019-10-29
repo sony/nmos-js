@@ -511,70 +511,71 @@ export const SendersEdit = props => {
     );
 };
 
-const EditStagedTab = ({ record, ...props }) => {
-    return (
-        <Edit
-            {...props}
-            undoable={false}
-            title={<SendersTitle />}
-            actions={<ConnectionEditActions id={props.id} />}
+const EditStagedTab = props => (
+    <Edit
+        {...props}
+        undoable={false}
+        title={<SendersTitle />}
+        actions={<ConnectionEditActions id={props.id} />}
+    >
+        <SimpleForm
+            toolbar={<PostEditToolbar />}
+            redirect={`/senders/${props.id}/show/staged`}
         >
-            <SimpleForm toolbar={<PostEditToolbar />}>
-                <TextInput label="Receiver ID" source="$staged.receiver_id" />
-                <BooleanInput
-                    label="Master Enable"
-                    source="$staged.master_enable"
-                />
-                <SelectInput
-                    label="Activation Mode"
-                    source="$staged.activation.mode"
-                    choices={[
-                        { id: null, name: 'None' },
-                        {
-                            id: 'activate_immediate',
-                            name: 'Activate Immediate',
-                        },
-                        {
-                            id: 'activate_scheduled_relative',
-                            name: 'Activate Scheduled Relative',
-                        },
-                        {
-                            id: 'activate_scheduled_absolute',
-                            name: 'Activate Scheduled Absolute',
-                        },
-                    ]}
-                />
-                <FormDataConsumer>
-                    {({ formData, ...rest }) => {
-                        switch (get(formData, '$staged.activation.mode')) {
-                            case 'activate_scheduled_relative':
-                                return (
-                                    <TextInput
-                                        label="Requested Time"
-                                        source="$staged.activation.requested_time"
-                                        {...rest}
-                                    />
-                                );
-                            case 'activate_scheduled_absolute':
-                                return (
-                                    <TextInput
-                                        label="Requested Time"
-                                        source="$staged.activation.requested_time"
-                                        {...rest}
-                                    />
-                                );
-                            default:
-                                set(
-                                    formData,
-                                    '$staged.activation.requested_time',
-                                    null
-                                );
-                                return null;
-                        }
-                    }}
-                </FormDataConsumer>
-                <SenderTransportParamsCardsGrid />
-            </SimpleForm>
-        </Edit>
-    );
-};
+            <TextInput label="Receiver ID" source="$staged.receiver_id" />
+            <BooleanInput
+                label="Master Enable"
+                source="$staged.master_enable"
+            />
+            <SelectInput
+                label="Activation Mode"
+                source="$staged.activation.mode"
+                choices={[
+                    { id: null, name: 'None' },
+                    {
+                        id: 'activate_immediate',
+                        name: 'Activate Immediate',
+                    },
+                    {
+                        id: 'activate_scheduled_relative',
+                        name: 'Activate Scheduled Relative',
+                    },
+                    {
+                        id: 'activate_scheduled_absolute',
+                        name: 'Activate Scheduled Absolute',
+                    },
+                ]}
+            />
+            <FormDataConsumer>
+                {({ formData, ...rest }) => {
+                    switch (get(formData, '$staged.activation.mode')) {
+                        case 'activate_scheduled_relative':
+                            return (
+                                <TextInput
+                                    label="Requested Time"
+                                    source="$staged.activation.requested_time"
+                                    {...rest}
+                                />
+                            );
+                        case 'activate_scheduled_absolute':
+                            return (
+                                <TextInput
+                                    label="Requested Time"
+                                    source="$staged.activation.requested_time"
+                                    {...rest}
+                                />
+                            );
+                        default:
+                            set(
+                                formData,
+                                '$staged.activation.requested_time',
+                                null
+                            );
+                            return null;
+                    }
+                }}
+            </FormDataConsumer>
+            <SenderTransportParamsCardsGrid />
+        </SimpleForm>
+    </Edit>
+);

@@ -303,14 +303,18 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     />
                 )}
                 {controllerProps.record &&
-                    controllerProps.record.caps.media_types && (
+                    controllerProps.record.hasOwnProperty(
+                        'record.caps.media_types'
+                    ) && (
                         <ItemArrayField
                             label="Caps Media Types"
                             source="caps.media_types"
                         />
                     )}
                 {controllerProps.record &&
-                    controllerProps.record.caps.event_types && (
+                    controllerProps.record.hasOwnProperty(
+                        'caps.event_types'
+                    ) && (
                         <ItemArrayField
                             label="Caps Event Types"
                             source="caps.event_types"
@@ -325,7 +329,9 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                 )}
                 {controllerProps.record &&
                     QueryVersion() >= 'v1.2' &&
-                    controllerProps.record.subscription.sender_id && (
+                    controllerProps.record.hasOwnProperty(
+                        'subscription.sender_id'
+                    ) && (
                         <ReferenceField
                             label="Sender"
                             source="subscription.sender_id"
@@ -480,7 +486,10 @@ const EditStagedTab = props => (
         title={<ReceiversTitle />}
         actions={<ConnectionEditActions id={props.id} />}
     >
-        <SimpleForm toolbar={<PostEditToolbar />}>
+        <SimpleForm
+            toolbar={<PostEditToolbar />}
+            redirect={`/receivers/${props.id}/show/staged`}
+        >
             <TextInput label="Sender ID" source="$staged.sender_id" />
             <BooleanInput
                 label="Master Enable"

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     ArrayField,
     Button,
@@ -39,177 +39,155 @@ import ItemArrayField from '../components/ItemArrayField';
 
 const cookies = new Cookies();
 
-export class NodesList extends React.Component {
-    constructor(props) {
-        super(props);
-        this.filter = '';
-        this.filterObject = {};
-        this.state = {
-            data: [],
-        };
-        this.nextPage = this.nextPage.bind(this);
-        this.setFilter = this.setFilter.bind(this);
-        this.filterPage = this.filterPage.bind(this);
-        this.firstLoad = this.firstLoad.bind(this);
-        this.firstLoad();
-    }
-
-    async firstLoad() {
+export const NodesList = () => {
+    const firstLoad = async () => {
         const params = {
             filter: {},
             pagination: { page: 1, perPage: 10 },
             sort: { field: 'id', order: 'DESC' },
         };
         const dataObject = await dataProvider('GET_LIST', 'nodes', params);
-        this.setState({ data: dataObject });
-    }
+        setData(dataObject);
+    };
 
-    async nextPage(label) {
+    const [data, setData] = useState(firstLoad);
+
+    const nextPage = async label => {
         const dataObject = await dataProvider(label, 'nodes');
-        this.setState({ data: dataObject });
-    }
+        setData(dataObject);
+    };
 
-    setFilter(filterValue, name) {
+    const [filterState, setFilterState] = useState({});
+
+    const changeFilter = async (filterValue, name) => {
+        let filter = filterState;
         if (filterValue) {
-            this.filterObject[name] = filterValue;
+            filter[name] = filterValue;
         } else {
-            delete this.filterObject[name];
+            delete filter[name];
         }
-        this.filterPage();
-    }
+        const filteredDataObject = await dataProvider('GET_LIST', 'nodes', {
+            filter: filter,
+        });
+        setFilterState(filter);
+        setData(filteredDataObject);
+    };
 
-    async filterPage() {
-        const params = {
-            filter: this.filterObject,
-        };
-        const dataObject = await dataProvider('GET_LIST', 'nodes', params);
-        this.setState({ data: dataObject });
-    }
+    const clearFilter = async () => {
+        setData(firstLoad());
+        setFilterState({});
+    };
 
-    copyField(data) {
+    const copyField = data => {
         const el = document.createElement('textarea');
         el.value = data;
         document.body.appendChild(el);
         el.select();
         document.execCommand('copy');
         document.body.removeChild(el);
-    }
+    };
 
-    render() {
-        if (this.state.data.data) {
-            return (
-                <Card>
-                    <Title title={'Nodes'} />
-                    <CardContent>
-                        <Button
-                            label={'Raw'}
-                            href={this.state.data.url}
-                            style={{ float: 'right' }}
-                            title={'View raw'}
-                        >
-                            <JsonIcon />
-                        </Button>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell
-                                        style={{
-                                            minWidth: '240px',
-                                            paddingLeft: '32px',
-                                        }}
-                                    >
-                                        Label{' '}
+    if (data.hasOwnProperty('data')) {
+        return (
+            <Card>
+                <Title title={'Nodes'} />
+                <CardContent>
+                    <Button
+                        label={'Raw'}
+                        href={data.url}
+                        style={{ float: 'right' }}
+                        title={'View raw'}
+                    >
+                        <JsonIcon />
+                    </Button>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell
+                                    style={{
+                                        minWidth: '240px',
+                                        paddingLeft: '32px',
+                                    }}
+                                >
+                                    Label{' '}
+                                    <FilterField
+                                        name="label"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                                <TableCell style={{ minWidth: '265px' }}>
+                                    Hostname{' '}
+                                    <FilterField
+                                        name="hostname"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                                {QueryVersion() >= 'v1.1' && (
+                                    <TableCell style={{ minWidth: '280px' }}>
+                                        API Versions{' '}
                                         <FilterField
-                                            name="label"
-                                            setFilter={this.setFilter}
+                                            name="api.versions"
+                                            setFilter={changeFilter}
                                         />
                                     </TableCell>
-                                    <TableCell style={{ minWidth: '265px' }}>
-                                        Hostname{' '}
-                                        <FilterField
-                                            name="hostname"
-                                            setFilter={this.setFilter}
+                                )}
+                                <TableCell style={{ minWidth: '255px' }}>
+                                    Node ID{' '}
+                                    <FilterField
+                                        name="id"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {data.data.map(item => (
+                                <TableRow key={item.id}>
+                                    <TableCell component="th" scope="row">
+                                        <ShowButton
+                                            style={{
+                                                textTransform: 'none',
+                                            }}
+                                            basePath="/nodes"
+                                            record={item}
+                                            label={item.label}
                                         />
                                     </TableCell>
+                                    <TableCell>{item.hostname}</TableCell>
                                     {QueryVersion() >= 'v1.1' && (
-                                        <TableCell
-                                            style={{ minWidth: '280px' }}
-                                        >
-                                            API Versions{' '}
-                                            <FilterField
-                                                name="api.versions"
-                                                setFilter={this.setFilter}
-                                            />
+                                        <TableCell>
+                                            {item.api.versions.join(', ')}
                                         </TableCell>
                                     )}
-                                    <TableCell style={{ minWidth: '255px' }}>
-                                        Node ID{' '}
-                                        <FilterField
-                                            name="id"
-                                            setFilter={this.setFilter}
-                                        />
+                                    <TableCell
+                                        onDoubleClick={() => copyField(item.id)}
+                                    >
+                                        {item.id}
                                     </TableCell>
                                 </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {this.state.data.data.map(item => (
-                                    <TableRow key={item.id}>
-                                        <TableCell component="th" scope="row">
-                                            <ShowButton
-                                                style={{
-                                                    textTransform: 'none',
-                                                }}
-                                                basePath="/nodes"
-                                                record={item}
-                                                label={item.label}
-                                            />
-                                        </TableCell>
-                                        <TableCell>{item.hostname}</TableCell>
-                                        {QueryVersion() >= 'v1.1' && (
-                                            <TableCell>
-                                                {item.api.versions.join(', ')}
-                                            </TableCell>
-                                        )}
-                                        <TableCell
-                                            onDoubleClick={() =>
-                                                this.copyField(item.id)
-                                            }
-                                        >
-                                            {item.id}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                        <br />
-                        <PaginationButton
-                            label="FIRST"
-                            nextPage={this.nextPage}
-                        />
-                        <PaginationButton
-                            label="PREV"
-                            nextPage={this.nextPage}
-                        />
-                        <PaginationButton
-                            label="NEXT"
-                            nextPage={this.nextPage}
-                        />
-                        <PaginationButton
-                            label="LAST"
-                            nextPage={this.nextPage}
-                        />
-                    </CardContent>
-                </Card>
-            );
-        } else {
-            return (
-                <div>
-                    <p>Waiting for data...</p>
-                </div>
-            );
-        }
+                            ))}
+                        </TableBody>
+                    </Table>
+                    <br />
+                    <PaginationButton label="FIRST" nextPage={nextPage} />
+                    <PaginationButton label="PREV" nextPage={nextPage} />
+                    <PaginationButton label="NEXT" nextPage={nextPage} />
+                    <PaginationButton label="LAST" nextPage={nextPage} />
+                    <Button
+                        onClick={() => clearFilter()}
+                        label="Clear Filters"
+                    />
+                </CardContent>
+            </Card>
+        );
+    } else {
+        return (
+            <div>
+                <p>Waiting for data...</p>
+            </div>
+        );
     }
-}
+};
 
 const NodesTitle = ({ record }) => {
     return (

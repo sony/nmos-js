@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Button,
     FunctionField,
@@ -37,178 +37,156 @@ const cardActionStyle = {
     float: 'right',
 };
 
-export class EventsList extends React.Component {
-    constructor(props) {
-        super(props);
-        this.filter = '';
-        this.filterObject = {};
-        this.state = {
-            data: [],
-        };
-        this.nextPage = this.nextPage.bind(this);
-        this.setFilter = this.setFilter.bind(this);
-        this.filterPage = this.filterPage.bind(this);
-        this.firstLoad = this.firstLoad.bind(this);
-        this.firstLoad();
-    }
-
-    async firstLoad() {
+export const EventsList = () => {
+    const firstLoad = async () => {
         const params = {
             filter: {},
             pagination: { page: 1, perPage: 10 },
-            sort: { field: 'timestamp', order: 'DESC' },
+            sort: { field: 'id', order: 'DESC' },
         };
         const dataObject = await dataProvider('GET_LIST', 'events', params);
-        this.setState({ data: dataObject });
-    }
+        setData(dataObject);
+    };
 
-    async nextPage(label) {
+    const [data, setData] = useState(firstLoad);
+
+    const nextPage = async label => {
         const dataObject = await dataProvider(label, 'events');
-        this.setState({ data: dataObject });
-    }
+        setData(dataObject);
+    };
 
-    setFilter(filterValue, name) {
+    const [filterState, setFilterState] = useState({});
+
+    const changeFilter = async (filterValue, name) => {
+        let filter = filterState;
         if (filterValue) {
-            this.filterObject[name] = filterValue;
+            filter[name] = filterValue;
         } else {
-            delete this.filterObject[name];
+            delete filter[name];
         }
-        this.filterPage();
-    }
+        const filteredDataObject = await dataProvider('GET_LIST', 'events', {
+            filter: filter,
+        });
+        setFilterState(filter);
+        setData(filteredDataObject);
+    };
 
-    async filterPage() {
-        const params = {
-            filter: this.filterObject,
-        };
-        const dataObject = await dataProvider('GET_LIST', 'events', params);
-        this.setState({ data: dataObject });
-    }
+    const clearFilter = async () => {
+        setData(firstLoad());
+        setFilterState({});
+    };
 
-    render() {
-        if (this.state.data.data) {
-            return (
-                <Card>
-                    <Title title={'Logs'} />
-                    <CardContent>
-                        <Button
-                            label={'Raw'}
-                            href={this.state.data.url}
-                            style={{ float: 'right' }}
-                            title={'View raw'}
-                        >
-                            <JsonIcon />
-                        </Button>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell
-                                        style={{
-                                            minWidth: '257px',
-                                            paddingRight: '6px',
-                                            paddingLeft: '32px',
-                                        }}
-                                    >
-                                        Timestamp{' '}
-                                        <FilterField
-                                            name="timestamp"
-                                            setFilter={this.setFilter}
+    if (data.hasOwnProperty('data')) {
+        return (
+            <Card>
+                <Title title={'Logs'} />
+                <CardContent>
+                    <Button
+                        label={'Raw'}
+                        href={data.url}
+                        style={{ float: 'right' }}
+                        title={'View raw'}
+                    >
+                        <JsonIcon />
+                    </Button>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell
+                                    style={{
+                                        minWidth: '257px',
+                                        paddingRight: '6px',
+                                        paddingLeft: '32px',
+                                    }}
+                                >
+                                    Timestamp{' '}
+                                    <FilterField
+                                        name="timestamp"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                                <TableCell
+                                    style={{
+                                        minWidth: '227px',
+                                        paddingRight: '6px',
+                                    }}
+                                >
+                                    Level{' '}
+                                    <FilterField
+                                        name="level"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                                <TableCell
+                                    style={{
+                                        minWidth: '247px',
+                                        paddingRight: '6px',
+                                    }}
+                                >
+                                    Message{' '}
+                                    <FilterField
+                                        name="message"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                                <TableCell style={{ paddingRight: '6px' }}>
+                                    Request URI{' '}
+                                    <FilterField
+                                        name="request_uri"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                                <TableCell
+                                    style={{
+                                        minWidth: '263px',
+                                        paddingRight: '6px',
+                                    }}
+                                >
+                                    HTTP Method{' '}
+                                    <FilterField
+                                        width="20px"
+                                        name="http_method"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {data.data.map(item => (
+                                <TableRow key={item.id}>
+                                    <TableCell component="th" scope="row">
+                                        <ShowButton
+                                            style={{
+                                                textTransform: 'none',
+                                            }}
+                                            basePath="/events"
+                                            record={item}
+                                            label={item.timestamp}
                                         />
                                     </TableCell>
-                                    <TableCell
-                                        style={{
-                                            minWidth: '227px',
-                                            paddingRight: '6px',
-                                        }}
-                                    >
-                                        Level{' '}
-                                        <FilterField
-                                            name="level"
-                                            setFilter={this.setFilter}
-                                        />
-                                    </TableCell>
-                                    <TableCell
-                                        style={{
-                                            minWidth: '247px',
-                                            paddingRight: '6px',
-                                        }}
-                                    >
-                                        Message{' '}
-                                        <FilterField
-                                            name="message"
-                                            setFilter={this.setFilter}
-                                        />
-                                    </TableCell>
-                                    <TableCell style={{ paddingRight: '6px' }}>
-                                        Request URI{' '}
-                                        <FilterField
-                                            name="request_uri"
-                                            setFilter={this.setFilter}
-                                        />
-                                    </TableCell>
-                                    <TableCell
-                                        style={{
-                                            minWidth: '263px',
-                                            paddingRight: '6px',
-                                        }}
-                                    >
-                                        HTTP Method{' '}
-                                        <FilterField
-                                            width="20px"
-                                            name="http_method"
-                                            setFilter={this.setFilter}
-                                        />
-                                    </TableCell>
+                                    <TableCell>{item.level}</TableCell>
+                                    <TableCell>{item.message}</TableCell>
+                                    <TableCell>{item.request_uri}</TableCell>
+                                    <TableCell>{item.http_method}</TableCell>
                                 </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {this.state.data.data.map(item => (
-                                    <TableRow key={item.id}>
-                                        <TableCell component="th" scope="row">
-                                            <ShowButton
-                                                style={{
-                                                    textTransform: 'none',
-                                                }}
-                                                basePath="/events"
-                                                record={item}
-                                                label={item.timestamp}
-                                            />
-                                        </TableCell>
-                                        <TableCell>{item.level}</TableCell>
-                                        <TableCell>{item.message}</TableCell>
-                                        <TableCell>
-                                            {item.request_uri}
-                                        </TableCell>
-                                        <TableCell>
-                                            {item.http_method}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                        <PaginationButton
-                            label="FIRST"
-                            nextPage={this.nextPage}
-                        />
-                        <PaginationButton
-                            label="PREV"
-                            nextPage={this.nextPage}
-                        />
-                        <PaginationButton
-                            label="NEXT"
-                            nextPage={this.nextPage}
-                        />
-                        <PaginationButton
-                            label="LAST"
-                            nextPage={this.nextPage}
-                        />
-                    </CardContent>
-                </Card>
-            );
-        } else {
-            return <div />;
-        }
+                            ))}
+                        </TableBody>
+                    </Table>
+                    <PaginationButton label="FIRST" nextPage={nextPage} />
+                    <PaginationButton label="PREV" nextPage={nextPage} />
+                    <PaginationButton label="NEXT" nextPage={nextPage} />
+                    <PaginationButton label="LAST" nextPage={nextPage} />
+                    <Button
+                        onClick={() => clearFilter()}
+                        label="Clear Filters"
+                    />
+                </CardContent>
+            </Card>
+        );
+    } else {
+        return <div />;
     }
-}
+};
 
 const EventsShowActions = ({ basePath, data, resource }) => (
     <CardActions title={<EventsTitle />} style={cardActionStyle}>

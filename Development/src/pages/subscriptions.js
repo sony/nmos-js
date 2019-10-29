@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     BooleanField,
     Button,
@@ -31,164 +31,146 @@ import JsonIcon from '../components/JsonIcon';
 
 const cookies = new Cookies();
 
-export class SubscriptionsList extends React.Component {
-    constructor(props) {
-        super(props);
-        this.filter = '';
-        this.filterObject = {};
-        this.state = {
-            data: [],
-        };
-        this.nextPage = this.nextPage.bind(this);
-        this.setFilter = this.setFilter.bind(this);
-        this.filterPage = this.filterPage.bind(this);
-        this.firstLoad = this.firstLoad.bind(this);
-        this.firstLoad();
-    }
-
-    async firstLoad() {
+export const SubscriptionsList = () => {
+    const firstLoad = async () => {
         const params = {
             filter: {},
             pagination: { page: 1, perPage: 10 },
-            sort: { field: 'timestamp', order: 'DESC' },
+            sort: { field: 'id', order: 'DESC' },
         };
         const dataObject = await dataProvider(
             'GET_LIST',
             'subscriptions',
             params
         );
-        this.setState({ data: dataObject });
-    }
+        setData(dataObject);
+    };
 
-    async nextPage(label) {
+    const [data, setData] = useState(firstLoad);
+
+    const nextPage = async label => {
         const dataObject = await dataProvider(label, 'subscriptions');
-        this.setState({ data: dataObject });
-    }
+        setData(dataObject);
+    };
 
-    setFilter(filterValue, name) {
+    const [filterState, setFilterState] = useState({});
+
+    const changeFilter = async (filterValue, name) => {
+        let filter = filterState;
         if (filterValue) {
-            this.filterObject[name] = filterValue;
+            filter[name] = filterValue;
         } else {
-            delete this.filterObject[name];
+            delete filter[name];
         }
-        this.filterPage();
-    }
-
-    async filterPage() {
-        const params = {
-            filter: this.filterObject,
-        };
-        const dataObject = await dataProvider(
+        const filteredDataObject = await dataProvider(
             'GET_LIST',
             'subscriptions',
-            params
+            {
+                filter: filter,
+            }
         );
-        this.setState({ data: dataObject });
-    }
+        setFilterState(filter);
+        setData(filteredDataObject);
+    };
 
-    render() {
-        if (this.state.data.data) {
-            return (
-                <Card>
-                    <Title title={'Subscriptions'} />
-                    <CardContent>
-                        <Button
-                            label={'Raw'}
-                            href={this.state.data.url}
-                            style={{ float: 'right' }}
-                            title={'View raw'}
-                        >
-                            <JsonIcon />
-                        </Button>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell
-                                        style={{
-                                            minWidth: '280px',
-                                            paddingLeft: '32px',
-                                        }}
-                                    >
-                                        Resource Path{' '}
-                                        <FilterField
-                                            name="resource path"
-                                            setFilter={this.setFilter}
+    const clearFilter = async () => {
+        setData(firstLoad());
+        setFilterState({});
+    };
+
+    if (data.hasOwnProperty('data')) {
+        return (
+            <Card>
+                <Title title={'Subscriptions'} />
+                <CardContent>
+                    <Button
+                        label={'Raw'}
+                        href={data.url}
+                        style={{ float: 'right' }}
+                        title={'View raw'}
+                    >
+                        <JsonIcon />
+                    </Button>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell
+                                    style={{
+                                        minWidth: '280px',
+                                        paddingLeft: '32px',
+                                    }}
+                                >
+                                    Resource Path{' '}
+                                    <FilterField
+                                        name="resource path"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                                <TableCell style={{ minWidth: '255px' }}>
+                                    Persist{' '}
+                                    <FilterField
+                                        name="persist"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                                <TableCell style={{ minWidth: '290px' }}>
+                                    Max Update Rate{' '}
+                                    <FilterField
+                                        name="max update rate"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                                <TableCell style={{ minWidth: '255px' }}>
+                                    ID{' '}
+                                    <FilterField
+                                        name="id"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {data.data.map(item => (
+                                <TableRow key={item.id}>
+                                    <TableCell component="th" scope="row">
+                                        <ShowButton
+                                            style={{
+                                                textTransform: 'none',
+                                            }}
+                                            basePath="/subscriptions"
+                                            record={item}
+                                            label={item.resource_path}
                                         />
                                     </TableCell>
-                                    <TableCell style={{ minWidth: '255px' }}>
-                                        Persist{' '}
-                                        <FilterField
-                                            name="persist"
-                                            setFilter={this.setFilter}
+                                    <TableCell>
+                                        <BooleanField
+                                            record={item}
+                                            source="persist"
                                         />
                                     </TableCell>
-                                    <TableCell style={{ minWidth: '290px' }}>
-                                        Max Update Rate{' '}
-                                        <FilterField
-                                            name="max update rate"
-                                            setFilter={this.setFilter}
-                                        />
+                                    <TableCell label="Max Update Rate (ms)">
+                                        {item.max_update_rate_ms}
                                     </TableCell>
-                                    <TableCell style={{ minWidth: '255px' }}>
-                                        ID{' '}
-                                        <FilterField
-                                            name="id"
-                                            setFilter={this.setFilter}
-                                        />
-                                    </TableCell>
+                                    <TableCell>{item.id}</TableCell>
                                 </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {this.state.data.data.map(item => (
-                                    <TableRow key={item.id}>
-                                        <TableCell component="th" scope="row">
-                                            <ShowButton
-                                                style={{
-                                                    textTransform: 'none',
-                                                }}
-                                                basePath="/subscriptions"
-                                                record={item}
-                                                label={item.resource_path}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <BooleanField
-                                                record={item}
-                                                source="persist"
-                                            />
-                                        </TableCell>
-                                        <TableCell label="Max Update Rate (ms)">
-                                            {item.max_update_rate_ms}
-                                        </TableCell>
-                                        <TableCell>{item.id}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                        <PaginationButton
-                            label="FIRST"
-                            nextPage={this.nextPage}
-                        />
-                        <PaginationButton
-                            label="PREV"
-                            nextPage={this.nextPage}
-                        />
-                        <PaginationButton
-                            label="NEXT"
-                            nextPage={this.nextPage}
-                        />
-                        <PaginationButton
-                            label="LAST"
-                            nextPage={this.nextPage}
-                        />
-                    </CardContent>
-                </Card>
-            );
-        } else {
-            return <div />;
-        }
+                            ))}
+                        </TableBody>
+                    </Table>
+                    <PaginationButton label="FIRST" nextPage={nextPage} />
+                    <PaginationButton label="PREV" nextPage={nextPage} />
+                    <PaginationButton label="NEXT" nextPage={nextPage} />
+                    <PaginationButton label="LAST" nextPage={nextPage} />
+                    <Button
+                        onClick={() => clearFilter()}
+                        label="Clear Filters"
+                    />
+                </CardContent>
+            </Card>
+        );
+    } else {
+        return <div />;
     }
-}
+};
 
 const SubscriptionsTitle = ({ record }) => {
     return (

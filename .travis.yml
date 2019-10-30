@@ -1,0 +1,10 @@
+language: node_js
+node_js: lts/*
+
+before_install: cd Development
+
+install: yarn install
+
+script:
+  - yarn run build
+  - yarn test --passWithNoTests --coverage --watchAll=false

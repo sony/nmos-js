@@ -6,5 +6,6 @@ before_install: cd Development
 install: yarn install
 
 script:
+  - yarn run lint-check
   - yarn run build
   - yarn test --passWithNoTests --coverage --watchAll=false

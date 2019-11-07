@@ -60,8 +60,6 @@ export const SendersList = () => {
     const firstLoad = async () => {
         const params = {
             filter: {},
-            pagination: { page: 1, perPage: 10 },
-            sort: { field: 'id', order: 'DESC' },
         };
         const dataObject = await dataProvider('GET_LIST', 'senders', params);
         setData(dataObject);
@@ -157,7 +155,7 @@ export const SendersList = () => {
                     <PaginationButton label="LAST" nextPage={nextPage} />
                     <Button
                         onClick={() => clearFilter()}
-                        label="Clear Filters"
+                        label="Clear All Filters"
                     />
                 </CardContent>
             </Card>

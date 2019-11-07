@@ -35,8 +35,6 @@ export const SubscriptionsList = () => {
     const firstLoad = async () => {
         const params = {
             filter: {},
-            pagination: { page: 1, perPage: 10 },
-            sort: { field: 'id', order: 'DESC' },
         };
         const dataObject = await dataProvider(
             'GET_LIST',
@@ -162,7 +160,7 @@ export const SubscriptionsList = () => {
                     <PaginationButton label="LAST" nextPage={nextPage} />
                     <Button
                         onClick={() => clearFilter()}
-                        label="Clear Filters"
+                        label="Clear All Filters"
                     />
                 </CardContent>
             </Card>

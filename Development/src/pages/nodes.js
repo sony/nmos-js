@@ -43,8 +43,6 @@ export const NodesList = () => {
     const firstLoad = async () => {
         const params = {
             filter: {},
-            pagination: { page: 1, perPage: 10 },
-            sort: { field: 'id', order: 'DESC' },
         };
         const dataObject = await dataProvider('GET_LIST', 'nodes', params);
         setData(dataObject);
@@ -175,7 +173,7 @@ export const NodesList = () => {
                     <PaginationButton label="LAST" nextPage={nextPage} />
                     <Button
                         onClick={() => clearFilter()}
-                        label="Clear Filters"
+                        label="Clear All Filters"
                     />
                 </CardContent>
             </Card>

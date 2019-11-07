@@ -57,8 +57,6 @@ export const ReceiversList = () => {
     const firstLoad = async () => {
         const params = {
             filter: {},
-            pagination: { page: 1, perPage: 10 },
-            sort: { field: 'id', order: 'DESC' },
         };
         const dataObject = await dataProvider('GET_LIST', 'receivers', params);
         setData(dataObject);
@@ -162,7 +160,7 @@ export const ReceiversList = () => {
                     <PaginationButton label="LAST" nextPage={nextPage} />
                     <Button
                         onClick={() => clearFilter()}
-                        label="Clear Filters"
+                        label="Clear All Filters"
                     />
                 </CardContent>
             </Card>
@@ -303,18 +301,14 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     />
                 )}
                 {controllerProps.record &&
-                    controllerProps.record.hasOwnProperty(
-                        'record.caps.media_types'
-                    ) && (
+                    controllerProps.record.caps.media_types && (
                         <ItemArrayField
                             label="Caps Media Types"
                             source="caps.media_types"
                         />
                     )}
                 {controllerProps.record &&
-                    controllerProps.record.hasOwnProperty(
-                        'caps.event_types'
-                    ) && (
+                    controllerProps.record.caps.event_types && (
                         <ItemArrayField
                             label="Caps Event Types"
                             source="caps.event_types"
@@ -329,9 +323,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                 )}
                 {controllerProps.record &&
                     QueryVersion() >= 'v1.2' &&
-                    controllerProps.record.hasOwnProperty(
-                        'subscription.sender_id'
-                    ) && (
+                    controllerProps.record.subscription.sender_id && (
                         <ReferenceField
                             label="Sender"
                             source="subscription.sender_id"

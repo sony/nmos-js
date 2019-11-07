@@ -175,11 +175,10 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 }
             }
 
-            if (pagingLimit && resource !== 'events') {
-                queryParams.push(
-                    'paging.order=update',
-                    'paging.limit=' + pagingLimit
-                );
+            if (pagingLimit) {
+                if (resource !== 'events')
+                    queryParams.push('paging.order=update');
+                queryParams.push('paging.limit=' + pagingLimit);
             }
 
             const query = queryParams.join('&');

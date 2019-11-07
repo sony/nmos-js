@@ -12,8 +12,8 @@ import {
 import ConnectButton from '../components/ConnectButton';
 import { CardActions, hr } from '@material-ui/core';
 
-const SettingsTitle = ({ record }) => {
-    return <span> Settings {record ? `${record.name}` : ''}</span>;
+const QueryAPITitle = ({ record }) => {
+    return <span>Query APIs{record ? `: ${record.name}` : ''}</span>;
 };
 
 const cardActionsStyle = {
@@ -21,13 +21,13 @@ const cardActionsStyle = {
     float: 'right',
 };
 
-const SettingsShowActions = ({ basePath }) => (
-    <CardActions title={<SettingsTitle />} style={cardActionsStyle}>
+const QueryAPIShowActions = ({ basePath }) => (
+    <CardActions title={<QueryAPITitle />} style={cardActionsStyle}>
         <ListButton title={'Return to ' + basePath} basePath={basePath} />
     </CardActions>
 );
 
-const SettingsPagination = () => {
+const QueryAPIPagination = () => {
     return (
         <p>
             <br />
@@ -35,7 +35,7 @@ const SettingsPagination = () => {
     );
 };
 
-const SettingsActions = ({
+const QueryAPIActions = ({
     bulkActions,
     basePath,
     displayedFilters,
@@ -66,12 +66,12 @@ const SettingsActions = ({
     </CardActions>
 );
 
-export const SettingsList = props => (
+export const QueryAPIList = props => (
     <List
-        title={<SettingsTitle />}
-        actions={<SettingsActions />}
+        title={<QueryAPITitle />}
+        actions={<QueryAPIActions />}
         bulkActionButtons={false}
-        pagination={<SettingsPagination />}
+        pagination={<QueryAPIPagination />}
         {...props}
     >
         <Datagrid>
@@ -90,10 +90,10 @@ export const SettingsList = props => (
     </List>
 );
 
-export const SettingsShow = props => (
+export const QueryAPIShow = props => (
     <Show
-        title={<SettingsTitle />}
-        actions={<SettingsShowActions />}
+        title={<QueryAPITitle />}
+        actions={<QueryAPIShowActions />}
         {...props}
     >
         <SimpleShowLayout>

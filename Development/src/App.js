@@ -1,7 +1,7 @@
 import React from 'react';
 import { Admin, Resource } from 'react-admin';
 
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/settings';
 import { NodesList, NodesShow } from './pages/nodes';
 import { DevicesList, DevicesShow } from './pages/devices';
 import { SourcesList, SourcesShow } from './pages/sources';
@@ -10,7 +10,7 @@ import { SendersEdit, SendersList, SendersShow } from './pages/senders';
 import { ReceiversEdit, ReceiversList, ReceiversShow } from './pages/receivers';
 import { EventsList, EventsShow } from './pages/logs';
 import { SubscriptionsList, SubscriptionsShow } from './pages/subscriptions';
-import { SettingsList, SettingsShow } from './pages/queryapis';
+import { QueryAPIList, QueryAPIShow } from './pages/queryapis';
 import dataProvider from './dataProvider';
 
 import AnnouncementIcon from '@material-ui/icons/Announcement';
@@ -28,20 +28,14 @@ import { useTheme } from '@material-ui/styles';
 import MyLayout from './MyLayout';
 
 const App = () => (
-    <Admin
-        appLayout={MyLayout}
-        icon={SettingsIcon}
-        dataProvider={dataProvider}
-        nestedItems={[]}
-        theme={useTheme()}
-    >
+    <Admin appLayout={MyLayout} dataProvider={dataProvider} theme={useTheme()}>
         <Resource name="Settings" list={Dashboard} icon={SettingsIcon} />
         <Resource
             name="queryapis"
             label="Query APIs"
             options={{ label: 'Query APIs' }}
-            list={SettingsList}
-            show={SettingsShow}
+            list={QueryAPIList}
+            show={QueryAPIShow}
             icon={SettingsAppIcon}
         />
         <Resource

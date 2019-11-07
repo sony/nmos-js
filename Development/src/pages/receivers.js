@@ -1,5 +1,5 @@
 import set from 'lodash/set';
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, Route } from 'react-router-dom';
 import {
     ArrayField,
@@ -53,142 +53,122 @@ import ItemArrayField from '../components/ItemArrayField';
 
 const cookies = new Cookies();
 
-export class ReceiversList extends React.Component {
-    constructor(props) {
-        super(props);
-        this.filter = '';
-        this.filterObject = {};
-        this.state = {
-            data: [],
-        };
-        this.nextPage = this.nextPage.bind(this);
-        this.setFilter = this.setFilter.bind(this);
-        this.filterPage = this.filterPage.bind(this);
-        this.firstLoad = this.firstLoad.bind(this);
-        this.firstLoad();
-    }
-
-    async firstLoad() {
+export const ReceiversList = () => {
+    const firstLoad = async () => {
         const params = {
             filter: {},
-            pagination: { page: 1, perPage: 10 },
-            sort: { field: 'id', order: 'DESC' },
         };
         const dataObject = await dataProvider('GET_LIST', 'receivers', params);
-        this.setState({ data: dataObject });
-    }
+        setData(dataObject);
+    };
 
-    async nextPage(label) {
+    const [data, setData] = useState(firstLoad);
+
+    const nextPage = async label => {
         const dataObject = await dataProvider(label, 'receivers');
-        this.setState({ data: dataObject });
-    }
+        setData(dataObject);
+    };
 
-    setFilter(filterValue, name) {
+    const [filterState, setFilterState] = useState({});
+
+    const changeFilter = async (filterValue, name) => {
+        let filter = filterState;
         if (filterValue) {
-            this.filterObject[name] = filterValue;
+            filter[name] = filterValue;
         } else {
-            delete this.filterObject[name];
+            delete filter[name];
         }
-        this.filterPage();
-    }
+        const filteredDataObject = await dataProvider('GET_LIST', 'receivers', {
+            filter: filter,
+        });
+        setFilterState(filter);
+        setData(filteredDataObject);
+    };
 
-    async filterPage() {
-        const params = {
-            filter: this.filterObject,
-        };
-        const dataObject = await dataProvider('GET_LIST', 'receivers', params);
-        this.setState({ data: dataObject });
-    }
+    const clearFilter = async () => {
+        setData(firstLoad());
+        setFilterState({});
+    };
 
-    render() {
-        if (this.state.data.data) {
-            return (
-                <Card>
-                    <Title title={'Receivers'} />
-                    <CardContent>
-                        <Button
-                            label={'Raw'}
-                            href={this.state.data.url}
-                            style={{ float: 'right' }}
-                            title={'View raw'}
-                        >
-                            <JsonIcon />
-                        </Button>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell
-                                        style={{
-                                            minWidth: '240px',
-                                            paddingLeft: '32px',
-                                        }}
-                                    >
-                                        Label{' '}
-                                        <FilterField
-                                            name="label"
-                                            setFilter={this.setFilter}
+    if (data.hasOwnProperty('data')) {
+        return (
+            <Card>
+                <Title title={'Receivers'} />
+                <CardContent>
+                    <Button
+                        label={'Raw'}
+                        href={data.url}
+                        style={{ float: 'right' }}
+                        title={'View raw'}
+                    >
+                        <JsonIcon />
+                    </Button>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell
+                                    style={{
+                                        minWidth: '240px',
+                                        paddingLeft: '32px',
+                                    }}
+                                >
+                                    Label{' '}
+                                    <FilterField
+                                        name="label"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                                <TableCell style={{ minWidth: '245px' }}>
+                                    Format{' '}
+                                    <FilterField
+                                        name="format"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                                <TableCell style={{ minWidth: '260px' }}>
+                                    Transport{' '}
+                                    <FilterField
+                                        name="transport"
+                                        setFilter={changeFilter}
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {data.data.map(item => (
+                                <TableRow key={item.id}>
+                                    <TableCell component="th" scope="row">
+                                        <ShowButton
+                                            style={{
+                                                textTransform: 'none',
+                                            }}
+                                            basePath="/receivers"
+                                            record={item}
+                                            label={item.label}
                                         />
                                     </TableCell>
-                                    <TableCell style={{ minWidth: '245px' }}>
-                                        Format{' '}
-                                        <FilterField
-                                            name="format"
-                                            setFilter={this.setFilter}
-                                        />
-                                    </TableCell>
-                                    <TableCell style={{ minWidth: '260px' }}>
-                                        Transport{' '}
-                                        <FilterField
-                                            name="transport"
-                                            setFilter={this.setFilter}
-                                        />
-                                    </TableCell>
+                                    <TableCell>{item.format}</TableCell>
+                                    <TableCell>{item.transport}</TableCell>
                                 </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {this.state.data.data.map(item => (
-                                    <TableRow key={item.id}>
-                                        <TableCell component="th" scope="row">
-                                            <ShowButton
-                                                style={{
-                                                    textTransform: 'none',
-                                                }}
-                                                basePath="/receivers"
-                                                record={item}
-                                                label={item.label}
-                                            />
-                                        </TableCell>
-                                        <TableCell>{item.format}</TableCell>
-                                        <TableCell>{item.transport}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                        <br />
-                        <PaginationButton
-                            label="FIRST"
-                            nextPage={this.nextPage}
-                        />
-                        <PaginationButton
-                            label="PREV"
-                            nextPage={this.nextPage}
-                        />
-                        <PaginationButton
-                            label="NEXT"
-                            nextPage={this.nextPage}
-                        />
-                        <PaginationButton
-                            label="LAST"
-                            nextPage={this.nextPage}
-                        />
-                    </CardContent>
-                </Card>
-            );
-        } else {
-            return <div />;
-        }
+                            ))}
+                        </TableBody>
+                    </Table>
+                    <br />
+                    <PaginationButton label="FIRST" nextPage={nextPage} />
+                    <PaginationButton label="PREV" nextPage={nextPage} />
+                    <PaginationButton label="NEXT" nextPage={nextPage} />
+                    <PaginationButton label="LAST" nextPage={nextPage} />
+                    <Button
+                        onClick={() => clearFilter()}
+                        label="Clear All Filters"
+                    />
+                </CardContent>
+            </Card>
+        );
+    } else {
+        return <div />;
     }
-}
+};
 
 const ReceiversTitle = ({ record }) => {
     return (
@@ -498,7 +478,10 @@ const EditStagedTab = props => (
         title={<ReceiversTitle />}
         actions={<ConnectionEditActions id={props.id} />}
     >
-        <SimpleForm toolbar={<PostEditToolbar />}>
+        <SimpleForm
+            toolbar={<PostEditToolbar />}
+            redirect={`/receivers/${props.id}/show/staged`}
+        >
             <TextInput label="Sender ID" source="$staged.sender_id" />
             <BooleanInput
                 label="Master Enable"

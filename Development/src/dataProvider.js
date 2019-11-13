@@ -10,7 +10,7 @@ import {
 } from 'react-admin';
 import get from 'lodash/get';
 import set from 'lodash/set';
-import { set as setJSON } from 'json-ptr';
+import setJSON from 'json-ptr';
 import assign from 'lodash/assign';
 import diff from 'deep-diff';
 import Cookies from 'universal-cookie';
@@ -257,7 +257,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             }
 
             for (const d of differences) {
-                setJSON(patchData, `/${d.path.join('/')}`, d.rhs, true);
+                setJSON.set(patchData, `/${d.path.join('/')}`, d.rhs, true);
             }
 
             if (patchData.hasOwnProperty('transport_file')) {

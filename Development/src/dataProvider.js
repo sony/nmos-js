@@ -17,7 +17,16 @@ import Cookies from 'universal-cookie';
 
 let API_URL = '';
 
-let LINK_HEADER = '';
+let LINK_HEADERS = {
+    nodes: '',
+    devices: '',
+    sources: '',
+    flows: '',
+    senders: '',
+    receivers: '',
+    subscriptions: '',
+    events: '',
+};
 const LOGGING_API = 'Logging API';
 const QUERY_API = 'Query API';
 const DNS_API = 'DNS-SD API';
@@ -106,22 +115,22 @@ function isNumber(v) {
 const convertDataProviderRequestToHTTP = (type, resource, params) => {
     switch (type) {
         case 'FIRST': {
-            let m = LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="first"/);
+            let m = LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="first"/);
             return { url: m ? m[1] : null };
         }
 
         case 'LAST': {
-            let m = LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="last"/);
+            let m = LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="last"/);
             return { url: m ? m[1] : null };
         }
 
         case 'NEXT': {
-            let m = LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="next"/);
+            let m = LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="next"/);
             return { url: m ? m[1] : null };
         }
 
         case 'PREV': {
-            let m = LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="prev"/);
+            let m = LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="prev"/);
             return { url: m ? m[1] : null };
         }
 
@@ -363,12 +372,12 @@ async function convertHTTPResponseToDataProvider(
     params
 ) {
     const { headers, json } = response;
-    LINK_HEADER = headers.get('Link');
+    LINK_HEADERS[resource] = headers.get('Link');
     if (
-        LINK_HEADER !== null &&
-        LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="next"/)
+        LINK_HEADERS[resource] !== null &&
+        LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="next"/)
     ) {
-        if (LINK_HEADER.match(/<([^>]+)>;[ \t]*rel="first"/)) {
+        if (LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="first"/)) {
             cookies.set('Pagination', 'enabled', { path: '/' });
         } else {
             cookies.set('Pagination', 'partial', { path: '/' });

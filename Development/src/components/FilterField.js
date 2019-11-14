@@ -1,85 +1,100 @@
-import React from 'react';
-import { Button, Grow } from '@material-ui/core';
+import React, { useEffect, useState } from 'react';
+import {
+    ClickAwayListener,
+    Grow,
+    IconButton,
+    Input,
+    InputAdornment,
+    withStyles,
+} from '@material-ui/core';
+import ClearIcon from '@material-ui/icons/Clear';
 import ContentFilter from '@material-ui/icons/FilterList';
 
-class FilterField extends React.Component {
-    constructor(props) {
-        super(props);
+const styles = theme => ({
+    container: {
+        display: 'inline',
+    },
+    button: {
+        maxWidth: '30px',
+        maxHeight: '30px',
+        minWidth: '30px',
+        minHeight: '30px',
+    },
+    icon: {
+        maxWidth: '20px',
+        maxHeight: '20px',
+        minWidth: '20px',
+        minHeight: '20px',
+    },
+    input: {
+        display: 'inline-flex',
+        maxHeight: '28px',
+        marginLeft: theme.spacing.unit,
+        marginRight: theme.spacing.unit,
+    },
+});
 
-        this.sendValue = this.sendValue.bind(this);
-        this.toggleClass = this.toggleClass.bind(this);
-        this.state = {
-            expanded: false,
-            value: '',
-        };
-    }
+const FilterField = props => {
+    const { classes } = props;
+    const [open, setOpen] = useState(false);
+    const [value, setValue] = useState('');
+    let textInputRef = null;
 
-    sendValue(event) {
-        this.setState({ value: event.target.value });
-        this.props.setFilter(event.target.value, this.props.name);
-    }
-    toggleClass() {
-        const currentState = this.state.expanded;
-        window.setTimeout(function() {
-            document.getElementById('filter').select();
-        }, 0);
-        this.setState({ expanded: !currentState });
-    }
-    render() {
-        return (
-            <span>
-                <Grow in={this.state.expanded} timeout={250}>
-                    <input
-                        autoFocus
-                        id="filter"
-                        className={
-                            this.state.expanded ? 'search.expanded' : 'search'
+    useEffect(() => {
+        if (open) textInputRef.focus();
+    }, [open, textInputRef]);
+
+    const handleChangeValue = event => {
+        props.setFilter(event.target.value, props.name);
+        setValue(event.target.value);
+    };
+
+    const handleClickAway = () => {
+        if (value === '') setOpen(false);
+    };
+
+    const handleClear = () => {
+        props.setFilter('', props.name);
+        setValue('');
+        setOpen(false);
+    };
+
+    return (
+        <ClickAwayListener onClickAway={handleClickAway}>
+            <div className={classes.container}>
+                <Grow in={open} timeout={300} unmountOnExit>
+                    <Input
+                        className={classes.input}
+                        value={value}
+                        onChange={handleChangeValue}
+                        inputRef={input => (textInputRef = input)}
+                        endAdornment={
+                            <InputAdornment position="end">
+                                <IconButton
+                                    className={classes.button}
+                                    onClick={handleClear}
+                                >
+                                    <ClearIcon className={classes.icon} />
+                                </IconButton>
+                            </InputAdornment>
                         }
-                        type="text"
-                        style={{
-                            width: '160px',
-                            borderRadius: '3px',
-                            border: 'solid 1px #2196f3',
-                        }}
-                        placeholder="Filter: None"
-                        onChange={this.sendValue}
                     />
                 </Grow>
-                <span>
-                    <Button
-                        className="addFilter"
-                        style={
-                            this.state.value === ''
-                                ? {
-                                      maxWidth: '30px',
-                                      maxHeight: '30px',
-                                      minWidth: '30px',
-                                      minHeight: '30px',
-                                  }
-                                : {
-                                      maxWidth: '30px',
-                                      maxHeight: '30px',
-                                      minWidth: '30px',
-                                      minHeight: '30px',
-                                      color: '#2196f3',
-                                  }
-                        }
-                        onClick={this.toggleClass}
-                    >
-                        <ContentFilter
-                            style={{
-                                transform: 'translatey(-3px)',
-                                maxWidth: '20px',
-                                maxHeight: '20px',
-                                minWidth: '20px',
-                                minHeight: '20px',
-                            }}
-                        />
-                    </Button>
-                </span>
-            </span>
-        );
-    }
-}
+                <IconButton
+                    className={classes.button}
+                    style={{ transform: 'translateY(-3px)' }}
+                    onClick={() => setOpen(!open)}
+                >
+                    <ContentFilter
+                        className={classes.icon}
+                        style={{
+                            color: `${value && '#2196f3'}`,
+                        }}
+                    />
+                </IconButton>
+            </div>
+        </ClickAwayListener>
+    );
+};
 
-export default FilterField;
+export default withStyles(styles)(FilterField);

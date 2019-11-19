@@ -41,6 +41,8 @@ import {
     Tabs,
     Typography,
 } from '@material-ui/core';
+import CheckIcon from '@material-ui/icons/Check';
+import ClearIcon from '@material-ui/icons/Clear';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
@@ -128,6 +130,9 @@ export const SendersList = () => {
                                         setFilter={changeFilter}
                                     />
                                 </TableCell>
+                                {QueryVersion() >= 'v1.2' && (
+                                    <TableCell>Subscription Active</TableCell>
+                                )}
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -144,6 +149,15 @@ export const SendersList = () => {
                                         />
                                     </TableCell>
                                     <TableCell>{item.transport}</TableCell>
+                                    {QueryVersion() >= 'v1.2' && (
+                                        <TableCell>
+                                            {item.subscription.active ? (
+                                                <CheckIcon />
+                                            ) : (
+                                                <ClearIcon />
+                                            )}
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             ))}
                         </TableBody>

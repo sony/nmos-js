@@ -255,6 +255,9 @@ const ReceiversShowComponent = props => {
                                 value={`${props.match.url}/connect`}
                                 component={Link}
                                 to={`${props.basePath}/${props.id}/show/connect`}
+                                disabled={
+                                    !get(controllerProps.record, '$active')
+                                }
                             />
                         </Tabs>
                     </AppBar>

@@ -1,183 +1,36 @@
-import copy from 'clipboard-copy';
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, Route } from 'react-router-dom';
 import {
-    ArrayField,
-    BooleanField,
-    BooleanInput,
-    Button,
-    ChipField,
-    Edit,
-    FormDataConsumer,
-    FunctionField,
-    ReferenceField,
-    SaveButton,
-    SelectInput,
-    ShowButton,
-    ShowController,
-    ShowView,
-    SimpleForm,
-    SimpleShowLayout,
-    TextField,
-    TextInput,
-    Title,
-    Toolbar,
-} from 'react-admin';
-import get from 'lodash/get';
-import set from 'lodash/set';
-import Cookies from 'universal-cookie';
-import {
     AppBar,
-    Card,
-    CardContent,
     Button as MaterialButton,
     Snackbar,
     Tab,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
     Tabs,
     Typography,
 } from '@material-ui/core';
-import CheckIcon from '@material-ui/icons/Check';
-import ClearIcon from '@material-ui/icons/Clear';
-import dataProvider from '../dataProvider';
-import PaginationButton from '../components/PaginationButton';
-import FilterField from '../components/FilterField';
-import TAIField from '../components/TAIField';
-import UrlField from '../components/URLField';
-import MapTags from '../components/TagsField';
-import JsonIcon from '../components/JsonIcon';
-import SenderTransportParamsCardsGrid from '../components/SenderTransportParams';
-import ConnectionShowActions from '../components/ConnectionShowActions';
-import ConnectionEditActions from '../components/ConnectionEditActions';
-import JSONViewer from '../components/JSONViewer';
-import ItemArrayField from '../components/ItemArrayField';
+import {
+    ArrayField,
+    BooleanField,
+    ChipField,
+    FunctionField,
+    ReferenceField,
+    ShowController,
+    ShowView,
+    SimpleShowLayout,
+    TextField,
+} from 'react-admin';
+import get from 'lodash/get';
+import copy from 'clipboard-copy';
+import Cookies from 'universal-cookie';
+import ConnectionShowActions from '../../components/ConnectionShowActions';
+import ItemArrayField from '../../components/ItemArrayField';
+import JSONViewer from '../../components/JSONViewer';
+import SenderTransportParamsCardsGrid from './SenderTransportParams';
+import MapTags from '../../components/TagsField';
+import TAIField from '../../components/TAIField';
+import UrlField from '../../components/URLField';
 
 const cookies = new Cookies();
-
-export const SendersList = () => {
-    const firstLoad = async () => {
-        const params = {
-            filter: {},
-        };
-        const dataObject = await dataProvider('GET_LIST', 'senders', params);
-        setData(dataObject);
-    };
-
-    const [data, setData] = useState(firstLoad);
-
-    const nextPage = async label => {
-        const dataObject = await dataProvider(label, 'senders');
-        setData(dataObject);
-    };
-
-    const [filterState, setFilterState] = useState({});
-
-    const changeFilter = async (filterValue, name) => {
-        let filter = filterState;
-        if (filterValue) {
-            filter[name] = filterValue;
-        } else {
-            delete filter[name];
-        }
-        const filteredDataObject = await dataProvider('GET_LIST', 'senders', {
-            filter: filter,
-        });
-        setFilterState(filter);
-        setData(filteredDataObject);
-    };
-
-    const clearFilter = async () => {
-        setData(firstLoad());
-        setFilterState({});
-    };
-
-    if (data.hasOwnProperty('data')) {
-        return (
-            <Card>
-                <Title title={'Senders'} />
-                <CardContent>
-                    <Button
-                        label={'Raw'}
-                        href={data.url}
-                        style={{ float: 'right' }}
-                        title={'View raw'}
-                    >
-                        <JsonIcon />
-                    </Button>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell
-                                    style={{
-                                        minWidth: '240px',
-                                        paddingLeft: '32px',
-                                    }}
-                                >
-                                    Label{' '}
-                                    <FilterField
-                                        name="label"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
-                                <TableCell style={{ minWidth: '260px' }}>
-                                    Transport{' '}
-                                    <FilterField
-                                        name="transport"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
-                                {QueryVersion() >= 'v1.2' && (
-                                    <TableCell>Active</TableCell>
-                                )}
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {data.data.map(item => (
-                                <TableRow key={item.id}>
-                                    <TableCell component="th" scope="row">
-                                        <ShowButton
-                                            style={{
-                                                textTransform: 'none',
-                                            }}
-                                            basePath="/senders"
-                                            record={item}
-                                            label={item.label}
-                                        />
-                                    </TableCell>
-                                    <TableCell>{item.transport}</TableCell>
-                                    {QueryVersion() >= 'v1.2' && (
-                                        <TableCell>
-                                            {item.subscription.active ? (
-                                                <CheckIcon />
-                                            ) : (
-                                                <ClearIcon />
-                                            )}
-                                        </TableCell>
-                                    )}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    <br />
-                    <PaginationButton label="FIRST" nextPage={nextPage} />
-                    <PaginationButton label="PREV" nextPage={nextPage} />
-                    <PaginationButton label="NEXT" nextPage={nextPage} />
-                    <PaginationButton label="LAST" nextPage={nextPage} />
-                    <Button
-                        onClick={() => clearFilter()}
-                        label="Clear All Filters"
-                    />
-                </CardContent>
-            </Card>
-        );
-    } else {
-        return <div />;
-    }
-};
 
 const SendersTitle = ({ record }) => {
     return (
@@ -192,6 +45,11 @@ const SendersTitle = ({ record }) => {
     );
 };
 
+const QueryVersion = () => {
+    let url = cookies.get('Query API');
+    return url.match(/([^/]+)(?=\/?$)/g)[0];
+};
+
 const ChipConditionalLabel = ({ record, source, ...props }) => {
     props.clickable = true;
     return record ? (
@@ -203,7 +61,7 @@ const ChipConditionalLabel = ({ record, source, ...props }) => {
     ) : null;
 };
 
-export const SendersShow = props => {
+const SendersShow = props => {
     return (
         <ShowController {...props}>
             {controllerProps => (
@@ -284,11 +142,6 @@ export const SendersShow = props => {
             )}
         </ShowController>
     );
-};
-
-const QueryVersion = () => {
-    let url = cookies.get('Query API');
-    return url.match(/([^/]+)(?=\/?$)/g)[0];
 };
 
 const ShowSummaryTab = ({ controllerProps, ...props }) => {
@@ -501,113 +354,4 @@ const ShowTransportFileTab = ({ record }) => {
     );
 };
 
-const PostEditToolbar = props => (
-    <Toolbar {...props}>
-        <SaveButton label="Stage" />
-    </Toolbar>
-);
-
-export const SendersEdit = props => {
-    return (
-        <div>
-            <AppBar position="static" color="default">
-                <Tabs
-                    value={props.location.pathname}
-                    indicatorColor="primary"
-                    textColor="primary"
-                >
-                    <Tab
-                        label="Summary"
-                        component={Link}
-                        to={`${props.basePath}/${props.id}/show/`}
-                    />
-                    <Tab
-                        label="Active"
-                        component={Link}
-                        to={`${props.basePath}/${props.id}/show/active`}
-                    />
-                    <Tab
-                        label="Staged"
-                        value={`${props.match.url}`}
-                        component={Link}
-                        to={`${props.basePath}/${props.id}/show/staged`}
-                    />
-                </Tabs>
-            </AppBar>
-            <Route
-                exact
-                path={`${props.basePath}/${props.id}/`}
-                render={() => <EditStagedTab {...props} />}
-            />
-        </div>
-    );
-};
-
-const EditStagedTab = props => (
-    <Edit
-        {...props}
-        undoable={false}
-        title={<SendersTitle />}
-        actions={<ConnectionEditActions id={props.id} />}
-    >
-        <SimpleForm
-            toolbar={<PostEditToolbar />}
-            redirect={`/senders/${props.id}/show/staged`}
-        >
-            <TextInput label="Receiver ID" source="$staged.receiver_id" />
-            <BooleanInput
-                label="Master Enable"
-                source="$staged.master_enable"
-            />
-            <SelectInput
-                label="Activation Mode"
-                source="$staged.activation.mode"
-                choices={[
-                    { id: null, name: <ClearIcon /> },
-                    {
-                        id: 'activate_immediate',
-                        name: 'activate_immediate',
-                    },
-                    {
-                        id: 'activate_scheduled_relative',
-                        name: 'activate_scheduled_relative',
-                    },
-                    {
-                        id: 'activate_scheduled_absolute',
-                        name: 'activate_scheduled_absolute',
-                    },
-                ]}
-            />
-            <FormDataConsumer>
-                {({ formData, ...rest }) => {
-                    switch (get(formData, '$staged.activation.mode')) {
-                        case 'activate_scheduled_relative':
-                            return (
-                                <TextInput
-                                    label="Requested Time"
-                                    source="$staged.activation.requested_time"
-                                    {...rest}
-                                />
-                            );
-                        case 'activate_scheduled_absolute':
-                            return (
-                                <TextInput
-                                    label="Requested Time"
-                                    source="$staged.activation.requested_time"
-                                    {...rest}
-                                />
-                            );
-                        default:
-                            set(
-                                formData,
-                                '$staged.activation.requested_time',
-                                null
-                            );
-                            return null;
-                    }
-                }}
-            </FormDataConsumer>
-            <SenderTransportParamsCardsGrid />
-        </SimpleForm>
-    </Edit>
-);
+export default SendersShow;

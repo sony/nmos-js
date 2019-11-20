@@ -14,8 +14,6 @@
     "json-ptr": "^1.2.0",
     "lodash": "^4.17.15",
     "prop-types": "^15.6.2",
-    "ra-core": "^2.9.8",
-    "ra-ui-materialui": "^2.9.8",
     "react": "^16.8.6",
     "react-admin": "^2.9.8",
     "react-dom": "^16.8.6",

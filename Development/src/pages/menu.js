@@ -24,7 +24,7 @@ import SettingsInputAntennaIcon from '@material-ui/icons/SettingsInputAntenna';
 import SwapVertIcon from '@material-ui/icons/SwapVert';
 import SettingsIcon from '@material-ui/icons/Settings';
 
-import { Sidebar } from 'ra-ui-materialui';
+import { Sidebar } from 'react-admin';
 
 Sidebar.defaultProps = {
     size: 240,

@@ -3,12 +3,12 @@ import { Admin, Resource } from 'react-admin';
 import { useTheme } from '@material-ui/styles';
 
 import Dashboard from './pages/settings';
+import { ReceiversEdit, ReceiversList, ReceiversShow } from './pages/receivers';
+import { SendersEdit, SendersList, SendersShow } from './pages/senders';
 import { NodesList, NodesShow } from './pages/nodes';
 import { DevicesList, DevicesShow } from './pages/devices';
 import { SourcesList, SourcesShow } from './pages/sources';
 import { FlowsList, FlowsShow } from './pages/flows';
-import { SendersEdit, SendersList, SendersShow } from './pages/senders';
-import { ReceiversEdit, ReceiversList, ReceiversShow } from './pages/receivers';
 import { EventsList, EventsShow } from './pages/logs';
 import { SubscriptionsList, SubscriptionsShow } from './pages/subscriptions';
 import { QueryAPIList, QueryAPIShow } from './pages/queryapis';

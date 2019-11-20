@@ -1,5 +1,5 @@
 import { CardActions } from '@material-ui/core';
-import { Button, ListButton } from 'ra-ui-materialui';
+import { Button, ListButton } from 'react-admin';
 import React from 'react';
 import NavLink from 'react-router-dom/NavLink';
 import EditIcon from '@material-ui/icons/Edit';

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { CardActions } from '@material-ui/core';
 import {
     ArrayField,
     Button,
@@ -9,142 +10,19 @@ import {
     ReferenceArrayField,
     ReferenceField,
     ReferenceManyField,
-    ShowButton,
     ShowController,
     ShowView,
     SimpleShowLayout,
     SingleFieldList,
     TextField,
-    Title,
 } from 'react-admin';
 import Cookies from 'universal-cookie';
-import {
-    Card,
-    CardActions,
-    CardContent,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-} from '@material-ui/core';
-import dataProvider from '../dataProvider';
-import PaginationButton from '../components/PaginationButton';
-import FilterField from '../components/FilterField';
-import TAIField from '../components/TAIField';
-import MapTags from '../components/TagsField';
-import JsonIcon from '../components/JsonIcon';
+import JsonIcon from '../../components/JsonIcon';
+import MapTags from '../../components/TagsField';
+import TAIField from '../../components/TAIField';
+import QueryVersion from '../../components/QueryVersion';
 
 const cookies = new Cookies();
-
-export const SourcesList = () => {
-    const firstLoad = async () => {
-        const params = {
-            filter: {},
-        };
-        const dataObject = await dataProvider('GET_LIST', 'sources', params);
-        setData(dataObject);
-    };
-
-    const [data, setData] = useState(firstLoad);
-
-    const nextPage = async label => {
-        const dataObject = await dataProvider(label, 'sources');
-        setData(dataObject);
-    };
-
-    const [filterState, setFilterState] = useState({});
-
-    const changeFilter = async (filterValue, name) => {
-        let filter = filterState;
-        if (filterValue) {
-            filter[name] = filterValue;
-        } else {
-            delete filter[name];
-        }
-        const filteredDataObject = await dataProvider('GET_LIST', 'sources', {
-            filter: filter,
-        });
-        setFilterState(filter);
-        setData(filteredDataObject);
-    };
-
-    const clearFilter = async () => {
-        setData(firstLoad());
-        setFilterState({});
-    };
-
-    if (data.hasOwnProperty('data')) {
-        return (
-            <Card>
-                <Title title={'Sources'} />
-                <CardContent>
-                    <Button
-                        label={'Raw'}
-                        href={data.url}
-                        style={{ float: 'right' }}
-                        title={'View raw'}
-                    >
-                        <JsonIcon />
-                    </Button>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell
-                                    style={{
-                                        minWidth: '240px',
-                                        paddingLeft: '32px',
-                                    }}
-                                >
-                                    Label{' '}
-                                    <FilterField
-                                        name="label"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
-                                <TableCell style={{ minWidth: '255px' }}>
-                                    Format{' '}
-                                    <FilterField
-                                        name="format"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {data.data.map(item => (
-                                <TableRow key={item.id}>
-                                    <TableCell component="th" scope="row">
-                                        <ShowButton
-                                            style={{
-                                                textTransform: 'none',
-                                            }}
-                                            basePath="/sources"
-                                            record={item}
-                                            label={item.label}
-                                        />
-                                    </TableCell>
-                                    <TableCell>{item.format}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    <br />
-                    <PaginationButton label="FIRST" nextPage={nextPage} />
-                    <PaginationButton label="PREV" nextPage={nextPage} />
-                    <PaginationButton label="NEXT" nextPage={nextPage} />
-                    <PaginationButton label="LAST" nextPage={nextPage} />
-                    <Button
-                        onClick={() => clearFilter()}
-                        label="Clear All Filters"
-                    />
-                </CardContent>
-            </Card>
-        );
-    } else {
-        return <div />;
-    }
-};
 
 const SourcesTitle = ({ record }) => {
     return (
@@ -170,11 +48,6 @@ const ChipConditionalLabel = ({ record, source, ...props }) => {
     ) : null;
 };
 
-const QueryVersion = () => {
-    let url = cookies.get('Query API');
-    return url.match(/([^/]+)(?=\/?$)/g)[0];
-};
-
 const cardActionStyle = {
     zIndex: 2,
     float: 'right',
@@ -195,7 +68,7 @@ const SourcesShowActions = ({ basePath, data, resource }) => (
     </CardActions>
 );
 
-export const SourcesShow = props => (
+const SourcesShow = props => (
     <ShowController {...props}>
         {controllerProps => (
             <ShowView
@@ -283,3 +156,5 @@ export const SourcesShow = props => (
         )}
     </ShowController>
 );
+
+export default SourcesShow;

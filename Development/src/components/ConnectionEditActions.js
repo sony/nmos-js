@@ -1,5 +1,5 @@
 import { CardActions } from '@material-ui/core';
-import { ShowButton } from 'ra-ui-materialui';
+import { ShowButton } from 'react-admin';
 import React from 'react';
 import Link from 'react-router-dom/Link';
 

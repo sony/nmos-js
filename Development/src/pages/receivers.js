@@ -1,5 +1,4 @@
-import set from 'lodash/set';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, Route } from 'react-router-dom';
 import {
     ArrayField,
@@ -23,8 +22,10 @@ import {
     TextInput,
     Title,
     Toolbar,
+    withDataProvider,
 } from 'react-admin';
 import get from 'lodash/get';
+import set from 'lodash/set';
 import Cookies from 'universal-cookie';
 import {
     AppBar,
@@ -34,10 +35,13 @@ import {
     Table,
     TableBody,
     TableCell,
+    TableFooter,
     TableHead,
     TableRow,
     Tabs,
 } from '@material-ui/core';
+import CheckIcon from '@material-ui/icons/Check';
+import ClearIcon from '@material-ui/icons/Clear';
 import dataProvider from '../dataProvider';
 import PaginationButton from '../components/PaginationButton';
 import FilterField from '../components/FilterField';
@@ -50,6 +54,7 @@ import ConnectionEditActions from '../components/ConnectionEditActions';
 import JSONViewer from '../components/JSONViewer';
 import TransportFileViewer from '../components/TransportFileViewer';
 import ItemArrayField from '../components/ItemArrayField';
+import MakeConnection from '../components/MakeConnection';
 
 const cookies = new Cookies();
 
@@ -132,6 +137,9 @@ export const ReceiversList = () => {
                                         setFilter={changeFilter}
                                     />
                                 </TableCell>
+                                {QueryVersion() >= 'v1.2' && (
+                                    <TableCell>Subscription Active</TableCell>
+                                )}
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -149,6 +157,15 @@ export const ReceiversList = () => {
                                     </TableCell>
                                     <TableCell>{item.format}</TableCell>
                                     <TableCell>{item.transport}</TableCell>
+                                    {QueryVersion() >= 'v1.2' && (
+                                        <TableCell>
+                                            {item.subscription.active ? (
+                                                <CheckIcon />
+                                            ) : (
+                                                <ClearIcon />
+                                            )}
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -199,7 +216,7 @@ const QueryVersion = () => {
     return url.match(/([^/]+)(?=\/?$)/g)[0];
 };
 
-export const ReceiversShow = props => {
+const ReceiversShowComponent = props => {
     return (
         <ShowController {...props}>
             {controllerProps => (
@@ -233,6 +250,15 @@ export const ReceiversShow = props => {
                                         }
                                     />
                                 ))}
+                            <Tab
+                                label="Connect"
+                                value={`${props.match.url}/connect`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/connect`}
+                                disabled={
+                                    !get(controllerProps.record, '$active')
+                                }
+                            />
                         </Tabs>
                     </AppBar>
                     <Route
@@ -262,6 +288,17 @@ export const ReceiversShow = props => {
                             <ShowStagedTab
                                 {...props}
                                 controllerProps={controllerProps}
+                            />
+                        )}
+                    />
+                    <Route
+                        exact
+                        path={`${props.basePath}/${props.id}/show/connect`}
+                        render={() => (
+                            <ConnectionManagementTab
+                                {...props}
+                                controllerProps={controllerProps}
+                                receiverData={controllerProps.record}
                             />
                         )}
                     />
@@ -544,3 +581,199 @@ const EditStagedTab = props => (
         </SimpleForm>
     </Edit>
 );
+
+const ConnectionManagementTab = ({
+    controllerProps,
+    receiverData,
+    ...props
+}) => {
+    const [sendersListData, setSendersListData] = useState(undefined);
+    const [params, setParams] = useState({
+        filter: {},
+    });
+
+    useEffect(() => {
+        (async function fetchData() {
+            const data = await dataProvider('GET_LIST', 'senders', params);
+            setSendersListData(data);
+        })();
+    }, [params]);
+
+    const changeFilter = (filterValue, name) => {
+        let newFilter = params.filter;
+        if (filterValue) {
+            newFilter[name] = filterValue;
+        } else {
+            delete newFilter[name];
+        }
+        setParams({ filter: newFilter });
+    };
+
+    const nextPage = async label => {
+        const data = await dataProvider(label, 'senders');
+        setSendersListData(data);
+    };
+
+    // receiverData initialises undefined, update when no longer null
+    useEffect(() => {
+        if (receiverData !== null)
+            setParams({
+                filter: { transport: get(receiverData, 'transport') },
+            });
+    }, [receiverData]);
+
+    const connect = (senderID, receiverID, endpoint) => {
+        MakeConnection(senderID, receiverID, endpoint, props).then(() =>
+            props.history.push(`${props.basePath}/${props.id}/show/${endpoint}`)
+        );
+    };
+
+    return (
+        <ShowView
+            {...props}
+            {...controllerProps}
+            title={<ReceiversTitle />}
+            actions={<div />}
+        >
+            <SimpleShowLayout>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell
+                                style={{
+                                    minWidth: '240px',
+                                    paddingLeft: '32px',
+                                }}
+                            >
+                                Label{' '}
+                                <FilterField
+                                    name="label"
+                                    setFilter={changeFilter}
+                                />
+                            </TableCell>
+                            <TableCell>
+                                ID{' '}
+                                <FilterField
+                                    name="id"
+                                    setFilter={changeFilter}
+                                />
+                            </TableCell>
+                            <TableCell>Flow</TableCell>
+                            <TableCell>Device</TableCell>
+                            {QueryVersion() >= 'v1.2' && (
+                                <TableCell>Subscription Active</TableCell>
+                            )}
+                            <TableCell>Connect</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    {sendersListData && (
+                        <TableBody>
+                            {sendersListData.data.map(item => (
+                                <TableRow
+                                    key={item.id}
+                                    selected={
+                                        get(receiverData, 'id') === item.id
+                                    }
+                                >
+                                    <TableCell component="th" scope="row">
+                                        <ShowButton
+                                            style={{
+                                                textTransform: 'none',
+                                            }}
+                                            basePath="/senders"
+                                            record={item}
+                                            label={item.label}
+                                        />
+                                    </TableCell>
+                                    <TableCell>{item.id}</TableCell>
+                                    <TableCell>
+                                        <ReferenceField
+                                            record={item}
+                                            basePath="/flows"
+                                            label="Flow"
+                                            source="flow_id"
+                                            reference="flows"
+                                            linkType="show"
+                                        >
+                                            <ChipConditionalLabel source="label" />
+                                        </ReferenceField>
+                                    </TableCell>
+                                    <TableCell>
+                                        <ReferenceField
+                                            record={item}
+                                            basePath="/devices"
+                                            label="Device"
+                                            source="device_id"
+                                            reference="devices"
+                                            linkType="show"
+                                        >
+                                            <ChipConditionalLabel source="label" />
+                                        </ReferenceField>
+                                    </TableCell>
+                                    {QueryVersion() >= 'v1.2' && (
+                                        <TableCell>
+                                            {item.subscription.active ? (
+                                                <CheckIcon />
+                                            ) : (
+                                                <ClearIcon />
+                                            )}
+                                        </TableCell>
+                                    )}
+                                    <TableCell>
+                                        <Button
+                                            onClick={() =>
+                                                connect(
+                                                    item.id,
+                                                    get(receiverData, 'id'),
+                                                    'active'
+                                                )
+                                            }
+                                            label="Activate"
+                                        />
+                                        <Button
+                                            onClick={() =>
+                                                connect(
+                                                    item.id,
+                                                    get(receiverData, 'id'),
+                                                    'staged'
+                                                )
+                                            }
+                                            label="Stage"
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    )}
+                </Table>
+                <Table>
+                    <TableFooter>
+                        <TableRow>
+                            <TableCell style={{ whiteSpace: 'nowrap' }}>
+                                <PaginationButton
+                                    label="FIRST"
+                                    nextPage={nextPage}
+                                />
+                                <PaginationButton
+                                    label="PREV"
+                                    nextPage={nextPage}
+                                />
+                                <PaginationButton
+                                    label="NEXT"
+                                    nextPage={nextPage}
+                                />
+                                <PaginationButton
+                                    label="LAST"
+                                    nextPage={nextPage}
+                                />
+                            </TableCell>
+                        </TableRow>
+                    </TableFooter>
+                </Table>
+            </SimpleShowLayout>
+        </ShowView>
+    );
+};
+
+const ReceiversShow = withDataProvider(ReceiversShowComponent);
+export { ReceiversShow };

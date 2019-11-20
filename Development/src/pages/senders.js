@@ -320,7 +320,10 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     source="manifest_href"
                 />
                 {controllerProps.record && QueryVersion() >= 'v1.2' && (
-                    <ItemArrayField source="interface_bindings" />
+                    <ItemArrayField
+                        label="Interface Bindings"
+                        source="interface_bindings"
+                    />
                 )}
                 {controllerProps.record && QueryVersion() >= 'v1.2' && (
                     <BooleanField
@@ -373,7 +376,17 @@ const ShowActiveTab = ({ controllerProps, ...props }) => {
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
-                <TextField label="Receiver ID" source="$active.receiver_id" />
+                {get(controllerProps.record, '$active.receiver_id') && (
+                    <ReferenceField
+                        basePath="/receivers"
+                        label="Receiver"
+                        source="$active.receiver_id"
+                        reference="receivers"
+                        linkType="show"
+                    >
+                        <ChipConditionalLabel source="label" />
+                    </ReferenceField>
+                )}
                 <BooleanField
                     label="Master Enable"
                     source="$active.master_enable"
@@ -413,7 +426,17 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
-                <TextField label="Receiver ID" source="staged.receiver_id" />
+                {get(controllerProps.record, '$staged.receiver_id') && (
+                    <ReferenceField
+                        basePath="/receivers"
+                        label="Receiver"
+                        source="$staged.receiver_id"
+                        reference="receivers"
+                        linkType="show"
+                    >
+                        <ChipConditionalLabel source="label" />
+                    </ReferenceField>
+                )}
                 <BooleanField
                     label="Master Enable"
                     source="$staged.master_enable"
@@ -543,18 +566,18 @@ const EditStagedTab = props => (
                 label="Activation Mode"
                 source="$staged.activation.mode"
                 choices={[
-                    { id: null, name: 'None' },
+                    { id: null, name: <ClearIcon /> },
                     {
                         id: 'activate_immediate',
-                        name: 'Activate Immediate',
+                        name: 'activate_immediate',
                     },
                     {
                         id: 'activate_scheduled_relative',
-                        name: 'Activate Scheduled Relative',
+                        name: 'activate_scheduled_relative',
                     },
                     {
                         id: 'activate_scheduled_absolute',
-                        name: 'Activate Scheduled Absolute',
+                        name: 'activate_scheduled_absolute',
                     },
                 ]}
             />

@@ -66,7 +66,7 @@ const MQTTReceiver = ({ dataObject }) => {
                                                     id: false,
                                                     name: <ClearIcon />,
                                                 },
-                                                { id: 'auto', name: 'Auto' },
+                                                { id: 'auto', name: 'auto' },
                                             ]}
                                         />
                                     )}
@@ -142,7 +142,7 @@ const MQTTReceiverEdit = ({ record }) => {
                             choices={[
                                 { id: true, name: <CheckIcon /> },
                                 { id: false, name: <ClearIcon /> },
-                                { id: 'auto', name: 'Auto' },
+                                { id: 'auto', name: 'auto' },
                             ]}
                         />
                     )}
@@ -433,7 +433,7 @@ const WebSocketReceiver = ({ dataObject }) => {
                                                     id: false,
                                                     name: <ClearIcon />,
                                                 },
-                                                { id: 'auto', name: 'Auto' },
+                                                { id: 'auto', name: 'auto' },
                                             ]}
                                         />
                                     )}
@@ -489,7 +489,7 @@ const WebSocketReceiverEdit = ({ record }) => {
                             choices={[
                                 { id: true, name: <CheckIcon /> },
                                 { id: false, name: <ClearIcon /> },
-                                { id: 'auto', name: 'Auto' },
+                                { id: 'auto', name: 'auto' },
                             ]}
                         />
                     )}

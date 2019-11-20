@@ -61,16 +61,11 @@ const copyTransportParams = (
 };
 
 export const isMulticast = address => {
-    if (
+    return (
         address.match(
             /^2(?:2[4-9]|3\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d?|0)){3}/
-        )
-    ) {
-        return true;
-    } else if (address.toLowerCase().startsWith('ff')) {
-        return true;
-    }
-    return false;
+        ) || address.toLowerCase().startsWith('ff')
+    );
 };
 
 const MakeConnection = (senderID, receiverID, endpoint, props) => {
@@ -109,8 +104,10 @@ const MakeConnection = (senderID, receiverID, endpoint, props) => {
                 if (
                     get(data.sender, '$transporttype') !==
                     get(data.receiver, '$transporttype')
-                )
+                ) {
                     reject();
+                }
+
                 let patchData = cloneDeep(data.receiver);
 
                 set(patchData, '$staged.master_enable', true);

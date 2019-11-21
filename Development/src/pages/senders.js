@@ -131,7 +131,7 @@ export const SendersList = () => {
                                     />
                                 </TableCell>
                                 {QueryVersion() >= 'v1.2' && (
-                                    <TableCell>Subscription Active</TableCell>
+                                    <TableCell>Active</TableCell>
                                 )}
                             </TableRow>
                         </TableHead>
@@ -326,10 +326,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     />
                 )}
                 {controllerProps.record && QueryVersion() >= 'v1.2' && (
-                    <BooleanField
-                        label="Subscription Active"
-                        source="subscription.active"
-                    />
+                    <BooleanField label="Active" source="subscription.active" />
                 )}
                 <hr />
                 <ReferenceField

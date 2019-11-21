@@ -138,7 +138,7 @@ export const ReceiversList = () => {
                                     />
                                 </TableCell>
                                 {QueryVersion() >= 'v1.2' && (
-                                    <TableCell>Subscription Active</TableCell>
+                                    <TableCell>Active</TableCell>
                                 )}
                             </TableRow>
                         </TableHead>
@@ -353,10 +353,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     )}
                 <TextField source="format" />
                 {controllerProps.record && QueryVersion() >= 'v1.2' && (
-                    <BooleanField
-                        label="Subscription Active"
-                        source="subscription.active"
-                    />
+                    <BooleanField label="Active" source="subscription.active" />
                 )}
                 {controllerProps.record &&
                     QueryVersion() >= 'v1.2' &&
@@ -394,7 +391,17 @@ const ShowActiveTab = ({ controllerProps, ...props }) => {
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
-                <TextField label="Sender ID" source="$active.sender_id" />
+                {get(controllerProps.record, '$active.sender_id') && (
+                    <ReferenceField
+                        basePath="/senders"
+                        label="Sender"
+                        source="$active.sender_id"
+                        reference="senders"
+                        linkType="show"
+                    >
+                        <ChipConditionalLabel source="label" />
+                    </ReferenceField>
+                )}
                 <BooleanField
                     label="Master Enable"
                     source="$active.master_enable"
@@ -435,7 +442,17 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
-                <TextField label="Sender ID" source="$staged.sender_id" />
+                {get(controllerProps.record, '$staged.sender_id') && (
+                    <ReferenceField
+                        basePath="/senders"
+                        label="Sender"
+                        source="$staged.sender_id"
+                        reference="senders"
+                        linkType="show"
+                    >
+                        <ChipConditionalLabel source="label" />
+                    </ReferenceField>
+                )}
                 <BooleanField
                     label="Master Enable"
                     source="$staged.master_enable"
@@ -468,7 +485,7 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
 
 const PostEditToolbar = props => (
     <Toolbar {...props}>
-        <SaveButton />
+        <SaveButton label="Stage" />
     </Toolbar>
 );
 
@@ -496,6 +513,11 @@ export const ReceiversEdit = props => {
                         value={`${props.match.url}`}
                         component={Link}
                         to={`${props.basePath}/${props.id}/show/staged`}
+                    />
+                    <Tab
+                        label="Connect"
+                        component={Link}
+                        to={`${props.basePath}/${props.id}/show/connect`}
                     />
                 </Tabs>
             </AppBar>
@@ -528,18 +550,18 @@ const EditStagedTab = props => (
                 label="Activation Mode"
                 source="$staged.activation.mode"
                 choices={[
-                    { id: null, name: 'None' },
+                    { id: null, name: <ClearIcon /> },
                     {
                         id: 'activate_immediate',
-                        name: 'Activate Immediate',
+                        name: 'activate_immediate',
                     },
                     {
                         id: 'activate_scheduled_relative',
-                        name: 'Activate Scheduled Relative',
+                        name: 'activate_scheduled_relative',
                     },
                     {
                         id: 'activate_scheduled_absolute',
-                        name: 'Activate Scheduled Absolute',
+                        name: 'activate_scheduled_absolute',
                     },
                 ]}
             />
@@ -589,7 +611,7 @@ const ConnectionManagementTab = ({
 }) => {
     const [sendersListData, setSendersListData] = useState(undefined);
     const [params, setParams] = useState({
-        filter: {},
+        filter: { transport: get(receiverData, 'transport') },
     });
 
     useEffect(() => {
@@ -641,7 +663,6 @@ const ConnectionManagementTab = ({
                         <TableRow>
                             <TableCell
                                 style={{
-                                    minWidth: '240px',
                                     paddingLeft: '32px',
                                 }}
                             >

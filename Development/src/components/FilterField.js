@@ -59,6 +59,20 @@ const FilterField = props => {
         setOpen(false);
     };
 
+    const onEsc = event => {
+        if (textInputRef !== document.activeElement) return;
+        // https://www.w3.org/TR/uievents-key/#named-key-attribute-values
+        if ('Escape' === event.key) handleClear();
+    };
+
+    useEffect(() => {
+        if (open) {
+            window.addEventListener('keydown', onEsc);
+        } else {
+            window.removeEventListener('keydown', onEsc);
+        }
+    });
+
     return (
         <ClickAwayListener onClickAway={handleClickAway}>
             <div className={classes.container}>

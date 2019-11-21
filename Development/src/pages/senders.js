@@ -506,7 +506,7 @@ const ShowTransportFileTab = ({ record }) => {
 
 const PostEditToolbar = props => (
     <Toolbar {...props}>
-        <SaveButton />
+        <SaveButton label="Stage" />
     </Toolbar>
 );
 

@@ -1,6 +1,7 @@
-import React from 'react';
-import { Link, Route } from 'react-router-dom';
-import { AppBar, Tab, Tabs } from '@material-ui/core';
+import React, { Fragment } from 'react';
+import Link from 'react-router-dom/Link';
+import { Route } from 'react-router-dom';
+import { Paper, Tab, Tabs } from '@material-ui/core';
 import {
     BooleanInput,
     Edit,
@@ -13,6 +14,7 @@ import {
 } from 'react-admin';
 import get from 'lodash/get';
 import set from 'lodash/set';
+import { useTheme } from '@material-ui/styles';
 import ClearIcon from '@material-ui/icons/Clear';
 import ConnectionEditActions from '../../components/ConnectionEditActions';
 import SenderTransportParamsCardsGrid from './SenderTransportParams';
@@ -35,38 +37,52 @@ const PostEditToolbar = props => (
 );
 
 const SendersEdit = props => {
+    const theme = useTheme();
+    const tabBackgroundColor =
+        theme.palette.type === 'light'
+            ? theme.palette.grey[100]
+            : theme.palette.grey[900];
     return (
-        <div>
-            <AppBar position="static" color="default">
-                <Tabs
-                    value={props.location.pathname}
-                    indicatorColor="primary"
-                    textColor="primary"
+        <Fragment>
+            <div style={{ display: 'flex' }}>
+                <Paper
+                    style={{
+                        alignSelf: 'end',
+                        background: tabBackgroundColor,
+                    }}
                 >
-                    <Tab
-                        label="Summary"
-                        component={Link}
-                        to={`${props.basePath}/${props.id}/show/`}
-                    />
-                    <Tab
-                        label="Active"
-                        component={Link}
-                        to={`${props.basePath}/${props.id}/show/active`}
-                    />
-                    <Tab
-                        label="Staged"
-                        value={`${props.match.url}`}
-                        component={Link}
-                        to={`${props.basePath}/${props.id}/show/staged`}
-                    />
-                </Tabs>
-            </AppBar>
+                    <Tabs
+                        value={props.location.pathname}
+                        indicatorColor="primary"
+                        textColor="primary"
+                    >
+                        <Tab
+                            label="Summary"
+                            component={Link}
+                            to={`${props.basePath}/${props.id}/show/`}
+                        />
+                        <Tab
+                            label="Active"
+                            component={Link}
+                            to={`${props.basePath}/${props.id}/show/active`}
+                        />
+                        <Tab
+                            label="Staged"
+                            value={`${props.match.url}`}
+                            component={Link}
+                            to={`${props.basePath}/${props.id}/show/staged`}
+                        />
+                    </Tabs>
+                </Paper>
+                <span style={{ flexGrow: 1 }} />
+                <ConnectionEditActions {...props} />
+            </div>
             <Route
                 exact
                 path={`${props.basePath}/${props.id}/`}
                 render={() => <EditStagedTab {...props} />}
             />
-        </div>
+        </Fragment>
     );
 };
 
@@ -75,7 +91,7 @@ const EditStagedTab = props => (
         {...props}
         undoable={false}
         title={<SendersTitle />}
-        actions={<ConnectionEditActions id={props.id} />}
+        actions={<Fragment />}
     >
         <SimpleForm
             toolbar={<PostEditToolbar />}

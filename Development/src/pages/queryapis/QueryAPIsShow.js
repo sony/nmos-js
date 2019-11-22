@@ -1,33 +1,29 @@
 import React from 'react';
-import { CardActions, hr } from '@material-ui/core';
+import { hr } from '@material-ui/core';
 import {
     ListButton,
     RichTextField,
     Show,
     SimpleShowLayout,
     TextField,
+    TopToolbar,
 } from 'react-admin';
 import ConnectButton from '../../components/ConnectButton';
 
-const QueryAPITitle = ({ record }) => {
+const QueryAPIsTitle = ({ record }) => {
     return <span>Query APIs{record ? `: ${record.name}` : ''}</span>;
 };
 
-const cardActionsStyle = {
-    zIndex: 2,
-    float: 'right',
-};
-
-const QueryAPIShowActions = ({ basePath }) => (
-    <CardActions title={<QueryAPITitle />} style={cardActionsStyle}>
+const QueryAPIsShowActions = ({ basePath }) => (
+    <TopToolbar title={<QueryAPIsTitle />}>
         <ListButton title={'Return to ' + basePath} basePath={basePath} />
-    </CardActions>
+    </TopToolbar>
 );
 
-const QueryAPIShow = props => (
+const QueryAPIsShow = props => (
     <Show
-        title={<QueryAPITitle />}
-        actions={<QueryAPIShowActions />}
+        title={<QueryAPIsTitle />}
+        actions={<QueryAPIsShowActions />}
         {...props}
     >
         <SimpleShowLayout>
@@ -46,4 +42,4 @@ const QueryAPIShow = props => (
     </Show>
 );
 
-export default QueryAPIShow;
+export default QueryAPIsShow;

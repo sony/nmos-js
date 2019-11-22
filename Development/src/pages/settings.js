@@ -11,9 +11,8 @@ import {
     Snackbar,
     Switch,
     TextField,
-    Typography,
+    makeStyles,
 } from '@material-ui/core';
-import { withStyles } from '@material-ui/core/styles';
 import Cookies from 'universal-cookie';
 
 import sealion from '../assets/sea-lion.png';
@@ -21,7 +20,7 @@ import { changePaging, returnChangeQuery } from '../dataProvider';
 
 const cookies = new Cookies();
 
-const styles = theme => ({
+const useStyles = makeStyles(theme => ({
     container: {
         justifyContent: 'center',
         display: 'flex',
@@ -31,11 +30,11 @@ const styles = theme => ({
         justifyContent: 'center',
     },
     textField: {
-        marginLeft: theme.spacing.unit,
-        marginRight: theme.spacing.unit,
+        marginLeft: theme.spacing(1),
+        marginRight: theme.spacing(1),
         width: 350,
     },
-});
+}));
 
 const paging = [
     {
@@ -64,8 +63,8 @@ function getBool(cookie) {
     return cookie !== 'false';
 }
 
-const Settings = props => {
-    const { classes } = props;
+const Settings = () => {
+    const classes = useStyles();
     const [values, setValues] = React.useState({
         queryAPI: returnChangeQuery('Query API', ''),
         loggingAPI: returnChangeQuery('Logging API', ''),
@@ -98,12 +97,12 @@ const Settings = props => {
     };
 
     return (
-        <div>
+        <div style={{ paddingTop: '24px' }}>
             <Card>
-                <Typography variant="display3" align="center">
-                    {/* Non-breaking hyphen*/}
-                    Welcome to the nmos&#8209;js Client
-                </Typography>
+                <CardHeader
+                    title="Welcome to the nmos&#8209;js Client"
+                    titleTypographyProps={{ variant: 'h2', align: 'center' }}
+                />
                 <CardContent align="center">
                     <img
                         id="sealion"
@@ -112,6 +111,7 @@ const Settings = props => {
                             border: '1px solid lightgray',
                             borderRadius: '50%',
                             padding: '4px',
+                            width: '20%',
                         }}
                         alt="sea-lion logo"
                     />
@@ -210,4 +210,4 @@ const Settings = props => {
     );
 };
 
-export default withStyles(styles)(Settings);
+export default Settings;

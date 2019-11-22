@@ -11,19 +11,19 @@ import { SourcesList, SourcesShow } from './pages/sources';
 import { FlowsList, FlowsShow } from './pages/flows';
 import { EventsList, EventsShow } from './pages/logs';
 import { SubscriptionsList, SubscriptionsShow } from './pages/subscriptions';
-import { QueryAPIList, QueryAPIShow } from './pages/queryapis';
+import { QueryAPIsList, QueryAPIsShow } from './pages/queryapis';
 import dataProvider from './dataProvider';
-import MyLayout from './MyLayout';
+import Layout from './LayoutComponent';
 
 const App = () => (
-    <Admin appLayout={MyLayout} dataProvider={dataProvider} theme={useTheme()}>
+    <Admin layout={Layout} dataProvider={dataProvider} theme={useTheme()}>
         <Resource name="Settings" list={Dashboard} />
         <Resource
             name="queryapis"
             label="Query APIs"
             options={{ label: 'Query APIs' }}
-            list={QueryAPIList}
-            show={QueryAPIShow}
+            list={QueryAPIsList}
+            show={QueryAPIsShow}
         />
         <Resource name="nodes" list={NodesList} show={NodesShow} />
         <Resource name="devices" list={DevicesList} show={DevicesShow} />

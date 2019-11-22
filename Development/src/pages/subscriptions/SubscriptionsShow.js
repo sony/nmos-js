@@ -1,5 +1,5 @@
 import React from 'react';
-import { CardActions, hr } from '@material-ui/core';
+import { hr } from '@material-ui/core';
 import {
     BooleanField,
     Button,
@@ -8,6 +8,7 @@ import {
     Show,
     SimpleShowLayout,
     TextField,
+    TopToolbar,
 } from 'react-admin';
 import Cookies from 'universal-cookie';
 import JsonIcon from '../../components/JsonIcon';
@@ -29,13 +30,8 @@ const SubscriptionsTitle = ({ record }) => {
     );
 };
 
-const cardActionStyle = {
-    zIndex: 2,
-    float: 'right',
-};
-
 const SubscriptionsShowActions = ({ basePath, data, resource }) => (
-    <CardActions title={<SubscriptionsTitle />} style={cardActionStyle}>
+    <TopToolbar title={<SubscriptionsTitle />}>
         {data ? (
             <Button
                 label={'Raw'}
@@ -46,7 +42,7 @@ const SubscriptionsShowActions = ({ basePath, data, resource }) => (
             </Button>
         ) : null}
         <ListButton basePath={basePath} />
-    </CardActions>
+    </TopToolbar>
 );
 
 const SubscriptionsShow = props => (

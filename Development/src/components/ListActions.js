@@ -1,9 +1,9 @@
 import React from 'react';
-import Link from 'react-router-dom/Link';
-import { ShowButton, TopToolbar } from 'react-admin';
+import { Button, TopToolbar } from 'react-admin';
 import { useTheme } from '@material-ui/styles';
+import JsonIcon from './JsonIcon';
 
-export default function ConnectionEditActions({ basePath, id }) {
+const ListActions = props => {
     const theme = useTheme();
     return (
         <TopToolbar
@@ -17,11 +17,11 @@ export default function ConnectionEditActions({ basePath, id }) {
                 minHeight: theme.spacing(5),
             }}
         >
-            <ShowButton
-                label={'Show'}
-                component={Link}
-                to={`${basePath}/${id}/show/staged`}
-            />
+            <Button label={'Raw'} style={{ float: 'right' }} title={'View raw'}>
+                <JsonIcon />
+            </Button>
         </TopToolbar>
     );
-}
+};
+
+export default ListActions;

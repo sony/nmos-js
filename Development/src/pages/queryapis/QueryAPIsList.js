@@ -1,57 +1,17 @@
-import React from 'react';
-import { CardActions } from '@material-ui/core';
+import React, { Fragment } from 'react';
 import { Datagrid, List, ShowButton, TextField } from 'react-admin';
 import ConnectButton from '../../components/ConnectButton';
 
-const QueryAPITitle = ({ record }) => {
+const QueryAPIsTitle = ({ record }) => {
     return <span>Query APIs{record ? `: ${record.name}` : ''}</span>;
 };
 
-const QueryAPIPagination = () => {
-    return (
-        <p>
-            <br />
-        </p>
-    );
-};
-
-const QueryAPIActions = ({
-    bulkActions,
-    basePath,
-    displayedFilters,
-    filters,
-    filterValues,
-    onUnselectItems,
-    resource,
-    selectedIds,
-    showFilter,
-}) => (
-    <CardActions>
-        {bulkActions &&
-            React.cloneElement(bulkActions, {
-                basePath,
-                filterValues,
-                resource,
-                selectedIds,
-                onUnselectItems,
-            })}
-        {filters &&
-            React.cloneElement(filters, {
-                resource,
-                showFilter,
-                displayedFilters,
-                filterValues,
-                context: 'button',
-            })}
-    </CardActions>
-);
-
-const QueryAPIList = props => (
+const QueryAPIsList = props => (
     <List
-        title={<QueryAPITitle />}
-        actions={<QueryAPIActions />}
+        title={<QueryAPIsTitle />}
+        exporter={true}
         bulkActionButtons={false}
-        pagination={<QueryAPIPagination />}
+        pagination={<Fragment />}
         {...props}
     >
         <Datagrid>
@@ -70,4 +30,4 @@ const QueryAPIList = props => (
     </List>
 );
 
-export default QueryAPIList;
+export default QueryAPIsList;

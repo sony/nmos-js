@@ -2,6 +2,7 @@ import setJSON from 'json-ptr';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import set from 'lodash/set';
+import dataProvider from '../dataProvider';
 
 const oneToOneTransportParams = {
     'urn:x-nmos:transport:mqtt': [
@@ -68,8 +69,7 @@ export const isMulticast = address => {
     );
 };
 
-const MakeConnection = (senderID, receiverID, endpoint, props) => {
-    const { dataProvider } = props;
+const MakeConnection = (senderID, receiverID, endpoint) => {
     return new Promise((resolve, reject) => {
         if (endpoint !== 'active' && endpoint !== 'staged') {
             reject();

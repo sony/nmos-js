@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Link, Route } from 'react-router-dom';
+import React, { Fragment, useEffect, useState } from 'react';
+import Link from 'react-router-dom/Link';
+import { Route } from 'react-router-dom';
 import {
-    AppBar,
+    Paper,
     Tab,
     Table,
     TableBody,
@@ -15,17 +16,20 @@ import {
     ArrayField,
     BooleanField,
     Button,
-    ChipField,
+    Error,
     FunctionField,
+    Loading,
     ReferenceField,
     ShowButton,
-    ShowController,
     ShowView,
     SimpleShowLayout,
     TextField,
-    withDataProvider,
+    useQuery,
+    useRefresh,
+    useShowController,
 } from 'react-admin';
 import get from 'lodash/get';
+import { useTheme } from '@material-ui/styles';
 import CheckIcon from '@material-ui/icons/Check';
 import ClearIcon from '@material-ui/icons/Clear';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
@@ -39,7 +43,7 @@ import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
 import MapTags from '../../components/TagsField';
 import TAIField from '../../components/TAIField';
 import TransportFileViewer from '../../components/TransportFileViewer';
-import dataProvider from '../../dataProvider';
+import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 
 const ReceiversTitle = ({ record }) => (
     <span>
@@ -52,106 +56,104 @@ const ReceiversTitle = ({ record }) => (
     </span>
 );
 
-const ChipConditionalLabel = ({ record, source, ...props }) => {
-    props.clickable = true;
-    return record ? (
-        record[source] ? (
-            <ChipField {...{ record, source, ...props }} />
-        ) : (
-            <ChipField {...{ record, source: 'id', ...props }} />
-        )
-    ) : null;
-};
-
 const ReceiversShow = props => {
+    const theme = useTheme();
+    const tabBackgroundColor =
+        theme.palette.type === 'light'
+            ? theme.palette.grey[100]
+            : theme.palette.grey[900];
+    const controllerProps = useShowController(props);
     return (
-        <ShowController {...props}>
-            {controllerProps => (
-                <div>
-                    <AppBar position="static" color="default">
-                        <Tabs
-                            value={props.location.pathname}
-                            indicatorColor="primary"
-                            textColor="primary"
-                        >
-                            <Tab
-                                label="Summary"
-                                value={`${props.match.url}`}
-                                component={Link}
-                                to={`${props.basePath}/${props.id}/show/`}
-                            />
-                            {get(controllerProps.record, '$connectionAPI') !==
-                                undefined &&
-                                ['active', 'staged'].map(label => (
-                                    <Tab
-                                        key={label}
-                                        label={label}
-                                        value={`${props.match.url}/${label}`}
-                                        component={Link}
-                                        to={`${props.basePath}/${props.id}/show/${label}`}
-                                        disabled={
-                                            !get(
-                                                controllerProps.record,
-                                                `$${label}`
-                                            )
-                                        }
-                                    />
-                                ))}
-                            <Tab
-                                label="Connect"
-                                value={`${props.match.url}/connect`}
-                                component={Link}
-                                to={`${props.basePath}/${props.id}/show/connect`}
-                                disabled={
-                                    !get(controllerProps.record, '$active')
-                                }
-                            />
-                        </Tabs>
-                    </AppBar>
-                    <Route
-                        exact
-                        path={`${props.basePath}/${props.id}/show/`}
-                        render={() => (
-                            <ShowSummaryTab
-                                {...props}
-                                controllerProps={controllerProps}
-                            />
-                        )}
+        <Fragment>
+            <div style={{ display: 'flex' }}>
+                <Paper
+                    style={{
+                        alignSelf: 'end',
+                        background: tabBackgroundColor,
+                    }}
+                >
+                    <Tabs
+                        value={props.location.pathname}
+                        indicatorColor="primary"
+                        textColor="primary"
+                    >
+                        <Tab
+                            label="Summary"
+                            value={`${props.match.url}`}
+                            component={Link}
+                            to={`${props.basePath}/${props.id}/show/`}
+                        />
+                        {get(controllerProps.record, '$connectionAPI') !==
+                            undefined &&
+                            ['active', 'staged'].map(label => (
+                                <Tab
+                                    key={label}
+                                    label={label}
+                                    value={`${props.match.url}/${label}`}
+                                    component={Link}
+                                    to={`${props.basePath}/${props.id}/show/${label}`}
+                                    disabled={
+                                        !get(
+                                            controllerProps.record,
+                                            `$${label}`
+                                        )
+                                    }
+                                />
+                            ))}
+                        <Tab
+                            label="Connect"
+                            value={`${props.match.url}/connect`}
+                            component={Link}
+                            to={`${props.basePath}/${props.id}/show/connect`}
+                            disabled={!get(controllerProps.record, '$active')}
+                        />
+                    </Tabs>
+                </Paper>
+                <span style={{ flexGrow: 1 }} />
+                <ConnectionShowActions {...props} />
+            </div>
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/show/`}
+                render={() => (
+                    <ShowSummaryTab
+                        {...props}
+                        controllerProps={controllerProps}
                     />
-                    <Route
-                        exact
-                        path={`${props.basePath}/${props.id}/show/active`}
-                        render={() => (
-                            <ShowActiveTab
-                                {...props}
-                                controllerProps={controllerProps}
-                            />
-                        )}
+                )}
+            />
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/show/active`}
+                render={() => (
+                    <ShowActiveTab
+                        {...props}
+                        controllerProps={controllerProps}
                     />
-                    <Route
-                        exact
-                        path={`${props.basePath}/${props.id}/show/staged`}
-                        render={() => (
-                            <ShowStagedTab
-                                {...props}
-                                controllerProps={controllerProps}
-                            />
-                        )}
+                )}
+            />
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/show/staged`}
+                render={() => (
+                    <ShowStagedTab
+                        {...props}
+                        controllerProps={controllerProps}
                     />
-                    <Route
-                        exact
-                        path={`${props.basePath}/${props.id}/show/connect`}
-                        render={() => (
-                            <ConnectionManagementTab
-                                {...props}
-                                controllerProps={controllerProps}
-                                receiverData={controllerProps.record}
-                            />
-                        )}
+                )}
+            />
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/show/connect`}
+                render={() => (
+                    <ConnectionManagementTab
+                        {...props}
+                        controllerProps={controllerProps}
+                        receiverData={controllerProps.record}
                     />
-                </div>
-            )}
-        </ShowController>
+                )}
+            />
+        </Fragment>
     );
 };
 
@@ -161,7 +163,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
             {...props}
             {...controllerProps}
             title={<ReceiversTitle />}
-            actions={<ConnectionShowActions />}
+            actions={<Fragment />}
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
@@ -209,7 +211,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                             label="Sender"
                             source="subscription.sender_id"
                             reference="senders"
-                            linkType="show"
+                            link="show"
                         >
                             <ChipConditionalLabel source="label" />
                         </ReferenceField>
@@ -219,7 +221,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     label="Device"
                     source="device_id"
                     reference="devices"
-                    linkType="show"
+                    link="show"
                 >
                     <ChipConditionalLabel source="label" />
                 </ReferenceField>
@@ -234,7 +236,7 @@ const ShowActiveTab = ({ controllerProps, ...props }) => {
             {...props}
             {...controllerProps}
             title={<ReceiversTitle />}
-            actions={<ConnectionShowActions />}
+            actions={<Fragment />}
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
@@ -244,7 +246,7 @@ const ShowActiveTab = ({ controllerProps, ...props }) => {
                         label="Sender"
                         source="$active.sender_id"
                         reference="senders"
-                        linkType="show"
+                        link="show"
                     >
                         <ChipConditionalLabel source="label" />
                     </ReferenceField>
@@ -285,7 +287,7 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
             {...props}
             {...controllerProps}
             title={<ReceiversTitle />}
-            actions={<ConnectionShowActions />}
+            actions={<Fragment />}
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
@@ -295,7 +297,7 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
                         label="Sender"
                         source="$staged.sender_id"
                         reference="senders"
-                        linkType="show"
+                        link="show"
                     >
                         <ChipConditionalLabel source="label" />
                     </ReferenceField>
@@ -335,31 +337,31 @@ const ConnectionManagementTab = ({
     receiverData,
     ...props
 }) => {
-    const [sendersListData, setSendersListData] = useState(undefined);
+    const refresh = useRefresh();
+    const [type, setType] = useState('getList');
     const [params, setParams] = useState({
         filter: { transport: get(receiverData, 'transport') },
     });
 
-    useEffect(() => {
-        (async function fetchData() {
-            const data = await dataProvider('GET_LIST', 'senders', params);
-            setSendersListData(data);
-        })();
-    }, [params]);
+    const { data, loaded, error } = useQuery({
+        type: type,
+        resource: 'senders',
+        payload: type === 'getList' ? params : {},
+    });
 
-    const changeFilter = (filterValue, name) => {
-        let newFilter = params.filter;
-        if (filterValue) {
-            newFilter[name] = filterValue;
-        } else {
-            delete newFilter[name];
-        }
-        setParams({ filter: newFilter });
+    const nextPage = label => {
+        setType(label);
     };
 
-    const nextPage = async label => {
-        const data = await dataProvider(label, 'senders');
-        setSendersListData(data);
+    const changeFilter = (filterValue, name) => {
+        let filter = params.filter;
+        if (filterValue) {
+            filter[name] = filterValue;
+        } else {
+            delete filter[name];
+        }
+        setType('getList');
+        setParams({ filter: filter });
     };
 
     // receiverData initialises undefined, update when no longer null
@@ -371,17 +373,24 @@ const ConnectionManagementTab = ({
     }, [receiverData]);
 
     const connect = (senderID, receiverID, endpoint) => {
-        MakeConnection(senderID, receiverID, endpoint, props).then(() =>
-            props.history.push(`${props.basePath}/${props.id}/show/${endpoint}`)
-        );
+        MakeConnection(senderID, receiverID, endpoint, props).then(() => {
+            refresh();
+            props.history.push(
+                `${props.basePath}/${props.id}/show/${endpoint}`
+            );
+        });
     };
+
+    if (!loaded) return <Loading />;
+    if (error) return <Error />;
+    if (!data) return null;
 
     return (
         <ShowView
             {...props}
             {...controllerProps}
             title={<ReceiversTitle />}
-            actions={<div />}
+            actions={<Fragment />}
         >
             <SimpleShowLayout>
                 <Table>
@@ -413,9 +422,9 @@ const ConnectionManagementTab = ({
                             <TableCell>Connect</TableCell>
                         </TableRow>
                     </TableHead>
-                    {sendersListData && (
+                    {data && (
                         <TableBody>
-                            {sendersListData.data.map(item => (
+                            {data.map(item => (
                                 <TableRow
                                     key={item.id}
                                     selected={
@@ -440,7 +449,7 @@ const ConnectionManagementTab = ({
                                             label="Flow"
                                             source="flow_id"
                                             reference="flows"
-                                            linkType="show"
+                                            link="show"
                                         >
                                             <ChipConditionalLabel source="label" />
                                         </ReferenceField>
@@ -452,7 +461,7 @@ const ConnectionManagementTab = ({
                                             label="Device"
                                             source="device_id"
                                             reference="devices"
-                                            linkType="show"
+                                            link="show"
                                         >
                                             <ChipConditionalLabel source="label" />
                                         </ReferenceField>
@@ -522,4 +531,4 @@ const ConnectionManagementTab = ({
     );
 };
 
-export default withDataProvider(ReceiversShow);
+export default ReceiversShow;

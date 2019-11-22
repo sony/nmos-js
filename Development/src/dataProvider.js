@@ -212,16 +212,16 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
         }
         case GET_MANY_REFERENCE: {
             let total_query;
-            if (params.target !== '' && params[params.source] !== '') {
+            if (params.target !== '' && params.id !== '') {
                 if (cookies.get('RQL') !== 'false') {
                     total_query =
                         'query.rql=matches(' +
                         params.target +
                         ',string:' +
-                        params[params.source] +
+                        params.id +
                         ',i)';
                 } else {
-                    total_query = params.target + '=' + params[params.source];
+                    total_query = params.target + '=' + params.id;
                 }
                 total_query += '&paging.limit=1000';
                 return { url: `${API_URL}/${resource}?${total_query}` };

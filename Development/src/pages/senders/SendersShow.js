@@ -1,8 +1,9 @@
-import React from 'react';
-import { Link, Route } from 'react-router-dom';
+import React, { Fragment } from 'react';
+import Link from 'react-router-dom/Link';
+import { Route } from 'react-router-dom';
 import {
-    AppBar,
     Button as MaterialButton,
+    Paper,
     Snackbar,
     Tab,
     Tabs,
@@ -11,17 +12,16 @@ import {
 import {
     ArrayField,
     BooleanField,
-    ChipField,
     FunctionField,
     ReferenceField,
-    ShowController,
     ShowView,
     SimpleShowLayout,
     TextField,
+    useShowController,
 } from 'react-admin';
 import get from 'lodash/get';
 import copy from 'clipboard-copy';
-import Cookies from 'universal-cookie';
+import { useTheme } from '@material-ui/styles';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
@@ -29,8 +29,8 @@ import SenderTransportParamsCardsGrid from './SenderTransportParams';
 import MapTags from '../../components/TagsField';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
-
-const cookies = new Cookies();
+import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import QueryVersion from '../../components/QueryVersion';
 
 const SendersTitle = ({ record }) => {
     return (
@@ -45,102 +45,93 @@ const SendersTitle = ({ record }) => {
     );
 };
 
-const QueryVersion = () => {
-    let url = cookies.get('Query API');
-    return url.match(/([^/]+)(?=\/?$)/g)[0];
-};
-
-const ChipConditionalLabel = ({ record, source, ...props }) => {
-    props.clickable = true;
-    return record ? (
-        record[source] ? (
-            <ChipField {...{ record, source, ...props }} />
-        ) : (
-            <ChipField {...{ record, source: 'id', ...props }} />
-        )
-    ) : null;
-};
-
 const SendersShow = props => {
+    const theme = useTheme();
+    const tabBackgroundColor =
+        theme.palette.type === 'light'
+            ? theme.palette.grey[100]
+            : theme.palette.grey[900];
+    const controllerProps = useShowController(props);
     return (
-        <ShowController {...props}>
-            {controllerProps => (
-                <div>
-                    <AppBar position="static" color="default">
-                        <Tabs
-                            value={props.location.pathname}
-                            indicatorColor="primary"
-                            textColor="primary"
-                        >
-                            <Tab
-                                label="Summary"
-                                value={`${props.match.url}`}
-                                component={Link}
-                                to={`${props.basePath}/${props.id}/show/`}
-                            />
-                            {get(controllerProps.record, '$connectionAPI') !==
-                                undefined &&
-                                ['active', 'staged', 'transportfile'].map(
-                                    label => (
-                                        <Tab
-                                            key={label}
-                                            value={`${props.match.url}/${label}`}
-                                            component={Link}
-                                            to={`${props.basePath}/${props.id}/show/${label}`}
-                                            disabled={
-                                                !get(
-                                                    controllerProps.record,
-                                                    `$${label}`
-                                                )
-                                            }
-                                            label={label}
-                                        />
-                                    )
-                                )}
-                        </Tabs>
-                    </AppBar>
-                    <Route
-                        exact
-                        path={`${props.basePath}/${props.id}/show/`}
-                        render={() => (
-                            <ShowSummaryTab
-                                {...props}
-                                controllerProps={controllerProps}
-                            />
-                        )}
+        <>
+            <div style={{ display: 'flex' }}>
+                <Paper
+                    style={{
+                        alignSelf: 'end',
+                        background: tabBackgroundColor,
+                    }}
+                >
+                    <Tabs
+                        value={props.location.pathname}
+                        indicatorColor="primary"
+                        textColor="primary"
+                    >
+                        <Tab
+                            label="Summary"
+                            value={`${props.match.url}`}
+                            component={Link}
+                            to={`${props.basePath}/${props.id}/show/`}
+                        />
+                        {get(controllerProps.record, '$connectionAPI') !==
+                            undefined &&
+                            ['active', 'staged', 'transportfile'].map(label => (
+                                <Tab
+                                    key={label}
+                                    value={`${props.match.url}/${label}`}
+                                    component={Link}
+                                    to={`${props.basePath}/${props.id}/show/${label}`}
+                                    disabled={
+                                        !get(
+                                            controllerProps.record,
+                                            `$${label}`
+                                        )
+                                    }
+                                    label={label}
+                                />
+                            ))}
+                    </Tabs>
+                </Paper>
+                <span style={{ flexGrow: 1 }} />
+                <ConnectionShowActions {...props} />
+            </div>
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/show/`}
+                render={() => (
+                    <ShowSummaryTab
+                        {...props}
+                        controllerProps={controllerProps}
                     />
-                    <Route
-                        exact
-                        path={`${props.basePath}/${props.id}/show/active`}
-                        render={() => (
-                            <ShowActiveTab
-                                {...props}
-                                controllerProps={controllerProps}
-                            />
-                        )}
+                )}
+            />
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/show/active`}
+                render={() => (
+                    <ShowActiveTab
+                        {...props}
+                        controllerProps={controllerProps}
                     />
-                    <Route
-                        exact
-                        path={`${props.basePath}/${props.id}/show/staged`}
-                        render={() => (
-                            <ShowStagedTab
-                                {...props}
-                                controllerProps={controllerProps}
-                            />
-                        )}
+                )}
+            />
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/show/staged`}
+                render={() => (
+                    <ShowStagedTab
+                        {...props}
+                        controllerProps={controllerProps}
                     />
-                    <Route
-                        exact
-                        path={`${props.basePath}/${props.id}/show/transportfile`}
-                        render={() => (
-                            <ShowTransportFileTab
-                                record={controllerProps.record}
-                            />
-                        )}
-                    />
-                </div>
-            )}
-        </ShowController>
+                )}
+            />
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/show/transportfile`}
+                render={() => (
+                    <ShowTransportFileTab record={controllerProps.record} />
+                )}
+            />
+        </>
     );
 };
 
@@ -150,7 +141,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
             {...props}
             {...controllerProps}
             title={<SendersTitle />}
-            actions={<ConnectionShowActions />}
+            actions={<Fragment />}
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
@@ -186,7 +177,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     label="Flow"
                     source="flow_id"
                     reference="flows"
-                    linkType="show"
+                    link="show"
                 >
                     <ChipConditionalLabel source="label" />
                 </ReferenceField>
@@ -194,7 +185,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     label="Device"
                     source="device_id"
                     reference="devices"
-                    linkType="show"
+                    link="show"
                 >
                     <ChipConditionalLabel source="label" />
                 </ReferenceField>
@@ -205,7 +196,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                             label="Receiver"
                             source="subscription.receiver_id"
                             reference="receivers"
-                            linkType="show"
+                            link="show"
                         >
                             <ChipConditionalLabel source="label" />
                         </ReferenceField>
@@ -222,7 +213,7 @@ const ShowActiveTab = ({ controllerProps, ...props }) => {
             {...props}
             {...controllerProps}
             title={<SendersTitle />}
-            actions={<ConnectionShowActions />}
+            actions={<Fragment />}
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
@@ -232,7 +223,7 @@ const ShowActiveTab = ({ controllerProps, ...props }) => {
                         label="Receiver"
                         source="$active.receiver_id"
                         reference="receivers"
-                        linkType="show"
+                        link="show"
                     >
                         <ChipConditionalLabel source="label" />
                     </ReferenceField>
@@ -272,7 +263,7 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
             {...props}
             {...controllerProps}
             title={<SendersTitle />}
-            actions={<ConnectionShowActions />}
+            actions={<Fragment />}
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
@@ -282,7 +273,7 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
                         label="Receiver"
                         source="$staged.receiver_id"
                         reference="receivers"
-                        linkType="show"
+                        link="show"
                     >
                         <ChipConditionalLabel source="label" />
                     </ReferenceField>
@@ -330,25 +321,27 @@ const ShowTransportFileTab = ({ record }) => {
         <ShowView
             record={record}
             title={<SendersTitle />}
-            actions={<ConnectionShowActions />}
+            actions={<Fragment />}
         >
             <SimpleShowLayout>
-                <pre style={{ fontFamily: 'inherit' }}>
-                    <Typography>{get(record, '$transportfile')}</Typography>
-                </pre>
-                <MaterialButton
-                    variant="contained"
-                    color="primary"
-                    onClick={handleClick}
-                >
-                    Copy
-                </MaterialButton>
-                <Snackbar
-                    open={open}
-                    onClose={handleClose}
-                    autoHideDuration={3000}
-                    message={<span>Transport File Copied</span>}
-                />
+                <>
+                    <pre style={{ fontFamily: 'inherit' }}>
+                        <Typography>{get(record, '$transportfile')}</Typography>
+                    </pre>
+                    <MaterialButton
+                        variant="contained"
+                        color="primary"
+                        onClick={handleClick}
+                    >
+                        Copy
+                    </MaterialButton>
+                    <Snackbar
+                        open={open}
+                        onClose={handleClose}
+                        autoHideDuration={3000}
+                        message={<span>Transport File Copied</span>}
+                    />
+                </>
             </SimpleShowLayout>
         </ShowView>
     );

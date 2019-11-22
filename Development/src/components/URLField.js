@@ -9,7 +9,12 @@ const URLField = ({ record, source }) => (
         rel="noopener noreferrer"
         style={{ textDecoration: 'none' }}
     >
-        <Typography color="textPrimary" style={{ textDecoration: 'underline' }}>
+        <Typography
+            color="textPrimary"
+            component="span"
+            variant="body2"
+            style={{ textDecoration: 'underline' }}
+        >
             {get(record, source)}
         </Typography>
     </a>

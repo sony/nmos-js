@@ -1,30 +1,29 @@
 import React, { useState } from 'react';
 import {
-    Button,
-    FunctionField,
-    ListButton,
-    Show,
-    ShowButton,
-    SimpleShowLayout,
-    TextField,
-    Title,
-} from 'react-admin';
-import { hr } from '@material-ui/core';
-import Cookies from 'universal-cookie';
-import {
     Card,
-    CardActions,
     CardContent,
     Table,
     TableBody,
     TableCell,
     TableHead,
     TableRow,
+    hr,
 } from '@material-ui/core';
-import dataProvider from '../dataProvider';
-import PaginationButton from '../components/PaginationButton';
+import {
+    Button,
+    FunctionField,
+    ListButton,
+    Show,
+    SimpleShowLayout,
+    TextField,
+    TopToolbar,
+} from 'react-admin';
+import { Error, Loading, ShowButton, Title, useQuery } from 'react-admin';
+import Cookies from 'universal-cookie';
 import FilterField from '../components/FilterField';
+import PaginationButton from '../components/PaginationButton';
 import MapTags from '../components/TagsField';
+import ListActions from '../components/ListActions';
 import JsonIcon from '../components/JsonIcon';
 
 const cookies = new Cookies();
@@ -32,61 +31,47 @@ const cookies = new Cookies();
 const EventsTitle = ({ record }) => {
     return <span>Log: {record ? `${record.timestamp}` : ''}</span>;
 };
-const cardActionStyle = {
-    zIndex: 2,
-    float: 'right',
-};
 
-export const EventsList = () => {
-    const firstLoad = async () => {
-        const params = {
-            filter: {},
-        };
-        const dataObject = await dataProvider('GET_LIST', 'events', params);
-        setData(dataObject);
+export const EventsList = props => {
+    const [type, setType] = useState('getList');
+    const [params, setParams] = useState({
+        filter: {},
+    });
+
+    const { data, loaded, error } = useQuery({
+        type: type,
+        resource: 'events',
+        payload: type === 'getList' ? params : {},
+    });
+
+    const nextPage = label => {
+        setType(label);
     };
 
-    const [data, setData] = useState(firstLoad);
-
-    const nextPage = async label => {
-        const dataObject = await dataProvider(label, 'events');
-        setData(dataObject);
-    };
-
-    const [filterState, setFilterState] = useState({});
-
-    const changeFilter = async (filterValue, name) => {
-        let filter = filterState;
+    const changeFilter = (filterValue, name) => {
+        let filter = params.filter;
         if (filterValue) {
             filter[name] = filterValue;
         } else {
             delete filter[name];
         }
-        const filteredDataObject = await dataProvider('GET_LIST', 'events', {
-            filter: filter,
-        });
-        setFilterState(filter);
-        setData(filteredDataObject);
+        setType('getList');
+        setParams({ filter: filter });
     };
 
-    const clearFilter = async () => {
-        setData(firstLoad());
-        setFilterState({});
-    };
+    if (!loaded) return <Loading />;
+    if (error) return <Error />;
+    if (!data) return null;
 
-    if (data.hasOwnProperty('data')) {
-        return (
+    return (
+        <>
+            <div style={{ display: 'flex' }}>
+                <span style={{ flexGrow: 1 }} />
+                <ListActions {...props} />
+            </div>
             <Card>
                 <Title title={'Logs'} />
                 <CardContent>
-                    <Button
-                        label={'Raw'}
-                        href={data.url}
-                        style={{ float: 'right' }}
-                        title={'View raw'}
-                    >
-                        <JsonIcon />
-                    </Button>
                     <Table>
                         <TableHead>
                             <TableRow>
@@ -105,7 +90,7 @@ export const EventsList = () => {
                                 </TableCell>
                                 <TableCell
                                     style={{
-                                        minWidth: '227px',
+                                        minWidth: '100px',
                                         paddingRight: '6px',
                                     }}
                                 >
@@ -136,7 +121,7 @@ export const EventsList = () => {
                                 </TableCell>
                                 <TableCell
                                     style={{
-                                        minWidth: '263px',
+                                        minWidth: '150px',
                                         paddingRight: '6px',
                                     }}
                                 >
@@ -150,7 +135,7 @@ export const EventsList = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {data.data.map(item => (
+                            {data.map(item => (
                                 <TableRow key={item.id}>
                                     <TableCell component="th" scope="row">
                                         <ShowButton
@@ -174,20 +159,14 @@ export const EventsList = () => {
                     <PaginationButton label="PREV" nextPage={nextPage} />
                     <PaginationButton label="NEXT" nextPage={nextPage} />
                     <PaginationButton label="LAST" nextPage={nextPage} />
-                    <Button
-                        onClick={() => clearFilter()}
-                        label="Clear All Filters"
-                    />
                 </CardContent>
             </Card>
-        );
-    } else {
-        return <div />;
-    }
+        </>
+    );
 };
 
 const EventsShowActions = ({ basePath, data, resource }) => (
-    <CardActions title={<EventsTitle />} style={cardActionStyle}>
+    <TopToolbar title={<EventsTitle />}>
         {data ? (
             <Button
                 label={'Raw'}
@@ -200,7 +179,7 @@ const EventsShowActions = ({ basePath, data, resource }) => (
             </Button>
         ) : null}
         <ListButton title={'Return to ' + basePath} basePath={basePath} />
-    </CardActions>
+    </TopToolbar>
 );
 
 export const EventsShow = props => (

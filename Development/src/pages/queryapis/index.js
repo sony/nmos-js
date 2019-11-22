@@ -1,4 +1,4 @@
-import QueryAPIList from './QueryAPIsList';
-import QueryAPIShow from './QueryAPIsShow';
+import QueryAPIsList from './QueryAPIsList';
+import QueryAPIsShow from './QueryAPIsShow';
 
-export { QueryAPIList, QueryAPIShow };
+export { QueryAPIsList, QueryAPIsShow };

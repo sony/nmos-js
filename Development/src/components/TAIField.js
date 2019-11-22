@@ -8,9 +8,9 @@ dayjs.extend(utc);
 
 const TAIField = ({ record, source, mode }) => (
     <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-        <Typography>{get(record, source)}&emsp;</Typography>
+        <Typography variant="body2">{get(record, source)}&emsp;</Typography>
         {get(record, source) != null && (
-            <Typography color="textSecondary">
+            <Typography variant="body2" color="textSecondary">
                 ({TAIConversion(record, source, mode)})
             </Typography>
         )}

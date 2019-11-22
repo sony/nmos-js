@@ -8,72 +8,54 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import { Button, ShowButton, Title } from 'react-admin';
+import { Error, Loading, ShowButton, Title, useQuery } from 'react-admin';
 import CheckIcon from '@material-ui/icons/Check';
 import ClearIcon from '@material-ui/icons/Clear';
-import Cookies from 'universal-cookie';
 import FilterField from '../../components/FilterField';
-import JsonIcon from '../../components/JsonIcon';
 import PaginationButton from '../../components/PaginationButton';
-import dataProvider from '../../dataProvider';
+import QueryVersion from '../../components/QueryVersion';
+import ListActions from '../../components/ListActions';
 
-const cookies = new Cookies();
+const SendersList = props => {
+    const [type, setType] = useState('getList');
+    const [params, setParams] = useState({
+        filter: {},
+    });
 
-const QueryVersion = () => {
-    let url = cookies.get('Query API');
-    return url.match(/([^/]+)(?=\/?$)/g)[0];
-};
+    const { data, loaded, error } = useQuery({
+        type: type,
+        resource: 'senders',
+        payload: type === 'getList' ? params : {},
+    });
 
-const SendersList = () => {
-    const firstLoad = async () => {
-        const params = {
-            filter: {},
-        };
-        const dataObject = await dataProvider('GET_LIST', 'senders', params);
-        setData(dataObject);
+    const nextPage = label => {
+        setType(label);
     };
 
-    const [data, setData] = useState(firstLoad);
-
-    const nextPage = async label => {
-        const dataObject = await dataProvider(label, 'senders');
-        setData(dataObject);
-    };
-
-    const [filterState, setFilterState] = useState({});
-
-    const changeFilter = async (filterValue, name) => {
-        let filter = filterState;
+    const changeFilter = (filterValue, name) => {
+        let filter = params.filter;
         if (filterValue) {
             filter[name] = filterValue;
         } else {
             delete filter[name];
         }
-        const filteredDataObject = await dataProvider('GET_LIST', 'senders', {
-            filter: filter,
-        });
-        setFilterState(filter);
-        setData(filteredDataObject);
+        setType('getList');
+        setParams({ filter: filter });
     };
 
-    const clearFilter = async () => {
-        setData(firstLoad());
-        setFilterState({});
-    };
+    if (!loaded) return <Loading />;
+    if (error) return <Error />;
+    if (!data) return null;
 
-    if (data.hasOwnProperty('data')) {
-        return (
+    return (
+        <>
+            <div style={{ display: 'flex' }}>
+                <span style={{ flexGrow: 1 }} />
+                <ListActions {...props} />
+            </div>
             <Card>
                 <Title title={'Senders'} />
                 <CardContent>
-                    <Button
-                        label={'Raw'}
-                        href={data.url}
-                        style={{ float: 'right' }}
-                        title={'View raw'}
-                    >
-                        <JsonIcon />
-                    </Button>
                     <Table>
                         <TableHead>
                             <TableRow>
@@ -102,7 +84,7 @@ const SendersList = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {data.data.map(item => (
+                            {data.map(item => (
                                 <TableRow key={item.id}>
                                     <TableCell component="th" scope="row">
                                         <ShowButton
@@ -133,16 +115,10 @@ const SendersList = () => {
                     <PaginationButton label="PREV" nextPage={nextPage} />
                     <PaginationButton label="NEXT" nextPage={nextPage} />
                     <PaginationButton label="LAST" nextPage={nextPage} />
-                    <Button
-                        onClick={() => clearFilter()}
-                        label="Clear All Filters"
-                    />
                 </CardContent>
             </Card>
-        );
-    } else {
-        return <div />;
-    }
+        </>
+    );
 };
 
 export default SendersList;

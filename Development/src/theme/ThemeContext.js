@@ -1,6 +1,6 @@
 import React from 'react';
 import { ThemeProvider } from '@material-ui/styles';
-import { createMuiTheme } from '@material-ui/core/styles';
+import { createMuiTheme, responsiveFontSizes } from '@material-ui/core/styles';
 import { blue, lightBlue } from '@material-ui/core/colors';
 import Cookies from 'universal-cookie';
 
@@ -17,13 +17,18 @@ export const AppThemeProvider = ({ children }) => {
     });
     if (themeState.mode === undefined) setThemeState({ mode: 'light' });
 
-    const theme = createMuiTheme({
+    let theme = createMuiTheme({
         palette: {
             primary: lightBlue,
             secondary: blue,
             type: themeState.mode,
         },
+        sidebar: {
+            width: 240,
+            closedWidth: 72,
+        },
     });
+    theme = responsiveFontSizes(theme);
 
     const toggleTheme = () => {
         const mode = themeState.mode === 'light' ? `dark` : `light`;

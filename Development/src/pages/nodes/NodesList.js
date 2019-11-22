@@ -8,72 +8,52 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import { Button, ShowButton, Title } from 'react-admin';
+import { Error, Loading, ShowButton, Title, useQuery } from 'react-admin';
 import FilterField from '../../components/FilterField';
-import JsonIcon from '../../components/JsonIcon';
 import PaginationButton from '../../components/PaginationButton';
-import dataProvider from '../../dataProvider';
 import QueryVersion from '../../components/QueryVersion';
+import ListActions from '../../components/ListActions';
 
-const NodesList = () => {
-    const firstLoad = async () => {
-        const params = {
-            filter: {},
-        };
-        const dataObject = await dataProvider('GET_LIST', 'nodes', params);
-        setData(dataObject);
+const NodesList = props => {
+    const [type, setType] = useState('getList');
+    const [params, setParams] = useState({
+        filter: {},
+    });
+
+    const { data, loaded, error } = useQuery({
+        type: type,
+        resource: 'nodes',
+        payload: type === 'getList' ? params : {},
+    });
+
+    const nextPage = label => {
+        setType(label);
     };
 
-    const [data, setData] = useState(firstLoad);
-
-    const nextPage = async label => {
-        const dataObject = await dataProvider(label, 'nodes');
-        setData(dataObject);
-    };
-
-    const [filterState, setFilterState] = useState({});
-
-    const changeFilter = async (filterValue, name) => {
-        let filter = filterState;
+    const changeFilter = (filterValue, name) => {
+        let filter = params.filter;
         if (filterValue) {
             filter[name] = filterValue;
         } else {
             delete filter[name];
         }
-        const filteredDataObject = await dataProvider('GET_LIST', 'nodes', {
-            filter: filter,
-        });
-        setFilterState(filter);
-        setData(filteredDataObject);
+        setType('getList');
+        setParams({ filter: filter });
     };
 
-    const clearFilter = async () => {
-        setData(firstLoad());
-        setFilterState({});
-    };
+    if (!loaded) return <Loading />;
+    if (error) return <Error />;
+    if (!data) return null;
 
-    const copyField = data => {
-        const el = document.createElement('textarea');
-        el.value = data;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-    };
-
-    if (data.hasOwnProperty('data')) {
-        return (
+    return (
+        <>
+            <div style={{ display: 'flex' }}>
+                <span style={{ flexGrow: 1 }} />
+                <ListActions {...props} />
+            </div>
             <Card>
                 <Title title={'Nodes'} />
                 <CardContent>
-                    <Button
-                        label={'Raw'}
-                        href={data.url}
-                        style={{ float: 'right' }}
-                        title={'View raw'}
-                    >
-                        <JsonIcon />
-                    </Button>
                     <Table>
                         <TableHead>
                             <TableRow>
@@ -115,7 +95,7 @@ const NodesList = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {data.data.map(item => (
+                            {data.map(item => (
                                 <TableRow key={item.id}>
                                     <TableCell component="th" scope="row">
                                         <ShowButton
@@ -133,11 +113,7 @@ const NodesList = () => {
                                             {item.api.versions.join(', ')}
                                         </TableCell>
                                     )}
-                                    <TableCell
-                                        onDoubleClick={() => copyField(item.id)}
-                                    >
-                                        {item.id}
-                                    </TableCell>
+                                    <TableCell>{item.id}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -147,20 +123,10 @@ const NodesList = () => {
                     <PaginationButton label="PREV" nextPage={nextPage} />
                     <PaginationButton label="NEXT" nextPage={nextPage} />
                     <PaginationButton label="LAST" nextPage={nextPage} />
-                    <Button
-                        onClick={() => clearFilter()}
-                        label="Clear All Filters"
-                    />
                 </CardContent>
             </Card>
-        );
-    } else {
-        return (
-            <div>
-                <p>Waiting for data...</p>
-            </div>
-        );
-    }
+        </>
+    );
 };
 
 export default NodesList;

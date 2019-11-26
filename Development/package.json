@@ -18,8 +18,10 @@
     "react-admin": "^3.0.0",
     "react-dom": "^16.9.0",
     "react-json-view": "^1.19.1",
+    "react-redux": "^7.1.0",
     "react-router-dom": "^5.1.0",
     "react-scripts": "^3.2.0",
+    "redux": "^3.7.2 || ^4.0.3",
     "t-a-i": "^1.0.15",
     "universal-cookie": "^3.0.7"
   },

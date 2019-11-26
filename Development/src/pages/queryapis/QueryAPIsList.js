@@ -9,7 +9,6 @@ const QueryAPIsTitle = ({ record }) => {
 const QueryAPIsList = props => (
     <List
         title={<QueryAPIsTitle />}
-        exporter={true}
         bulkActionButtons={false}
         pagination={<Fragment />}
         {...props}

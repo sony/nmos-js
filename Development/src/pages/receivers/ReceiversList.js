@@ -8,39 +8,43 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import { Error, Loading, ShowButton, Title, useQuery } from 'react-admin';
+import { Error, Loading, ShowButton, Title } from 'react-admin';
 import CheckIcon from '@material-ui/icons/Check';
 import ClearIcon from '@material-ui/icons/Clear';
 import FilterField from '../../components/FilterField';
 import PaginationButton from '../../components/PaginationButton';
 import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
+import useGetList from '../../components/useGetList';
 
 const ReceiversList = props => {
-    const [type, setType] = useState('getList');
-    const [params, setParams] = useState({
-        filter: {},
-    });
+    const [filter, setFilter] = useState({});
+    const [paginationCursor, setPaginationCursor] = useState(null);
+    // As the paginationCursor variable has not changed we need to force an update
+    const [seed, setSeed] = useState(Math.random());
 
-    const { data, loaded, error } = useQuery({
-        type: type,
-        resource: 'receivers',
-        payload: type === 'getList' ? params : {},
+    const { data, error, loaded } = useGetList({
+        ...props,
+        filter,
+        paginationCursor,
+        seed,
     });
 
     const nextPage = label => {
-        setType(label);
+        setPaginationCursor(label);
+        setSeed(Math.random());
     };
 
     const changeFilter = (filterValue, name) => {
-        let filter = params.filter;
+        let currentFilter = filter;
         if (filterValue) {
-            filter[name] = filterValue;
+            currentFilter[name] = filterValue;
         } else {
-            delete filter[name];
+            delete currentFilter[name];
         }
-        setType('getList');
-        setParams({ filter: filter });
+        setFilter(currentFilter);
+        setPaginationCursor(null);
+        setSeed(Math.random());
     };
 
     if (!loaded) return <Loading />;

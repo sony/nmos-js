@@ -27,6 +27,7 @@ let LINK_HEADERS = {
     subscriptions: '',
     events: '',
 };
+let LAST_SEED;
 const LOGGING_API = 'Logging API';
 const QUERY_API = 'Query API';
 const DNS_API = 'DNS-SD API';
@@ -114,26 +115,6 @@ function isNumber(v) {
 
 const convertDataProviderRequestToHTTP = (type, resource, params) => {
     switch (type) {
-        case 'FIRST': {
-            let m = LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="first"/);
-            return { url: m ? m[1] : null };
-        }
-
-        case 'LAST': {
-            let m = LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="last"/);
-            return { url: m ? m[1] : null };
-        }
-
-        case 'NEXT': {
-            let m = LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="next"/);
-            return { url: m ? m[1] : null };
-        }
-
-        case 'PREV': {
-            let m = LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="prev"/);
-            return { url: m ? m[1] : null };
-        }
-
         case GET_ONE: {
             API_URL = returnUrl(resource);
             if (resource === 'queryapis') {
@@ -143,6 +124,49 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
         }
 
         case GET_LIST: {
+            // If the same seed is presented twice a refresh has been called
+            // and we need to disable pagination.
+            if (params.seed === LAST_SEED) delete params.paginationCursor;
+            LAST_SEED = params.seed;
+
+            if (
+                params.hasOwnProperty('paginationCursor') &&
+                params.paginationCursor
+            ) {
+                switch (params.paginationCursor) {
+                    case 'FIRST': {
+                        let m = LINK_HEADERS[resource].match(
+                            /<([^>]+)>;[ \t]*rel="first"/
+                        );
+                        return { url: m ? m[1] : null };
+                    }
+
+                    case 'LAST': {
+                        let m = LINK_HEADERS[resource].match(
+                            /<([^>]+)>;[ \t]*rel="last"/
+                        );
+                        return { url: m ? m[1] : null };
+                    }
+
+                    case 'NEXT': {
+                        let m = LINK_HEADERS[resource].match(
+                            /<([^>]+)>;[ \t]*rel="next"/
+                        );
+                        return { url: m ? m[1] : null };
+                    }
+
+                    case 'PREV': {
+                        let m = LINK_HEADERS[resource].match(
+                            /<([^>]+)>;[ \t]*rel="prev"/
+                        );
+                        return { url: m ? m[1] : null };
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
+
             const pagingLimit = cookies.get('Paging Limit');
             const queryParams = [];
 

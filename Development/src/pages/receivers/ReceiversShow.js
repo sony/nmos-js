@@ -24,7 +24,6 @@ import {
     ShowView,
     SimpleShowLayout,
     TextField,
-    useQuery,
     useRefresh,
     useShowController,
 } from 'react-admin';
@@ -39,6 +38,7 @@ import JSONViewer from '../../components/JSONViewer';
 import MakeConnection from '../../components/MakeConnection';
 import PaginationButton from '../../components/PaginationButton';
 import QueryVersion from '../../components/QueryVersion';
+import useGetList from '../../components/useGetList';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
 import MapTags from '../../components/TagsField';
 import TAIField from '../../components/TAIField';
@@ -338,38 +338,42 @@ const ConnectionManagementTab = ({
     ...props
 }) => {
     const refresh = useRefresh();
-    const [type, setType] = useState('getList');
-    const [params, setParams] = useState({
-        filter: { transport: get(receiverData, 'transport') },
+    const [filter, setFilter] = useState({
+        transport: get(receiverData, 'transport'),
     });
+    const [paginationCursor, setPaginationCursor] = useState(null);
+    // As the paginationCursor variable has not changed we need to force an update
+    const [seed, setSeed] = useState(Math.random());
 
-    const { data, loaded, error } = useQuery({
-        type: type,
+    const { data, error, loaded } = useGetList({
+        ...props,
+        filter,
+        paginationCursor,
         resource: 'senders',
-        payload: type === 'getList' ? params : {},
+        seed,
     });
 
     const nextPage = label => {
-        setType(label);
+        setPaginationCursor(label);
+        setSeed(Math.random());
     };
 
     const changeFilter = (filterValue, name) => {
-        let filter = params.filter;
+        let currentFilter = filter;
         if (filterValue) {
-            filter[name] = filterValue;
+            currentFilter[name] = filterValue;
         } else {
-            delete filter[name];
+            delete currentFilter[name];
         }
-        setType('getList');
-        setParams({ filter: filter });
+        setFilter(currentFilter);
+        setPaginationCursor(null);
+        setSeed(Math.random());
     };
 
     // receiverData initialises undefined, update when no longer null
     useEffect(() => {
         if (receiverData !== null)
-            setParams({
-                filter: { transport: get(receiverData, 'transport') },
-            });
+            setFilter({ transport: get(receiverData, 'transport') });
     }, [receiverData]);
 
     const connect = (senderID, receiverID, endpoint) => {

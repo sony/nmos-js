@@ -18,6 +18,7 @@ import { useTheme } from '@material-ui/styles';
 import ClearIcon from '@material-ui/icons/Clear';
 import ConnectionEditActions from '../../components/ConnectionEditActions';
 import SenderTransportParamsCardsGrid from './SenderTransportParams';
+import { StageIcon } from '../../icons';
 
 const SendersTitle = ({ record }) => (
     <span>
@@ -32,7 +33,7 @@ const SendersTitle = ({ record }) => (
 
 const PostEditToolbar = props => (
     <Toolbar {...props}>
-        <SaveButton />
+        <SaveButton label="Stage" icon={<StageIcon />} />
     </Toolbar>
 );
 

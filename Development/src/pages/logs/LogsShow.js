@@ -10,7 +10,7 @@ import {
     TopToolbar,
 } from 'react-admin';
 import Cookies from 'universal-cookie';
-import JsonIcon from '../../components/JsonIcon';
+import JsonIcon from '../../icons/JsonIcon';
 import MapTags from '../../components/TagsField';
 
 const cookies = new Cookies();

@@ -16,7 +16,7 @@ import {
     useShowController,
 } from 'react-admin';
 import Cookies from 'universal-cookie';
-import JsonIcon from '../../components/JsonIcon';
+import JsonIcon from '../../icons/JsonIcon';
 import MapTags from '../../components/TagsField';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';

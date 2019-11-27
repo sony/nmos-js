@@ -9,19 +9,22 @@ import MenuList from '@material-ui/core/MenuList';
 import Paper from '@material-ui/core/Paper';
 import { withStyles } from '@material-ui/styles';
 
-import AnnouncementIcon from '@material-ui/icons/Announcement';
 import BuildIcon from '@material-ui/icons/Build';
-import CallMadeIcon from '@material-ui/icons/CallMade';
-import CallReceivedIcon from '@material-ui/icons/CallReceived';
-import CompareArrowsIcon from '@material-ui/icons/CompareArrows';
-import DvrIcon from '@material-ui/icons/Dvr';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
-import QueryIcon from '@material-ui/icons/HelpOutline';
-import SettingsCellIcon from '@material-ui/icons/SettingsCell';
-import SettingsInputAntennaIcon from '@material-ui/icons/SettingsInputAntenna';
-import SwapVertIcon from '@material-ui/icons/SwapVert';
 import SettingsIcon from '@material-ui/icons/Settings';
+
+import {
+    DeviceIcon,
+    FlowIcon,
+    NodeIcon,
+    ReceiverIcon,
+    RegistryIcon,
+    RegistryLogsIcon,
+    SenderIcon,
+    SourceIcon,
+    SubscriptionIcon,
+} from '../icons';
 
 const StyledListItem = withStyles({
     root: {
@@ -60,7 +63,7 @@ const NestedList = () => {
                             to={'/queryapis'}
                         >
                             <ListItemIcon>
-                                <QueryIcon />
+                                <RegistryIcon />
                             </ListItemIcon>
                             <ListItemText
                                 style={{ whiteSpace: 'nowrap' }}
@@ -72,49 +75,49 @@ const NestedList = () => {
             </Paper>
             <StyledListItem button component={NavLink} to={'/nodes'}>
                 <ListItemIcon>
-                    <DvrIcon />
+                    <NodeIcon />
                 </ListItemIcon>
                 <ListItemText primary="Nodes" />
             </StyledListItem>
             <StyledListItem button component={NavLink} to={'/devices'}>
                 <ListItemIcon>
-                    <SettingsCellIcon />
+                    <DeviceIcon />
                 </ListItemIcon>
                 <ListItemText primary="Devices" />
             </StyledListItem>
             <StyledListItem button component={NavLink} to={'/sources'}>
                 <ListItemIcon>
-                    <SettingsInputAntennaIcon />
+                    <SourceIcon />
                 </ListItemIcon>
                 <ListItemText primary="Sources" />
             </StyledListItem>
             <StyledListItem button component={NavLink} to={'/flows'}>
                 <ListItemIcon>
-                    <CompareArrowsIcon />
+                    <FlowIcon />
                 </ListItemIcon>
                 <ListItemText primary="Flows" />
             </StyledListItem>
             <StyledListItem button component={NavLink} to={'/senders'}>
                 <ListItemIcon>
-                    <CallMadeIcon />
+                    <SenderIcon />
                 </ListItemIcon>
                 <ListItemText primary="Senders" />
             </StyledListItem>
             <StyledListItem button component={NavLink} to={'/receivers'}>
                 <ListItemIcon>
-                    <CallReceivedIcon />
+                    <ReceiverIcon />
                 </ListItemIcon>
                 <ListItemText primary="Receivers" />
             </StyledListItem>
             <StyledListItem button component={NavLink} to={'/subscriptions'}>
                 <ListItemIcon>
-                    <SwapVertIcon />
+                    <SubscriptionIcon />
                 </ListItemIcon>
                 <ListItemText primary="Subscriptions" />
             </StyledListItem>
             <StyledListItem button component={NavLink} to={'/logs'}>
                 <ListItemIcon>
-                    <AnnouncementIcon />
+                    <RegistryLogsIcon />
                 </ListItemIcon>
                 <ListItemText primary="Logs" />
             </StyledListItem>

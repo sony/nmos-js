@@ -17,6 +17,7 @@ import set from 'lodash/set';
 import ClearIcon from '@material-ui/icons/Clear';
 import { useTheme } from '@material-ui/styles';
 import ConnectionEditActions from '../../components/ConnectionEditActions';
+import { StageIcon } from '../../icons';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
 
 const ReceiversTitle = ({ record }) => (
@@ -32,7 +33,7 @@ const ReceiversTitle = ({ record }) => (
 
 const PostEditToolbar = props => (
     <Toolbar {...props}>
-        <SaveButton label="Stage" />
+        <SaveButton label="Stage" icon={<StageIcon />} />
     </Toolbar>
 );
 

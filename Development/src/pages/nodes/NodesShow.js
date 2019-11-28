@@ -144,9 +144,15 @@ export const NodesShow = props => {
                 {controllerProps.record && QueryVersion() >= 'v1.2' && (
                     <ArrayField source="interfaces">
                         <Datagrid>
-                            <TextField source="chassis_id" label="Chassis ID" />
                             <TextField source="name" />
-                            <TextField source="port_id" label="Port ID" />
+                            <TextField source="chassis_id" label="Local Chassis ID" />
+                            <TextField source="port_id" label="Local Port ID" />
+                            {QueryVersion() >= 'v1.3' && (
+                                <TextField source="attached_network_device.chassis_id" label="Remote Chassis ID" />
+                            )}
+                            {QueryVersion() >= 'v1.3' && (
+                                <TextField source="attached_network_device.port_id" label="Remote Port ID" />
+                            )}
                         </Datagrid>
                     </ArrayField>
                 )}

@@ -1,20 +1,17 @@
-import { CardActions } from '@material-ui/core';
-import { Button, ListButton } from 'ra-ui-materialui';
 import React from 'react';
 import NavLink from 'react-router-dom/NavLink';
-import EditIcon from '@material-ui/icons/Edit';
+import { Button, ListButton, TopToolbar, useGetOne } from 'react-admin';
 import get from 'lodash/get';
 import Cookies from 'universal-cookie';
+import EditIcon from '@material-ui/icons/Edit';
 import JsonIcon from './JsonIcon';
+import { useTheme } from '@material-ui/styles';
 
 const cookies = new Cookies();
 
-const cardActionStyle = {
-    zIndex: 2,
-    float: 'right',
-};
+export default function ConnectionShowActions({ basePath, id, resource }) {
+    const { data } = useGetOne(resource, id);
 
-export default function ConnectionShowActions({ basePath, data, resource }) {
     let json_href;
     if (data) {
         const tab = window.location.href.split('/').pop();
@@ -23,13 +20,25 @@ export default function ConnectionShowActions({ basePath, data, resource }) {
             json_href = data.$connectionAPI + '/' + tab;
         }
     }
+    const theme = useTheme();
     return (
-        <CardActions style={cardActionStyle}>
+        <TopToolbar
+            style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'flex-start',
+                paddingTop: theme.spacing(4),
+                paddingBottom: 0,
+                paddingRight: theme.spacing(2),
+                minHeight: theme.spacing(5),
+            }}
+        >
             {data ? (
                 <Button
                     label={'Raw'}
                     title={'View raw'}
                     onClick={() => window.open(json_href, '_blank')}
+                    rel="noopener noreferrer"
                 >
                     <JsonIcon />
                 </Button>
@@ -48,6 +57,6 @@ export default function ConnectionShowActions({ basePath, data, resource }) {
                     <EditIcon />
                 </Button>
             ) : null}
-        </CardActions>
+        </TopToolbar>
     );
 }

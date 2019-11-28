@@ -1,5 +1,5 @@
 import React from 'react';
-import Button from './Button';
+import Button from '@material-ui/core/Button';
 import PropTypes from 'prop-types';
 import { returnChangeQuery } from '../dataProvider';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
@@ -28,14 +28,14 @@ class ConnectButtonSnackbar extends React.Component {
         return (
             <div>
                 <Button
-                    size="small"
+                    color="primary"
                     onClick={this.handleClick({
                         vertical: 'top',
                         horizontal: 'center',
                     })}
-                    label="Connect"
                 >
                     <RssFeedIcon />
+                    Connect
                 </Button>
 
                 <Snackbar

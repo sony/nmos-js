@@ -1,19 +1,6 @@
-import React, { useState } from 'react';
-import {
-    Button,
-    FunctionField,
-    ListButton,
-    Show,
-    ShowButton,
-    SimpleShowLayout,
-    TextField,
-    Title,
-} from 'react-admin';
-import { hr } from '@material-ui/core';
-import Cookies from 'universal-cookie';
+import React, { Fragment, useState } from 'react';
 import {
     Card,
-    CardActions,
     CardContent,
     Table,
     TableBody,
@@ -21,72 +8,55 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import dataProvider from '../dataProvider';
-import PaginationButton from '../components/PaginationButton';
-import FilterField from '../components/FilterField';
-import MapTags from '../components/TagsField';
-import JsonIcon from '../components/JsonIcon';
+import { Error, Loading, ShowButton, Title } from 'react-admin';
+import FilterField from '../../components/FilterField';
+import PaginationButton from '../../components/PaginationButton';
+import ListActions from '../../components/ListActions';
+import useGetList from '../../components/useGetList';
 
-const cookies = new Cookies();
+const LogsList = props => {
+    const [filter, setFilter] = useState({});
+    const [paginationCursor, setPaginationCursor] = useState(null);
+    // As the paginationCursor variable has not changed we need to force an update
+    const [seed, setSeed] = useState(Math.random());
 
-const EventsTitle = ({ record }) => {
-    return <span>Log: {record ? `${record.timestamp}` : ''}</span>;
-};
-const cardActionStyle = {
-    zIndex: 2,
-    float: 'right',
-};
+    const { data, error, loaded, url } = useGetList({
+        ...props,
+        filter,
+        paginationCursor,
+        seed,
+    });
 
-export const EventsList = () => {
-    const firstLoad = async () => {
-        const params = {
-            filter: {},
-        };
-        const dataObject = await dataProvider('GET_LIST', 'events', params);
-        setData(dataObject);
+    const nextPage = label => {
+        setPaginationCursor(label);
+        setSeed(Math.random());
     };
 
-    const [data, setData] = useState(firstLoad);
-
-    const nextPage = async label => {
-        const dataObject = await dataProvider(label, 'events');
-        setData(dataObject);
-    };
-
-    const [filterState, setFilterState] = useState({});
-
-    const changeFilter = async (filterValue, name) => {
-        let filter = filterState;
+    const changeFilter = (filterValue, name) => {
+        let currentFilter = filter;
         if (filterValue) {
-            filter[name] = filterValue;
+            currentFilter[name] = filterValue;
         } else {
-            delete filter[name];
+            delete currentFilter[name];
         }
-        const filteredDataObject = await dataProvider('GET_LIST', 'events', {
-            filter: filter,
-        });
-        setFilterState(filter);
-        setData(filteredDataObject);
+        setFilter(currentFilter);
+        setPaginationCursor(null);
+        setSeed(Math.random());
     };
 
-    const clearFilter = async () => {
-        setData(firstLoad());
-        setFilterState({});
-    };
+    if (!loaded) return <Loading />;
+    if (error) return <Error />;
+    if (!data) return null;
 
-    if (data.hasOwnProperty('data')) {
-        return (
+    return (
+        <Fragment>
+            <div style={{ display: 'flex' }}>
+                <span style={{ flexGrow: 1 }} />
+                <ListActions url={url} />
+            </div>
             <Card>
                 <Title title={'Logs'} />
                 <CardContent>
-                    <Button
-                        label={'Raw'}
-                        href={data.url}
-                        style={{ float: 'right' }}
-                        title={'View raw'}
-                    >
-                        <JsonIcon />
-                    </Button>
                     <Table>
                         <TableHead>
                             <TableRow>
@@ -105,7 +75,7 @@ export const EventsList = () => {
                                 </TableCell>
                                 <TableCell
                                     style={{
-                                        minWidth: '227px',
+                                        minWidth: '100px',
                                         paddingRight: '6px',
                                     }}
                                 >
@@ -136,7 +106,7 @@ export const EventsList = () => {
                                 </TableCell>
                                 <TableCell
                                     style={{
-                                        minWidth: '263px',
+                                        minWidth: '150px',
                                         paddingRight: '6px',
                                     }}
                                 >
@@ -150,14 +120,14 @@ export const EventsList = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {data.data.map(item => (
+                            {data.map(item => (
                                 <TableRow key={item.id}>
                                     <TableCell component="th" scope="row">
                                         <ShowButton
                                             style={{
                                                 textTransform: 'none',
                                             }}
-                                            basePath="/events"
+                                            basePath="/logs"
                                             record={item}
                                             label={item.timestamp}
                                         />
@@ -174,64 +144,10 @@ export const EventsList = () => {
                     <PaginationButton label="PREV" nextPage={nextPage} />
                     <PaginationButton label="NEXT" nextPage={nextPage} />
                     <PaginationButton label="LAST" nextPage={nextPage} />
-                    <Button
-                        onClick={() => clearFilter()}
-                        label="Clear All Filters"
-                    />
                 </CardContent>
             </Card>
-        );
-    } else {
-        return <div />;
-    }
+        </Fragment>
+    );
 };
 
-const EventsShowActions = ({ basePath, data, resource }) => (
-    <CardActions title={<EventsTitle />} style={cardActionStyle}>
-        {data ? (
-            <Button
-                label={'Raw'}
-                href={
-                    cookies.get('Logging API') + '/' + resource + '/' + data.id
-                }
-                title={'View raw'}
-            >
-                <JsonIcon />
-            </Button>
-        ) : null}
-        <ListButton title={'Return to ' + basePath} basePath={basePath} />
-    </CardActions>
-);
-
-export const EventsShow = props => (
-    <Show title={<EventsTitle />} actions={<EventsShowActions />} {...props}>
-        <SimpleShowLayout>
-            <TextField source="timestamp" />
-            <TextField source="level" />
-            <TextField source="level_name" label="Level Name" />
-            <TextField source="message" />
-            <FunctionField
-                label="Tags"
-                render={record =>
-                    record.tags
-                        ? Object.keys(record.tags).length > 0
-                            ? MapTags(record)
-                            : null
-                        : null
-                }
-            />
-            <TextField source="http_method" label="HTTP Method" />
-            <TextField source="request_uri" label="Request URI" />
-            <hr />
-            <TextField source="source_location.file" label="Source File" />
-            <TextField source="source_location.line" label="Source Line" />
-            <TextField
-                source="source_location.function"
-                label="Source Function"
-            />
-            <hr />
-            <TextField source="thread_id" label="Thread ID" />
-            <TextField source="id" label="ID" />
-        </SimpleShowLayout>
-    </Show>
-);
+export default LogsList;

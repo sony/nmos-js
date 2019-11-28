@@ -5,12 +5,12 @@ import {
     IconButton,
     Input,
     InputAdornment,
-    withStyles,
+    makeStyles,
 } from '@material-ui/core';
 import ClearIcon from '@material-ui/icons/Clear';
 import ContentFilter from '@material-ui/icons/FilterList';
 
-const styles = theme => ({
+const useStyles = makeStyles(theme => ({
     container: {
         display: 'inline',
     },
@@ -29,13 +29,13 @@ const styles = theme => ({
     input: {
         display: 'inline-flex',
         maxHeight: '28px',
-        marginLeft: theme.spacing.unit,
-        marginRight: theme.spacing.unit,
+        marginLeft: theme.spacing(1),
+        marginRight: theme.spacing(1),
     },
-});
+}));
 
-const FilterField = props => {
-    const { classes } = props;
+const FilterField = ({ setFilter, name }) => {
+    const classes = useStyles();
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState('');
     let textInputRef = null;
@@ -45,7 +45,7 @@ const FilterField = props => {
     }, [open, textInputRef]);
 
     const handleChangeValue = event => {
-        props.setFilter(event.target.value, props.name);
+        setFilter(event.target.value, name);
         setValue(event.target.value);
     };
 
@@ -54,7 +54,7 @@ const FilterField = props => {
     };
 
     const handleClear = () => {
-        props.setFilter('', props.name);
+        setFilter('', name);
         setValue('');
         setOpen(false);
     };
@@ -62,7 +62,7 @@ const FilterField = props => {
     const onEsc = event => {
         if (textInputRef !== document.activeElement) return;
         // https://www.w3.org/TR/uievents-key/#named-key-attribute-values
-        if ('Escape' === event.key) handleClear();
+        if ('Escape' === event.key) setOpen(false);
     };
 
     useEffect(() => {
@@ -111,4 +111,4 @@ const FilterField = props => {
     );
 };
 
-export default withStyles(styles)(FilterField);
+export default FilterField;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import NavLink from 'react-router-dom/NavLink';
 import Collapse from '@material-ui/core/Collapse';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -7,8 +7,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import MenuList from '@material-ui/core/MenuList';
 import Paper from '@material-ui/core/Paper';
-import { withStyles } from '@material-ui/core/styles';
-import * as PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/styles';
 
 import AnnouncementIcon from '@material-ui/icons/Announcement';
 import BuildIcon from '@material-ui/icons/Build';
@@ -24,118 +23,103 @@ import SettingsInputAntennaIcon from '@material-ui/icons/SettingsInputAntenna';
 import SwapVertIcon from '@material-ui/icons/SwapVert';
 import SettingsIcon from '@material-ui/icons/Settings';
 
-import { Sidebar } from 'ra-ui-materialui';
-
-Sidebar.defaultProps = {
-    size: 240,
-    closedSize: 72,
-};
-
-const styles = () => ({
+const StyledListItem = withStyles({
     root: {
-        width: '100%',
-        maxWidth: 360,
+        paddingLeft: '24px',
     },
-});
+})(ListItem);
 
-const NestedList = props => {
-    const classes = { props };
+const NestedList = () => {
     const [open, setOpen] = useState(false);
-
     return (
-        <div className={classes.root}>
-            <MenuList>
-                <ListItem button onClick={() => setOpen(!open)}>
-                    <ListItemIcon>
-                        <SettingsIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Settings" />
-                    {open ? <ExpandLess /> : <ExpandMore />}
-                </ListItem>
-                <Paper>
-                    <Collapse in={open} timeout="auto" unmountOnExit>
-                        <List component="div">
-                            <ListItem
-                                button
-                                component={NavLink}
-                                to={'/settings'}
-                            >
-                                <ListItemIcon>
-                                    <BuildIcon />
-                                </ListItemIcon>
-                                <ListItemText primary="General" />
-                            </ListItem>
-                            <ListItem
-                                button
-                                component={NavLink}
-                                to={'/queryapis'}
-                            >
-                                <ListItemIcon>
-                                    <QueryIcon />
-                                </ListItemIcon>
-                                <ListItemText
-                                    style={{ whiteSpace: 'nowrap' }}
-                                    primary="Query APIs"
-                                />
-                            </ListItem>
-                        </List>
-                    </Collapse>
-                </Paper>
-                <ListItem button component={NavLink} to={'/nodes'}>
-                    <ListItemIcon>
-                        <DvrIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Nodes" />
-                </ListItem>
-                <ListItem button component={NavLink} to={'/devices'}>
-                    <ListItemIcon>
-                        <SettingsCellIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Devices" />
-                </ListItem>
-                <ListItem button component={NavLink} to={'/sources'}>
-                    <ListItemIcon>
-                        <SettingsInputAntennaIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Sources" />
-                </ListItem>
-                <ListItem button component={NavLink} to={'/flows'}>
-                    <ListItemIcon>
-                        <CompareArrowsIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Flows" />
-                </ListItem>
-                <ListItem button component={NavLink} to={'/senders'}>
-                    <ListItemIcon>
-                        <CallMadeIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Senders" />
-                </ListItem>
-                <ListItem button component={NavLink} to={'/receivers'}>
-                    <ListItemIcon>
-                        <CallReceivedIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Receivers" />
-                </ListItem>
-                <ListItem button component={NavLink} to={'/subscriptions'}>
-                    <ListItemIcon>
-                        <SwapVertIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Subscriptions" />
-                </ListItem>
-                <ListItem button component={NavLink} to={'/events'}>
-                    <ListItemIcon>
-                        <AnnouncementIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Logs" />
-                </ListItem>
-            </MenuList>
-        </div>
+        <MenuList>
+            <StyledListItem button onClick={() => setOpen(!open)}>
+                <ListItemIcon>
+                    <SettingsIcon />
+                </ListItemIcon>
+                <ListItemText primary="Settings" />
+                {open ? <ExpandLess /> : <ExpandMore />}
+            </StyledListItem>
+            <Paper>
+                <Collapse in={open} timeout="auto" unmountOnExit>
+                    <List component="div">
+                        <StyledListItem
+                            button
+                            component={NavLink}
+                            to={'/settings'}
+                            style={{ paddingLeft: '24px' }}
+                        >
+                            <ListItemIcon>
+                                <BuildIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="General" />
+                        </StyledListItem>
+                        <StyledListItem
+                            button
+                            component={NavLink}
+                            to={'/queryapis'}
+                        >
+                            <ListItemIcon>
+                                <QueryIcon />
+                            </ListItemIcon>
+                            <ListItemText
+                                style={{ whiteSpace: 'nowrap' }}
+                                primary="Query APIs"
+                            />
+                        </StyledListItem>
+                    </List>
+                </Collapse>
+            </Paper>
+            <StyledListItem button component={NavLink} to={'/nodes'}>
+                <ListItemIcon>
+                    <DvrIcon />
+                </ListItemIcon>
+                <ListItemText primary="Nodes" />
+            </StyledListItem>
+            <StyledListItem button component={NavLink} to={'/devices'}>
+                <ListItemIcon>
+                    <SettingsCellIcon />
+                </ListItemIcon>
+                <ListItemText primary="Devices" />
+            </StyledListItem>
+            <StyledListItem button component={NavLink} to={'/sources'}>
+                <ListItemIcon>
+                    <SettingsInputAntennaIcon />
+                </ListItemIcon>
+                <ListItemText primary="Sources" />
+            </StyledListItem>
+            <StyledListItem button component={NavLink} to={'/flows'}>
+                <ListItemIcon>
+                    <CompareArrowsIcon />
+                </ListItemIcon>
+                <ListItemText primary="Flows" />
+            </StyledListItem>
+            <StyledListItem button component={NavLink} to={'/senders'}>
+                <ListItemIcon>
+                    <CallMadeIcon />
+                </ListItemIcon>
+                <ListItemText primary="Senders" />
+            </StyledListItem>
+            <StyledListItem button component={NavLink} to={'/receivers'}>
+                <ListItemIcon>
+                    <CallReceivedIcon />
+                </ListItemIcon>
+                <ListItemText primary="Receivers" />
+            </StyledListItem>
+            <StyledListItem button component={NavLink} to={'/subscriptions'}>
+                <ListItemIcon>
+                    <SwapVertIcon />
+                </ListItemIcon>
+                <ListItemText primary="Subscriptions" />
+            </StyledListItem>
+            <StyledListItem button component={NavLink} to={'/logs'}>
+                <ListItemIcon>
+                    <AnnouncementIcon />
+                </ListItemIcon>
+                <ListItemText primary="Logs" />
+            </StyledListItem>
+        </MenuList>
     );
 };
 
-NestedList.propTypes = {
-    classes: PropTypes.object.isRequired,
-};
-
-export default withStyles(styles)(NestedList);
+export default NestedList;

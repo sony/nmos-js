@@ -1,5 +1,5 @@
 import React from 'react';
-import get from 'lodash/get';
+import { Card, CardContent, Divider, Grid } from '@material-ui/core';
 import {
     ArrayInput,
     BooleanField,
@@ -10,8 +10,8 @@ import {
     TextField,
     TextInput,
 } from 'react-admin';
-import { Card, CardContent, Divider, Grid } from '@material-ui/core';
-import { CardFormIterator } from './CardFormIterator';
+import get from 'lodash/get';
+import { CardFormIterator } from '../../components/CardFormIterator';
 import CheckIcon from '@material-ui/icons/Check';
 import ClearIcon from '@material-ui/icons/Clear';
 

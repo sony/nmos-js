@@ -7,23 +7,23 @@ import { NodesList, NodesShow } from './pages/nodes';
 import { DevicesList, DevicesShow } from './pages/devices';
 import { SourcesList, SourcesShow } from './pages/sources';
 import { FlowsList, FlowsShow } from './pages/flows';
-import { SendersEdit, SendersList, SendersShow } from './pages/senders';
 import { ReceiversEdit, ReceiversList, ReceiversShow } from './pages/receivers';
-import { EventsList, EventsShow } from './pages/logs';
+import { SendersEdit, SendersList, SendersShow } from './pages/senders';
+import { LogsList, LogsShow } from './pages/logs';
 import { SubscriptionsList, SubscriptionsShow } from './pages/subscriptions';
-import { QueryAPIList, QueryAPIShow } from './pages/queryapis';
+import { QueryAPIsList, QueryAPIsShow } from './pages/queryapis';
 import dataProvider from './dataProvider';
-import MyLayout from './MyLayout';
+import Layout from './LayoutComponent';
 
 const App = () => (
-    <Admin appLayout={MyLayout} dataProvider={dataProvider} theme={useTheme()}>
+    <Admin layout={Layout} dataProvider={dataProvider} theme={useTheme()}>
         <Resource name="Settings" list={Dashboard} />
         <Resource
             name="queryapis"
             label="Query APIs"
             options={{ label: 'Query APIs' }}
-            list={QueryAPIList}
-            show={QueryAPIShow}
+            list={QueryAPIsList}
+            show={QueryAPIsShow}
         />
         <Resource name="nodes" list={NodesList} show={NodesShow} />
         <Resource name="devices" list={DevicesList} show={DevicesShow} />
@@ -46,7 +46,7 @@ const App = () => (
             list={SubscriptionsList}
             show={SubscriptionsShow}
         />
-        <Resource name="events" list={EventsList} show={EventsShow} />
+        <Resource name="logs" list={LogsList} show={LogsShow} />
     </Admin>
 );
 

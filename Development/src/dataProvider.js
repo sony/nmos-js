@@ -25,8 +25,9 @@ let LINK_HEADERS = {
     senders: '',
     receivers: '',
     subscriptions: '',
-    events: '',
+    logs: '',
 };
+let LAST_SEED;
 const LOGGING_API = 'Logging API';
 const QUERY_API = 'Query API';
 const DNS_API = 'DNS-SD API';
@@ -55,7 +56,7 @@ function returnUrl(resource) {
     let url;
     let api;
     switch (resource) {
-        case 'events':
+        case 'logs':
             api = LOGGING_API;
             break;
         case 'queryapis':
@@ -114,35 +115,61 @@ function isNumber(v) {
 
 const convertDataProviderRequestToHTTP = (type, resource, params) => {
     switch (type) {
-        case 'FIRST': {
-            let m = LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="first"/);
-            return { url: m ? m[1] : null };
-        }
-
-        case 'LAST': {
-            let m = LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="last"/);
-            return { url: m ? m[1] : null };
-        }
-
-        case 'NEXT': {
-            let m = LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="next"/);
-            return { url: m ? m[1] : null };
-        }
-
-        case 'PREV': {
-            let m = LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="prev"/);
-            return { url: m ? m[1] : null };
-        }
-
         case GET_ONE: {
             API_URL = returnUrl(resource);
             if (resource === 'queryapis') {
                 return { url: `${API_URL}/_nmos-query._tcp/${params.id}` };
             }
+            if (resource === 'logs') {
+                return { url: `${API_URL}/events/${params.id}` };
+            }
             return { url: `${API_URL}/${resource}/${params.id}` };
         }
 
         case GET_LIST: {
+            // If the same seed is presented twice a refresh has been called
+            // and we need to disable pagination.
+            if (params.seed === LAST_SEED) delete params.paginationCursor;
+            LAST_SEED = params.seed;
+
+            if (
+                params.hasOwnProperty('paginationCursor') &&
+                params.paginationCursor
+            ) {
+                switch (params.paginationCursor) {
+                    case 'FIRST': {
+                        let m = LINK_HEADERS[resource].match(
+                            /<([^>]+)>;[ \t]*rel="first"/
+                        );
+                        return { url: m ? m[1] : null };
+                    }
+
+                    case 'LAST': {
+                        let m = LINK_HEADERS[resource].match(
+                            /<([^>]+)>;[ \t]*rel="last"/
+                        );
+                        return { url: m ? m[1] : null };
+                    }
+
+                    case 'NEXT': {
+                        let m = LINK_HEADERS[resource].match(
+                            /<([^>]+)>;[ \t]*rel="next"/
+                        );
+                        return { url: m ? m[1] : null };
+                    }
+
+                    case 'PREV': {
+                        let m = LINK_HEADERS[resource].match(
+                            /<([^>]+)>;[ \t]*rel="prev"/
+                        );
+                        return { url: m ? m[1] : null };
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
+
             const pagingLimit = cookies.get('Paging Limit');
             const queryParams = [];
 
@@ -185,12 +212,19 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             }
 
             if (pagingLimit) {
-                if (resource !== 'events')
+                if (resource !== 'logs')
                     queryParams.push('paging.order=update');
                 queryParams.push('paging.limit=' + pagingLimit);
             }
 
             const query = queryParams.join('&');
+
+            if (resource === 'logs') {
+                return {
+                    url: `${API_URL}/events?${query}`,
+                };
+            }
+
             return {
                 url: `${API_URL}/${resource}?${query}`,
             };
@@ -212,16 +246,16 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
         }
         case GET_MANY_REFERENCE: {
             let total_query;
-            if (params.target !== '' && params[params.source] !== '') {
+            if (params.target !== '' && params.id !== '') {
                 if (cookies.get('RQL') !== 'false') {
                     total_query =
                         'query.rql=matches(' +
                         params.target +
                         ',string:' +
-                        params[params.source] +
+                        params.id +
                         ',i)';
                 } else {
-                    total_query = params.target + '=' + params[params.source];
+                    total_query = params.target + '=' + params.id;
                 }
                 total_query += '&paging.limit=1000';
                 return { url: `${API_URL}/${resource}?${total_query}` };

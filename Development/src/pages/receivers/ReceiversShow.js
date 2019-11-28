@@ -35,7 +35,7 @@ import ConnectionShowActions from '../../components/ConnectionShowActions';
 import FilterField from '../../components/FilterField';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
-import MakeConnection from '../../components/MakeConnection';
+import makeConnection from '../../components/makeConnection';
 import PaginationButton from '../../components/PaginationButton';
 import QueryVersion from '../../components/QueryVersion';
 import useGetList from '../../components/useGetList';
@@ -377,7 +377,7 @@ const ConnectionManagementTab = ({
     }, [receiverData]);
 
     const connect = (senderID, receiverID, endpoint) => {
-        MakeConnection(senderID, receiverID, endpoint, props).then(() => {
+        makeConnection(senderID, receiverID, endpoint, props).then(() => {
             refresh();
             props.history.push(
                 `${props.basePath}/${props.id}/show/${endpoint}`

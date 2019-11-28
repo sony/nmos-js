@@ -2,14 +2,11 @@ import React, { Fragment } from 'react';
 import { Datagrid, List, ShowButton, TextField } from 'react-admin';
 import ConnectButton from '../../components/ConnectButton';
 
-const QueryAPIsTitle = ({ record }) => {
-    return <span>Query APIs{record ? `: ${record.name}` : ''}</span>;
-};
-
 const QueryAPIsList = props => (
     <List
-        title={<QueryAPIsTitle />}
+        title="Query APIs"
         bulkActionButtons={false}
+        exporter={false}
         pagination={<Fragment />}
         {...props}
     >

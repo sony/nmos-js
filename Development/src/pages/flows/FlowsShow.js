@@ -24,14 +24,14 @@ import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 
 const cookies = new Cookies();
 
-const FlowsTitle = ({ ...props }) => {
+const FlowsTitle = ({ record }) => {
     return (
         <span>
             Flow:{' '}
-            {props.record
-                ? props.record.label
-                    ? `${props.record.label}`
-                    : `${props.record.id}`
+            {record
+                ? record.label
+                    ? `${record.label}`
+                    : `${record.id}`
                 : 'Unknown'}
         </span>
     );
@@ -42,7 +42,17 @@ const FlowsShowActions = ({ basePath, data, resource }) => (
         {data ? (
             <Button
                 label={'Raw'}
-                href={cookies.get('Query API') + '/' + resource + '/' + data.id}
+                onClick={() =>
+                    window.open(
+                        cookies.get('Query API') +
+                            '/' +
+                            resource +
+                            '/' +
+                            data.id,
+                        '_blank'
+                    )
+                }
+                rel="noopener noreferrer"
                 title={'View raw'}
             >
                 <JsonIcon />

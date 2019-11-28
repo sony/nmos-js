@@ -7,7 +7,6 @@
     "@material-ui/core": "^4.3.3",
     "@material-ui/icons": "^4.2.1",
     "@material-ui/styles": "^4.3.3",
-    "classnames": "^2.2.6",
     "clipboard-copy": "^3.1.0",
     "dayjs": "^1.8.16",
     "deep-diff": "^1.0.2",

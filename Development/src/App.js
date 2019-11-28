@@ -3,13 +3,13 @@ import { Admin, Resource } from 'react-admin';
 import { useTheme } from '@material-ui/styles';
 
 import Dashboard from './pages/settings';
-import { ReceiversEdit, ReceiversList, ReceiversShow } from './pages/receivers';
-import { SendersEdit, SendersList, SendersShow } from './pages/senders';
 import { NodesList, NodesShow } from './pages/nodes';
 import { DevicesList, DevicesShow } from './pages/devices';
 import { SourcesList, SourcesShow } from './pages/sources';
 import { FlowsList, FlowsShow } from './pages/flows';
-import { EventsList, EventsShow } from './pages/logs';
+import { ReceiversEdit, ReceiversList, ReceiversShow } from './pages/receivers';
+import { SendersEdit, SendersList, SendersShow } from './pages/senders';
+import { LogsList, LogsShow } from './pages/logs';
 import { SubscriptionsList, SubscriptionsShow } from './pages/subscriptions';
 import { QueryAPIsList, QueryAPIsShow } from './pages/queryapis';
 import dataProvider from './dataProvider';
@@ -46,7 +46,7 @@ const App = () => (
             list={SubscriptionsList}
             show={SubscriptionsShow}
         />
-        <Resource name="events" list={EventsList} show={EventsShow} />
+        <Resource name="logs" list={LogsList} show={LogsShow} />
     </Admin>
 );
 

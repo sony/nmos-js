@@ -112,7 +112,7 @@ const NestedList = () => {
                 </ListItemIcon>
                 <ListItemText primary="Subscriptions" />
             </StyledListItem>
-            <StyledListItem button component={NavLink} to={'/events'}>
+            <StyledListItem button component={NavLink} to={'/logs'}>
                 <ListItemIcon>
                     <AnnouncementIcon />
                 </ListItemIcon>

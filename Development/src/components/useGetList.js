@@ -1,12 +1,72 @@
+import { useEffect } from 'react';
 import { shallowEqual, useSelector } from 'react-redux';
-
 import {
     CRUD_GET_LIST,
     useCheckMinimumRequiredProps,
+    useDataProvider,
     useNotify,
-    useQueryWithStore,
+    useSafeSetState,
     useVersion,
 } from 'react-admin';
+import isEqual from 'lodash/isEqual';
+
+const isEmptyList = data =>
+    Array.isArray(data)
+        ? data.length === 0
+        : data &&
+          Object.keys(data).length === 0 &&
+          data.hasOwnProperty('fetchedAt');
+
+// We need a custom hook as the request URL needs to be returned.
+const useQueryWithStore = (query, options, dataSelector, totalSelector) => {
+    const { type, resource, payload } = query;
+    const data = useSelector(dataSelector);
+    const total = useSelector(totalSelector);
+    const [state, setState] = useSafeSetState({
+        data,
+        total,
+        error: null,
+        loading: true,
+        loaded: data !== undefined && !isEmptyList(data),
+        url: null,
+    });
+    if (!isEqual(state.data, data) || state.total !== total) {
+        setState(
+            Object.assign(Object.assign({}, state), {
+                data,
+                total,
+                loaded: true,
+            })
+        );
+    }
+    const dataProvider = useDataProvider();
+    useEffect(() => {
+        setState(prevState =>
+            Object.assign(Object.assign({}, prevState), { loading: true })
+        );
+        dataProvider[type](resource, payload, options)
+            .then(response => {
+                // We only care about the dataProvider url response here, because
+                // the list data was already passed to the SUCCESS redux reducer.
+                setState(prevState =>
+                    Object.assign(Object.assign({}, prevState), {
+                        error: null,
+                        loading: false,
+                        loaded: true,
+                        url: response.url,
+                    })
+                );
+            })
+            .catch(error => {
+                setState({
+                    error,
+                    loading: false,
+                    loaded: false,
+                });
+            });
+    }, [JSON.stringify({ query, options })]); // eslint-disable-line
+    return state;
+};
 
 const useGetList = props => {
     useCheckMinimumRequiredProps(
@@ -33,7 +93,7 @@ const useGetList = props => {
     const notify = useNotify();
     const version = useVersion();
 
-    const { total, loading, loaded, error } = useQueryWithStore(
+    const { total, error, loading, loaded, url } = useQueryWithStore(
         {
             type: 'getList',
             resource,
@@ -67,14 +127,14 @@ const useGetList = props => {
         state =>
             state.admin.resources[resource]
                 ? state.admin.resources[resource].data
-                : null,
+                : {},
         shallowEqual
     );
     const ids = useSelector(
         state =>
             state.admin.resources[resource]
                 ? state.admin.resources[resource].list.ids
-                : null,
+                : [],
         shallowEqual
     );
 
@@ -95,6 +155,7 @@ const useGetList = props => {
         loaded,
         resource,
         total,
+        url,
         version,
     };
 };

@@ -17,18 +17,19 @@ export const AppThemeProvider = ({ children }) => {
     });
     if (themeState.mode === undefined) setThemeState({ mode: 'light' });
 
-    let theme = createMuiTheme({
-        palette: {
-            primary: lightBlue,
-            secondary: blue,
-            type: themeState.mode,
-        },
-        sidebar: {
-            width: 240,
-            closedWidth: 72,
-        },
-    });
-    theme = responsiveFontSizes(theme);
+    const theme = responsiveFontSizes(
+        createMuiTheme({
+            palette: {
+                primary: lightBlue,
+                secondary: blue,
+                type: themeState.mode,
+            },
+            sidebar: {
+                width: 240,
+                closedWidth: 72,
+            },
+        })
+    );
 
     const toggleTheme = () => {
         const mode = themeState.mode === 'light' ? `dark` : `light`;

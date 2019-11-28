@@ -25,7 +25,7 @@ let LINK_HEADERS = {
     senders: '',
     receivers: '',
     subscriptions: '',
-    events: '',
+    logs: '',
 };
 let LAST_SEED;
 const LOGGING_API = 'Logging API';
@@ -56,7 +56,7 @@ function returnUrl(resource) {
     let url;
     let api;
     switch (resource) {
-        case 'events':
+        case 'logs':
             api = LOGGING_API;
             break;
         case 'queryapis':
@@ -119,6 +119,9 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             API_URL = returnUrl(resource);
             if (resource === 'queryapis') {
                 return { url: `${API_URL}/_nmos-query._tcp/${params.id}` };
+            }
+            if (resource === 'logs') {
+                return { url: `${API_URL}/events/${params.id}` };
             }
             return { url: `${API_URL}/${resource}/${params.id}` };
         }
@@ -209,12 +212,19 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             }
 
             if (pagingLimit) {
-                if (resource !== 'events')
+                if (resource !== 'logs')
                     queryParams.push('paging.order=update');
                 queryParams.push('paging.limit=' + pagingLimit);
             }
 
             const query = queryParams.join('&');
+
+            if (resource === 'logs') {
+                return {
+                    url: `${API_URL}/events?${query}`,
+                };
+            }
+
             return {
                 url: `${API_URL}/${resource}?${query}`,
             };

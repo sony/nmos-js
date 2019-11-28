@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import {
     Card,
     CardContent,
@@ -20,7 +20,7 @@ const SourcesList = props => {
     // As the paginationCursor variable has not changed we need to force an update
     const [seed, setSeed] = useState(Math.random());
 
-    const { data, error, loaded } = useGetList({
+    const { data, error, loaded, url } = useGetList({
         ...props,
         filter,
         paginationCursor,
@@ -49,10 +49,10 @@ const SourcesList = props => {
     if (!data) return null;
 
     return (
-        <>
+        <Fragment>
             <div style={{ display: 'flex' }}>
                 <span style={{ flexGrow: 1 }} />
-                <ListActions {...props} />
+                <ListActions url={url} />
             </div>
             <Card>
                 <Title title={'Sources'} />
@@ -106,7 +106,7 @@ const SourcesList = props => {
                     <PaginationButton label="LAST" nextPage={nextPage} />
                 </CardContent>
             </Card>
-        </>
+        </Fragment>
     );
 };
 

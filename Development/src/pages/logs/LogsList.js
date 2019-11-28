@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import {
     Card,
     CardContent,
@@ -7,39 +7,20 @@ import {
     TableCell,
     TableHead,
     TableRow,
-    hr,
 } from '@material-ui/core';
-import {
-    Button,
-    FunctionField,
-    ListButton,
-    Show,
-    SimpleShowLayout,
-    TextField,
-    TopToolbar,
-} from 'react-admin';
 import { Error, Loading, ShowButton, Title } from 'react-admin';
-import Cookies from 'universal-cookie';
-import FilterField from '../components/FilterField';
-import PaginationButton from '../components/PaginationButton';
-import MapTags from '../components/TagsField';
-import ListActions from '../components/ListActions';
-import JsonIcon from '../components/JsonIcon';
-import useGetList from '../components/useGetList';
+import FilterField from '../../components/FilterField';
+import PaginationButton from '../../components/PaginationButton';
+import ListActions from '../../components/ListActions';
+import useGetList from '../../components/useGetList';
 
-const cookies = new Cookies();
-
-const EventsTitle = ({ record }) => {
-    return <span>Log: {record ? `${record.timestamp}` : ''}</span>;
-};
-
-export const EventsList = props => {
+const LogsList = props => {
     const [filter, setFilter] = useState({});
     const [paginationCursor, setPaginationCursor] = useState(null);
     // As the paginationCursor variable has not changed we need to force an update
     const [seed, setSeed] = useState(Math.random());
 
-    const { data, error, loaded } = useGetList({
+    const { data, error, loaded, url } = useGetList({
         ...props,
         filter,
         paginationCursor,
@@ -68,10 +49,10 @@ export const EventsList = props => {
     if (!data) return null;
 
     return (
-        <>
+        <Fragment>
             <div style={{ display: 'flex' }}>
                 <span style={{ flexGrow: 1 }} />
-                <ListActions {...props} />
+                <ListActions url={url} />
             </div>
             <Card>
                 <Title title={'Logs'} />
@@ -146,7 +127,7 @@ export const EventsList = props => {
                                             style={{
                                                 textTransform: 'none',
                                             }}
-                                            basePath="/events"
+                                            basePath="/logs"
                                             record={item}
                                             label={item.timestamp}
                                         />
@@ -165,56 +146,8 @@ export const EventsList = props => {
                     <PaginationButton label="LAST" nextPage={nextPage} />
                 </CardContent>
             </Card>
-        </>
+        </Fragment>
     );
 };
 
-const EventsShowActions = ({ basePath, data, resource }) => (
-    <TopToolbar title={<EventsTitle />}>
-        {data ? (
-            <Button
-                label={'Raw'}
-                href={
-                    cookies.get('Logging API') + '/' + resource + '/' + data.id
-                }
-                title={'View raw'}
-            >
-                <JsonIcon />
-            </Button>
-        ) : null}
-        <ListButton title={'Return to ' + basePath} basePath={basePath} />
-    </TopToolbar>
-);
-
-export const EventsShow = props => (
-    <Show title={<EventsTitle />} actions={<EventsShowActions />} {...props}>
-        <SimpleShowLayout>
-            <TextField source="timestamp" />
-            <TextField source="level" />
-            <TextField source="level_name" label="Level Name" />
-            <TextField source="message" />
-            <FunctionField
-                label="Tags"
-                render={record =>
-                    record.tags
-                        ? Object.keys(record.tags).length > 0
-                            ? MapTags(record)
-                            : null
-                        : null
-                }
-            />
-            <TextField source="http_method" label="HTTP Method" />
-            <TextField source="request_uri" label="Request URI" />
-            <hr />
-            <TextField source="source_location.file" label="Source File" />
-            <TextField source="source_location.line" label="Source Line" />
-            <TextField
-                source="source_location.function"
-                label="Source Function"
-            />
-            <hr />
-            <TextField source="thread_id" label="Thread ID" />
-            <TextField source="id" label="ID" />
-        </SimpleShowLayout>
-    </Show>
-);
+export default LogsList;

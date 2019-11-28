@@ -42,7 +42,17 @@ const SourcesShowActions = ({ basePath, data, resource }) => (
         {data ? (
             <Button
                 label={'Raw'}
-                href={cookies.get('Query API') + '/' + resource + '/' + data.id}
+                onClick={() =>
+                    window.open(
+                        cookies.get('Query API') +
+                            '/' +
+                            resource +
+                            '/' +
+                            data.id,
+                        '_blank'
+                    )
+                }
+                rel="noopener noreferrer"
                 title={'View raw'}
             >
                 <JsonIcon />

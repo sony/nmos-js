@@ -11,7 +11,7 @@ import {
 import ConnectButton from '../../components/ConnectButton';
 
 const QueryAPIsTitle = ({ record }) => {
-    return <span>Query APIs{record ? `: ${record.name}` : ''}</span>;
+    return <span>Query API{record ? `: ${record.name}` : ''}</span>;
 };
 
 const QueryAPIsShowActions = ({ basePath }) => (

@@ -69,7 +69,7 @@ export const isMulticast = address => {
     );
 };
 
-const MakeConnection = (senderID, receiverID, endpoint) => {
+const makeConnection = (senderID, receiverID, endpoint) => {
     return new Promise((resolve, reject) => {
         if (endpoint !== 'active' && endpoint !== 'staged') {
             reject();
@@ -211,4 +211,4 @@ const MakeConnection = (senderID, receiverID, endpoint) => {
     });
 };
 
-export default MakeConnection;
+export default makeConnection;

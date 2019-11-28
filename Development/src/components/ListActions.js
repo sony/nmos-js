@@ -3,7 +3,7 @@ import { Button, TopToolbar } from 'react-admin';
 import { useTheme } from '@material-ui/styles';
 import JsonIcon from './JsonIcon';
 
-const ListActions = props => {
+const ListActions = ({ url }) => {
     const theme = useTheme();
     return (
         <TopToolbar
@@ -17,9 +17,17 @@ const ListActions = props => {
                 minHeight: theme.spacing(5),
             }}
         >
-            <Button label={'Raw'} style={{ float: 'right' }} title={'View raw'}>
-                <JsonIcon />
-            </Button>
+            {url && (
+                <Button
+                    label={'Raw'}
+                    onClick={() => window.open(url, '_blank')}
+                    rel="noopener noreferrer"
+                    style={{ float: 'right' }}
+                    title={'View raw'}
+                >
+                    <JsonIcon />
+                </Button>
+            )}
         </TopToolbar>
     );
 };

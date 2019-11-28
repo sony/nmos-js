@@ -1,8 +1,7 @@
 import React from 'react';
 import { ChipField } from 'react-admin';
 
-const ChipConditionalLabel = ({ record, source, ...props }) => {
-    props.clickable = true;
+const ChipConditionalLabel = ({ record, source }) => {
     return record ? (
         record[source] ? (
             <ChipField {...{ record, clickable: true, source }} />

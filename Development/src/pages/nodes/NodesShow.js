@@ -47,7 +47,17 @@ const NodesShowActions = ({ basePath, data, resource }) => (
         {data ? (
             <Button
                 label={'Raw'}
-                href={cookies.get('Query API') + '/' + resource + '/' + data.id}
+                onClick={() =>
+                    window.open(
+                        cookies.get('Query API') +
+                            '/' +
+                            resource +
+                            '/' +
+                            data.id,
+                        '_blank'
+                    )
+                }
+                rel="noopener noreferrer"
                 title={'View raw'}
             >
                 <JsonIcon />
@@ -93,7 +103,7 @@ export const NodesShow = props => {
                     />
                 )}
                 {controllerProps.record && QueryVersion() >= 'v1.1' && (
-                    <ArrayField label=" API Endpoints" source="api.endpoints">
+                    <ArrayField label="API Endpoints" source="api.endpoints">
                         <Datagrid>
                             <TextField source="host" />
                             <TextField source="port" />

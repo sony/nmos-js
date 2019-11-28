@@ -131,6 +131,7 @@ const Settings = () => {
                                 <TextField
                                     id="standard-queryAPI"
                                     label="Query API"
+                                    variant="filled"
                                     value={values.queryAPI}
                                     onChange={handleInputChange('queryAPI')}
                                     className={classes.textField}
@@ -140,6 +141,7 @@ const Settings = () => {
                                 <TextField
                                     id="standard-loggingAPI"
                                     label="Logging API"
+                                    variant="filled"
                                     value={values.loggingAPI}
                                     onChange={handleInputChange('loggingAPI')}
                                     className={classes.textField}
@@ -149,6 +151,7 @@ const Settings = () => {
                                 <TextField
                                     id="standard-dnssdAPI"
                                     label="DNS-SD API"
+                                    variant="filled"
                                     value={values.dnssdAPI}
                                     onChange={handleInputChange('dnssdAPI')}
                                     className={classes.textField}
@@ -159,6 +162,7 @@ const Settings = () => {
                                     id="standard-paging"
                                     select
                                     label="Paging Limit"
+                                    variant="filled"
                                     placeholder=""
                                     className={classes.textField}
                                     value={values.paging}

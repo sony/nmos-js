@@ -38,6 +38,7 @@ export default function ConnectionShowActions({ basePath, id, resource }) {
                     label={'Raw'}
                     title={'View raw'}
                     onClick={() => window.open(json_href, '_blank')}
+                    rel="noopener noreferrer"
                 >
                     <JsonIcon />
                 </Button>

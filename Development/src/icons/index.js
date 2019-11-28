@@ -12,9 +12,6 @@ import RegistryLogsIcon from './RegistryLogs';
 import SenderIcon from './Sender';
 import SourceIcon from './Source';
 import StageIcon from './Stage';
-import StageCancelIcon from './StageCancel';
-import StageImmediateIcon from './StageImmediate';
-import StageScheduledIcon from './StageScheduled';
 import SubscriptionIcon from './Subscription';
 
 // To optimise the SVG files and convert to the correct syntax:
@@ -35,8 +32,5 @@ export {
     SenderIcon,
     SourceIcon,
     StageIcon,
-    StageCancelIcon,
-    StageImmediateIcon,
-    StageScheduledIcon,
     SubscriptionIcon,
 };

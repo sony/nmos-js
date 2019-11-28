@@ -4,7 +4,7 @@ import { Button, ListButton, TopToolbar, useGetOne } from 'react-admin';
 import get from 'lodash/get';
 import Cookies from 'universal-cookie';
 import EditIcon from '@material-ui/icons/Edit';
-import JsonIcon from './JsonIcon';
+import JsonIcon from '../icons/JsonIcon';
 import { useTheme } from '@material-ui/styles';
 
 const cookies = new Cookies();

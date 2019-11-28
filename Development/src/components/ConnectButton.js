@@ -2,8 +2,8 @@ import React from 'react';
 import Button from '@material-ui/core/Button';
 import PropTypes from 'prop-types';
 import { returnChangeQuery } from '../dataProvider';
-import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { Snackbar } from '@material-ui/core';
+import { ConnectRegistryIcon } from '../icons';
 
 let longQuery = '';
 
@@ -33,8 +33,8 @@ class ConnectButtonSnackbar extends React.Component {
                         vertical: 'top',
                         horizontal: 'center',
                     })}
+                    startIcon={<ConnectRegistryIcon />}
                 >
-                    <RssFeedIcon />
                     Connect
                 </Button>
 

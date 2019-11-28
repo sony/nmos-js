@@ -2,6 +2,7 @@ import React, { Fragment, useEffect, useState } from 'react';
 import Link from 'react-router-dom/Link';
 import { Route } from 'react-router-dom';
 import {
+    Button,
     Paper,
     Tab,
     Table,
@@ -15,7 +16,6 @@ import {
 import {
     ArrayField,
     BooleanField,
-    Button,
     Error,
     FunctionField,
     Loading,
@@ -30,6 +30,7 @@ import {
 import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
 import CheckIcon from '@material-ui/icons/Check';
+import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import ClearIcon from '@material-ui/icons/Clear';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import FilterField from '../../components/FilterField';
@@ -43,7 +44,7 @@ import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
 import MapTags from '../../components/TagsField';
 import TAIField from '../../components/TAIField';
 import TransportFileViewer from '../../components/TransportFileViewer';
-import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import { ActivateImmediateIcon, StageIcon } from '../../icons';
 
 const ReceiversTitle = ({ record }) => (
     <span>
@@ -488,8 +489,12 @@ const ConnectionManagementTab = ({
                                                     'active'
                                                 )
                                             }
-                                            label="Activate"
-                                        />
+                                            startIcon={
+                                                <ActivateImmediateIcon />
+                                            }
+                                        >
+                                            Activate
+                                        </Button>
                                         <Button
                                             onClick={() =>
                                                 connect(
@@ -498,8 +503,10 @@ const ConnectionManagementTab = ({
                                                     'staged'
                                                 )
                                             }
-                                            label="Stage"
-                                        />
+                                            startIcon={<StageIcon />}
+                                        >
+                                            Stage
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))}

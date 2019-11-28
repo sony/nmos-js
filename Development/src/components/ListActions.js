@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, TopToolbar } from 'react-admin';
 import { useTheme } from '@material-ui/styles';
-import JsonIcon from './JsonIcon';
+import JsonIcon from '../icons/JsonIcon';
 
 const ListActions = ({ url }) => {
     const theme = useTheme();

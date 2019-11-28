@@ -14,6 +14,7 @@ import {
     makeStyles,
 } from '@material-ui/core';
 import Cookies from 'universal-cookie';
+import SaveIcon from '@material-ui/icons/Save';
 
 import sealion from '../assets/sea-lion.png';
 import { changePaging, returnChangeQuery } from '../dataProvider';
@@ -196,6 +197,7 @@ const Settings = () => {
                                     variant="contained"
                                     color="primary"
                                     onClick={handleSave}
+                                    startIcon={<SaveIcon />}
                                 >
                                     Save
                                 </Button>

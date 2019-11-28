@@ -1,4 +1,4 @@
-let _interopRequireDefault = require('../../node_modules/@babel/runtime/helpers/interopRequireDefault');
+let _interopRequireDefault = require('@babel/runtime/helpers/interopRequireDefault');
 
 Object.defineProperty(exports, '__esModule', {
     value: true,
@@ -8,7 +8,7 @@ exports.default = void 0;
 const _react = _interopRequireDefault(require('react'));
 
 const _createSvgIcon = _interopRequireDefault(
-    require('../../node_modules/@material-ui/icons/utils/createSvgIcon')
+    require('@material-ui/icons/utils/createSvgIcon')
 );
 
 const _default = (0, _createSvgIcon.default)(

@@ -145,13 +145,22 @@ export const NodesShow = props => {
                     <ArrayField source="interfaces">
                         <Datagrid>
                             <TextField source="name" />
-                            <TextField source="chassis_id" label="Local Chassis ID" />
+                            <TextField
+                                source="chassis_id"
+                                label="Local Chassis ID"
+                            />
                             <TextField source="port_id" label="Local Port ID" />
                             {QueryVersion() >= 'v1.3' && (
-                                <TextField source="attached_network_device.chassis_id" label="Remote Chassis ID" />
+                                <TextField
+                                    source="attached_network_device.chassis_id"
+                                    label="Remote Chassis ID"
+                                />
                             )}
                             {QueryVersion() >= 'v1.3' && (
-                                <TextField source="attached_network_device.port_id" label="Remote Port ID" />
+                                <TextField
+                                    source="attached_network_device.port_id"
+                                    label="Remote Port ID"
+                                />
                             )}
                         </Datagrid>
                     </ArrayField>

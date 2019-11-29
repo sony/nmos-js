@@ -8,7 +8,7 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import { Error, Loading, ShowButton, Title } from 'react-admin';
+import { Loading, ShowButton, Title } from 'react-admin';
 import FilterField from '../../components/FilterField';
 import PaginationButton from '../../components/PaginationButton';
 import ListActions from '../../components/ListActions';
@@ -20,7 +20,7 @@ const FlowsList = props => {
     // As the paginationCursor variable has not changed we need to force an update
     const [seed, setSeed] = useState(Math.random());
 
-    const { data, error, loaded, url } = useGetList({
+    const { data, loaded, url } = useGetList({
         ...props,
         filter,
         paginationCursor,
@@ -45,7 +45,6 @@ const FlowsList = props => {
     };
 
     if (!loaded) return <Loading />;
-    if (error) return <Error />;
     if (!data) return null;
 
     return (

@@ -489,6 +489,7 @@ const ConnectionManagementTab = ({
                                                     'active'
                                                 )
                                             }
+                                            color="primary"
                                             startIcon={
                                                 <ActivateImmediateIcon />
                                             }
@@ -503,6 +504,7 @@ const ConnectionManagementTab = ({
                                                     'staged'
                                                 )
                                             }
+                                            color="primary"
                                             startIcon={<StageIcon />}
                                         >
                                             Stage

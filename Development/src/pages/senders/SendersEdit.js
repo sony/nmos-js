@@ -6,11 +6,9 @@ import {
     BooleanInput,
     Edit,
     FormDataConsumer,
-    SaveButton,
     SelectInput,
     SimpleForm,
     TextInput,
-    Toolbar,
 } from 'react-admin';
 import get from 'lodash/get';
 import set from 'lodash/set';
@@ -18,7 +16,7 @@ import { useTheme } from '@material-ui/styles';
 import ClearIcon from '@material-ui/icons/Clear';
 import ConnectionEditActions from '../../components/ConnectionEditActions';
 import SenderTransportParamsCardsGrid from './SenderTransportParams';
-import { StageIcon } from '../../icons';
+import ConnectionEditToolbar from '../../components/ConnectionEditToolbar';
 
 const SendersTitle = ({ record }) => (
     <span>
@@ -29,12 +27,6 @@ const SendersTitle = ({ record }) => (
                 : `${record.id}`
             : 'Unknown'}
     </span>
-);
-
-const PostEditToolbar = props => (
-    <Toolbar {...props}>
-        <SaveButton label="Stage" icon={<StageIcon />} />
-    </Toolbar>
 );
 
 const SendersEdit = props => {
@@ -95,7 +87,7 @@ const EditStagedTab = props => (
         actions={<Fragment />}
     >
         <SimpleForm
-            toolbar={<PostEditToolbar />}
+            toolbar={<ConnectionEditToolbar />}
             redirect={`/senders/${props.id}/show/staged`}
         >
             <TextInput label="Receiver ID" source="$staged.receiver_id" />

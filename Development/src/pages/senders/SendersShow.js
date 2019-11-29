@@ -31,6 +31,7 @@ import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import QueryVersion from '../../components/QueryVersion';
+import { ContentCopyIcon } from '../../icons';
 
 const SendersTitle = ({ record }) => {
     return (
@@ -332,6 +333,7 @@ const ShowTransportFileTab = ({ record }) => {
                         variant="contained"
                         color="primary"
                         onClick={handleClick}
+                        startIcon={<ContentCopyIcon />}
                     >
                         Copy
                     </MaterialButton>

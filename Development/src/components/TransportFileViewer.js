@@ -11,6 +11,7 @@ import {
 } from '@material-ui/core';
 import copy from 'clipboard-copy';
 import get from 'lodash/get';
+import { ContentCopyIcon } from '../icons';
 
 const TransportFileViewer = ({ endpoint, ...props }) => {
     const [checked, setChecked] = React.useState(false);
@@ -41,13 +42,16 @@ const TransportFileViewer = ({ endpoint, ...props }) => {
             <Collapse in={checked}>
                 <Card>
                     <CardContent>
-                        <Typography style={{ fontFamily: 'inherit' }}>
-                            {get(props.record, `${endpoint}`)}
-                        </Typography>
+                        <pre style={{ fontFamily: 'inherit' }}>
+                            <Typography>
+                                {get(props.record, `${endpoint}`)}
+                            </Typography>
+                        </pre>
                         <MaterialButton
                             variant="contained"
                             color="primary"
                             onClick={handleClick}
+                            startIcon={<ContentCopyIcon />}
                         >
                             Copy
                         </MaterialButton>

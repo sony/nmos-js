@@ -61,7 +61,6 @@ const SourcesList = props => {
                             <TableRow>
                                 <TableCell
                                     style={{
-                                        minWidth: '240px',
                                         paddingLeft: '32px',
                                     }}
                                 >
@@ -71,7 +70,7 @@ const SourcesList = props => {
                                         setFilter={changeFilter}
                                     />
                                 </TableCell>
-                                <TableCell style={{ minWidth: '255px' }}>
+                                <TableCell>
                                     Format{' '}
                                     <FilterField
                                         name="format"

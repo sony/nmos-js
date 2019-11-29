@@ -61,7 +61,6 @@ const SubscriptionsList = props => {
                             <TableRow>
                                 <TableCell
                                     style={{
-                                        minWidth: '280px',
                                         paddingLeft: '32px',
                                     }}
                                 >
@@ -71,21 +70,21 @@ const SubscriptionsList = props => {
                                         setFilter={changeFilter}
                                     />
                                 </TableCell>
-                                <TableCell style={{ minWidth: '255px' }}>
+                                <TableCell>
                                     Persist{' '}
                                     <FilterField
                                         name="persist"
                                         setFilter={changeFilter}
                                     />
                                 </TableCell>
-                                <TableCell style={{ minWidth: '290px' }}>
+                                <TableCell>
                                     Max Update Rate{' '}
                                     <FilterField
                                         name="max update rate"
                                         setFilter={changeFilter}
                                     />
                                 </TableCell>
-                                <TableCell style={{ minWidth: '255px' }}>
+                                <TableCell>
                                     ID{' '}
                                     <FilterField
                                         name="id"

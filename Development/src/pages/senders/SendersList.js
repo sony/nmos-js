@@ -64,7 +64,6 @@ const SendersList = props => {
                             <TableRow>
                                 <TableCell
                                     style={{
-                                        minWidth: '240px',
                                         paddingLeft: '32px',
                                     }}
                                 >
@@ -74,7 +73,7 @@ const SendersList = props => {
                                         setFilter={changeFilter}
                                     />
                                 </TableCell>
-                                <TableCell style={{ minWidth: '260px' }}>
+                                <TableCell>
                                     Transport{' '}
                                     <FilterField
                                         name="transport"

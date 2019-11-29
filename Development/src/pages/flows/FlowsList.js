@@ -61,7 +61,6 @@ const FlowsList = props => {
                             <TableRow>
                                 <TableCell
                                     style={{
-                                        minWidth: '240px',
                                         paddingLeft: '32px',
                                     }}
                                 >
@@ -71,7 +70,7 @@ const FlowsList = props => {
                                         setFilter={changeFilter}
                                     />
                                 </TableCell>
-                                <TableCell style={{ minWidth: '245px' }}>
+                                <TableCell>
                                     Format{' '}
                                     <FilterField
                                         name="format"

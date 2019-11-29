@@ -62,7 +62,6 @@ const NodesList = props => {
                             <TableRow>
                                 <TableCell
                                     style={{
-                                        minWidth: '240px',
                                         paddingLeft: '32px',
                                     }}
                                 >
@@ -72,7 +71,7 @@ const NodesList = props => {
                                         setFilter={changeFilter}
                                     />
                                 </TableCell>
-                                <TableCell style={{ minWidth: '265px' }}>
+                                <TableCell>
                                     Hostname{' '}
                                     <FilterField
                                         name="hostname"
@@ -80,7 +79,7 @@ const NodesList = props => {
                                     />
                                 </TableCell>
                                 {QueryVersion() >= 'v1.1' && (
-                                    <TableCell style={{ minWidth: '280px' }}>
+                                    <TableCell>
                                         API Versions{' '}
                                         <FilterField
                                             name="api.versions"
@@ -88,7 +87,7 @@ const NodesList = props => {
                                         />
                                     </TableCell>
                                 )}
-                                <TableCell style={{ minWidth: '255px' }}>
+                                <TableCell>
                                     Node ID{' '}
                                     <FilterField
                                         name="id"

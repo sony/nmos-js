@@ -61,7 +61,6 @@ const DevicesList = props => {
                             <TableRow>
                                 <TableCell
                                     style={{
-                                        minWidth: '240px',
                                         paddingLeft: '32px',
                                     }}
                                 >
@@ -71,7 +70,7 @@ const DevicesList = props => {
                                         setFilter={changeFilter}
                                     />
                                 </TableCell>
-                                <TableCell style={{ minWidth: '240px' }}>
+                                <TableCell>
                                     Type{' '}
                                     <FilterField
                                         name="type"

@@ -61,7 +61,6 @@ const LogsList = props => {
                             <TableRow>
                                 <TableCell
                                     style={{
-                                        minWidth: '257px',
                                         paddingRight: '6px',
                                         paddingLeft: '32px',
                                     }}
@@ -74,7 +73,6 @@ const LogsList = props => {
                                 </TableCell>
                                 <TableCell
                                     style={{
-                                        minWidth: '100px',
                                         paddingRight: '6px',
                                     }}
                                 >
@@ -86,7 +84,6 @@ const LogsList = props => {
                                 </TableCell>
                                 <TableCell
                                     style={{
-                                        minWidth: '247px',
                                         paddingRight: '6px',
                                     }}
                                 >
@@ -105,7 +102,6 @@ const LogsList = props => {
                                 </TableCell>
                                 <TableCell
                                     style={{
-                                        minWidth: '150px',
                                         paddingRight: '6px',
                                     }}
                                 >

@@ -5,7 +5,7 @@ const SvgFlow = props => (
     <SvgIcon viewBox="0 0 480 480" {...props}>
         <defs>
             <path
-                d="M300 300V180h60v120h-60zm80 0V180h60v120h-60zm-160 0V180h60v120h-60zm-80 0V180h60v120h-60zm-40-60l-20-20h40v20h-20zm-40-40l-20-20h80v20H60z"
+                d="M140 280V180h100v100H140zm240 0V180h100v100H380zm-270 0l-20-20h30v20h-10zm150 0V180h100v100H260zM70 240l-20-20h70v20H70zm-40-40l-20-20h110v20H30z"
                 id="Flow_svg__a"
             />
         </defs>

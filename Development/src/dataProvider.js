@@ -241,6 +241,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             } else {
                 total_query = 'id=' + params.ids[0];
                 //hmm, need to make multiple requests if we have to match one at a time with basic query syntax
+                //as the fetch component must make a valid connection we'll make the first request here
                 return { url: `${API_URL}/${resource}?${total_query}` };
             }
         }
@@ -498,6 +499,25 @@ async function convertHTTPResponseToDataProvider(
                 url: url,
                 data: json,
                 total: json ? json.length : 0,
+            };
+        case GET_MANY:
+            if (cookies.get('RQL') === 'false') {
+                return await Promise.all(
+                    params.ids.map(
+                        id =>
+                            new Promise(resolve =>
+                                fetch(`${API_URL}/${resource}?id=${id}`)
+                                    .then(response => response.json())
+                                    .then(json => resolve(json[0]))
+                            )
+                    )
+                ).then(response => {
+                    return { url: url, data: response };
+                });
+            }
+            return {
+                url: url,
+                data: json,
             };
         case GET_MANY_REFERENCE:
             return {

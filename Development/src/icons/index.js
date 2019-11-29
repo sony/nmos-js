@@ -15,7 +15,8 @@ import StageIcon from './Stage';
 import SubscriptionIcon from './Subscription';
 
 // To optimise the SVG files and convert to the correct syntax:
-// npx @svgr/cli -d ./out/ --template ./svgr-template.js ./src/
+// svgo --enable=removeDimensions --disable=removeViewBox --pretty -f .\src\ -o .\optimised\
+// npx @svgr/cli -d ./out/ --template ./svgr-template.js ./optimised/
 
 export {
     ActivateImmediateIcon,

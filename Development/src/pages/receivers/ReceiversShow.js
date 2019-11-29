@@ -190,14 +190,14 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                 {controllerProps.record &&
                     controllerProps.record.caps.media_types && (
                         <ItemArrayField
-                            label="Caps Media Types"
+                            label="Media Types Capability"
                             source="caps.media_types"
                         />
                     )}
                 {controllerProps.record &&
                     controllerProps.record.caps.event_types && (
                         <ItemArrayField
-                            label="Caps Event Types"
+                            label="Event Types Capability"
                             source="caps.event_types"
                         />
                     )}

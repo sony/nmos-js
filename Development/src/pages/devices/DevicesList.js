@@ -20,7 +20,7 @@ const DevicesList = props => {
     // As the paginationCursor variable has not changed we need to force an update
     const [seed, setSeed] = useState(Math.random());
 
-    const { data, error, loaded, url } = useGetList({
+    const { data, loaded, url } = useGetList({
         ...props,
         filter,
         paginationCursor,
@@ -45,7 +45,6 @@ const DevicesList = props => {
     };
 
     if (!loaded) return <Loading />;
-    if (error) return <Error />;
     if (!data) return null;
 
     return (

@@ -6,10 +6,10 @@ const SvgFlow = props => (
         <defs>
             <path
                 d="M300 300V180h60v120h-60zm80 0V180h60v120h-60zm-160 0V180h60v120h-60zm-80 0V180h60v120h-60zm-40-60l-20-20h40v20h-20zm-40-40l-20-20h80v20H60z"
-                id="flow_svg__a"
+                id="Flow_svg__a"
             />
         </defs>
-        <use xlinkHref="#flow_svg__a" />
+        <use xlinkHref="#Flow_svg__a" />
     </SvgIcon>
 );
 

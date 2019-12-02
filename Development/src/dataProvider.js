@@ -74,9 +74,9 @@ function returnUrl(resource) {
     return url;
 }
 
-export const returnChangeQuery = (API, cookieQuery) => {
-    if (cookieQuery === '' || cookieQuery === 'reset') {
-        if (cookies.get(API) === undefined || cookieQuery === 'reset') {
+export const changeAPIEndpoint = (API, cookieQuery) => {
+    if (cookieQuery === '') {
+        if (cookies.get(API) === undefined) {
             let local = defaultUrl(API);
             cookies.set(API, local, { path: '/' });
             return cookies.get(API);

@@ -11,56 +11,42 @@ import Cookies from 'universal-cookie';
 const cookies = new Cookies();
 
 const components = {
-    PREV: ChevronLeft,
-    NEXT: ChevronRight,
-    LAST: LastPage,
-    FIRST: FirstPage,
+    prev: ChevronLeft,
+    next: ChevronRight,
+    last: LastPage,
+    first: FirstPage,
 };
 
-class PaginationButton extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {};
-        this.enabled = true;
-        this.firstLoad = this.firstLoad.bind(this);
-        this.onClick = this.onClick.bind(this);
-        this.firstLoad();
-    }
-    async firstLoad() {
-        const paginationSupport = cookies.get('Pagination');
-
+const PaginationButton = props => {
+    const label = props.label.toLowerCase();
+    const paginationSupport = cookies.get('Pagination');
+    const enabled = (() => {
+        if (props.disabled) return false;
         if (paginationSupport === 'enabled') {
-            this.enabled = true;
+            return true;
         } else if (paginationSupport === 'disabled') {
-            this.enabled = false;
+            return false;
         } else {
             // paginationSupport === 'partial'
-            this.enabled =
-                this.props.label === 'NEXT' || this.props.label === 'PREV';
+            return label === 'next' || label === 'prev';
         }
-    }
+    })();
 
-    getIcon(label) {
+    const getIcon = label => {
         const ButtonIcon = components[label];
         return <ButtonIcon style={{ transform: 'rotate(270deg)' }} />;
-    }
+    };
 
-    onClick() {
-        this.props.nextPage(this.props.label);
-    }
-
-    render() {
-        return (
-            <Button
-                onClick={this.onClick}
-                label={this.props.label}
-                disabled={!this.enabled}
-            >
-                {this.getIcon(this.props.label)}
-                {this.props.label}
-            </Button>
-        );
-    }
-}
+    return (
+        <Button
+            onClick={() => props.nextPage(label)}
+            label={label}
+            disabled={!enabled}
+        >
+            {getIcon(label)}
+            {label}
+        </Button>
+    );
+};
 
 export default PaginationButton;

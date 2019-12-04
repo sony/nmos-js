@@ -28,6 +28,7 @@ const useQueryWithStore = (query, options, dataSelector, totalSelector) => {
         error: null,
         loading: true,
         loaded: data !== undefined && !isEmptyList(data),
+        pagination: null,
         url: null,
     });
     if (!isEqual(state.data, data) || state.total !== total) {
@@ -53,6 +54,7 @@ const useQueryWithStore = (query, options, dataSelector, totalSelector) => {
                         error: null,
                         loading: false,
                         loaded: true,
+                        pagination: response.pagination,
                         url: response.url,
                     })
                 );
@@ -71,36 +73,28 @@ const useQueryWithStore = (query, options, dataSelector, totalSelector) => {
 const useGetList = props => {
     useCheckMinimumRequiredProps(
         'List',
-        [
-            'basePath',
-            'filter',
-            'location',
-            'paginationCursor',
-            'resource',
-            'seed',
-        ],
+        ['basePath', 'filter', 'location', 'resource'],
         props
     );
-    const {
-        basePath,
-        resource,
-        hasCreate,
-        paginationCursor,
-        filter,
-        seed,
-    } = props;
+    const { basePath, resource, hasCreate, paginationURL, filter } = props;
 
     const notify = useNotify();
     const version = useVersion();
 
-    const { total, error, loading, loaded, url } = useQueryWithStore(
+    const {
+        total,
+        error,
+        loading,
+        loaded,
+        pagination,
+        url,
+    } = useQueryWithStore(
         {
             type: 'getList',
             resource,
             payload: {
-                seed,
-                paginationCursor,
                 filter,
+                paginationURL,
             },
         },
         {
@@ -153,6 +147,7 @@ const useGetList = props => {
         ids,
         loading,
         loaded,
+        pagination,
         resource,
         total,
         url,

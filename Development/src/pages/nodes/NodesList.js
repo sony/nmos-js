@@ -8,7 +8,7 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import { Loading, ShowButton, Title } from 'react-admin';
+import { Loading, ShowButton, Title, useRefresh } from 'react-admin';
 import FilterField from '../../components/FilterField';
 import PaginationButton from '../../components/PaginationButton';
 import QueryVersion from '../../components/QueryVersion';
@@ -16,21 +16,19 @@ import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
 
 const NodesList = props => {
+    const refresh = useRefresh();
     const [filter, setFilter] = useState({});
-    const [paginationCursor, setPaginationCursor] = useState(null);
-    // As the paginationCursor variable has not changed we need to force an update
-    const [seed, setSeed] = useState(Math.random());
-
-    const { data, loaded, url } = useGetList({
+    const [paginationURL, setPaginationURL] = useState(null);
+    const { data, loaded, pagination, url } = useGetList({
         ...props,
         filter,
-        paginationCursor,
-        seed,
+        paginationURL,
     });
+    if (!loaded) return <Loading />;
+    if (!data) return null;
 
     const nextPage = label => {
-        setPaginationCursor(label);
-        setSeed(Math.random());
+        setPaginationURL(pagination[label]);
     };
 
     const changeFilter = (filterValue, name) => {
@@ -40,13 +38,18 @@ const NodesList = props => {
         } else {
             delete currentFilter[name];
         }
+        setPaginationURL(null);
         setFilter(currentFilter);
-        setPaginationCursor(null);
-        setSeed(Math.random());
+        refresh();
     };
 
-    if (!loaded) return <Loading />;
-    if (!data) return null;
+    const ListPaginationButton = props => (
+        <PaginationButton
+            disabled={!pagination}
+            nextPage={nextPage}
+            {...props}
+        />
+    );
 
     return (
         <Fragment>
@@ -121,10 +124,10 @@ const NodesList = props => {
                         </TableBody>
                     </Table>
                     <br />
-                    <PaginationButton label="FIRST" nextPage={nextPage} />
-                    <PaginationButton label="PREV" nextPage={nextPage} />
-                    <PaginationButton label="NEXT" nextPage={nextPage} />
-                    <PaginationButton label="LAST" nextPage={nextPage} />
+                    <ListPaginationButton label="first" />
+                    <ListPaginationButton label="prev" />
+                    <ListPaginationButton label="next" />
+                    <ListPaginationButton label="last" />
                 </CardContent>
             </Card>
         </Fragment>

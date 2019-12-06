@@ -465,21 +465,25 @@ async function convertHTTPResponseToDataProvider(
                 };
             }
 
-            const pagination = ['first', 'last', 'next', 'prev']
-                .map(cursor => {
-                    return {
-                        cursor,
-                        data: headers
-                            .get('Link')
-                            .match(
-                                new RegExp(`<([^>]+)>;[ \\t]*rel="${cursor}"`)
-                            )[1],
-                    };
-                })
-                .reduce((object, item) => {
-                    object[item.cursor] = item.data;
-                    return object;
-                }, {});
+            const pagination = headers.get('Link')
+                ? ['first', 'last', 'next', 'prev']
+                      .map(cursor => {
+                          return {
+                              cursor,
+                              data: headers
+                                  .get('Link')
+                                  .match(
+                                      new RegExp(
+                                          `<([^>]+)>;[ \\t]*rel="${cursor}"`
+                                      )
+                                  )[1],
+                          };
+                      })
+                      .reduce((object, item) => {
+                          object[item.cursor] = item.data;
+                          return object;
+                      }, {})
+                : null;
 
             return {
                 url: url,

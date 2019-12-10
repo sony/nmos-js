@@ -27,7 +27,6 @@ let LINK_HEADERS = {
     subscriptions: '',
     logs: '',
 };
-let PAGINATION_URL = {};
 const LOGGING_API = 'Logging API';
 const QUERY_API = 'Query API';
 const DNS_API = 'DNS-SD API';
@@ -128,11 +127,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
 
         case GET_LIST: {
             if (params.paginationURL) {
-                // in the case of a refresh we want to reset pagination
-                if (params.paginationURL !== PAGINATION_URL[resource]) {
-                    PAGINATION_URL[resource] = params.paginationURL;
-                    return { url: params.paginationURL };
-                }
+                return { url: params.paginationURL };
             }
 
             const pagingLimit = cookies.get('Paging Limit');

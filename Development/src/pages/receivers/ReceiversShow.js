@@ -35,7 +35,7 @@ import FilterField from '../../components/FilterField';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
 import makeConnection from '../../components/makeConnection';
-import PaginationButton from '../../components/PaginationButton';
+import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
 import useGetList from '../../components/useGetList';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
@@ -377,7 +377,7 @@ const ConnectionManagementTab = ({
     };
 
     const ListPaginationButton = props => (
-        <PaginationButton
+        <PaginationButtons
             disabled={!pagination}
             nextPage={nextPage}
             {...props}

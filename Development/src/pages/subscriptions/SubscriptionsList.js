@@ -16,7 +16,7 @@ import {
     useRefresh,
 } from 'react-admin';
 import FilterField from '../../components/FilterField';
-import PaginationButton from '../../components/PaginationButton';
+import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
 
@@ -47,14 +47,6 @@ const SubscriptionsList = props => {
         setFilter(currentFilter);
         refresh();
     };
-
-    const ListPaginationButton = props => (
-        <PaginationButton
-            disabled={!pagination}
-            nextPage={nextPage}
-            {...props}
-        />
-    );
 
     return (
         <Fragment>
@@ -129,10 +121,11 @@ const SubscriptionsList = props => {
                             ))}
                         </TableBody>
                     </Table>
-                    <ListPaginationButton label="first" />
-                    <ListPaginationButton label="prev" />
-                    <ListPaginationButton label="next" />
-                    <ListPaginationButton label="last" />
+                    <PaginationButtons
+                        disabled={!pagination}
+                        nextPage={nextPage}
+                        {...props}
+                    />
                 </CardContent>
             </Card>
         </Fragment>

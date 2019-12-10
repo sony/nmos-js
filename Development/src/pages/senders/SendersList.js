@@ -12,7 +12,7 @@ import { Loading, ShowButton, Title, useRefresh } from 'react-admin';
 import CheckIcon from '@material-ui/icons/Check';
 import ClearIcon from '@material-ui/icons/Clear';
 import FilterField from '../../components/FilterField';
-import PaginationButton from '../../components/PaginationButton';
+import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
@@ -44,14 +44,6 @@ const SendersList = props => {
         setFilter(currentFilter);
         refresh();
     };
-
-    const ListPaginationButton = props => (
-        <PaginationButton
-            disabled={!pagination}
-            nextPage={nextPage}
-            {...props}
-        />
-    );
 
     return (
         <Fragment>
@@ -116,10 +108,11 @@ const SendersList = props => {
                         </TableBody>
                     </Table>
                     <br />
-                    <ListPaginationButton label="first" />
-                    <ListPaginationButton label="prev" />
-                    <ListPaginationButton label="next" />
-                    <ListPaginationButton label="last" />
+                    <PaginationButtons
+                        disabled={!pagination}
+                        nextPage={nextPage}
+                        {...props}
+                    />
                 </CardContent>
             </Card>
         </Fragment>

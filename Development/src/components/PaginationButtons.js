@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import {
     ChevronLeft,
     ChevronRight,
@@ -17,18 +17,18 @@ const components = {
     first: FirstPage,
 };
 
-const PaginationButton = props => {
-    const label = props.label.toLowerCase();
+export const PaginationButton = ({ disabled, label, nextPage, rel }) => {
+    rel.toLowerCase();
     const paginationSupport = cookies.get('Pagination');
     const enabled = (() => {
-        if (props.disabled) return false;
+        if (disabled) return false;
         if (paginationSupport === 'enabled') {
             return true;
         } else if (paginationSupport === 'disabled') {
             return false;
         } else {
             // paginationSupport === 'partial'
-            return label === 'next' || label === 'prev';
+            return rel === 'next' || rel === 'prev';
         }
     })();
 
@@ -38,15 +38,20 @@ const PaginationButton = props => {
     };
 
     return (
-        <Button
-            onClick={() => props.nextPage(label)}
-            label={label}
-            disabled={!enabled}
-        >
-            {getIcon(label)}
+        <Button onClick={() => nextPage(rel)} label={label} disabled={!enabled}>
+            {getIcon(rel)}
             {label}
         </Button>
     );
 };
 
-export default PaginationButton;
+const PaginationButtons = props => (
+    <Fragment>
+        <PaginationButton label="First" rel="first" {...props} />
+        <PaginationButton label="Prev" rel="prev" {...props} />
+        <PaginationButton label="Next" rel="next" {...props} />
+        <PaginationButton label="Last" rel="last" {...props} />
+    </Fragment>
+);
+
+export default PaginationButtons;

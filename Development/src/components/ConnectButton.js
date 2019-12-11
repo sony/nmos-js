@@ -1,7 +1,6 @@
 import React from 'react';
 import Button from '@material-ui/core/Button';
-import PropTypes from 'prop-types';
-import { returnChangeQuery } from '../dataProvider';
+import { changeAPIEndpoint } from '../dataProvider';
 import { Snackbar } from '@material-ui/core';
 import { ConnectRegistryIcon } from '../icons';
 
@@ -14,7 +13,7 @@ class ConnectButtonSnackbar extends React.Component {
         horizontal: 'center',
     };
     handleClick = state => () => {
-        returnChangeQuery('query', longQuery);
+        changeAPIEndpoint('Query API', longQuery);
         this.setState({ open: true, ...state });
     };
     handleClose = (event, reason) => {
@@ -67,9 +66,5 @@ const makeNewQuery = record => {
 const ConnectButton = ({ record }) => (
     <ConnectButtonSnackbar onClick={makeNewQuery(record)} />
 );
-
-ConnectButton.propTypes = {
-    label: PropTypes.string,
-};
 
 export default ConnectButton;

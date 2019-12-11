@@ -16,7 +16,6 @@ import {
 import {
     ArrayField,
     BooleanField,
-    Error,
     FunctionField,
     Loading,
     ReferenceField,
@@ -24,7 +23,6 @@ import {
     ShowView,
     SimpleShowLayout,
     TextField,
-    useRefresh,
     useShowController,
 } from 'react-admin';
 import get from 'lodash/get';
@@ -37,7 +35,7 @@ import FilterField from '../../components/FilterField';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
 import makeConnection from '../../components/makeConnection';
-import PaginationButton from '../../components/PaginationButton';
+import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
 import useGetList from '../../components/useGetList';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
@@ -69,7 +67,7 @@ const ReceiversShow = props => {
             <div style={{ display: 'flex' }}>
                 <Paper
                     style={{
-                        alignSelf: 'end',
+                        alignSelf: 'flex-end',
                         background: tabBackgroundColor,
                     }}
                 >
@@ -338,25 +336,32 @@ const ConnectionManagementTab = ({
     receiverData,
     ...props
 }) => {
-    const refresh = useRefresh();
+    // we need to force update the sender data without refreshing
+    // the whole view
+    const [refresh, setRefresh] = useState(true);
     const [filter, setFilter] = useState({
         transport: get(receiverData, 'transport'),
     });
-    const [paginationCursor, setPaginationCursor] = useState(null);
-    // As the paginationCursor variable has not changed we need to force an update
-    const [seed, setSeed] = useState(Math.random());
-
-    const { data, error, loaded } = useGetList({
+    const [paginationURL, setPaginationURL] = useState(null);
+    const { data, loaded, pagination } = useGetList({
         ...props,
         filter,
-        paginationCursor,
+        paginationURL,
         resource: 'senders',
-        seed,
+        refresh,
     });
 
+    // receiverData initialises undefined, update when no longer null
+    useEffect(() => {
+        if (receiverData !== null)
+            setFilter({ transport: get(receiverData, 'transport') });
+    }, [receiverData]);
+
+    if (!loaded) return <Loading />;
+    if (!data) return null;
+
     const nextPage = label => {
-        setPaginationCursor(label);
-        setSeed(Math.random());
+        setPaginationURL(pagination[label]);
     };
 
     const changeFilter = (filterValue, name) => {
@@ -366,16 +371,18 @@ const ConnectionManagementTab = ({
         } else {
             delete currentFilter[name];
         }
+        setRefresh(!refresh);
+        setPaginationURL(null);
         setFilter(currentFilter);
-        setPaginationCursor(null);
-        setSeed(Math.random());
     };
 
-    // receiverData initialises undefined, update when no longer null
-    useEffect(() => {
-        if (receiverData !== null)
-            setFilter({ transport: get(receiverData, 'transport') });
-    }, [receiverData]);
+    const ListPaginationButton = props => (
+        <PaginationButtons
+            disabled={!pagination}
+            nextPage={nextPage}
+            {...props}
+        />
+    );
 
     const connect = (senderID, receiverID, endpoint) => {
         makeConnection(senderID, receiverID, endpoint, props).then(() => {
@@ -385,10 +392,6 @@ const ConnectionManagementTab = ({
             );
         });
     };
-
-    if (!loaded) return <Loading />;
-    if (error) return <Error />;
-    if (!data) return null;
 
     return (
         <ShowView
@@ -427,114 +430,96 @@ const ConnectionManagementTab = ({
                             <TableCell>Connect</TableCell>
                         </TableRow>
                     </TableHead>
-                    {data && (
-                        <TableBody>
-                            {data.map(item => (
-                                <TableRow
-                                    key={item.id}
-                                    selected={
-                                        get(receiverData, 'id') === item.id
-                                    }
-                                >
-                                    <TableCell component="th" scope="row">
-                                        <ShowButton
-                                            style={{
-                                                textTransform: 'none',
-                                            }}
-                                            basePath="/senders"
-                                            record={item}
-                                            label={item.label}
-                                        />
-                                    </TableCell>
-                                    <TableCell>{item.id}</TableCell>
+                    <TableBody>
+                        {data.map(item => (
+                            <TableRow
+                                key={item.id}
+                                selected={get(receiverData, 'id') === item.id}
+                            >
+                                <TableCell component="th" scope="row">
+                                    <ShowButton
+                                        style={{
+                                            textTransform: 'none',
+                                        }}
+                                        basePath="/senders"
+                                        record={item}
+                                        label={item.label}
+                                    />
+                                </TableCell>
+                                <TableCell>{item.id}</TableCell>
+                                <TableCell>
+                                    <ReferenceField
+                                        record={item}
+                                        basePath="/flows"
+                                        label="Flow"
+                                        source="flow_id"
+                                        reference="flows"
+                                        link="show"
+                                    >
+                                        <ChipConditionalLabel source="label" />
+                                    </ReferenceField>
+                                </TableCell>
+                                <TableCell>
+                                    <ReferenceField
+                                        record={item}
+                                        basePath="/devices"
+                                        label="Device"
+                                        source="device_id"
+                                        reference="devices"
+                                        link="show"
+                                    >
+                                        <ChipConditionalLabel source="label" />
+                                    </ReferenceField>
+                                </TableCell>
+                                {QueryVersion() >= 'v1.2' && (
                                     <TableCell>
-                                        <ReferenceField
-                                            record={item}
-                                            basePath="/flows"
-                                            label="Flow"
-                                            source="flow_id"
-                                            reference="flows"
-                                            link="show"
-                                        >
-                                            <ChipConditionalLabel source="label" />
-                                        </ReferenceField>
+                                        {item.subscription.active ? (
+                                            <CheckIcon />
+                                        ) : (
+                                            <ClearIcon />
+                                        )}
                                     </TableCell>
-                                    <TableCell>
-                                        <ReferenceField
-                                            record={item}
-                                            basePath="/devices"
-                                            label="Device"
-                                            source="device_id"
-                                            reference="devices"
-                                            link="show"
-                                        >
-                                            <ChipConditionalLabel source="label" />
-                                        </ReferenceField>
-                                    </TableCell>
-                                    {QueryVersion() >= 'v1.2' && (
-                                        <TableCell>
-                                            {item.subscription.active ? (
-                                                <CheckIcon />
-                                            ) : (
-                                                <ClearIcon />
-                                            )}
-                                        </TableCell>
-                                    )}
-                                    <TableCell>
-                                        <Button
-                                            onClick={() =>
-                                                connect(
-                                                    item.id,
-                                                    get(receiverData, 'id'),
-                                                    'active'
-                                                )
-                                            }
-                                            color="primary"
-                                            startIcon={
-                                                <ActivateImmediateIcon />
-                                            }
-                                        >
-                                            Activate
-                                        </Button>
-                                        <Button
-                                            onClick={() =>
-                                                connect(
-                                                    item.id,
-                                                    get(receiverData, 'id'),
-                                                    'staged'
-                                                )
-                                            }
-                                            color="primary"
-                                            startIcon={<StageIcon />}
-                                        >
-                                            Stage
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    )}
+                                )}
+                                <TableCell>
+                                    <Button
+                                        onClick={() =>
+                                            connect(
+                                                item.id,
+                                                get(receiverData, 'id'),
+                                                'active'
+                                            )
+                                        }
+                                        color="primary"
+                                        startIcon={<ActivateImmediateIcon />}
+                                    >
+                                        Activate
+                                    </Button>
+                                    <Button
+                                        onClick={() =>
+                                            connect(
+                                                item.id,
+                                                get(receiverData, 'id'),
+                                                'staged'
+                                            )
+                                        }
+                                        color="primary"
+                                        startIcon={<StageIcon />}
+                                    >
+                                        Stage
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
                 </Table>
                 <Table>
                     <TableFooter>
                         <TableRow>
                             <TableCell style={{ whiteSpace: 'nowrap' }}>
-                                <PaginationButton
-                                    label="FIRST"
-                                    nextPage={nextPage}
-                                />
-                                <PaginationButton
-                                    label="PREV"
-                                    nextPage={nextPage}
-                                />
-                                <PaginationButton
-                                    label="NEXT"
-                                    nextPage={nextPage}
-                                />
-                                <PaginationButton
-                                    label="LAST"
-                                    nextPage={nextPage}
-                                />
+                                <ListPaginationButton label="first" />
+                                <ListPaginationButton label="prev" />
+                                <ListPaginationButton label="next" />
+                                <ListPaginationButton label="last" />
                             </TableCell>
                         </TableRow>
                     </TableFooter>

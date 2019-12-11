@@ -40,7 +40,7 @@ const SendersEdit = props => {
             <div style={{ display: 'flex' }}>
                 <Paper
                     style={{
-                        alignSelf: 'end',
+                        alignSelf: 'flex-end',
                         background: tabBackgroundColor,
                     }}
                 >

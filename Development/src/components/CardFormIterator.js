@@ -41,57 +41,44 @@ export class CardFormIterator extends Component {
         return fields ? (
             <div>
                 <br style={{ lineHeight: 2 }} />
-                <Grid container>
+                <Grid container spacing={2}>
                     {fields.map((member, index) => (
-                        <div key={index}>
-                            <Grid item sm>
-                                <Card>
-                                    <CardContent>
-                                        {Children.map(
-                                            children,
-                                            (input, index2) =>
-                                                isValidElement(input) ? (
-                                                    <FormInput
-                                                        basePath={
-                                                            input.props
-                                                                .basePath ||
-                                                            basePath
-                                                        }
-                                                        input={cloneElement(
-                                                            input,
-                                                            {
-                                                                source: input
-                                                                    .props
-                                                                    .source
-                                                                    ? `${member}.${input.props.source}`
-                                                                    : member,
-                                                                index: input
-                                                                    .props
-                                                                    .source
-                                                                    ? undefined
-                                                                    : index2,
-                                                                label:
-                                                                    input.props
-                                                                        .label ||
-                                                                    input.props
-                                                                        .source,
-                                                            }
-                                                        )}
-                                                        record={
-                                                            (records &&
-                                                                records[
-                                                                    index
-                                                                ]) ||
-                                                            {}
-                                                        }
-                                                        resource={resource}
-                                                    />
-                                                ) : null
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        </div>
+                        <Grid item sm key={index} style={{ flexGrow: 0 }}>
+                            <Card elevation={3}>
+                                <CardContent>
+                                    {Children.map(children, (input, index2) =>
+                                        isValidElement(input) ? (
+                                            <FormInput
+                                                basePath={
+                                                    input.props.basePath ||
+                                                    basePath
+                                                }
+                                                input={cloneElement(input, {
+                                                    source: input.props.source
+                                                        ? `${member}.${input.props.source}`
+                                                        : member,
+                                                    index: input.props.source
+                                                        ? undefined
+                                                        : index2,
+                                                    label:
+                                                        input.props.label ||
+                                                        input.props.source,
+                                                })}
+                                                record={
+                                                    (records &&
+                                                        records[index]) ||
+                                                    {}
+                                                }
+                                                resource={resource}
+                                                style={{
+                                                    display: 'inline-block',
+                                                }}
+                                            />
+                                        ) : null
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </Grid>
                     ))}
                 </Grid>
             </div>

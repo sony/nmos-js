@@ -27,7 +27,6 @@ let LINK_HEADERS = {
     subscriptions: '',
     logs: '',
 };
-let LAST_SEED;
 const LOGGING_API = 'Logging API';
 const QUERY_API = 'Query API';
 const DNS_API = 'DNS-SD API';
@@ -75,9 +74,9 @@ function returnUrl(resource) {
     return url;
 }
 
-export const returnChangeQuery = (API, cookieQuery) => {
-    if (cookieQuery === '' || cookieQuery === 'reset') {
-        if (cookies.get(API) === undefined || cookieQuery === 'reset') {
+export const changeAPIEndpoint = (API, cookieQuery) => {
+    if (cookieQuery === '') {
+        if (cookies.get(API) === undefined) {
             let local = defaultUrl(API);
             cookies.set(API, local, { path: '/' });
             return cookies.get(API);
@@ -127,47 +126,8 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
         }
 
         case GET_LIST: {
-            // If the same seed is presented twice a refresh has been called
-            // and we need to disable pagination.
-            if (params.seed === LAST_SEED) delete params.paginationCursor;
-            LAST_SEED = params.seed;
-
-            if (
-                params.hasOwnProperty('paginationCursor') &&
-                params.paginationCursor
-            ) {
-                switch (params.paginationCursor) {
-                    case 'FIRST': {
-                        let m = LINK_HEADERS[resource].match(
-                            /<([^>]+)>;[ \t]*rel="first"/
-                        );
-                        return { url: m ? m[1] : null };
-                    }
-
-                    case 'LAST': {
-                        let m = LINK_HEADERS[resource].match(
-                            /<([^>]+)>;[ \t]*rel="last"/
-                        );
-                        return { url: m ? m[1] : null };
-                    }
-
-                    case 'NEXT': {
-                        let m = LINK_HEADERS[resource].match(
-                            /<([^>]+)>;[ \t]*rel="next"/
-                        );
-                        return { url: m ? m[1] : null };
-                    }
-
-                    case 'PREV': {
-                        let m = LINK_HEADERS[resource].match(
-                            /<([^>]+)>;[ \t]*rel="prev"/
-                        );
-                        return { url: m ? m[1] : null };
-                    }
-                    default: {
-                        break;
-                    }
-                }
+            if (params.paginationURL) {
+                return { url: params.paginationURL };
             }
 
             const pagingLimit = cookies.get('Paging Limit');
@@ -494,9 +454,35 @@ async function convertHTTPResponseToDataProvider(
         case GET_LIST:
             if (resource === 'queryapis') {
                 json.map(_ => (_.id = _.name));
+                return {
+                    data: json,
+                    total: json ? json.length : 0,
+                };
             }
+
+            const pagination = headers.get('Link')
+                ? ['first', 'last', 'next', 'prev']
+                      .map(cursor => {
+                          return {
+                              cursor,
+                              data: headers
+                                  .get('Link')
+                                  .match(
+                                      new RegExp(
+                                          `<([^>]+)>;[ \\t]*rel="${cursor}"`
+                                      )
+                                  )[1],
+                          };
+                      })
+                      .reduce((object, item) => {
+                          object[item.cursor] = item.data;
+                          return object;
+                      }, {})
+                : null;
+
             return {
                 url: url,
+                pagination: pagination,
                 data: json,
                 total: json ? json.length : 0,
             };

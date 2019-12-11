@@ -21,10 +21,10 @@ const MQTTSender = ({ dataObject }) => {
     });
     return (
         <div>
-            <Grid container>
+            <Grid container spacing={2}>
                 {Object.keys(dataObject).map(i => (
                     <Grid item sm key={i}>
-                        <Card>
+                        <Card elevation={3}>
                             <CardContent>
                                 <SimpleShowLayout record={dataObject[i]}>
                                     {dataObject[i].hasOwnProperty(
@@ -183,10 +183,10 @@ const RTPSender = ({ dataObject }) => {
     });
     return (
         <div>
-            <Grid container>
+            <Grid container spacing={2}>
                 {Object.keys(dataObject).map(i => (
                     <Grid item sm key={i}>
-                        <Card>
+                        <Card elevation={3}>
                             <CardContent>
                                 <SimpleShowLayout record={dataObject[i]}>
                                     {dataObject[i].hasOwnProperty(
@@ -502,10 +502,10 @@ const WebSocketSender = ({ dataObject }) => {
     });
     return (
         <div>
-            <Grid container>
+            <Grid container spacing={2}>
                 {Object.keys(dataObject).map(i => (
                     <Grid item sm key={i}>
-                        <Card>
+                        <Card elevation={3}>
                             <CardContent>
                                 <SimpleShowLayout record={dataObject[i]}>
                                     {dataObject[i].hasOwnProperty(

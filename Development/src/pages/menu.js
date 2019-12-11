@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import NavLink from 'react-router-dom/NavLink';
+import { useHistory } from 'react-router-dom';
 import Collapse from '@material-ui/core/Collapse';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -8,6 +8,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import MenuList from '@material-ui/core/MenuList';
 import Paper from '@material-ui/core/Paper';
 import { withStyles } from '@material-ui/styles';
+import { useRefresh } from 'react-admin';
 
 import BuildIcon from '@material-ui/icons/Build';
 import ExpandLess from '@material-ui/icons/ExpandLess';
@@ -32,6 +33,35 @@ const StyledListItem = withStyles({
     },
 })(ListItem);
 
+const titleCase = string => {
+    return string.replace(/\w\S*/g, txt => {
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
+};
+
+const NavLinkMenuItem = ({
+    to,
+    icon,
+    label = titleCase(to.substr(1)),
+    ...props
+}) => {
+    const history = useHistory();
+    const refresh = useRefresh();
+    const refreshHandler = () => {
+        if (window.location.hash.substr(1) === to) {
+            refresh();
+        } else {
+            history.push(to);
+        }
+    };
+    return (
+        <StyledListItem button onClick={refreshHandler} {...props}>
+            <ListItemIcon>{icon}</ListItemIcon>
+            <ListItemText primary={label} />
+        </StyledListItem>
+    );
+};
+
 const NestedList = () => {
     const [open, setOpen] = useState(false);
     return (
@@ -45,82 +75,31 @@ const NestedList = () => {
             </StyledListItem>
             <Paper>
                 <Collapse in={open} timeout="auto" unmountOnExit>
-                    <List component="div">
-                        <StyledListItem
-                            button
-                            component={NavLink}
+                    <List>
+                        <NavLinkMenuItem
                             to={'/settings'}
+                            icon={<BuildIcon />}
                             style={{ paddingLeft: '24px' }}
-                        >
-                            <ListItemIcon>
-                                <BuildIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="General" />
-                        </StyledListItem>
-                        <StyledListItem
-                            button
-                            component={NavLink}
+                        />
+                        <NavLinkMenuItem
                             to={'/queryapis'}
-                        >
-                            <ListItemIcon>
-                                <RegistryIcon />
-                            </ListItemIcon>
-                            <ListItemText
-                                style={{ whiteSpace: 'nowrap' }}
-                                primary="Query APIs"
-                            />
-                        </StyledListItem>
+                            icon={<RegistryIcon />}
+                            label="Query APIs"
+                        />
                     </List>
                 </Collapse>
             </Paper>
-            <StyledListItem button component={NavLink} to={'/nodes'}>
-                <ListItemIcon>
-                    <NodeIcon />
-                </ListItemIcon>
-                <ListItemText primary="Nodes" />
-            </StyledListItem>
-            <StyledListItem button component={NavLink} to={'/devices'}>
-                <ListItemIcon>
-                    <DeviceIcon />
-                </ListItemIcon>
-                <ListItemText primary="Devices" />
-            </StyledListItem>
-            <StyledListItem button component={NavLink} to={'/sources'}>
-                <ListItemIcon>
-                    <SourceIcon />
-                </ListItemIcon>
-                <ListItemText primary="Sources" />
-            </StyledListItem>
-            <StyledListItem button component={NavLink} to={'/flows'}>
-                <ListItemIcon>
-                    <FlowIcon />
-                </ListItemIcon>
-                <ListItemText primary="Flows" />
-            </StyledListItem>
-            <StyledListItem button component={NavLink} to={'/senders'}>
-                <ListItemIcon>
-                    <SenderIcon />
-                </ListItemIcon>
-                <ListItemText primary="Senders" />
-            </StyledListItem>
-            <StyledListItem button component={NavLink} to={'/receivers'}>
-                <ListItemIcon>
-                    <ReceiverIcon />
-                </ListItemIcon>
-                <ListItemText primary="Receivers" />
-            </StyledListItem>
-            <StyledListItem button component={NavLink} to={'/subscriptions'}>
-                <ListItemIcon>
-                    <SubscriptionIcon />
-                </ListItemIcon>
-                <ListItemText primary="Subscriptions" />
-            </StyledListItem>
-            <StyledListItem button component={NavLink} to={'/logs'}>
-                <ListItemIcon>
-                    <RegistryLogsIcon />
-                </ListItemIcon>
-                <ListItemText primary="Logs" />
-            </StyledListItem>
+            <NavLinkMenuItem to={'/nodes'} icon={<NodeIcon />} />
+            <NavLinkMenuItem to={'/devices'} icon={<DeviceIcon />} />
+            <NavLinkMenuItem to={'/sources'} icon={<SourceIcon />} />
+            <NavLinkMenuItem to={'/flows'} icon={<FlowIcon />} />
+            <NavLinkMenuItem to={'/senders'} icon={<SenderIcon />} />
+            <NavLinkMenuItem to={'/receivers'} icon={<ReceiverIcon />} />
+            <NavLinkMenuItem
+                to={'/subscriptions'}
+                icon={<SubscriptionIcon />}
+            />
+            <NavLinkMenuItem to={'/logs'} icon={<RegistryLogsIcon />} />
         </MenuList>
     );
 };

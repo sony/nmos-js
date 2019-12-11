@@ -376,14 +376,6 @@ const ConnectionManagementTab = ({
         setFilter(currentFilter);
     };
 
-    const ListPaginationButton = props => (
-        <PaginationButtons
-            disabled={!pagination}
-            nextPage={nextPage}
-            {...props}
-        />
-    );
-
     const connect = (senderID, receiverID, endpoint) => {
         makeConnection(senderID, receiverID, endpoint, props).then(() => {
             refresh();
@@ -516,10 +508,11 @@ const ConnectionManagementTab = ({
                     <TableFooter>
                         <TableRow>
                             <TableCell style={{ whiteSpace: 'nowrap' }}>
-                                <ListPaginationButton label="first" />
-                                <ListPaginationButton label="prev" />
-                                <ListPaginationButton label="next" />
-                                <ListPaginationButton label="last" />
+                                <PaginationButtons
+                                    disabled={!pagination}
+                                    nextPage={nextPage}
+                                    {...props}
+                                />
                             </TableCell>
                         </TableRow>
                     </TableFooter>

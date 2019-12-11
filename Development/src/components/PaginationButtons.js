@@ -17,7 +17,7 @@ const components = {
     first: FirstPage,
 };
 
-export const PaginationButton = ({ disabled, label, nextPage, rel }) => {
+export const PaginationButton = ({ disabled, nextPage, rel, label = rel }) => {
     rel.toLowerCase();
     const paginationSupport = cookies.get('Pagination');
     const enabled = (() => {
@@ -38,7 +38,7 @@ export const PaginationButton = ({ disabled, label, nextPage, rel }) => {
     };
 
     return (
-        <Button onClick={() => nextPage(rel)} label={label} disabled={!enabled}>
+        <Button onClick={() => nextPage(rel)} disabled={!enabled}>
             {getIcon(rel)}
             {label}
         </Button>
@@ -47,10 +47,10 @@ export const PaginationButton = ({ disabled, label, nextPage, rel }) => {
 
 const PaginationButtons = props => (
     <Fragment>
-        <PaginationButton label="First" rel="first" {...props} />
-        <PaginationButton label="Prev" rel="prev" {...props} />
-        <PaginationButton label="Next" rel="next" {...props} />
-        <PaginationButton label="Last" rel="last" {...props} />
+        <PaginationButton rel="first" {...props} />
+        <PaginationButton rel="prev" {...props} />
+        <PaginationButton rel="next" {...props} />
+        <PaginationButton rel="last" {...props} />
     </Fragment>
 );
 

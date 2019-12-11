@@ -403,16 +403,9 @@ const ConnectionManagementTab = ({
                                     paddingLeft: '32px',
                                 }}
                             >
-                                Label{' '}
+                                Sender{' '}
                                 <FilterField
                                     name="label"
-                                    setFilter={changeFilter}
-                                />
-                            </TableCell>
-                            <TableCell>
-                                ID{' '}
-                                <FilterField
-                                    name="id"
                                     setFilter={changeFilter}
                                 />
                             </TableCell>
@@ -440,7 +433,6 @@ const ConnectionManagementTab = ({
                                         label={item.label}
                                     />
                                 </TableCell>
-                                <TableCell>{item.id}</TableCell>
                                 <TableCell>
                                     <ReferenceField
                                         record={item}

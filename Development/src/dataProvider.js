@@ -509,7 +509,7 @@ async function convertHTTPResponseToDataProvider(
             return {
                 url: url,
                 data: json,
-                total: 'unknown',
+                total: null,
             };
         case UPDATE:
             return { data: { ...json, id: json.id } };

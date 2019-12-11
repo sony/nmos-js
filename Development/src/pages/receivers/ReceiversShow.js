@@ -23,6 +23,7 @@ import {
     ShowView,
     SimpleShowLayout,
     TextField,
+    useRefresh,
     useShowController,
 } from 'react-admin';
 import get from 'lodash/get';
@@ -336,6 +337,7 @@ const ConnectionManagementTab = ({
     receiverData,
     ...props
 }) => {
+    const refreshWholeView = useRefresh();
     // we need to force update the sender data without refreshing
     // the whole view
     const [refresh, setRefresh] = useState(true);
@@ -378,7 +380,7 @@ const ConnectionManagementTab = ({
 
     const connect = (senderID, receiverID, endpoint) => {
         makeConnection(senderID, receiverID, endpoint, props).then(() => {
-            refresh();
+            refreshWholeView();
             props.history.push(
                 `${props.basePath}/${props.id}/show/${endpoint}`
             );

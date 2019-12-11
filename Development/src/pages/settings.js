@@ -17,7 +17,7 @@ import Cookies from 'universal-cookie';
 import SaveIcon from '@material-ui/icons/Save';
 
 import sealion from '../assets/sea-lion.png';
-import { changePaging, returnChangeQuery } from '../dataProvider';
+import { changeAPIEndpoint, changePaging } from '../dataProvider';
 
 const cookies = new Cookies();
 
@@ -67,9 +67,9 @@ function getBool(cookie) {
 const Settings = () => {
     const classes = useStyles();
     const [values, setValues] = React.useState({
-        queryAPI: returnChangeQuery('Query API', ''),
-        loggingAPI: returnChangeQuery('Logging API', ''),
-        dnssdAPI: returnChangeQuery('DNS-SD API', ''),
+        queryAPI: changeAPIEndpoint('Query API', ''),
+        loggingAPI: changeAPIEndpoint('Logging API', ''),
+        dnssdAPI: changeAPIEndpoint('DNS-SD API', ''),
         paging: parseInt(changePaging('valueRequest'), 10),
         rql: getBool(cookies.get('RQL')),
     });
@@ -87,9 +87,9 @@ const Settings = () => {
     };
 
     const handleSave = () => {
-        returnChangeQuery('Query API', values.queryAPI);
-        returnChangeQuery('Logging API', values.loggingAPI);
-        returnChangeQuery('DNS-SD API', values.dnssdAPI);
+        changeAPIEndpoint('Query API', values.queryAPI);
+        changeAPIEndpoint('Logging API', values.loggingAPI);
+        changeAPIEndpoint('DNS-SD API', values.dnssdAPI);
         if (values.paging) {
             changePaging(values.paging);
         }

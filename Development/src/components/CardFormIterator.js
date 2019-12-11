@@ -44,7 +44,7 @@ export class CardFormIterator extends Component {
                 <Grid container spacing={2}>
                     {fields.map((member, index) => (
                         <Grid item sm key={index} style={{ flexGrow: 0 }}>
-                            <Card raised>
+                            <Card elevation={3}>
                                 <CardContent>
                                     {Children.map(children, (input, index2) =>
                                         isValidElement(input) ? (

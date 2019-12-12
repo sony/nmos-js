@@ -201,11 +201,7 @@ const makeConnection = (senderID, receiverID, endpoint) => {
                     previousData: data.receiver,
                 };
             })
-            .then(params =>
-                dataProvider('UPDATE', 'receivers', params, {
-                    onSuccess: { refresh: true },
-                })
-            )
+            .then(params => dataProvider('UPDATE', 'receivers', params))
             .then(() => resolve())
             .catch(error => reject(error.message));
     });

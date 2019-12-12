@@ -360,7 +360,6 @@ const ConnectionManagementTab = ({
     }, [receiverData]);
 
     if (!loaded) return <Loading />;
-    if (!data) return null;
 
     const nextPage = label => {
         setPaginationURL(pagination[label]);

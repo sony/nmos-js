@@ -27,7 +27,6 @@ const SendersList = props => {
         paginationURL,
     });
     if (!loaded) return <Loading />;
-    if (!data) return null;
 
     const nextPage = label => {
         setPaginationURL(pagination[label]);

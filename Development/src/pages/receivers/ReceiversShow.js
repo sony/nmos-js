@@ -19,10 +19,10 @@ import {
     FunctionField,
     Loading,
     ReferenceField,
-    ShowButton,
     ShowView,
     SimpleShowLayout,
     TextField,
+    linkToRecord,
     useRefresh,
     useShowController,
 } from 'react-admin';
@@ -409,7 +409,6 @@ const ConnectionManagementTab = ({
                                 />
                             </TableCell>
                             <TableCell>Flow</TableCell>
-                            <TableCell>Device</TableCell>
                             {QueryVersion() >= 'v1.2' && (
                                 <TableCell>Active</TableCell>
                             )}
@@ -423,14 +422,18 @@ const ConnectionManagementTab = ({
                                 selected={get(receiverData, 'id') === item.id}
                             >
                                 <TableCell component="th" scope="row">
-                                    <ShowButton
-                                        style={{
-                                            textTransform: 'none',
-                                        }}
-                                        basePath="/senders"
-                                        record={item}
-                                        label={item.label}
-                                    />
+                                    <Link
+                                        to={`${linkToRecord(
+                                            '/senders',
+                                            item.id
+                                        )}/show`}
+                                    >
+                                        <ChipConditionalLabel
+                                            record={item}
+                                            source="label"
+                                            label="ra.action.show"
+                                        />
+                                    </Link>
                                 </TableCell>
                                 <TableCell>
                                     <ReferenceField
@@ -439,18 +442,6 @@ const ConnectionManagementTab = ({
                                         label="Flow"
                                         source="flow_id"
                                         reference="flows"
-                                        link="show"
-                                    >
-                                        <ChipConditionalLabel source="label" />
-                                    </ReferenceField>
-                                </TableCell>
-                                <TableCell>
-                                    <ReferenceField
-                                        record={item}
-                                        basePath="/devices"
-                                        label="Device"
-                                        source="device_id"
-                                        reference="devices"
                                         link="show"
                                     >
                                         <ChipConditionalLabel source="label" />

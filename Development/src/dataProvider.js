@@ -10,6 +10,7 @@ import {
 } from 'react-admin';
 import get from 'lodash/get';
 import set from 'lodash/set';
+import has from 'lodash/has';
 import setJSON from 'json-ptr';
 import assign from 'lodash/assign';
 import diff from 'deep-diff';
@@ -33,7 +34,7 @@ const DNS_API = 'DNS-SD API';
 
 const cookies = new Cookies();
 
-function defaultUrl(api) {
+const defaultUrl = api => {
     let path = window.location.protocol + '//' + window.location.host;
     switch (api) {
         case LOGGING_API:
@@ -49,9 +50,9 @@ function defaultUrl(api) {
             //not expected to be used
             return '';
     }
-}
+};
 
-function returnUrl(resource) {
+const returnUrl = resource => {
     let url;
     let api;
     switch (resource) {
@@ -72,7 +73,7 @@ function returnUrl(resource) {
         url = cookies.get(api);
     }
     return url;
-}
+};
 
 export const changeAPIEndpoint = (API, cookieQuery) => {
     if (cookieQuery === '') {
@@ -108,9 +109,9 @@ export const changePaging = newLimit => {
     return paging_limit;
 };
 
-function isNumber(v) {
+const isNumber = v => {
     return !isNaN(v) && !isNaN(parseFloat(v));
-}
+};
 
 const convertDataProviderRequestToHTTP = (type, resource, params) => {
     switch (type) {
@@ -290,82 +291,87 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
     }
 };
 
-function timeout(ms, promise) {
-    return new Promise(function(resolve, reject) {
-        setTimeout(function() {
+const timeout = (ms, promise) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
             reject(new Error('Timeout'));
         }, ms);
         promise.then(resolve, reject);
     });
-}
+};
 
-function getEndpoints(addresses, resource, id) {
+const getEndpoints = (addresses, resource, id) => {
     // Looking for the first promise to succeed or all to fail
     const invertPromise = p => new Promise((res, rej) => p.then(rej, res));
     const firstOf = ps => invertPromise(Promise.all(ps.map(invertPromise)));
     const endpointData = [];
     let connectionAPI;
+    const controller = new AbortController();
+    const signal = controller.signal;
 
     return new Promise((resolve, reject) => {
         firstOf(
-            addresses.map(function(address) {
+            addresses.map(address => {
                 return timeout(
                     5000,
-                    fetch(`${address}/single/${resource}/${id}`)
+                    fetch(`${address}/single/${resource}/${id}`, { signal })
                 );
             })
         )
-            .then(function(response) {
+            .then(response => {
                 connectionAPI = response.url;
                 return response.json();
             })
-            .then(function(endpoints) {
+            .then(endpoints => {
                 if (get(endpoints, 'code')) {
+                    controller.abort();
                     reject(new Error(`${endpoints.error} - ${endpoints.code}`));
                     return;
                 }
                 Promise.all(
                     endpoints.map(endpoint =>
-                        fetch(`${connectionAPI}/${endpoint}`)
-                            .then(function(response) {
+                        fetch(`${connectionAPI}/${endpoint}`, { signal })
+                            .then(response => {
                                 if (response.ok) {
                                     return response.text();
                                 }
                             })
-                            .then(function(text) {
+                            .then(text => {
                                 try {
                                     return JSON.parse(text);
                                 } catch (e) {
                                     return text;
                                 }
                             })
-                            .then(function(data) {
+                            .then(data => {
                                 endpointData.push({
                                     [`$${endpoint.slice(0, -1)}`]: data,
                                 });
                             })
-                            .catch(function(error) {
-                                console.log(error);
+                            .catch(error => {
+                                throw error;
                             })
                     )
-                ).then(function() {
+                ).then(() => {
                     endpointData.push({ $connectionAPI: connectionAPI });
+                    controller.abort();
                     resolve(endpointData);
                 });
             })
-            .catch(function(errors) {
+            .catch(errors => {
+                controller.abort();
                 reject(errors[0]);
             });
     });
-}
+};
 
-async function convertHTTPResponseToDataProvider(
+const convertHTTPResponseToDataProvider = async (
     url,
     response,
     type,
     resource,
     params
-) {
+) => {
     const { headers, json } = response;
     LINK_HEADERS[resource] = headers.get('Link');
     if (
@@ -402,7 +408,7 @@ async function convertHTTPResponseToDataProvider(
                 }
 
                 let connectionAddresses = {};
-                deviceJSONData.controls.forEach(function(control) {
+                deviceJSONData.controls.forEach(control => {
                     const type = control.type.replace('.', '_');
                     if (type.startsWith('urn:x-nmos:control:sr-ctrl')) {
                         if (!connectionAddresses.hasOwnProperty(type)) {
@@ -520,7 +526,7 @@ async function convertHTTPResponseToDataProvider(
             }
             return { url: url, data: json };
     }
-}
+};
 
 export default async (type, resource, params) => {
     const { fetchJson } = fetchUtils;
@@ -539,11 +545,14 @@ export default async (type, resource, params) => {
                 params
             ),
         error => {
-            if (error.hasOwnProperty('body.debug')) {
+            if (error && has(error, 'body.debug'))
                 throw new Error(
-                    `${error.body.error} - ${error.body.code} - (${error.body.debug})`
+                    get(error.body, 'error') +
+                        ' - ' +
+                        get(error.body, 'code') +
+                        ' - ' +
+                        get(error.body, 'debug')
                 );
-            }
             throw error;
         }
     );

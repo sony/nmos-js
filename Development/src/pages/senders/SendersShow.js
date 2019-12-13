@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import Link from 'react-router-dom/Link';
 import { Route } from 'react-router-dom';
 import {
@@ -47,12 +47,22 @@ const SendersTitle = ({ record }) => {
 };
 
 const SendersShow = props => {
+    const [useConnectionAPI, setUseConnectionAPI] = useState(false);
+    const controllerProps = useShowController(props);
+
+    useEffect(() => {
+        if (get(controllerProps.record, '$connectionAPI') !== undefined) {
+            setUseConnectionAPI(true);
+        } else {
+            setUseConnectionAPI(false);
+        }
+    }, [controllerProps.record]);
+
     const theme = useTheme();
     const tabBackgroundColor =
         theme.palette.type === 'light'
             ? theme.palette.grey[100]
             : theme.palette.grey[900];
-    const controllerProps = useShowController(props);
     return (
         <Fragment>
             <div style={{ display: 'flex' }}>
@@ -73,23 +83,19 @@ const SendersShow = props => {
                             component={Link}
                             to={`${props.basePath}/${props.id}/show/`}
                         />
-                        {get(controllerProps.record, '$connectionAPI') !==
-                            undefined &&
-                            ['active', 'staged', 'transportfile'].map(label => (
-                                <Tab
-                                    key={label}
-                                    value={`${props.match.url}/${label}`}
-                                    component={Link}
-                                    to={`${props.basePath}/${props.id}/show/${label}`}
-                                    disabled={
-                                        !get(
-                                            controllerProps.record,
-                                            `$${label}`
-                                        )
-                                    }
-                                    label={label}
-                                />
-                            ))}
+                        {['active', 'staged', 'transportfile'].map(label => (
+                            <Tab
+                                key={label}
+                                value={`${props.match.url}/${label}`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/${label}`}
+                                disabled={
+                                    !get(controllerProps.record, `$${label}`) ||
+                                    !useConnectionAPI
+                                }
+                                label={label}
+                            />
+                        ))}
                     </Tabs>
                 </Paper>
                 <span style={{ flexGrow: 1 }} />

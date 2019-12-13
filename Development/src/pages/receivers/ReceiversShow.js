@@ -23,14 +23,14 @@ import {
     SimpleShowLayout,
     TextField,
     linkToRecord,
+    useNotify,
     useRefresh,
     useShowController,
 } from 'react-admin';
 import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
-import CheckIcon from '@material-ui/icons/Check';
+import ActiveField from '../../components/ActiveField';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
-import ClearIcon from '@material-ui/icons/Clear';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import FilterField from '../../components/FilterField';
 import ItemArrayField from '../../components/ItemArrayField';
@@ -57,12 +57,22 @@ const ReceiversTitle = ({ record }) => (
 );
 
 const ReceiversShow = props => {
+    const [useConnectionAPI, setUseConnectionAPI] = useState(false);
+    const controllerProps = useShowController(props);
+
+    useEffect(() => {
+        if (get(controllerProps.record, '$connectionAPI') !== undefined) {
+            setUseConnectionAPI(true);
+        } else {
+            setUseConnectionAPI(false);
+        }
+    }, [controllerProps.record]);
+
     const theme = useTheme();
     const tabBackgroundColor =
         theme.palette.type === 'light'
             ? theme.palette.grey[100]
             : theme.palette.grey[900];
-    const controllerProps = useShowController(props);
     return (
         <Fragment>
             <div style={{ display: 'flex' }}>
@@ -83,29 +93,28 @@ const ReceiversShow = props => {
                             component={Link}
                             to={`${props.basePath}/${props.id}/show/`}
                         />
-                        {get(controllerProps.record, '$connectionAPI') !==
-                            undefined &&
-                            ['active', 'staged'].map(label => (
-                                <Tab
-                                    key={label}
-                                    label={label}
-                                    value={`${props.match.url}/${label}`}
-                                    component={Link}
-                                    to={`${props.basePath}/${props.id}/show/${label}`}
-                                    disabled={
-                                        !get(
-                                            controllerProps.record,
-                                            `$${label}`
-                                        )
-                                    }
-                                />
-                            ))}
+                        {['active', 'staged'].map(label => (
+                            <Tab
+                                key={label}
+                                label={label}
+                                value={`${props.match.url}/${label}`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/${label}`}
+                                disabled={
+                                    !get(controllerProps.record, `$${label}`) ||
+                                    !useConnectionAPI
+                                }
+                            />
+                        ))}
                         <Tab
                             label="Connect"
                             value={`${props.match.url}/connect`}
                             component={Link}
                             to={`${props.basePath}/${props.id}/show/connect`}
-                            disabled={!get(controllerProps.record, '$active')}
+                            disabled={
+                                !get(controllerProps.record, '$active') ||
+                                !useConnectionAPI
+                            }
                         />
                     </Tabs>
                 </Paper>
@@ -337,6 +346,7 @@ const ConnectionManagementTab = ({
     receiverData,
     ...props
 }) => {
+    const notify = useNotify();
     const refreshWholeView = useRefresh();
     // we need to force update the sender data without refreshing
     // the whole view
@@ -378,12 +388,26 @@ const ConnectionManagementTab = ({
     };
 
     const connect = (senderID, receiverID, endpoint) => {
-        makeConnection(senderID, receiverID, endpoint, props).then(() => {
-            refreshWholeView();
-            props.history.push(
-                `${props.basePath}/${props.id}/show/${endpoint}`
-            );
-        });
+        makeConnection(senderID, receiverID, endpoint)
+            .then(() => {
+                notify('Element updated', 'info');
+                refreshWholeView();
+                props.history.push(
+                    `${props.basePath}/${props.id}/show/${endpoint}`
+                );
+            })
+            .catch(error => {
+                if (error && error.hasOwnProperty('body'))
+                    notify(
+                        get(error.body, 'error') +
+                            ' - ' +
+                            get(error.body, 'code') +
+                            ' - ' +
+                            get(error.body, 'debug'),
+                        'warning'
+                    );
+                notify(error.toString(), 'warning');
+            });
     };
 
     return (
@@ -449,11 +473,10 @@ const ConnectionManagementTab = ({
                                 </TableCell>
                                 {QueryVersion() >= 'v1.2' && (
                                     <TableCell>
-                                        {item.subscription.active ? (
-                                            <CheckIcon />
-                                        ) : (
-                                            <ClearIcon />
-                                        )}
+                                        <ActiveField
+                                            record={item}
+                                            resource="senders"
+                                        />
                                     </TableCell>
                                 )}
                                 <TableCell>

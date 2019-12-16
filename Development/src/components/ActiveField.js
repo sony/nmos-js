@@ -33,13 +33,16 @@ const toggleMasterEnable = (record, resource) => {
             id: record.id,
         })
             .then(({ data }) => {
+                if (!data.hasOwnProperty('$staged')) {
+                    throw new Error('No Connection API found');
+                }
                 const params = {
                     id: get(data, 'id'),
                     data: {
                         ...data,
                         $staged: {
                             ...get(data, '$staged'),
-                            master_enable: !get(data, '$staged.master_enable'),
+                            master_enable: !get(data, '$active.master_enable'),
                             activation: { mode: 'activate_immediate' },
                         },
                     },
@@ -47,7 +50,7 @@ const toggleMasterEnable = (record, resource) => {
                 };
                 return dataProvider('UPDATE', resource, params);
             })
-            .then(() => resolve())
+            .then(response => resolve(response))
             .catch(error => reject(error))
     );
 };
@@ -60,10 +63,13 @@ const ActiveField = ({ className, source, record = {}, resource, ...rest }) => {
 
     const handleChange = (record, resource) => {
         toggleMasterEnable(record, resource)
-            .then(() => setChecked(!checked))
+            .then(({ data }) => setChecked(get(data, 'master_enable')))
             .catch(error => notify(error.toString(), 'warning'));
     };
 
+    // When the page refresh button is pressed, the ActiveField will receive a
+    // new record prop. When this happens we should update the state of the
+    // switch to reflect the newest IS-04 data
     useEffect(() => {
         setChecked(get(record, 'subscription.active'));
     }, [record]);

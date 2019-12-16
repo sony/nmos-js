@@ -112,7 +112,7 @@ const ReceiversShow = props => {
                             component={Link}
                             to={`${props.basePath}/${props.id}/show/connect`}
                             disabled={
-                                !get(controllerProps.record, '$active') ||
+                                !get(controllerProps.record, '$staged') ||
                                 !useConnectionAPI
                             }
                         />
@@ -446,6 +446,10 @@ const ConnectionManagementTab = ({
                                 selected={get(receiverData, 'id') === item.id}
                             >
                                 <TableCell component="th" scope="row">
+                                    {
+                                        // Using linkToRecord as ReferenceField will
+                                        // make a new unnecessary network request
+                                    }
                                     <Link
                                         to={`${linkToRecord(
                                             '/senders',

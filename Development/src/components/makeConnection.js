@@ -32,11 +32,11 @@ const oneToOneTransportParams = {
 
 const getExtParams = transport_params => {
     const uniqueKeys = Object.keys(
-        transport_params.reduce(function(result, obj) {
+        transport_params.reduce((result, obj) => {
             return Object.assign(result, obj);
         }, {})
     );
-    return uniqueKeys.filter(function(x) {
+    return uniqueKeys.filter(x => {
         return x.startsWith('ext_');
     });
 };
@@ -46,8 +46,8 @@ const copyTransportParams = (
     senderToReceiver,
     patchData
 ) => {
-    senderTransportParams.forEach(function(leg, index) {
-        senderToReceiver.forEach(function(param) {
+    senderTransportParams.forEach((leg, index) => {
+        senderToReceiver.forEach(param => {
             const lhs = get(leg, param);
             if (lhs !== undefined) {
                 setJSON.set(
@@ -69,20 +69,88 @@ export const isMulticast = address => {
     );
 };
 
+const makePatchDataWithTransportParams = data => {
+    let patchData = cloneDeep(data.receiver);
+
+    const senderTransportParams = get(data.sender, '$active.transport_params');
+    if (!Array.isArray(senderTransportParams)) return;
+
+    copyTransportParams(
+        senderTransportParams,
+        oneToOneTransportParams[get(data.sender, '$transporttype')],
+        patchData
+    );
+
+    switch (get(data.sender, '$transporttype')) {
+        case 'urn:x-nmos:transport:mqtt':
+            copyTransportParams(
+                senderTransportParams,
+                getExtParams(get(data.sender, '$active.transport_params')),
+                patchData
+            );
+            senderTransportParams.forEach((leg, index) => {
+                const destination_host = get(leg, 'destination_host');
+                setJSON.set(
+                    patchData,
+                    `/$staged/transport_params/${index}/source_host`,
+                    destination_host,
+                    true
+                );
+                const destination_port = get(leg, 'destination_port');
+                setJSON.set(
+                    patchData,
+                    `/$staged/transport_params/${index}/source_port`,
+                    destination_port,
+                    true
+                );
+            });
+            break;
+        case 'urn:x-nmos:transport:rtp':
+            senderTransportParams.forEach((leg, index) => {
+                const destination_ip = get(leg, 'destination_ip');
+                if (isMulticast(destination_ip)) {
+                    setJSON.set(
+                        patchData,
+                        `/$staged/transport_params/${index}/multicast_ip`,
+                        destination_ip,
+                        true
+                    );
+                } else {
+                    setJSON.set(
+                        patchData,
+                        `/$staged/transport_params/${index}/interface_ip`,
+                        destination_ip,
+                        true
+                    );
+                }
+            });
+            break;
+        case 'urn:x-nmos:transport:websocket':
+            copyTransportParams(
+                senderTransportParams,
+                getExtParams(get(data.sender, '$active.transport_params')),
+                patchData
+            );
+            break;
+        default:
+    }
+    return patchData;
+};
+
 const makeConnection = (senderID, receiverID, endpoint) => {
     return new Promise((resolve, reject) => {
         if (endpoint !== 'active' && endpoint !== 'staged') {
-            reject();
+            return reject('Invalid endpoint');
         }
 
-        const senderPromise = new Promise(resolve =>
+        const getSenderDataPromise = new Promise(resolve =>
             dataProvider('GET_ONE', 'senders', {
                 id: senderID,
             }).then(response =>
                 resolve({ resource: 'sender', data: response.data })
             )
         );
-        const receiverPromise = new Promise(resolve =>
+        const getReceiverDataPromise = new Promise(resolve =>
             dataProvider('GET_ONE', 'receivers', {
                 id: receiverID,
             }).then(response =>
@@ -90,7 +158,7 @@ const makeConnection = (senderID, receiverID, endpoint) => {
             )
         );
 
-        Promise.all([senderPromise, receiverPromise])
+        Promise.all([getSenderDataPromise, getReceiverDataPromise])
             .then(response => {
                 let data = {};
                 for (const i of response) {
@@ -99,17 +167,32 @@ const makeConnection = (senderID, receiverID, endpoint) => {
                 return data;
             })
             .then(data => {
-                if (get(data, 'sender') === undefined) reject();
-                if (get(data, 'receiver') === undefined) reject();
+                if (get(data, 'sender') === undefined)
+                    return reject(new Error("Couldn't get sender data"));
+                if (get(data, 'receiver') === undefined)
+                    return reject(new Error("Couldn't get receiver data"));
                 if (
                     get(data.sender, '$transporttype') !==
                     get(data.receiver, '$transporttype')
                 ) {
-                    reject();
+                    return reject(new Error('Transport types do not match'));
+                }
+                if (
+                    endpoint === 'active' &&
+                    !get(data, 'sender.$active.master_enable')
+                ) {
+                    return reject(new Error('Sender is not enabled'));
                 }
 
-                let patchData = cloneDeep(data.receiver);
-
+                let patchData = makePatchDataWithTransportParams(data);
+                if (get(data, 'sender.$transportfile')) {
+                    setJSON.set(
+                        patchData,
+                        `/$staged/transport_file/data`,
+                        get(data.sender, '$transportfile'),
+                        true
+                    );
+                }
                 set(patchData, '$staged.master_enable', true);
                 set(patchData, '$staged.sender_id', get(data.sender, 'id'));
                 if (endpoint === 'active') {
@@ -120,94 +203,15 @@ const makeConnection = (senderID, receiverID, endpoint) => {
                     );
                 }
 
-                const senderTransportParams = get(
-                    data.sender,
-                    '$active.transport_params'
-                );
-                if (!Array.isArray(senderTransportParams)) return;
-
-                copyTransportParams(
-                    senderTransportParams,
-                    oneToOneTransportParams[get(data.sender, '$transporttype')],
-                    patchData
-                );
-
-                switch (get(data.sender, '$transporttype')) {
-                    case 'urn:x-nmos:transport:mqtt':
-                        copyTransportParams(
-                            senderTransportParams,
-                            getExtParams(
-                                get(data.sender, '$active.transport_params')
-                            ),
-                            patchData
-                        );
-                        senderTransportParams.forEach(function(leg, index) {
-                            const destination_host = get(
-                                leg,
-                                'destination_host'
-                            );
-                            setJSON.set(
-                                patchData,
-                                `/$staged/transport_params/${index}/source_host`,
-                                destination_host,
-                                true
-                            );
-                            const destination_port = get(
-                                leg,
-                                'destination_port'
-                            );
-                            setJSON.set(
-                                patchData,
-                                `/$staged/transport_params/${index}/source_port`,
-                                destination_port,
-                                true
-                            );
-                        });
-                        break;
-                    case 'urn:x-nmos:transport:rtp':
-                        senderTransportParams.forEach(function(leg, index) {
-                            const destination_ip = get(leg, 'destination_ip');
-                            if (isMulticast(destination_ip)) {
-                                setJSON.set(
-                                    patchData,
-                                    `/$staged/transport_params/${index}/multicast_ip`,
-                                    destination_ip,
-                                    true
-                                );
-                            } else {
-                                setJSON.set(
-                                    patchData,
-                                    `/$staged/transport_params/${index}/interface_ip`,
-                                    destination_ip,
-                                    true
-                                );
-                            }
-                        });
-                        break;
-                    case 'urn:x-nmos:transport:websocket':
-                        copyTransportParams(
-                            senderTransportParams,
-                            getExtParams(
-                                get(data.sender, '$active.transport_params')
-                            ),
-                            patchData
-                        );
-                        break;
-                    default:
-                }
                 return {
                     id: get(data.receiver, 'id'),
                     data: patchData,
                     previousData: data.receiver,
                 };
             })
-            .then(params =>
-                dataProvider('UPDATE', 'receivers', params, {
-                    onSuccess: { refresh: true },
-                })
-            )
+            .then(params => dataProvider('UPDATE', 'receivers', params))
             .then(() => resolve())
-            .catch(error => reject(error.message));
+            .catch(error => reject(error));
     });
 };
 

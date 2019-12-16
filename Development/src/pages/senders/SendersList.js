@@ -9,8 +9,7 @@ import {
     TableRow,
 } from '@material-ui/core';
 import { Loading, ShowButton, Title, useRefresh } from 'react-admin';
-import CheckIcon from '@material-ui/icons/Check';
-import ClearIcon from '@material-ui/icons/Clear';
+import ActiveField from '../../components/ActiveField';
 import FilterField from '../../components/FilterField';
 import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
@@ -27,7 +26,6 @@ const SendersList = props => {
         paginationURL,
     });
     if (!loaded) return <Loading />;
-    if (!data) return null;
 
     const nextPage = label => {
         setPaginationURL(pagination[label]);
@@ -96,11 +94,10 @@ const SendersList = props => {
                                     <TableCell>{item.transport}</TableCell>
                                     {QueryVersion() >= 'v1.2' && (
                                         <TableCell>
-                                            {item.subscription.active ? (
-                                                <CheckIcon />
-                                            ) : (
-                                                <ClearIcon />
-                                            )}
+                                            <ActiveField
+                                                record={item}
+                                                resource="senders"
+                                            />
                                         </TableCell>
                                     )}
                                 </TableRow>

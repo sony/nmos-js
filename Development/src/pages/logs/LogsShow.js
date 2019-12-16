@@ -1,5 +1,4 @@
 import React from 'react';
-import { hr } from '@material-ui/core';
 import {
     Button,
     FunctionField,

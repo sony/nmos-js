@@ -1,70 +1,105 @@
-import React from 'react';
+import React, { Fragment, useState } from 'react';
+import { Menu, MenuItem, Snackbar } from '@material-ui/core';
+import get from 'lodash/get';
 import Button from '@material-ui/core/Button';
 import { changeAPIEndpoint } from '../dataProvider';
-import { Snackbar } from '@material-ui/core';
 import { ConnectRegistryIcon } from '../icons';
 
-let longQuery = '';
+const ConnectButton = ({ record }) => {
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [queryAPI, setQueryAPI] = useState(
+        changeAPIEndpoint('Query API', '')
+    );
 
-class ConnectButtonSnackbar extends React.Component {
-    state = {
-        open: false,
-        vertical: 'top',
-        horizontal: 'center',
-    };
-    handleClick = state => () => {
-        changeAPIEndpoint('Query API', longQuery);
-        this.setState({ open: true, ...state });
-    };
-    handleClose = (event, reason) => {
-        if (reason === 'clickaway') {
-            return;
-        }
-        this.setState({ open: false });
-    };
-    render() {
-        const { vertical, horizontal, open } = this.state;
+    const makeQueryAPIAddress = selectedAddress => {
         return (
-            <div>
-                <Button
-                    color="primary"
-                    onClick={this.handleClick({
-                        vertical: 'top',
-                        horizontal: 'center',
-                    })}
-                    startIcon={<ConnectRegistryIcon />}
-                >
-                    Connect
-                </Button>
-
-                <Snackbar
-                    anchorOrigin={{ vertical, horizontal }}
-                    open={open}
-                    autoHideDuration={1600}
-                    onClose={this.handleClose}
-                    ContentProps={{
-                        'aria-describedby': 'text',
-                    }}
-                    message={<span id="text">Connected to: {longQuery}</span>}
-                />
-            </div>
+            get(record, 'txt.api_proto') +
+            '://' +
+            selectedAddress +
+            ':' +
+            get(record, 'port') +
+            '/x-nmos/query/' +
+            get(record, 'txt.api_ver')
+                .split(',')
+                .slice(-1)[0]
         );
+    };
+
+    const changeQueryAPI = selectedAddress => {
+        const newQueryAPI = makeQueryAPIAddress(selectedAddress);
+        setQueryAPI(newQueryAPI);
+        changeAPIEndpoint('Query API', newQueryAPI);
+    };
+
+    if (!get(record, 'addresses')) {
+        return null;
     }
-}
 
-const makeNewQuery = record => {
-    longQuery =
-        record.txt.api_proto +
-        '://' +
-        record.addresses[0] +
-        ':' +
-        record.port +
-        '/x-nmos/query/' +
-        record.txt.api_ver.split(',').slice(-1)[0];
+    const handleButtonClick = event => {
+        if (get(record, 'addresses').length > 1) {
+            setAnchorEl(event.currentTarget);
+        } else {
+            changeQueryAPI(get(record, 'addresses')[0]);
+            setSnackbarOpen(true);
+        }
+    };
+
+    const handleMenuItemClick = option => {
+        changeQueryAPI(option);
+        setAnchorEl(null);
+        setSnackbarOpen(true);
+    };
+
+    return (
+        <Fragment>
+            <Button
+                color="primary"
+                variant="contained"
+                onClick={handleButtonClick}
+                startIcon={<ConnectRegistryIcon />}
+            >
+                Connect
+            </Button>
+            <Menu
+                id="address-menu"
+                anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left',
+                }}
+                transformOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                }}
+                anchorEl={anchorEl}
+                keepMounted
+                open={Boolean(anchorEl)}
+                onClose={() => setAnchorEl(null)}
+            >
+                {get(record, 'addresses').map(option => (
+                    <MenuItem
+                        key={option}
+                        onClick={() => handleMenuItemClick(option)}
+                    >
+                        {makeQueryAPIAddress(option)}
+                    </MenuItem>
+                ))}
+            </Menu>
+            <Snackbar
+                anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'center',
+                }}
+                open={snackbarOpen}
+                onClose={() => setSnackbarOpen(false)}
+                autoHideDuration={3000}
+                ContentProps={{
+                    'aria-describedby': 'text',
+                }}
+                message={<span id="text">Connected to: {queryAPI}</span>}
+            />
+        </Fragment>
+    );
 };
-
-const ConnectButton = ({ record }) => (
-    <ConnectButtonSnackbar onClick={makeNewQuery(record)} />
-);
 
 export default ConnectButton;

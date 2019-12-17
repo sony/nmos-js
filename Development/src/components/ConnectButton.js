@@ -80,6 +80,7 @@ const ConnectButton = ({ record }) => {
                     <MenuItem
                         key={option}
                         onClick={() => handleMenuItemClick(option)}
+                        style={{ fontSize: '0.875rem' }}
                     >
                         {makeQueryAPIAddress(option)}
                     </MenuItem>

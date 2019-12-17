@@ -350,7 +350,7 @@ const ConnectionManagementTab = ({
     const refreshWholeView = useRefresh();
     // we need to force update the sender data without refreshing
     // the whole view
-    const [refresh, setRefresh] = useState(0);
+    const [refresh, setRefresh] = useState(true);
     const [filter, setFilter] = useState({
         transport: get(receiverData, 'transport'),
     });

@@ -49,8 +49,7 @@ const QueryAPIsList = props => {
                 {...props}
             >
                 <Datagrid>
-                    <ShowField label="Label" />
-                    <TextField source="port" sortable={false} />
+                    <ShowField label="Name" />
                     <TextField
                         label="API Versions"
                         source="txt.api_ver"

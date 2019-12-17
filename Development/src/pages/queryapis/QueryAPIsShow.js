@@ -64,11 +64,11 @@ const QueryAPIsShow = props => {
             <Fragment>
                 <SimpleShowLayout {...props} {...controllerProps}>
                     <TextField source="name" />
-                    <div />
-                    <ItemArrayField source="addresses" />
+                    <hr />
                     <TextField label="Host Target" source="host_target" />
+                    <ItemArrayField source="addresses" />
                     <TextField source="port" />
-                    <div />
+                    <hr />
                     <TextField label="API Protocol" source="txt.api_proto" />
                     <TextField label="API Versions" source="txt.api_ver" />
                     <TextField label="Priority" source="txt.pri" />

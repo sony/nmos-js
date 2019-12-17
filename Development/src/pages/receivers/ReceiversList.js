@@ -105,7 +105,6 @@ const ReceiversList = props => {
                                             <ActiveField
                                                 record={item}
                                                 resource="receivers"
-                                                refresh
                                             />
                                         </TableCell>
                                     )}

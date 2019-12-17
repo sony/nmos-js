@@ -2,30 +2,8 @@ import React, { useEffect } from 'react';
 import { Switch } from '@material-ui/core';
 import { useNotify } from 'react-admin';
 import get from 'lodash/get';
-import omit from 'lodash/omit';
 import dataProvider from '../dataProvider';
-
-const sanitizeRestProps = props =>
-    omit(props, [
-        'addLabel',
-        'allowEmpty',
-        'basePath',
-        'cellClassName',
-        'className',
-        'formClassName',
-        'headerClassName',
-        'label',
-        'linkType',
-        'link',
-        'locale',
-        'record',
-        'resource',
-        'sortable',
-        'sortBy',
-        'source',
-        'textAlign',
-        'translateChoice',
-    ]);
+import sanitizeRestProps from './sanitizeRestProps';
 
 const toggleMasterEnable = (record, resource) => {
     return new Promise((resolve, reject) =>

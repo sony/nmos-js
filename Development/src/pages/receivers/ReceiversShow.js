@@ -418,116 +418,123 @@ const ConnectionManagementTab = ({
             actions={<Fragment />}
         >
             <SimpleShowLayout>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell
-                                style={{
-                                    paddingLeft: '32px',
-                                }}
-                            >
-                                Sender{' '}
-                                <FilterField
-                                    name="label"
-                                    setFilter={changeFilter}
-                                />
-                            </TableCell>
-                            <TableCell>Flow</TableCell>
-                            {QueryVersion() >= 'v1.2' && (
-                                <TableCell>Active</TableCell>
-                            )}
-                            <TableCell>Connect</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {data.map(item => (
-                            <TableRow
-                                key={item.id}
-                                selected={get(receiverData, 'id') === item.id}
-                            >
-                                <TableCell component="th" scope="row">
-                                    {
-                                        // Using linkToRecord as ReferenceField will
-                                        // make a new unnecessary network request
-                                    }
-                                    <Link
-                                        to={`${linkToRecord(
-                                            '/senders',
-                                            item.id
-                                        )}/show`}
-                                    >
-                                        <ChipConditionalLabel
-                                            record={item}
-                                            source="label"
-                                            label="ra.action.show"
-                                        />
-                                    </Link>
+                <Fragment>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell
+                                    style={{
+                                        paddingLeft: '32px',
+                                    }}
+                                >
+                                    Sender{' '}
+                                    <FilterField
+                                        name="label"
+                                        setFilter={changeFilter}
+                                    />
                                 </TableCell>
-                                <TableCell>
-                                    <ReferenceField
-                                        record={item}
-                                        basePath="/flows"
-                                        label="Flow"
-                                        source="flow_id"
-                                        reference="flows"
-                                        link="show"
-                                    >
-                                        <ChipConditionalLabel source="label" />
-                                    </ReferenceField>
-                                </TableCell>
+                                <TableCell>Flow</TableCell>
                                 {QueryVersion() >= 'v1.2' && (
-                                    <TableCell>
-                                        <ActiveField
-                                            record={item}
-                                            resource="senders"
-                                        />
-                                    </TableCell>
+                                    <TableCell>Active</TableCell>
                                 )}
-                                <TableCell>
-                                    <Button
-                                        onClick={() =>
-                                            connect(
-                                                item.id,
-                                                get(receiverData, 'id'),
-                                                'active'
-                                            )
+                                <TableCell>Connect</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {data.map(item => (
+                                <TableRow
+                                    key={item.id}
+                                    selected={
+                                        get(receiverData, 'id') === item.id
+                                    }
+                                >
+                                    <TableCell component="th" scope="row">
+                                        {
+                                            // Using linkToRecord as ReferenceField will
+                                            // make a new unnecessary network request
                                         }
-                                        color="primary"
-                                        startIcon={<ActivateImmediateIcon />}
-                                    >
-                                        Activate
-                                    </Button>
-                                    <Button
-                                        onClick={() =>
-                                            connect(
-                                                item.id,
-                                                get(receiverData, 'id'),
-                                                'staged'
-                                            )
-                                        }
-                                        color="primary"
-                                        startIcon={<StageIcon />}
-                                    >
-                                        Stage
-                                    </Button>
+                                        <Link
+                                            to={`${linkToRecord(
+                                                '/senders',
+                                                item.id
+                                            )}/show`}
+                                        >
+                                            <ChipConditionalLabel
+                                                record={item}
+                                                source="label"
+                                                label="ra.action.show"
+                                            />
+                                        </Link>
+                                    </TableCell>
+                                    <TableCell>
+                                        <ReferenceField
+                                            record={item}
+                                            basePath="/flows"
+                                            label="Flow"
+                                            source="flow_id"
+                                            reference="flows"
+                                            link="show"
+                                        >
+                                            <ChipConditionalLabel source="label" />
+                                        </ReferenceField>
+                                    </TableCell>
+                                    {QueryVersion() >= 'v1.2' && (
+                                        <TableCell>
+                                            <ActiveField
+                                                record={item}
+                                                resource="senders"
+                                            />
+                                        </TableCell>
+                                    )}
+                                    <TableCell>
+                                        <Button
+                                            onClick={() =>
+                                                connect(
+                                                    item.id,
+                                                    get(receiverData, 'id'),
+                                                    'active'
+                                                )
+                                            }
+                                            color="primary"
+                                            startIcon={
+                                                <ActivateImmediateIcon />
+                                            }
+                                        >
+                                            Activate
+                                        </Button>
+                                        <Button
+                                            onClick={() =>
+                                                connect(
+                                                    item.id,
+                                                    get(receiverData, 'id'),
+                                                    'staged'
+                                                )
+                                            }
+                                            color="primary"
+                                            startIcon={<StageIcon />}
+                                        >
+                                            Stage
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+
+                    <Table>
+                        <TableFooter>
+                            <TableRow>
+                                <TableCell style={{ whiteSpace: 'nowrap' }}>
+                                    <PaginationButtons
+                                        disabled={!pagination}
+                                        nextPage={nextPage}
+                                        {...props}
+                                    />
                                 </TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-                <Table>
-                    <TableFooter>
-                        <TableRow>
-                            <TableCell style={{ whiteSpace: 'nowrap' }}>
-                                <PaginationButtons
-                                    disabled={!pagination}
-                                    nextPage={nextPage}
-                                    {...props}
-                                />
-                            </TableCell>
-                        </TableRow>
-                    </TableFooter>
-                </Table>
+                        </TableFooter>
+                    </Table>
+                </Fragment>
             </SimpleShowLayout>
         </ShowView>
     );

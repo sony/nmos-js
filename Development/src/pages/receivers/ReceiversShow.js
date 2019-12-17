@@ -458,6 +458,7 @@ const ConnectionManagementTab = ({
                                                 '/senders',
                                                 item.id
                                             )}/show`}
+                                            style={{ textDecoration: 'none' }}
                                         >
                                             <ChipConditionalLabel
                                                 record={item}

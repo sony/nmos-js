@@ -14,8 +14,9 @@ ESLint and Prettier can be run using `yarn lint`. If you wish to list the warnin
 
 ## Run as a Docker container
 
-At this point in time, a prebuild container is not provided. Luckily it is easy to build it from source!
+At this point in time, a prebuilt container is not provided. Luckily it is easy to build it from source!
 You will need to have git installed as well as [Docker](https://docs.docker.com/install/).
+
 ```bash
 git clone https://github.com/sony/nmos-js
 cd nmos-js

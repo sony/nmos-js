@@ -433,9 +433,13 @@ const ConnectionManagementTab = ({
                                         setFilter={changeFilter}
                                     />
                                 </TableCell>
-                                <TableCell>Flow</TableCell>
                                 {QueryVersion() >= 'v1.2' && (
                                     <TableCell>Active</TableCell>
+                                )}
+                                <TableCell>Flow</TableCell>
+                                <TableCell>Format</TableCell>
+                                {QueryVersion() >= 'v1.1' && (
+                                    <TableCell>Media Type</TableCell>
                                 )}
                                 <TableCell>Connect</TableCell>
                             </TableRow>
@@ -467,6 +471,14 @@ const ConnectionManagementTab = ({
                                             />
                                         </Link>
                                     </TableCell>
+                                    {QueryVersion() >= 'v1.2' && (
+                                        <TableCell>
+                                            <ActiveField
+                                                record={item}
+                                                resource="senders"
+                                            />
+                                        </TableCell>
+                                    )}
                                     <TableCell>
                                         <ReferenceField
                                             record={item}
@@ -479,12 +491,30 @@ const ConnectionManagementTab = ({
                                             <ChipConditionalLabel source="label" />
                                         </ReferenceField>
                                     </TableCell>
-                                    {QueryVersion() >= 'v1.2' && (
+                                    <TableCell>
+                                        <ReferenceField
+                                            record={item}
+                                            basePath="/flows"
+                                            label="Flow"
+                                            source="flow_id"
+                                            reference="flows"
+                                            link={false}
+                                        >
+                                            <TextField source="format" />
+                                        </ReferenceField>
+                                    </TableCell>
+                                    {QueryVersion() >= 'v1.1' && (
                                         <TableCell>
-                                            <ActiveField
+                                            <ReferenceField
                                                 record={item}
-                                                resource="senders"
-                                            />
+                                                basePath="/flows"
+                                                label="Flow"
+                                                source="flow_id"
+                                                reference="flows"
+                                                link={false}
+                                            >
+                                                <TextField source="media_type" />
+                                            </ReferenceField>
                                         </TableCell>
                                     )}
                                     <TableCell>

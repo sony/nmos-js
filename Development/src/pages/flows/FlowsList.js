@@ -11,6 +11,7 @@ import {
 import { Loading, ShowButton, Title, useRefresh } from 'react-admin';
 import FilterField from '../../components/FilterField';
 import PaginationButtons from '../../components/PaginationButtons';
+import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
 
@@ -71,6 +72,15 @@ const FlowsList = props => {
                                         setFilter={changeFilter}
                                     />
                                 </TableCell>
+                                {QueryVersion() >= 'v1.1' && (
+                                    <TableCell>
+                                        Media Type{' '}
+                                        <FilterField
+                                            name="media_type"
+                                            setFilter={changeFilter}
+                                        />
+                                    </TableCell>
+                                )}
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -87,6 +97,9 @@ const FlowsList = props => {
                                         />
                                     </TableCell>
                                     <TableCell>{item.format}</TableCell>
+                                    {QueryVersion() >= 'v1.1' && (
+                                        <TableCell>{item.media_type}</TableCell>
+                                    )}
                                 </TableRow>
                             ))}
                         </TableBody>

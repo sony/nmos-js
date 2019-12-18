@@ -113,6 +113,7 @@ const EditStagedTab = props => (
                         name: 'activate_scheduled_absolute',
                     },
                 ]}
+                translateChoice={false}
             />
             <FormDataConsumer>
                 {({ formData, ...rest }) => {

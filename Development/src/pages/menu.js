@@ -57,7 +57,10 @@ const NavLinkMenuItem = ({
     return (
         <StyledListItem button onClick={refreshHandler} {...props}>
             <ListItemIcon>{icon}</ListItemIcon>
-            <ListItemText primary={label} />
+            <ListItemText
+                primary={label}
+                primaryTypographyProps={{ noWrap: true }}
+            />
         </StyledListItem>
     );
 };

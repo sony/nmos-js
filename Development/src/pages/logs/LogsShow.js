@@ -18,14 +18,18 @@ const LogsTitle = ({ record }) => {
     return <span>Log: {record ? `${record.timestamp}` : ''}</span>;
 };
 
-const LogsShowActions = ({ basePath, data, resource }) => (
+const LogsShowActions = ({ basePath, data }) => (
     <TopToolbar title={<LogsTitle />}>
         {data ? (
             <Button
                 label={'Raw'}
-                href={
-                    cookies.get('Logging API') + '/' + resource + '/' + data.id
+                onClick={() =>
+                    window.open(
+                        cookies.get('Logging API') + '/events/' + data.id,
+                        '_blank'
+                    )
                 }
+                rel="noopener noreferrer"
                 title={'View raw'}
             >
                 <JsonIcon />

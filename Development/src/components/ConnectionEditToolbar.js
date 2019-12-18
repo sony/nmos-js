@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { useFormState } from 'react-final-form';
 import { Button } from '@material-ui/core';
 import { Toolbar } from 'react-admin';
@@ -10,7 +10,7 @@ import {
     StageIcon,
 } from '../icons';
 
-const ConnectionEditToolbar = props => {
+const ConnectionEditToolbar = ({ handleSubmitWithRedirect }) => {
     const formState = useFormState().values;
     const buttonProps = (() => {
         if (get(formState, '$staged.activation.activation_time')) {
@@ -30,19 +30,21 @@ const ConnectionEditToolbar = props => {
         }
     })();
     return (
-        <Toolbar {...props}>
-            <Button
-                onClick={() => props.handleSubmitWithRedirect()}
-                variant="contained"
-                color="primary"
-                disabled={
-                    get(formState, '$staged.activation.activation_time') &&
-                    get(formState, '$staged.activation.mode') !== null
-                }
-                startIcon={buttonProps[1]}
-            >
-                {buttonProps[0]}
-            </Button>
+        <Toolbar>
+            <Fragment>
+                <Button
+                    onClick={() => handleSubmitWithRedirect()}
+                    variant="contained"
+                    color="primary"
+                    disabled={
+                        get(formState, '$staged.activation.activation_time') &&
+                        get(formState, '$staged.activation.mode') !== null
+                    }
+                    startIcon={buttonProps[1]}
+                >
+                    {buttonProps[0]}
+                </Button>
+            </Fragment>
         </Toolbar>
     );
 };

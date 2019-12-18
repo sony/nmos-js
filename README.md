@@ -21,8 +21,8 @@ The web application can also be embedded in the nmos-cpp-registry application. C
 
 ## Work In Progress
 
-The **master** branch has recently been switched to a [react-admin](https://github.com/marmelab/react-admin)-based implementation, which functions as an NMOS Registry browser, using the IS-04 Query API.
-Connection management support, using the IS-05 Connection API, is currently being developed for this implementation.
+The **master** branch uses a [react-admin](https://github.com/marmelab/react-admin)-based implementation, which functions as an NMOS Registry browser, using the IS-04 Query API.
+Connection management is also supported, using the IS-05 Connection API.  
 The earlier [ng-admin](https://github.com/marmelab/ng-admin)-based implementation that included connection management is available on the **ng-admin** branch, but is not being developed further.
 
 ### Active Development

@@ -408,16 +408,19 @@ const convertHTTPResponseToDataProvider = async (
                 }
 
                 let connectionAddresses = {};
-                deviceJSONData.controls.forEach(control => {
-                    const type = control.type.replace('.', '_');
-                    if (type.startsWith('urn:x-nmos:control:sr-ctrl')) {
-                        if (!connectionAddresses.hasOwnProperty(type)) {
-                            set(connectionAddresses, type, [control.href]);
-                        } else {
-                            connectionAddresses[type].push(control.href);
+                // Device.controls was added in v1.1
+                if (deviceJSONData.hasOwnProperty('controls')) {
+                    deviceJSONData.controls.forEach(control => {
+                        const type = control.type.replace('.', '_');
+                        if (type.startsWith('urn:x-nmos:control:sr-ctrl')) {
+                            if (!connectionAddresses.hasOwnProperty(type)) {
+                                set(connectionAddresses, type, [control.href]);
+                            } else {
+                                connectionAddresses[type].push(control.href);
+                            }
                         }
-                    }
-                });
+                    });
+                }
                 // Return IS-04 if no Connection API endpoints
                 if (Object.keys(connectionAddresses).length === 0) {
                     return { url: url, data: json };

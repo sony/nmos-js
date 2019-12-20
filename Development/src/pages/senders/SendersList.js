@@ -42,11 +42,7 @@ const SendersList = props => {
             <Card>
                 <Title title={'Senders'} />
                 <CardContent>
-                    <FilterPanel
-                        data={data}
-                        filter={filter}
-                        setFilter={setFilter}
-                    >
+                    <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
                         <StringFilter source="transport" />
                         {QueryVersion() >= 'v1.2' && (

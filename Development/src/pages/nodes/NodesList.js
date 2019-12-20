@@ -38,11 +38,7 @@ const NodesList = props => {
             <Card>
                 <Title title={'Nodes'} />
                 <CardContent>
-                    <FilterPanel
-                        data={data}
-                        filter={filter}
-                        setFilter={setFilter}
-                    >
+                    <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
                         <StringFilter source="hostname" />
                         {QueryVersion() >= 'v1.1' && (

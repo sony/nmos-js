@@ -46,11 +46,7 @@ const ReceiversList = props => {
             <Card>
                 <Title title={'Receivers'} />
                 <CardContent>
-                    <FilterPanel
-                        data={data}
-                        filter={filter}
-                        setFilter={setFilter}
-                    >
+                    <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
                         <StringFilter source="format" />
                         <StringFilter source="transport" />

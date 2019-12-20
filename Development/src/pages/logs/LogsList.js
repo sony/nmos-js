@@ -37,11 +37,7 @@ const LogsList = props => {
             <Card>
                 <Title title={'Logs'} />
                 <CardContent>
-                    <FilterPanel
-                        data={data}
-                        filter={filter}
-                        setFilter={setFilter}
-                    >
+                    <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="timestamp" />
                         <StringFilter source="level" />
                         <StringFilter source="message" />

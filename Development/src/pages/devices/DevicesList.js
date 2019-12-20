@@ -37,11 +37,7 @@ const DevicesList = props => {
             <Card>
                 <Title title={'Devices'} />
                 <CardContent>
-                    <FilterPanel
-                        data={data}
-                        filter={filter}
-                        setFilter={setFilter}
-                    >
+                    <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
                         <StringFilter source="type" />
                     </FilterPanel>

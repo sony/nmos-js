@@ -38,11 +38,7 @@ const FlowsList = props => {
             <Card>
                 <Title title={'Flows'} />
                 <CardContent>
-                    <FilterPanel
-                        data={data}
-                        filter={filter}
-                        setFilter={setFilter}
-                    >
+                    <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
                         <StringFilter source="format" />
                         {QueryVersion() >= 'v1.1' && (

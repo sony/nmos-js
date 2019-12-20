@@ -8,14 +8,13 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import { Loading, ShowButton, Title, useRefresh } from 'react-admin';
-import FilterField from '../../components/FilterField';
+import { Loading, ShowButton, Title } from 'react-admin';
+import FilterPanel, { StringFilter } from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
 
 const DevicesList = props => {
-    const refresh = useRefresh();
     const [filter, setFilter] = useState({});
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
@@ -29,18 +28,6 @@ const DevicesList = props => {
         setPaginationURL(pagination[label]);
     };
 
-    const changeFilter = (filterValue, name) => {
-        let currentFilter = filter;
-        if (filterValue) {
-            currentFilter[name] = filterValue;
-        } else {
-            delete currentFilter[name];
-        }
-        setPaginationURL(null);
-        setFilter(currentFilter);
-        refresh();
-    };
-
     return (
         <Fragment>
             <div style={{ display: 'flex' }}>
@@ -50,6 +37,14 @@ const DevicesList = props => {
             <Card>
                 <Title title={'Devices'} />
                 <CardContent>
+                    <FilterPanel
+                        data={data}
+                        filter={filter}
+                        setFilter={setFilter}
+                    >
+                        <StringFilter source="label" />
+                        <StringFilter source="type" />
+                    </FilterPanel>
                     <Table>
                         <TableHead>
                             <TableRow>
@@ -58,19 +53,9 @@ const DevicesList = props => {
                                         paddingLeft: '32px',
                                     }}
                                 >
-                                    Label{' '}
-                                    <FilterField
-                                        name="label"
-                                        setFilter={changeFilter}
-                                    />
+                                    Label
                                 </TableCell>
-                                <TableCell>
-                                    Type{' '}
-                                    <FilterField
-                                        name="type"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
+                                <TableCell>Type</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>

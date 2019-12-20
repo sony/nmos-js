@@ -8,16 +8,18 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import { Loading, ShowButton, Title, useRefresh } from 'react-admin';
+import { Loading, ShowButton, Title } from 'react-admin';
 import ActiveField from '../../components/ActiveField';
-import FilterField from '../../components/FilterField';
+import FilterPanel, {
+    BooleanFilter,
+    StringFilter,
+} from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
 
 const SendersList = props => {
-    const refresh = useRefresh();
     const [filter, setFilter] = useState({});
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
@@ -31,18 +33,6 @@ const SendersList = props => {
         setPaginationURL(pagination[label]);
     };
 
-    const changeFilter = (filterValue, name) => {
-        let currentFilter = filter;
-        if (filterValue) {
-            currentFilter[name] = filterValue;
-        } else {
-            delete currentFilter[name];
-        }
-        setPaginationURL(null);
-        setFilter(currentFilter);
-        refresh();
-    };
-
     return (
         <Fragment>
             <div style={{ display: 'flex' }}>
@@ -52,6 +42,20 @@ const SendersList = props => {
             <Card>
                 <Title title={'Senders'} />
                 <CardContent>
+                    <FilterPanel
+                        data={data}
+                        filter={filter}
+                        setFilter={setFilter}
+                    >
+                        <StringFilter source="label" />
+                        <StringFilter source="transport" />
+                        {QueryVersion() >= 'v1.2' && (
+                            <BooleanFilter
+                                source="subscription.active"
+                                label="Active"
+                            />
+                        )}
+                    </FilterPanel>
                     <Table>
                         <TableHead>
                             <TableRow>
@@ -60,19 +64,9 @@ const SendersList = props => {
                                         paddingLeft: '32px',
                                     }}
                                 >
-                                    Label{' '}
-                                    <FilterField
-                                        name="label"
-                                        setFilter={changeFilter}
-                                    />
+                                    Label
                                 </TableCell>
-                                <TableCell>
-                                    Transport{' '}
-                                    <FilterField
-                                        name="transport"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
+                                <TableCell>Transport</TableCell>
                                 {QueryVersion() >= 'v1.2' && (
                                     <TableCell>Active</TableCell>
                                 )}

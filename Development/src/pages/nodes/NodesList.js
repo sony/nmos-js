@@ -8,15 +8,14 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import { Loading, ShowButton, Title, useRefresh } from 'react-admin';
-import FilterField from '../../components/FilterField';
+import { Loading, ShowButton, Title } from 'react-admin';
+import FilterPanel, { StringFilter } from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
 
 const NodesList = props => {
-    const refresh = useRefresh();
     const [filter, setFilter] = useState({});
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
@@ -30,18 +29,6 @@ const NodesList = props => {
         setPaginationURL(pagination[label]);
     };
 
-    const changeFilter = (filterValue, name) => {
-        let currentFilter = filter;
-        if (filterValue) {
-            currentFilter[name] = filterValue;
-        } else {
-            delete currentFilter[name];
-        }
-        setPaginationURL(null);
-        setFilter(currentFilter);
-        refresh();
-    };
-
     return (
         <Fragment>
             <div style={{ display: 'flex' }}>
@@ -51,6 +38,21 @@ const NodesList = props => {
             <Card>
                 <Title title={'Nodes'} />
                 <CardContent>
+                    <FilterPanel
+                        data={data}
+                        filter={filter}
+                        setFilter={setFilter}
+                    >
+                        <StringFilter source="label" />
+                        <StringFilter source="hostname" />
+                        {QueryVersion() >= 'v1.1' && (
+                            <StringFilter
+                                source="api.versions"
+                                label="API Versions"
+                            />
+                        )}
+                        <StringFilter source="id" label="Node ID" />
+                    </FilterPanel>
                     <Table>
                         <TableHead>
                             <TableRow>
@@ -59,35 +61,13 @@ const NodesList = props => {
                                         paddingLeft: '32px',
                                     }}
                                 >
-                                    Label{' '}
-                                    <FilterField
-                                        name="label"
-                                        setFilter={changeFilter}
-                                    />
+                                    Label
                                 </TableCell>
-                                <TableCell>
-                                    Hostname{' '}
-                                    <FilterField
-                                        name="hostname"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
+                                <TableCell>Hostname</TableCell>
                                 {QueryVersion() >= 'v1.1' && (
-                                    <TableCell>
-                                        API Versions{' '}
-                                        <FilterField
-                                            name="api.versions"
-                                            setFilter={changeFilter}
-                                        />
-                                    </TableCell>
+                                    <TableCell>API Versions</TableCell>
                                 )}
-                                <TableCell>
-                                    Node ID{' '}
-                                    <FilterField
-                                        name="id"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
+                                <TableCell>Node ID</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>

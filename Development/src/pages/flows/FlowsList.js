@@ -8,15 +8,14 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import { Loading, ShowButton, Title, useRefresh } from 'react-admin';
-import FilterField from '../../components/FilterField';
+import { Loading, ShowButton, Title } from 'react-admin';
+import FilterPanel, { StringFilter } from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
 
 const FlowsList = props => {
-    const refresh = useRefresh();
     const [filter, setFilter] = useState({});
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
@@ -30,18 +29,6 @@ const FlowsList = props => {
         setPaginationURL(pagination[label]);
     };
 
-    const changeFilter = (filterValue, name) => {
-        let currentFilter = filter;
-        if (filterValue) {
-            currentFilter[name] = filterValue;
-        } else {
-            delete currentFilter[name];
-        }
-        setPaginationURL(null);
-        setFilter(currentFilter);
-        refresh();
-    };
-
     return (
         <Fragment>
             <div style={{ display: 'flex' }}>
@@ -51,6 +38,20 @@ const FlowsList = props => {
             <Card>
                 <Title title={'Flows'} />
                 <CardContent>
+                    <FilterPanel
+                        data={data}
+                        filter={filter}
+                        setFilter={setFilter}
+                    >
+                        <StringFilter source="label" />
+                        <StringFilter source="format" />
+                        {QueryVersion() >= 'v1.1' && (
+                            <StringFilter
+                                source="media_type"
+                                label="Media Type"
+                            />
+                        )}
+                    </FilterPanel>
                     <Table>
                         <TableHead>
                             <TableRow>
@@ -59,27 +60,11 @@ const FlowsList = props => {
                                         paddingLeft: '32px',
                                     }}
                                 >
-                                    Label{' '}
-                                    <FilterField
-                                        name="label"
-                                        setFilter={changeFilter}
-                                    />
+                                    Label
                                 </TableCell>
-                                <TableCell>
-                                    Format{' '}
-                                    <FilterField
-                                        name="format"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
+                                <TableCell>Format</TableCell>
                                 {QueryVersion() >= 'v1.1' && (
-                                    <TableCell>
-                                        Media Type{' '}
-                                        <FilterField
-                                            name="media_type"
-                                            setFilter={changeFilter}
-                                        />
-                                    </TableCell>
+                                    <TableCell>Media Type</TableCell>
                                 )}
                             </TableRow>
                         </TableHead>

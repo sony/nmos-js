@@ -8,14 +8,13 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import { Loading, ShowButton, Title, useRefresh } from 'react-admin';
-import FilterField from '../../components/FilterField';
+import { Loading, ShowButton, Title } from 'react-admin';
+import FilterPanel, { StringFilter } from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
 
 const LogsList = props => {
-    const refresh = useRefresh();
     const [filter, setFilter] = useState({});
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
@@ -29,18 +28,6 @@ const LogsList = props => {
         setPaginationURL(pagination[label]);
     };
 
-    const changeFilter = (filterValue, name) => {
-        let currentFilter = filter;
-        if (filterValue) {
-            currentFilter[name] = filterValue;
-        } else {
-            delete currentFilter[name];
-        }
-        setPaginationURL(null);
-        setFilter(currentFilter);
-        refresh();
-    };
-
     return (
         <Fragment>
             <div style={{ display: 'flex' }}>
@@ -50,62 +37,37 @@ const LogsList = props => {
             <Card>
                 <Title title={'Logs'} />
                 <CardContent>
+                    <FilterPanel
+                        data={data}
+                        filter={filter}
+                        setFilter={setFilter}
+                    >
+                        <StringFilter source="timestamp" />
+                        <StringFilter source="level" />
+                        <StringFilter source="message" />
+                        <StringFilter
+                            source="request_uri"
+                            label="Request URI"
+                        />
+                        <StringFilter
+                            source="http_method"
+                            label="HTTP Method"
+                        />
+                    </FilterPanel>
                     <Table>
                         <TableHead>
                             <TableRow>
                                 <TableCell
                                     style={{
-                                        paddingRight: '6px',
                                         paddingLeft: '32px',
                                     }}
                                 >
-                                    Timestamp{' '}
-                                    <FilterField
-                                        name="timestamp"
-                                        setFilter={changeFilter}
-                                    />
+                                    Timestamp
                                 </TableCell>
-                                <TableCell
-                                    style={{
-                                        paddingRight: '6px',
-                                    }}
-                                >
-                                    Level{' '}
-                                    <FilterField
-                                        name="level"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
-                                <TableCell
-                                    style={{
-                                        paddingRight: '6px',
-                                    }}
-                                >
-                                    Message{' '}
-                                    <FilterField
-                                        name="message"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
-                                <TableCell style={{ paddingRight: '6px' }}>
-                                    Request URI{' '}
-                                    <FilterField
-                                        name="request_uri"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
-                                <TableCell
-                                    style={{
-                                        paddingRight: '6px',
-                                    }}
-                                >
-                                    HTTP Method{' '}
-                                    <FilterField
-                                        width="20px"
-                                        name="http_method"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
+                                <TableCell>Level</TableCell>
+                                <TableCell>Message</TableCell>
+                                <TableCell>Request URI</TableCell>
+                                <TableCell>HTTP Method</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>

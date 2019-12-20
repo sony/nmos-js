@@ -8,20 +8,13 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import {
-    BooleanField,
-    Loading,
-    ShowButton,
-    Title,
-    useRefresh,
-} from 'react-admin';
-import FilterField from '../../components/FilterField';
+import { BooleanField, Loading, ShowButton, Title } from 'react-admin';
+import FilterPanel, { StringFilter } from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
 
 const SubscriptionsList = props => {
-    const refresh = useRefresh();
     const [filter, setFilter] = useState({});
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
@@ -35,18 +28,6 @@ const SubscriptionsList = props => {
         setPaginationURL(pagination[label]);
     };
 
-    const changeFilter = (filterValue, name) => {
-        let currentFilter = filter;
-        if (filterValue) {
-            currentFilter[name] = filterValue;
-        } else {
-            delete currentFilter[name];
-        }
-        setPaginationURL(null);
-        setFilter(currentFilter);
-        refresh();
-    };
-
     return (
         <Fragment>
             <div style={{ display: 'flex' }}>
@@ -56,6 +37,22 @@ const SubscriptionsList = props => {
             <Card>
                 <Title title={'Subscriptions'} />
                 <CardContent>
+                    <FilterPanel
+                        data={data}
+                        filter={filter}
+                        setFilter={setFilter}
+                    >
+                        <StringFilter
+                            source="resource_path"
+                            label="Resource Path"
+                        />
+                        <StringFilter source="persist" />
+                        <StringFilter
+                            source="max_update_rate_ms"
+                            label="Max Update Rate"
+                        />
+                        <StringFilter source="id" label="ID" />
+                    </FilterPanel>
                     <Table>
                         <TableHead>
                             <TableRow>
@@ -64,33 +61,11 @@ const SubscriptionsList = props => {
                                         paddingLeft: '32px',
                                     }}
                                 >
-                                    Resource Path{' '}
-                                    <FilterField
-                                        name="resource path"
-                                        setFilter={changeFilter}
-                                    />
+                                    Resource Path
                                 </TableCell>
-                                <TableCell>
-                                    Persist{' '}
-                                    <FilterField
-                                        name="persist"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    Max Update Rate{' '}
-                                    <FilterField
-                                        name="max update rate"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    ID{' '}
-                                    <FilterField
-                                        name="id"
-                                        setFilter={changeFilter}
-                                    />
-                                </TableCell>
+                                <TableCell>Persist</TableCell>
+                                <TableCell>Max Update Rate</TableCell>
+                                <TableCell>ID</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>

@@ -16,8 +16,6 @@ import assign from 'lodash/assign';
 import diff from 'deep-diff';
 import Cookies from 'universal-cookie';
 
-let API_URL = '';
-
 let LINK_HEADERS = {
     nodes: '',
     devices: '',
@@ -34,45 +32,52 @@ const DNS_API = 'DNS-SD API';
 
 const cookies = new Cookies();
 
+export const concatUrl = (url, path) => {
+    return (
+        url + (url.endsWith('/') && path.startsWith('/') ? path.slice(1) : path)
+    );
+};
+
 const defaultUrl = api => {
-    let path = window.location.protocol + '//' + window.location.host;
+    let baseUrl = window.location.protocol + '//' + window.location.host;
     switch (api) {
         case LOGGING_API:
-            path += '/log/v1.0';
-            return path;
+            return baseUrl + '/log/v1.0';
         case QUERY_API:
-            path += '/x-nmos/query/v1.2';
-            return path;
+            return baseUrl + '/x-nmos/query/v1.3';
         case DNS_API:
-            path += '/x-dns-sd/v1.0';
-            return path;
+            return baseUrl + '/x-dns-sd/v1.0';
         default:
             //not expected to be used
             return '';
     }
 };
 
-const returnUrl = resource => {
+export const resourceUrl = (resource, subresourceQuery = '') => {
     let url;
     let api;
+    let res;
     switch (resource) {
         case 'logs':
             api = LOGGING_API;
+            res = 'events';
             break;
         case 'queryapis':
             api = DNS_API;
+            res = '_nmos-query._tcp';
             break;
         default:
             //all pages other than logs/queryapis
             api = QUERY_API;
+            res = resource;
             break;
     }
-    if (cookies.get(api) === undefined) {
+    url = cookies.get(api);
+    if (url === undefined) {
         url = defaultUrl(api);
-    } else {
-        url = cookies.get(api);
     }
-    return url;
+
+    return concatUrl(url, `/${res}${subresourceQuery}`);
 };
 
 export const changeAPIEndpoint = (API, cookieQuery) => {
@@ -116,14 +121,7 @@ const isNumber = v => {
 const convertDataProviderRequestToHTTP = (type, resource, params) => {
     switch (type) {
         case GET_ONE: {
-            API_URL = returnUrl(resource);
-            if (resource === 'queryapis') {
-                return { url: `${API_URL}/_nmos-query._tcp/${params.id}` };
-            }
-            if (resource === 'logs') {
-                return { url: `${API_URL}/events/${params.id}` };
-            }
-            return { url: `${API_URL}/${resource}/${params.id}` };
+            return { url: resourceUrl(resource, `/${params.id}`) };
         }
 
         case GET_LIST: {
@@ -134,10 +132,8 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             const pagingLimit = cookies.get('Paging Limit');
             const queryParams = [];
 
-            API_URL = returnUrl(resource);
-
             if (resource === 'queryapis') {
-                return { url: `${API_URL}/_nmos-query._tcp/` };
+                return { url: resourceUrl(resource) };
             }
 
             if (cookies.get('RQL') === 'false') {
@@ -180,14 +176,8 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
 
             const query = queryParams.join('&');
 
-            if (resource === 'logs') {
-                return {
-                    url: `${API_URL}/events?${query}`,
-                };
-            }
-
             return {
-                url: `${API_URL}/${resource}?${query}`,
+                url: resourceUrl(resource, `?${query}`),
             };
         }
         case GET_MANY: {
@@ -198,12 +188,16 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                     'query.rql=or(' +
                     params.ids.map(id => 'eq(id,' + id + ')').join(',') +
                     ')';
-                return { url: `${API_URL}/${resource}?${total_query}` };
+                return {
+                    url: resourceUrl(resource, `?${total_query}`),
+                };
             } else {
                 total_query = 'id=' + params.ids[0];
                 //hmm, need to make multiple requests if we have to match one at a time with basic query syntax
                 //as the fetch component must make a valid connection we'll make the first request here
-                return { url: `${API_URL}/${resource}?${total_query}` };
+                return {
+                    url: resourceUrl(resource, `?${total_query}`),
+                };
             }
         }
         case GET_MANY_REFERENCE: {
@@ -220,9 +214,11 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                     total_query = params.target + '=' + params.id;
                 }
                 total_query += '&paging.limit=1000';
-                return { url: `${API_URL}/${resource}?${total_query}` };
+                return {
+                    url: resourceUrl(resource, `?${total_query}`),
+                };
             } else {
-                return { url: `${API_URL}/${resource}` };
+                return { url: resourceUrl(resource) };
             }
         }
         case UPDATE:
@@ -278,7 +274,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 body: JSON.stringify(patchData),
             };
             return {
-                url: `${params.data.$connectionAPI}/staged`,
+                url: concatUrl(params.data.$connectionAPI, '/staged'),
                 options: options,
             };
         case CREATE:
@@ -314,7 +310,9 @@ const getEndpoints = (addresses, resource, id) => {
             addresses.map(address => {
                 return timeout(
                     5000,
-                    fetch(`${address}/single/${resource}/${id}`, { signal })
+                    fetch(concatUrl(address, `/single/${resource}/${id}`), {
+                        signal,
+                    })
                 );
             })
         )
@@ -330,7 +328,9 @@ const getEndpoints = (addresses, resource, id) => {
                 }
                 Promise.all(
                     endpoints.map(endpoint =>
-                        fetch(`${connectionAPI}/${endpoint}`, { signal })
+                        fetch(concatUrl(connectionAPI, `/${endpoint}`), {
+                            signal,
+                        })
                             .then(response => {
                                 if (response.ok) {
                                     return response.text();
@@ -392,16 +392,14 @@ const convertHTTPResponseToDataProvider = async (
                 json.id = json.name;
             }
             if (resource === 'receivers' || resource === 'senders') {
-                API_URL = returnUrl(resource);
                 let resourceJSONData = await fetch(
-                    `${API_URL}/${resource}/${params.id}`
+                    resourceUrl(resource, `/${params.id}`)
                 ).then(result => result.json());
 
                 let deviceJSONData;
                 if (resourceJSONData.hasOwnProperty('device_id')) {
-                    API_URL = returnUrl('devices');
                     deviceJSONData = await fetch(
-                        `${API_URL}/devices/${resourceJSONData.device_id}`
+                        resourceUrl('devices', `/${resourceJSONData.device_id}`)
                     ).then(result => result.json());
                 } else {
                     return { url: url, data: json };
@@ -501,7 +499,7 @@ const convertHTTPResponseToDataProvider = async (
                     params.ids.map(
                         id =>
                             new Promise(resolve =>
-                                fetch(`${API_URL}/${resource}?id=${id}`)
+                                fetch(resourceUrl(resource, `?id=${id}`))
                                     .then(response => response.json())
                                     .then(json => resolve(json[0]))
                             )

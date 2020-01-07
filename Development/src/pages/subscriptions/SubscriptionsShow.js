@@ -1,7 +1,6 @@
 import React from 'react';
 import {
     BooleanField,
-    Button,
     FunctionField,
     ListButton,
     Show,
@@ -9,12 +8,9 @@ import {
     TextField,
     TopToolbar,
 } from 'react-admin';
-import Cookies from 'universal-cookie';
-import JsonIcon from '../../icons/JsonIcon';
 import MapTags from '../../components/TagsField';
+import RawButton from '../../components/RawButton';
 import UrlField from '../../components/URLField';
-
-const cookies = new Cookies();
 
 const SubscriptionsTitle = ({ record }) => {
     return (
@@ -31,25 +27,7 @@ const SubscriptionsTitle = ({ record }) => {
 
 const SubscriptionsShowActions = ({ basePath, data, resource }) => (
     <TopToolbar title={<SubscriptionsTitle />}>
-        {data ? (
-            <Button
-                label={'Raw'}
-                onClick={() =>
-                    window.open(
-                        cookies.get('Query API') +
-                            '/' +
-                            resource +
-                            '/' +
-                            data.id,
-                        '_blank'
-                    )
-                }
-                rel="noopener noreferrer"
-                title={'View raw'}
-            >
-                <JsonIcon />
-            </Button>
-        ) : null}
+        {data ? <RawButton record={data} resource={resource} /> : null}
         <ListButton basePath={basePath} />
     </TopToolbar>
 );

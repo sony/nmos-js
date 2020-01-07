@@ -2,11 +2,9 @@ import React, { Fragment } from 'react';
 import { makeStyles } from '@material-ui/core';
 import { Datagrid, List, ShowButton, TextField } from 'react-admin';
 import get from 'lodash/get';
-import Cookies from 'universal-cookie';
 import ConnectButton from '../../components/ConnectButton';
 import ListActions from '../../components/ListActions';
-
-const cookies = new Cookies();
+import { resourceUrl } from '../../dataProvider';
 
 const ShowField = ({ record = {}, basePath }) => (
     <ShowButton
@@ -37,11 +35,7 @@ const QueryAPIsList = props => {
     return (
         <Fragment>
             <List
-                actions={
-                    <ListActions
-                        url={cookies.get('DNS-SD API') + '/_nmos-query._tcp'}
-                    />
-                }
+                actions={<ListActions url={resourceUrl(props.resource)} />}
                 bulkActionButtons={false}
                 classes={classes}
                 title="Query APIs"

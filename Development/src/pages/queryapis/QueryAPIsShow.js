@@ -1,6 +1,5 @@
 import React, { Fragment } from 'react';
 import {
-    Button,
     ListButton,
     ShowView,
     SimpleShowLayout,
@@ -10,36 +9,17 @@ import {
     useShowController,
 } from 'react-admin';
 import { makeStyles } from '@material-ui/core';
-import Cookies from 'universal-cookie';
 import ConnectButton from '../../components/ConnectButton';
 import ItemArrayField from '../../components/ItemArrayField';
-import JsonIcon from '../../icons/JsonIcon';
-
-const cookies = new Cookies();
+import RawButton from '../../components/RawButton';
 
 const QueryAPIsTitle = ({ record }) => {
     return <span>Query API{record ? `: ${record.name}` : ''}</span>;
 };
 
-const QueryAPIsShowActions = ({ basePath, data }) => (
+const QueryAPIsShowActions = ({ basePath, data, resource }) => (
     <TopToolbar title={<QueryAPIsTitle />}>
-        {data ? (
-            <Button
-                label={'Raw'}
-                onClick={() =>
-                    window.open(
-                        cookies.get('DNS-SD API') +
-                            '/_nmos-query._tcp/' +
-                            data.id,
-                        '_blank'
-                    )
-                }
-                rel="noopener noreferrer"
-                title={'View raw'}
-            >
-                <JsonIcon />
-            </Button>
-        ) : null}
+        {data ? <RawButton record={data} resource={resource} /> : null}
         <ListButton title={'Return to ' + basePath} basePath={basePath} />
     </TopToolbar>
 );

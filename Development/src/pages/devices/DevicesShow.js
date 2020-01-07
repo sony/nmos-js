@@ -1,7 +1,6 @@
 import React from 'react';
 import {
     ArrayField,
-    Button,
     Datagrid,
     FunctionField,
     ListButton,
@@ -15,15 +14,12 @@ import {
     TopToolbar,
     useShowController,
 } from 'react-admin';
-import Cookies from 'universal-cookie';
-import JsonIcon from '../../icons/JsonIcon';
 import MapTags from '../../components/TagsField';
+import RawButton from '../../components/RawButton';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
 import QueryVersion from '../../components/QueryVersion';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
-
-const cookies = new Cookies();
 
 const DevicesTitle = ({ record }) => {
     return (
@@ -40,25 +36,7 @@ const DevicesTitle = ({ record }) => {
 
 const DevicesShowActions = ({ basePath, data, resource }) => (
     <TopToolbar title={<DevicesTitle />}>
-        {data ? (
-            <Button
-                label={'Raw'}
-                onClick={() =>
-                    window.open(
-                        cookies.get('Query API') +
-                            '/' +
-                            resource +
-                            '/' +
-                            data.id,
-                        '_blank'
-                    )
-                }
-                rel="noopener noreferrer"
-                title={'View raw'}
-            >
-                <JsonIcon />
-            </Button>
-        ) : null}
+        {data ? <RawButton record={data} resource={resource} /> : null}
         <ListButton title={'Return to ' + basePath} basePath={basePath} />
     </TopToolbar>
 );

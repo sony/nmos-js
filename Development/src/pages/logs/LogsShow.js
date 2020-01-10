@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-    Button,
     FunctionField,
     ListButton,
     Show,
@@ -8,33 +7,16 @@ import {
     TextField,
     TopToolbar,
 } from 'react-admin';
-import Cookies from 'universal-cookie';
-import JsonIcon from '../../icons/JsonIcon';
 import MapTags from '../../components/TagsField';
-
-const cookies = new Cookies();
+import RawButton from '../../components/RawButton';
 
 const LogsTitle = ({ record }) => {
     return <span>Log: {record ? `${record.timestamp}` : ''}</span>;
 };
 
-const LogsShowActions = ({ basePath, data }) => (
+const LogsShowActions = ({ basePath, data, resource }) => (
     <TopToolbar title={<LogsTitle />}>
-        {data ? (
-            <Button
-                label={'Raw'}
-                onClick={() =>
-                    window.open(
-                        cookies.get('Logging API') + '/events/' + data.id,
-                        '_blank'
-                    )
-                }
-                rel="noopener noreferrer"
-                title={'View raw'}
-            >
-                <JsonIcon />
-            </Button>
-        ) : null}
+        {data ? <RawButton record={data} resource={resource} /> : null}
         <ListButton title={'Return to ' + basePath} basePath={basePath} />
     </TopToolbar>
 );

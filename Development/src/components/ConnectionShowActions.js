@@ -2,12 +2,10 @@ import React from 'react';
 import NavLink from 'react-router-dom/NavLink';
 import { Button, ListButton, TopToolbar, useGetOne } from 'react-admin';
 import get from 'lodash/get';
-import Cookies from 'universal-cookie';
 import EditIcon from '@material-ui/icons/Edit';
 import JsonIcon from '../icons/JsonIcon';
 import { useTheme } from '@material-ui/styles';
-
-const cookies = new Cookies();
+import { concatUrl, resourceUrl } from '../dataProvider';
 
 export default function ConnectionShowActions({ basePath, id, resource }) {
     const { data } = useGetOne(resource, id);
@@ -15,9 +13,9 @@ export default function ConnectionShowActions({ basePath, id, resource }) {
     let json_href;
     if (data) {
         const tab = window.location.href.split('/').pop();
-        json_href = cookies.get('Query API') + '/' + resource + '/' + data.id;
+        json_href = resourceUrl(resource, `/${data.id}`);
         if (tab === 'active' || tab === 'staged' || tab === 'transportfile') {
-            json_href = data.$connectionAPI + '/' + tab;
+            json_href = concatUrl(data.$connectionAPI, `/${tab}`);
         }
     }
     const theme = useTheme();

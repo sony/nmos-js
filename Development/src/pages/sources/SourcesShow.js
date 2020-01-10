@@ -92,6 +92,12 @@ const SourcesShow = props => {
                             </Datagrid>
                         </ArrayField>
                     )}
+                {controllerProps.record &&
+                    QueryVersion() >= 'v1.3' &&
+                    controllerProps.record.format ===
+                        'urn:x-nmos:format:data' && (
+                        <TextField label="Event Type" source="event_type" />
+                    )}
                 <hr />
                 <ReferenceArrayField
                     allowEmpty={true}

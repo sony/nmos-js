@@ -119,6 +119,19 @@ const FlowsShow = props => {
                             source="transfer_characteristic"
                         />
                     )}
+                {controllerProps.record &&
+                    QueryVersion() >= 'v1.1' &&
+                    controllerProps.record.format ===
+                        'urn:x-nmos:format:audio' &&
+                    controllerProps.record.media_type.startsWith('audio/L') && (
+                        <TextField label="Bit Depth" source="bit_depth" />
+                    )}
+                {controllerProps.record &&
+                    QueryVersion() >= 'v1.3' &&
+                    controllerProps.record.format ===
+                        'urn:x-nmos:format:data' && (
+                        <TextField label="Event Type" source="event_type" />
+                    )}
                 <hr />
                 <ReferenceArrayField
                     allowEmpty={true}

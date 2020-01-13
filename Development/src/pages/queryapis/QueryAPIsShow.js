@@ -54,8 +54,16 @@ const QueryAPIsShow = props => {
                     <hr />
                     <TextField label="API Protocol" source="txt.api_proto" />
                     <TextField label="API Versions" source="txt.api_ver" />
-                    <FunctionField label="API Authorization" source="txt.api_auth" render={(record, source) =>
-                        <BooleanField record={{_:get(record, source) === 'true'}} source='_'/>}/>
+                    <FunctionField
+                        label="API Authorization"
+                        source="txt.api_auth"
+                        render={(record, source) => (
+                            <BooleanField
+                                record={{ _: get(record, source) === 'true' }}
+                                source="_"
+                            />
+                        )}
+                    />
                     />
                     <TextField label="Priority" source="txt.pri" />
                 </SimpleShowLayout>

@@ -1,6 +1,7 @@
 import React from 'react';
 import {
     ArrayField,
+    BooleanField,
     Datagrid,
     FunctionField,
     ListButton,
@@ -86,6 +87,9 @@ export const NodesShow = props => {
                             <TextField source="host" />
                             <TextField source="port" />
                             <TextField source="protocol" />
+                            {QueryVersion() >= 'v1.3' && (
+                                <BooleanField source="authorization" />
+                            )}
                             <FunctionField
                                 render={record => (
                                     <a
@@ -117,6 +121,9 @@ export const NodesShow = props => {
                     <Datagrid>
                         <UrlField source="href" label="Address" />
                         <TextField source="type" />
+                        {QueryVersion() >= 'v1.3' && (
+                            <BooleanField source="authorization" />
+                        )}
                     </Datagrid>
                 </ArrayField>
                 {controllerProps.record && QueryVersion() >= 'v1.2' && (

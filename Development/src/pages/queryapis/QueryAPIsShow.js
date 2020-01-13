@@ -1,5 +1,7 @@
 import React, { Fragment } from 'react';
 import {
+    BooleanField,
+    FunctionField,
     ListButton,
     ShowView,
     SimpleShowLayout,
@@ -9,6 +11,7 @@ import {
     useShowController,
 } from 'react-admin';
 import { makeStyles } from '@material-ui/core';
+import get from 'lodash/get';
 import ConnectButton from '../../components/ConnectButton';
 import ItemArrayField from '../../components/ItemArrayField';
 import RawButton from '../../components/RawButton';
@@ -51,6 +54,9 @@ const QueryAPIsShow = props => {
                     <hr />
                     <TextField label="API Protocol" source="txt.api_proto" />
                     <TextField label="API Versions" source="txt.api_ver" />
+                    <FunctionField label="API Authorization" source="txt.api_auth" render={(record, source) =>
+                        <BooleanField record={{_:get(record, source) === 'true'}} source='_'/>}/>
+                    />
                     <TextField label="Priority" source="txt.pri" />
                 </SimpleShowLayout>
                 <Toolbar classes={useStyles()}>

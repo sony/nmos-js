@@ -11,6 +11,7 @@ import {
 import MapTags from '../../components/TagsField';
 import RawButton from '../../components/RawButton';
 import UrlField from '../../components/URLField';
+import QueryVersion from '../../components/QueryVersion';
 
 const SubscriptionsTitle = ({ record }) => {
     return (
@@ -57,6 +58,9 @@ const SubscriptionsShow = props => (
             <hr />
             <BooleanField source="persist" />
             <BooleanField source="secure" />
+            {QueryVersion() >= 'v1.3' && (
+                <BooleanField source="authorization" />
+            )}
         </SimpleShowLayout>
     </Show>
 );

@@ -1,6 +1,7 @@
 import React from 'react';
 import {
     ArrayField,
+    BooleanField,
     Datagrid,
     FunctionField,
     ListButton,
@@ -74,6 +75,9 @@ const DevicesShow = props => {
                         <Datagrid>
                             <UrlField source="href" label="Address" />
                             <TextField source="type" />
+                            {QueryVersion() >= 'v1.3' && (
+                                <BooleanField source="authorization" />
+                            )}
                         </Datagrid>
                     </ArrayField>
                 )}

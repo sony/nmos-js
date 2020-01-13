@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import {
     Card,
     CardContent,
@@ -14,7 +14,6 @@ import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
-
 import FilterPanel, {
     BooleanFilter,
     StringFilter,
@@ -28,14 +27,11 @@ const ReceiversList = props => {
         filter,
         paginationURL,
     });
-    useEffect(() => {
-        setPaginationURL(null);
-    }, [filter]);
+    if (!loaded) return <Loading />;
 
     const nextPage = label => {
         setPaginationURL(pagination[label]);
     };
-    if (!loaded) return <Loading />;
 
     return (
         <Fragment>

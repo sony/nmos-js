@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useRef, useState } from 'react';
 import {
     Button,
     IconButton,
@@ -30,15 +30,69 @@ const StyledTableCell = withStyles({
     },
 })(TableCell);
 
+export const BooleanFilter = ({
+    source,
+    label,
+    filter,
+    setFilter,
+    autoFocus,
+}) => {
+    const [checked, setChecked] = useState(!!filter[source]);
+    if (!label) label = titleCase(source);
+
+    const inputRef = useRef();
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (autoFocus) inputRef.current.focus();
+        }, 100);
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [autoFocus]);
+
+    useEffect(() => {
+        setFilter(f => ({ ...f, [source]: checked }));
+        return function cleanup() {
+            setFilter(f => {
+                let newFilter = { ...f };
+                delete newFilter[source];
+                return newFilter;
+            });
+        };
+    }, [checked, setFilter, source]);
+    return (
+        <div style={{ display: 'flex' }}>
+            <Typography style={{ alignSelf: 'center' }}>{label}</Typography>
+            <Switch
+                checked={checked}
+                onChange={() => setChecked(!checked)}
+                inputRef={inputRef}
+            />
+        </div>
+    );
+};
+
 export const StringFilter = ({
     source,
     label,
     filter,
     setFilter,
+    autoFocus,
     ...props
 }) => {
     const [value, setValue] = useState(filter[source] ? filter[source] : '');
     if (!label) label = titleCase(source);
+
+    const inputRef = useRef();
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (autoFocus) inputRef.current.focus();
+        }, 100);
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [autoFocus]);
+
     useEffect(() => {
         setFilter(f => ({ ...f, [source]: value }));
         return function cleanup() {
@@ -56,29 +110,9 @@ export const StringFilter = ({
             margin="dense"
             value={value}
             onChange={event => setValue(event.target.value)}
+            inputRef={inputRef}
             {...props}
         />
-    );
-};
-
-export const BooleanFilter = ({ source, label, filter, setFilter }) => {
-    const [checked, setChecked] = useState(!!filter[source]);
-    if (!label) label = titleCase(source);
-    useEffect(() => {
-        setFilter(f => ({ ...f, [source]: checked }));
-        return function cleanup() {
-            setFilter(f => {
-                let newFilter = { ...f };
-                delete newFilter[source];
-                return newFilter;
-            });
-        };
-    }, [checked, setFilter, source]);
-    return (
-        <div style={{ display: 'flex' }}>
-            <Typography style={{ alignSelf: 'center' }}>{label}</Typography>
-            <Switch checked={checked} onChange={() => setChecked(!checked)} />
-        </div>
     );
 };
 
@@ -92,13 +126,14 @@ const FilterPanel = ({ children, filter, setFilter }) => {
         setAnchorEl(null);
     };
 
-    const addFilter = child => {
+    const addFilter = (child, autoFocus = false) => {
         handleClose();
         setDisplayedFilters(f => ({
             ...f,
             [get(child, 'props.source')]: React.cloneElement(child, {
                 filter: filter,
                 setFilter: setFilter,
+                autoFocus,
             }),
         }));
     };
@@ -119,8 +154,9 @@ const FilterPanel = ({ children, filter, setFilter }) => {
                     <TableRow>
                         {Object.keys(displayedFilters).map(key => (
                             <Fragment key={key}>
-                                <StyledTableCell padding="none">
+                                <StyledTableCell>
                                     <IconButton
+                                        size="small"
                                         onClick={() => removeFilter(key)}
                                     >
                                         <ClearIcon />
@@ -162,7 +198,7 @@ const FilterPanel = ({ children, filter, setFilter }) => {
                 keepMounted
             >
                 {React.Children.map(children, child => (
-                    <MenuItem onClick={() => addFilter(child)}>
+                    <MenuItem onClick={() => addFilter(child, true)}>
                         {get(child, 'props.label')
                             ? get(child, 'props.label')
                             : titleCase(get(child, 'props.source'))}

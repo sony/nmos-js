@@ -42,6 +42,10 @@ const useQueryWithStore = (query, options, dataSelector, totalSelector) => {
     }
     const dataProvider = useDataProvider();
     useEffect(() => {
+        // If the filter has changed ignore paginationURL
+        payload.paginationURL = null;
+    }, [payload.filter]); // eslint-disable-line
+    useEffect(() => {
         setState(prevState =>
             Object.assign(Object.assign({}, prevState), { loading: true })
         );

@@ -142,7 +142,8 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
 
             if (cookies.get('RQL') === 'false') {
                 for (const [key, value] of Object.entries(params.filter)) {
-                    queryParams.push(key + '=' + value);
+                    if (value || typeof value === 'boolean')
+                        queryParams.push(key + '=' + value);
                 }
             } else {
                 const matchParams = [];
@@ -151,9 +152,10 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                     parsedValue = parsedValue.split('%2C'); //splits comma separated values
                     for (let i = 0; i < parsedValue.length; i++) {
                         if (key === 'level' || typeof value === 'boolean') {
-                            matchParams.push(
-                                'eq(' + key + ',' + parsedValue[i] + ')'
-                            );
+                            if (value !== '')
+                                matchParams.push(
+                                    'eq(' + key + ',' + parsedValue[i] + ')'
+                                );
                         } else {
                             //almost everything else is a string for which partial matches are useful
                             matchParams.push(

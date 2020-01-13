@@ -32,7 +32,10 @@ import { useTheme } from '@material-ui/styles';
 import ActiveField from '../../components/ActiveField';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
-import FilterField from '../../components/FilterField';
+import FilterPanel, {
+    BooleanFilter,
+    StringFilter,
+} from '../../components/FilterPanel';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
 import makeConnection from '../../components/makeConnection';
@@ -348,9 +351,6 @@ const ConnectionManagementTab = ({
 }) => {
     const notify = useNotify();
     const refreshWholeView = useRefresh();
-    // we need to force update the sender data without refreshing
-    // the whole view
-    const [refresh, setRefresh] = useState(true);
     const [filter, setFilter] = useState({
         transport: get(receiverData, 'transport'),
     });
@@ -360,7 +360,6 @@ const ConnectionManagementTab = ({
         filter,
         paginationURL,
         resource: 'senders',
-        refresh,
     });
 
     // receiverData initialises undefined, update when no longer null
@@ -373,18 +372,6 @@ const ConnectionManagementTab = ({
 
     const nextPage = label => {
         setPaginationURL(pagination[label]);
-    };
-
-    const changeFilter = (filterValue, name) => {
-        let currentFilter = filter;
-        if (filterValue) {
-            currentFilter[name] = filterValue;
-        } else {
-            delete currentFilter[name];
-        }
-        setRefresh(!refresh);
-        setPaginationURL(null);
-        setFilter(currentFilter);
     };
 
     const connect = (senderID, receiverID, endpoint) => {
@@ -419,6 +406,19 @@ const ConnectionManagementTab = ({
         >
             <SimpleShowLayout>
                 <Fragment>
+                    <FilterPanel
+                        data={data}
+                        filter={filter}
+                        setFilter={setFilter}
+                    >
+                        <StringFilter source="label" />
+                        {QueryVersion() >= 'v1.2' && (
+                            <BooleanFilter
+                                source="subscription.active"
+                                label="Active"
+                            />
+                        )}
+                    </FilterPanel>
                     <Table>
                         <TableHead>
                             <TableRow>
@@ -427,11 +427,7 @@ const ConnectionManagementTab = ({
                                         paddingLeft: '32px',
                                     }}
                                 >
-                                    Sender{' '}
-                                    <FilterField
-                                        name="label"
-                                        setFilter={changeFilter}
-                                    />
+                                    Sender
                                 </TableCell>
                                 {QueryVersion() >= 'v1.2' && (
                                     <TableCell>Active</TableCell>
@@ -551,7 +547,6 @@ const ConnectionManagementTab = ({
                             ))}
                         </TableBody>
                     </Table>
-
                     <Table>
                         <TableFooter>
                             <TableRow>

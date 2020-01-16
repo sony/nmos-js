@@ -13,6 +13,7 @@ import ActiveField from '../../components/ActiveField';
 import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
+import useDebounce from '../../components/useDebounce';
 import useGetList from '../../components/useGetList';
 import FilterPanel, {
     BooleanFilter,
@@ -21,10 +22,11 @@ import FilterPanel, {
 
 const ReceiversList = props => {
     const [filter, setFilter] = useState({});
+    const debouncedFilter = useDebounce(filter, 250);
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
         ...props,
-        filter,
+        filter: debouncedFilter,
         paginationURL,
     });
     if (!loaded) return <Loading />;

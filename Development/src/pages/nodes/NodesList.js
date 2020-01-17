@@ -49,7 +49,19 @@ const NodesList = props => {
                         {QueryVersion() >= 'v1.1' && (
                             <StringFilter
                                 source="api.versions"
-                                label="API Versions"
+                                label="API Version"
+                            />
+                        )}
+                        {QueryVersion() >= 'v1.1' && (
+                            <StringFilter
+                                source="api.endpoints.host"
+                                label="API Endpoint Host"
+                            />
+                        )}
+                        {QueryVersion() >= 'v1.2' && (
+                            <StringFilter
+                                source="interfaces.port_id"
+                                label="Interface Port ID"
                             />
                         )}
                         <StringFilter source="id" label="ID" />

@@ -11,6 +11,7 @@ import {
 import { Loading, ShowButton, Title } from 'react-admin';
 import FilterPanel, { StringFilter } from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
+import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
 import useDebounce from '../../components/useDebounce';
 import useGetList from '../../components/useGetList';
@@ -41,7 +42,11 @@ const DevicesList = props => {
                 <CardContent>
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
+                        {QueryVersion() >= 'v1.1' && (
+                            <StringFilter source="description" />
+                        )}
                         <StringFilter source="type" />
+                        <StringFilter source="id" label="ID" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

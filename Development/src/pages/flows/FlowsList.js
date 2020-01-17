@@ -42,6 +42,7 @@ const FlowsList = props => {
                 <CardContent>
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
+                        <StringFilter source="description" />
                         <StringFilter source="format" />
                         {QueryVersion() >= 'v1.1' && (
                             <StringFilter
@@ -49,6 +50,7 @@ const FlowsList = props => {
                                 label="Media Type"
                             />
                         )}
+                        <StringFilter source="id" label="ID" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

@@ -46,6 +46,7 @@ const SendersList = props => {
                 <CardContent>
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
+                        <StringFilter source="description" />
                         <StringFilter source="transport" />
                         {QueryVersion() >= 'v1.2' && (
                             <BooleanFilter
@@ -53,6 +54,7 @@ const SendersList = props => {
                                 label="Active"
                             />
                         )}
+                        <StringFilter source="id" label="ID" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

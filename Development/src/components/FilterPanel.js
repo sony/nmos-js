@@ -1,6 +1,7 @@
 import React, { Fragment, useEffect, useRef, useState } from 'react';
 import {
     Button,
+    Divider,
     IconButton,
     Menu,
     MenuItem,
@@ -204,12 +205,13 @@ const FilterPanel = ({ children, filter, setFilter }) => {
                             : titleCase(get(child, 'props.source'))}
                     </MenuItem>
                 ))}
+                <Divider />
                 <MenuItem
                     onClick={() => {
                         React.Children.map(children, child => addFilter(child));
                     }}
                 >
-                    Show All
+                    All
                 </MenuItem>
             </Menu>
         </div>

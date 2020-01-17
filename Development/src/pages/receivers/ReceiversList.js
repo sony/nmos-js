@@ -46,6 +46,7 @@ const ReceiversList = props => {
                 <CardContent>
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
+                        <StringFilter source="description" />
                         <StringFilter source="format" />
                         <StringFilter source="transport" />
                         {QueryVersion() >= 'v1.2' && (
@@ -54,6 +55,7 @@ const ReceiversList = props => {
                                 label="Active"
                             />
                         )}
+                        <StringFilter source="id" label="ID" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

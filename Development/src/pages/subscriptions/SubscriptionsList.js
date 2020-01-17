@@ -63,7 +63,6 @@ const SubscriptionsList = props => {
                                 </TableCell>
                                 <TableCell>Persist</TableCell>
                                 <TableCell>Max Update Rate</TableCell>
-                                <TableCell>ID</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -88,7 +87,6 @@ const SubscriptionsList = props => {
                                     <TableCell label="Max Update Rate (ms)">
                                         {item.max_update_rate_ms}
                                     </TableCell>
-                                    <TableCell>{item.id}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

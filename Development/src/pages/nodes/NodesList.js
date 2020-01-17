@@ -42,6 +42,9 @@ const NodesList = props => {
                 <CardContent>
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
+                        {QueryVersion() >= 'v1.1' && (
+                            <StringFilter source="description" />
+                        )}
                         <StringFilter source="hostname" />
                         {QueryVersion() >= 'v1.1' && (
                             <StringFilter
@@ -49,7 +52,7 @@ const NodesList = props => {
                                 label="API Versions"
                             />
                         )}
-                        <StringFilter source="id" label="Node ID" />
+                        <StringFilter source="id" label="ID" />
                     </FilterPanel>
                     <Table>
                         <TableHead>
@@ -65,7 +68,7 @@ const NodesList = props => {
                                 {QueryVersion() >= 'v1.1' && (
                                     <TableCell>API Versions</TableCell>
                                 )}
-                                <TableCell>Node ID</TableCell>
+                                <TableCell>ID</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>

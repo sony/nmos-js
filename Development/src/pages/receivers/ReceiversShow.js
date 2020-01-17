@@ -411,13 +411,18 @@ const ConnectionManagementTab = ({
                         filter={filter}
                         setFilter={setFilter}
                     >
-                        <StringFilter source="label" />
+                        <StringFilter source="label" label="Sender Label" />
+                        <StringFilter
+                            source="description"
+                            label="Sender Description"
+                        />
                         {QueryVersion() >= 'v1.2' && (
                             <BooleanFilter
                                 source="subscription.active"
-                                label="Active"
+                                label="Sender Active"
                             />
                         )}
+                        <StringFilter source="id" label="Sender ID" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

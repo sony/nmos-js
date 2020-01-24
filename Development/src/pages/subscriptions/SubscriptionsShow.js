@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import {
     BooleanField,
     FunctionField,
     ListButton,
-    Show,
+    ShowView,
     SimpleShowLayout,
     TextField,
+    Toolbar,
     TopToolbar,
+    useShowController,
 } from 'react-admin';
-import MapTags from '../../components/TagsField';
+import get from 'lodash/get';
+import DeleteButton from '../../components/DeleteButton';
+import MapObject from '../../components/ObjectField';
 import RawButton from '../../components/RawButton';
 import UrlField from '../../components/URLField';
 import QueryVersion from '../../components/QueryVersion';
@@ -33,36 +37,48 @@ const SubscriptionsShowActions = ({ basePath, data, resource }) => (
     </TopToolbar>
 );
 
-const SubscriptionsShow = props => (
-    <Show
-        title={<SubscriptionsTitle />}
-        actions={<SubscriptionsShowActions />}
-        {...props}
-    >
-        <SimpleShowLayout>
-            <TextField source="id" label="ID" />
-            <TextField source="resource_path" />
-            <UrlField label="WebSocket Address" source="ws_href" />
-            <TextField
-                label="Max Update Rate (ms)"
-                source="max_update_rate_ms"
-            />
-            <FunctionField
-                label="Params"
-                render={record =>
-                    Object.keys(record.params).length > 0
-                        ? MapTags(record)
-                        : null
-                }
-            />
-            <hr />
-            <BooleanField source="persist" />
-            <BooleanField source="secure" />
-            {QueryVersion() >= 'v1.3' && (
-                <BooleanField source="authorization" />
+const SubscriptionsShow = props => {
+    const controllerProps = useShowController(props);
+    return (
+        <Fragment>
+            <ShowView
+                title={<SubscriptionsTitle />}
+                actions={<SubscriptionsShowActions />}
+                {...controllerProps}
+                {...props}
+            >
+                <SimpleShowLayout>
+                    <TextField source="id" label="ID" />
+                    <TextField source="resource_path" />
+                    <UrlField label="WebSocket Address" source="ws_href" />
+                    <TextField
+                        label="Max Update Rate (ms)"
+                        source="max_update_rate_ms"
+                    />
+                    <FunctionField
+                        label="Params"
+                        render={record =>
+                            Object.keys(record.params).length > 0
+                                ? MapObject(record, 'params')
+                                : null
+                        }
+                    />
+                    <hr />
+                    <BooleanField source="persist" />
+                    <BooleanField source="secure" />
+                    {QueryVersion() >= 'v1.3' && (
+                        <BooleanField source="authorization" />
+                    )}
+                </SimpleShowLayout>
+            </ShowView>
+            {get(controllerProps.record, 'id') && (
+                // Toolbar will override the DeleteButton resource prop
+                <Toolbar resource="subscriptions" style={{ marginTop: 0 }}>
+                    <DeleteButton id={get(controllerProps.record, 'id')} />
+                </Toolbar>
             )}
-        </SimpleShowLayout>
-    </Show>
-);
+        </Fragment>
+    );
+};
 
 export default SubscriptionsShow;

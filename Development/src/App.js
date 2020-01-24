@@ -10,7 +10,11 @@ import { FlowsList, FlowsShow } from './pages/flows';
 import { ReceiversEdit, ReceiversList, ReceiversShow } from './pages/receivers';
 import { SendersEdit, SendersList, SendersShow } from './pages/senders';
 import { LogsList, LogsShow } from './pages/logs';
-import { SubscriptionsList, SubscriptionsShow } from './pages/subscriptions';
+import {
+    SubscriptionsCreate,
+    SubscriptionsList,
+    SubscriptionsShow,
+} from './pages/subscriptions';
 import { QueryAPIsList, QueryAPIsShow } from './pages/queryapis';
 import dataProvider from './dataProvider';
 import Layout from './LayoutComponent';
@@ -45,6 +49,7 @@ const App = () => (
             name="subscriptions"
             list={SubscriptionsList}
             show={SubscriptionsShow}
+            create={SubscriptionsCreate}
         />
         <Resource name="logs" list={LogsList} show={LogsShow} />
     </Admin>

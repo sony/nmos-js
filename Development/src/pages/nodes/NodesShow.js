@@ -15,7 +15,7 @@ import {
 } from 'react-admin';
 import LinkIcon from '@material-ui/icons/Link';
 import ItemArrayField from '../../components/ItemArrayField';
-import MapTags from '../../components/TagsField';
+import MapObject from '../../components/ObjectField';
 import RawButton from '../../components/RawButton';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
@@ -67,7 +67,7 @@ export const NodesShow = props => {
                         label="Tags"
                         render={record =>
                             Object.keys(record.tags).length > 0
-                                ? MapTags(record)
+                                ? MapObject(record, 'tags')
                                 : null
                         }
                     />

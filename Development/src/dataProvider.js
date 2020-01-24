@@ -279,10 +279,22 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 url: concatUrl(params.data.$connectionAPI, '/staged'),
                 options: options,
             };
-        case CREATE:
-            return '';
+        case CREATE: {
+            const url = resourceUrl(resource, `?${resource}`);
+            const options = {
+                method: 'POST',
+                body: JSON.stringify(params.data),
+            };
+            return {
+                url,
+                options: options,
+            };
+        }
         case DELETE:
-            return '';
+            return {
+                url: resourceUrl(resource, `/${params.id}`),
+                options: { method: 'DELETE' },
+            };
         default:
             //not expected to be used
             return '';
@@ -522,6 +534,10 @@ const convertHTTPResponseToDataProvider = async (
             };
         case UPDATE:
             return { data: { ...json, id: json.id } };
+        case CREATE:
+            return { data: { ...params.data, id: json.id } };
+        case DELETE:
+            return { data: { id: params.id } };
         default:
             //used for prev, next, first, last
             if (resource === 'queryapis') {

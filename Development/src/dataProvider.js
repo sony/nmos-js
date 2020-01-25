@@ -280,7 +280,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 options: options,
             };
         case CREATE: {
-            const url = resourceUrl(resource, `?${resource}`);
+            const url = resourceUrl(resource);
             const options = {
                 method: 'POST',
                 body: JSON.stringify(params.data),

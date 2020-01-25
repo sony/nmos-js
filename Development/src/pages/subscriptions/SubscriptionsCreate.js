@@ -4,12 +4,11 @@ import {
     Create,
     ListButton,
     NumberInput,
+    SelectInput,
     SimpleForm,
-    TextInput,
     TopToolbar,
 } from 'react-admin';
 import ObjectInput from '../../components/ObjectInput';
-import QueryVersion from '../../components/QueryVersion';
 import RawButton from '../../components/RawButton';
 
 const SubscriptionsCreateActions = ({ basePath, data, resource }) => (
@@ -22,7 +21,21 @@ const SubscriptionsCreateActions = ({ basePath, data, resource }) => (
 const SubscriptionsCreate = props => (
     <Create actions={<SubscriptionsCreateActions />} {...props}>
         <SimpleForm redirect="show">
-            <TextInput source="resource_path" label="Resource Path" />
+            <SelectInput
+                source="resource_path"
+                label="Resource Path"
+                choices={[
+                    { id: "", name: "(none)" },
+                    { id: "/nodes", name: "/nodes" },
+                    { id: "/devices", name: "/devices" },
+                    { id: "/sources", name: "/sources" },
+                    { id: "/flows", name: "/flows" },
+                    { id: "/senders", name: "/senders" },
+                    { id: "/receivers", name: "/receivers" },
+                ]}
+                initialValue=""
+                parse={value => (value)}
+            />
             <NumberInput
                 source="max_update_rate_ms"
                 label="Max Update Rate (ms)"

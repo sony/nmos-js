@@ -25,16 +25,16 @@ const SubscriptionsCreate = props => (
                 source="resource_path"
                 label="Resource Path"
                 choices={[
-                    { id: "", name: "(none)" },
-                    { id: "/nodes", name: "/nodes" },
-                    { id: "/devices", name: "/devices" },
-                    { id: "/sources", name: "/sources" },
-                    { id: "/flows", name: "/flows" },
-                    { id: "/senders", name: "/senders" },
-                    { id: "/receivers", name: "/receivers" },
+                    { id: '', name: '(none)' },
+                    { id: '/nodes', name: '/nodes' },
+                    { id: '/devices', name: '/devices' },
+                    { id: '/sources', name: '/sources' },
+                    { id: '/flows', name: '/flows' },
+                    { id: '/senders', name: '/senders' },
+                    { id: '/receivers', name: '/receivers' },
                 ]}
                 initialValue=""
-                parse={value => (value)}
+                parse={value => value}
             />
             <NumberInput
                 source="max_update_rate_ms"

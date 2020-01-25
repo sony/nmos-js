@@ -16,21 +16,24 @@ const useStyles = makeStyles(theme => ({
     },
 }));
 
-const DeleteButton = ({ resource, id }) => {
+const DeleteButton = ({ resource, id, record }) => {
     const classes = useStyles();
-    const [deleteOne, { loading, error }] = useDelete(resource, id);
     const notify = useNotify();
     const refresh = useRefresh();
     const history = useHistory();
+    const [deleteOne, { loading, error }] = useDelete(resource, id, record, {
+        onSuccess: () => {
+            if (window.location.hash.substr(1) === `/${resource}`) {
+                refresh();
+            } else {
+                history.push(`/${resource}`);
+            }
+        },
+    });
     const handleButton = () => {
         deleteOne();
         if (!error) {
             notify('Element deleted', 'info');
-        }
-        if (window.location.hash.substr(1) === `/${resource}`) {
-            refresh();
-        } else {
-            history.push(`/${resource}`);
         }
     };
     useEffect(() => {

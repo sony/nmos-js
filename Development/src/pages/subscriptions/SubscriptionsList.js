@@ -11,7 +11,10 @@ import {
 import { BooleanField, Loading, ShowButton, Title } from 'react-admin';
 import get from 'lodash/get';
 import DeleteButton from '../../components/DeleteButton';
-import FilterPanel, { StringFilter } from '../../components/FilterPanel';
+import FilterPanel, {
+    BooleanFilter,
+    StringFilter,
+} from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useDebounce from '../../components/useDebounce';
@@ -46,7 +49,7 @@ const SubscriptionsList = props => {
                             source="resource_path"
                             label="Resource Path"
                         />
-                        <StringFilter source="persist" />
+                        <BooleanFilter source="persist" />
                         <StringFilter
                             source="max_update_rate_ms"
                             label="Max Update Rate (ms)"

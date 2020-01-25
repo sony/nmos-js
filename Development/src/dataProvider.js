@@ -147,14 +147,18 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                     let parsedValue = encodeURIComponent(value);
                     parsedValue = parsedValue.split('%2C'); //splits comma separated values
                     for (let i = 0; i < parsedValue.length; i++) {
-                        if (
-                            ['max_update_rate_ms', 'level'].includes(key) ||
-                            typeof value === 'boolean'
-                        ) {
-                            if (value !== '')
+                        if (typeof value === 'boolean') {
+                            //a few properties are Boolean
+                            matchParams.push(
+                                'eq(' + key + ',' + parsedValue[i] + ')'
+                            );
+                        } else if (typeof value === 'number') {
+                            //a few are integers
+                            if (!isNaN(value)) {
                                 matchParams.push(
                                     'eq(' + key + ',' + parsedValue[i] + ')'
                                 );
+                            }
                         } else {
                             //almost everything else is a string for which partial matches are useful
                             matchParams.push(

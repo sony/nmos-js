@@ -13,6 +13,7 @@ import get from 'lodash/get';
 import DeleteButton from '../../components/DeleteButton';
 import FilterPanel, {
     BooleanFilter,
+    NumberFilter,
     StringFilter,
 } from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
@@ -50,7 +51,7 @@ const SubscriptionsList = props => {
                             label="Resource Path"
                         />
                         <BooleanFilter source="persist" />
-                        <StringFilter
+                        <NumberFilter
                             source="max_update_rate_ms"
                             label="Max Update Rate (ms)"
                         />

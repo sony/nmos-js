@@ -9,7 +9,10 @@ import {
     TableRow,
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
-import FilterPanel, { StringFilter } from '../../components/FilterPanel';
+import FilterPanel, {
+    NumberFilter,
+    StringFilter,
+} from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useDebounce from '../../components/useDebounce';
@@ -41,7 +44,7 @@ const LogsList = props => {
                 <CardContent>
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="timestamp" />
-                        <StringFilter source="level" />
+                        <NumberFilter source="level" />
                         <StringFilter source="message" />
                         <StringFilter
                             source="request_uri"

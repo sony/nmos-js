@@ -26,12 +26,10 @@ const SubscriptionsCreate = props => (
             <NumberInput
                 source="max_update_rate_ms"
                 label="Max Update Rate (ms)"
+                initialValue={100}
             />
             <ObjectInput source="params" />
-            <BooleanInput source="persist" initialValue={false} />
-            {QueryVersion() >= 'v1.3' && (
-                <BooleanInput source="authorization" />
-            )}
+            <BooleanInput source="persist" initialValue={true} />
         </SimpleForm>
     </Create>
 );

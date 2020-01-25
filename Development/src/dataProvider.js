@@ -147,7 +147,10 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                     let parsedValue = encodeURIComponent(value);
                     parsedValue = parsedValue.split('%2C'); //splits comma separated values
                     for (let i = 0; i < parsedValue.length; i++) {
-                        if (key === 'level' || typeof value === 'boolean') {
+                        if (
+                            ['max_update_rate_ms', 'level'].includes(key) ||
+                            typeof value === 'boolean'
+                        ) {
                             if (value !== '')
                                 matchParams.push(
                                     'eq(' + key + ',' + parsedValue[i] + ')'

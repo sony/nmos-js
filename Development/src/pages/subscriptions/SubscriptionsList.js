@@ -49,7 +49,7 @@ const SubscriptionsList = props => {
                         <StringFilter source="persist" />
                         <StringFilter
                             source="max_update_rate_ms"
-                            label="Max Update Rate"
+                            label="Max Update Rate (ms)"
                         />
                         <StringFilter source="id" label="ID" />
                     </FilterPanel>
@@ -64,7 +64,7 @@ const SubscriptionsList = props => {
                                     Resource Path
                                 </TableCell>
                                 <TableCell>Persist</TableCell>
-                                <TableCell>Max Update Rate</TableCell>
+                                <TableCell>Max Update Rate (ms)</TableCell>
                                 <TableCell />
                             </TableRow>
                         </TableHead>
@@ -87,7 +87,7 @@ const SubscriptionsList = props => {
                                             source="persist"
                                         />
                                     </TableCell>
-                                    <TableCell label="Max Update Rate (ms)">
+                                    <TableCell>
                                         {item.max_update_rate_ms}
                                     </TableCell>
                                     <TableCell>

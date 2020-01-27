@@ -5,7 +5,7 @@ import Button from '@material-ui/core/Button';
 import { changeAPIEndpoint } from '../dataProvider';
 import { ConnectRegistryIcon } from '../icons';
 
-const ConnectButton = ({ record }) => {
+const ConnectButton = ({ record, variant = 'contained', size }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [queryAPI, setQueryAPI] = useState(
@@ -55,9 +55,12 @@ const ConnectButton = ({ record }) => {
         <Fragment>
             <Button
                 color="primary"
-                variant="contained"
                 onClick={handleButtonClick}
                 startIcon={<ConnectRegistryIcon />}
+                variant={variant}
+                size={
+                    size ? size : variant === 'contained' ? 'medium' : 'small'
+                }
             >
                 Connect
             </Button>

@@ -99,6 +99,7 @@ const SubscriptionsList = props => {
                                             <DeleteButton
                                                 resource="subscriptions"
                                                 id={item.id}
+                                                variant="text"
                                             />
                                         )}
                                     </TableCell>

@@ -3,20 +3,43 @@ import { useHistory } from 'react-router-dom';
 import { Button, useDelete, useNotify, useRefresh } from 'react-admin';
 import get from 'lodash/get';
 import { makeStyles } from '@material-ui/core';
+import { fade } from '@material-ui/core/styles/colorManipulator';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { red } from '@material-ui/core/colors';
 
 const useStyles = makeStyles(theme => ({
-    root: {
-        color: theme.palette.getContrastText(red[500]),
-        backgroundColor: red[500],
+    contained: {
+        color: theme.palette.error.contrastText,
+        backgroundColor: theme.palette.error.main,
         '&:hover': {
-            backgroundColor: red[700],
+            backgroundColor: theme.palette.error.dark,
+            // Reset on touch devices, it doesn't add specificity
+            '@media (hover: none)': {
+                backgroundColor: theme.palette.error.main,
+            },
+        },
+    },
+    text: {
+        color: theme.palette.error.main,
+        '&:hover': {
+            backgroundColor: fade(
+                theme.palette.error.main,
+                theme.palette.action.hoverOpacity
+            ),
+            // Reset on touch devices, it doesn't add specificity
+            '@media (hover: none)': {
+                backgroundColor: 'transparent',
+            },
         },
     },
 }));
 
-const DeleteButton = ({ resource, id, record }) => {
+const DeleteButton = ({
+    resource,
+    id,
+    record,
+    variant = 'contained',
+    size,
+}) => {
     const classes = useStyles();
     const notify = useNotify();
     const refresh = useRefresh();
@@ -45,10 +68,14 @@ const DeleteButton = ({ resource, id, record }) => {
     });
     return (
         <Button
-            className={classes.root}
+            className={
+                variant === 'contained' ? classes.contained : classes.text
+            }
             disabled={loading}
             onClick={deleteOne}
             label="Delete"
+            variant={variant}
+            size={size ? size : variant === 'contained' ? 'medium' : 'small'}
         >
             <DeleteIcon />
         </Button>

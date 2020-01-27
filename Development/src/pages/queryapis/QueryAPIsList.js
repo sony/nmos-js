@@ -54,7 +54,7 @@ const QueryAPIsList = props => {
                         source="txt.pri"
                         sortable={false}
                     />
-                    <ConnectButton />
+                    <ConnectButton variant="text" />
                 </Datagrid>
             </List>
         </Fragment>

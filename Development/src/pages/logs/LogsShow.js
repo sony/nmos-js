@@ -7,7 +7,7 @@ import {
     TextField,
     TopToolbar,
 } from 'react-admin';
-import MapTags from '../../components/TagsField';
+import MapObject from '../../components/ObjectField';
 import RawButton from '../../components/RawButton';
 
 const LogsTitle = ({ record }) => {
@@ -33,7 +33,7 @@ const LogsShow = props => (
                 render={record =>
                     record.tags
                         ? Object.keys(record.tags).length > 0
-                            ? MapTags(record)
+                            ? MapObject(record, 'tags')
                             : null
                         : null
                 }

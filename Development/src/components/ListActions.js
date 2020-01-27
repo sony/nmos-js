@@ -1,9 +1,9 @@
 import React from 'react';
-import { Button, TopToolbar } from 'react-admin';
+import { Button, CreateButton, TopToolbar } from 'react-admin';
 import { useTheme } from '@material-ui/styles';
 import JsonIcon from '../icons/JsonIcon';
 
-const ListActions = ({ url }) => {
+const ListActions = ({ basePath, hasCreate, url }) => {
     const theme = useTheme();
     return (
         <TopToolbar
@@ -28,6 +28,7 @@ const ListActions = ({ url }) => {
                     <JsonIcon />
                 </Button>
             )}
+            {hasCreate && <CreateButton basePath={basePath} />}
         </TopToolbar>
     );
 };

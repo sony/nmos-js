@@ -9,7 +9,13 @@ import {
     TableRow,
 } from '@material-ui/core';
 import { BooleanField, Loading, ShowButton, Title } from 'react-admin';
-import FilterPanel, { StringFilter } from '../../components/FilterPanel';
+import get from 'lodash/get';
+import DeleteButton from '../../components/DeleteButton';
+import FilterPanel, {
+    BooleanFilter,
+    NumberFilter,
+    StringFilter,
+} from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useDebounce from '../../components/useDebounce';
@@ -34,7 +40,7 @@ const SubscriptionsList = props => {
         <Fragment>
             <div style={{ display: 'flex' }}>
                 <span style={{ flexGrow: 1 }} />
-                <ListActions url={url} />
+                <ListActions url={url} {...props} />
             </div>
             <Card>
                 <Title title={'Subscriptions'} />
@@ -44,10 +50,10 @@ const SubscriptionsList = props => {
                             source="resource_path"
                             label="Resource Path"
                         />
-                        <StringFilter source="persist" />
-                        <StringFilter
+                        <BooleanFilter source="persist" />
+                        <NumberFilter
                             source="max_update_rate_ms"
-                            label="Max Update Rate"
+                            label="Max Update Rate (ms)"
                         />
                         <StringFilter source="id" label="ID" />
                     </FilterPanel>
@@ -62,7 +68,8 @@ const SubscriptionsList = props => {
                                     Resource Path
                                 </TableCell>
                                 <TableCell>Persist</TableCell>
-                                <TableCell>Max Update Rate</TableCell>
+                                <TableCell>Max Update Rate (ms)</TableCell>
+                                <TableCell />
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -84,8 +91,16 @@ const SubscriptionsList = props => {
                                             source="persist"
                                         />
                                     </TableCell>
-                                    <TableCell label="Max Update Rate (ms)">
+                                    <TableCell>
                                         {item.max_update_rate_ms}
+                                    </TableCell>
+                                    <TableCell>
+                                        {get(item, 'persist') && (
+                                            <DeleteButton
+                                                resource="subscriptions"
+                                                id={item.id}
+                                            />
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))}

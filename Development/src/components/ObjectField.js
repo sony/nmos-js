@@ -6,15 +6,16 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
+import get from 'lodash/get';
 
-function MapTags(record) {
-    if (record == null) {
-        return null;
+function MapObject(record, source) {
+    if (record == null || !get(record, source)) {
+        return;
     }
-    const keys = Object.keys(record.tags);
+    const keys = Object.keys(get(record, source));
     let arr = [];
     keys.forEach(key => {
-        arr.push({ key: key, value: record.tags[key] });
+        arr.push({ key: key, value: get(record, source)[key] });
     });
     return (
         <div>
@@ -27,7 +28,7 @@ function MapTags(record) {
                 </TableHead>
                 <TableBody>
                     {arr.map(item => (
-                        <TagField key={item.key} tag={item} />
+                        <ObjectField key={item.key} item={item} />
                     ))}
                 </TableBody>
             </Table>
@@ -35,16 +36,20 @@ function MapTags(record) {
     );
 }
 
-const TagField = ({ tag = {} }) => (
+const ObjectField = ({ item = {} }) => (
     <TableRow style={{ fontSize: '14px' }}>
-        <TableCell>{tag.key}</TableCell>
-        <TableCell>{tag.value.join(', ')}</TableCell>
+        <TableCell>{item.key}</TableCell>
+        {Array.isArray(item.value) ? (
+            <TableCell>{item.value.join(', ')}</TableCell>
+        ) : (
+            <TableCell>{item.value}</TableCell>
+        )}
     </TableRow>
 );
 
-TagField.defaultProps = {
+ObjectField.defaultProps = {
     addLabel: true,
     map: [],
 };
 
-export default MapTags;
+export default MapObject;

@@ -43,7 +43,7 @@ import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
 import useGetList from '../../components/useGetList';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
-import MapTags from '../../components/TagsField';
+import MapObject from '../../components/ObjectField';
 import TAIField from '../../components/TAIField';
 import TransportFileViewer from '../../components/TransportFileViewer';
 import { ActivateImmediateIcon, StageIcon } from '../../icons';
@@ -186,7 +186,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     label="Tags"
                     render={record =>
                         Object.keys(record.tags).length > 0
-                            ? MapTags(record)
+                            ? MapObject(record, 'tags')
                             : null
                     }
                 />

@@ -73,6 +73,51 @@ export const BooleanFilter = ({
     );
 };
 
+export const NumberFilter = ({
+    source,
+    label,
+    filter,
+    setFilter,
+    autoFocus,
+    ...props
+}) => {
+    const [value, setValue] = useState(filter[source] ? filter[source] : '');
+    if (!label) label = titleCase(source);
+
+    const inputRef = useRef();
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (autoFocus) inputRef.current.focus();
+        }, 100);
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [autoFocus]);
+
+    useEffect(() => {
+        setFilter(f => ({ ...f, [source]: parseInt(value, 10) }));
+        return function cleanup() {
+            setFilter(f => {
+                let newFilter = { ...f };
+                delete newFilter[source];
+                return newFilter;
+            });
+        };
+    }, [value, setFilter, source]);
+    return (
+        <TextField
+            type="number"
+            label={label}
+            variant="filled"
+            margin="dense"
+            value={value}
+            onChange={event => setValue(event.target.value)}
+            inputRef={inputRef}
+            {...props}
+        />
+    );
+};
+
 export const StringFilter = ({
     source,
     label,

@@ -26,7 +26,7 @@ import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
 import SenderTransportParamsCardsGrid from './SenderTransportParams';
-import MapTags from '../../components/TagsField';
+import MapObject from '../../components/ObjectField';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
@@ -159,7 +159,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     label="Tags"
                     render={record =>
                         Object.keys(record.tags).length > 0
-                            ? MapTags(record)
+                            ? MapObject(record, 'tags')
                             : null
                     }
                 />

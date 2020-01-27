@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useHistory } from 'react-router-dom';
 import { Button, useDelete, useNotify, useRefresh } from 'react-admin';
 import get from 'lodash/get';
@@ -21,23 +21,16 @@ const DeleteButton = ({ resource, id, record }) => {
     const notify = useNotify();
     const refresh = useRefresh();
     const history = useHistory();
-    const [deleteOne, { loading, error }] = useDelete(resource, id, record, {
+    const [deleteOne, { loading }] = useDelete(resource, id, record, {
         onSuccess: () => {
+            notify('Element deleted', 'info');
             if (window.location.hash.substr(1) === `/${resource}`) {
                 refresh();
             } else {
                 history.push(`/${resource}`);
             }
         },
-    });
-    const handleButton = () => {
-        deleteOne();
-        if (!error) {
-            notify('Element deleted', 'info');
-        }
-    };
-    useEffect(() => {
-        if (error) {
+        onFailure: error => {
             if (error.hasOwnProperty('body'))
                 notify(
                     get(error.body, 'error') +
@@ -48,13 +41,13 @@ const DeleteButton = ({ resource, id, record }) => {
                     'warning'
                 );
             notify(error.toString(), 'warning');
-        }
-    }, [error, notify]);
+        },
+    });
     return (
         <Button
             className={classes.root}
             disabled={loading}
-            onClick={handleButton}
+            onClick={deleteOne}
             label="Delete"
         >
             <DeleteIcon />

@@ -164,7 +164,7 @@ const RefreshSelector = () => {
                                     : 'center bottom',
                         }}
                     >
-                        <Paper>
+                        <Paper elevation={8}>
                             <ClickAwayListener onClickAway={handleClose}>
                                 <MenuList id="split-button-menu">
                                     {intervals.map((option, index) => (

@@ -195,7 +195,7 @@ const FilterPanel = ({ children, filter, setFilter }) => {
 
     return (
         <div style={{ display: 'flex', width: '100%' }}>
-            <Table style={{ display: 'inline' }}>
+            <Table style={{ display: 'inline', flex: 1 }}>
                 <TableBody>
                     <TableRow>
                         {Object.keys(displayedFilters).map(key => (
@@ -216,7 +216,6 @@ const FilterPanel = ({ children, filter, setFilter }) => {
                     </TableRow>
                 </TableBody>
             </Table>
-            <span style={{ flex: 1 }} />
             <Button
                 size="small"
                 onClick={handleClick}

@@ -1,11 +1,27 @@
-import React, { Fragment } from 'react';
-import { AppBar } from 'react-admin';
-import { IconButton, Typography } from '@material-ui/core';
+import React, { Fragment, useEffect, useRef, useState } from 'react';
+import { AppBar, useRefresh, useVersion } from 'react-admin';
+import {
+    Button,
+    ClickAwayListener,
+    Grow,
+    IconButton,
+    LinearProgress,
+    MenuItem,
+    MenuList,
+    Paper,
+    Popper,
+    Typography,
+    withStyles,
+} from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
+import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import Brightness7Icon from '@material-ui/icons/Brightness7';
 import Brightness4Icon from '@material-ui/icons/Brightness4';
 import { ThemeContext } from '../theme/ThemeContext';
 import { useTheme } from '@material-ui/styles';
+import Cookies from 'universal-cookie';
+
+const cookies = new Cookies();
 
 const useStyles = makeStyles({
     title: {
@@ -19,6 +35,163 @@ const useStyles = makeStyles({
     },
 });
 
+const ThemedLinearProgress = withStyles(theme => ({
+    bar: {
+        transition: 'none',
+    },
+    colorPrimary: {
+        backgroundColor: theme.palette.secondary.dark,
+    },
+    barColorPrimary: {
+        backgroundColor: theme.palette.secondary.light,
+    },
+}))(LinearProgress);
+
+const intervals = [
+    ['Off', null],
+    ['5s', 5000],
+    ['10s', 10000],
+    ['30s', 30000],
+    ['1m', 60000],
+    ['5m', 300000],
+    ['15m', 900000],
+    ['30m', 1800000],
+    ['1h', 3600000],
+];
+
+const useInterval = (callback, delay) => {
+    const callbackFunction = useRef();
+    useEffect(() => {
+        callbackFunction.current = callback;
+    }, [callback]);
+    useEffect(() => {
+        const tick = () => {
+            callbackFunction.current();
+        };
+        if (delay !== null) {
+            let id = setInterval(tick, delay);
+            return () => clearInterval(id);
+        }
+    }, [delay]);
+};
+
+const RefreshSelector = () => {
+    const [open, setOpen] = useState(false);
+    const [percentage, setPercentage] = useState(0);
+    const anchorRef = useRef(null);
+    const [intervalsIndex, setIntervalsIndex] = React.useState(
+        cookies.get('RefreshTime') || 4
+    );
+    const refresh = useRefresh();
+    const version = useVersion();
+
+    useInterval(
+        () => {
+            setPercentage(p => p + 1);
+        },
+        intervals[intervalsIndex][1] ? intervals[intervalsIndex][1] / 100 : null
+    );
+
+    useEffect(() => {
+        if (percentage === 100) {
+            refresh();
+            setPercentage(0);
+        }
+    }, [percentage, refresh]);
+
+    useEffect(() => {
+        setPercentage(0);
+    }, [version]);
+
+    const handleMenuItemClick = (event, index) => {
+        setIntervalsIndex(index);
+        setOpen(false);
+        setPercentage(0);
+        cookies.set('RefreshTime', index);
+    };
+    const handleToggle = () => {
+        setOpen(prevOpen => !prevOpen);
+    };
+    const handleClose = event => {
+        if (anchorRef.current && anchorRef.current.contains(event.target)) {
+            return;
+        }
+        setOpen(false);
+    };
+
+    return (
+        <Fragment>
+            {' '}
+            {intervals[intervalsIndex][1] ? (
+                <div ref={anchorRef}>
+                    <Button
+                        color="inherit"
+                        size="small"
+                        style={{ textTransform: 'none' }}
+                        onClick={handleToggle}
+                    >
+                        <ArrowDropDownIcon size="small" />
+                        {intervals[intervalsIndex][0]}
+                    </Button>
+                    <ThemedLinearProgress
+                        variant="determinate"
+                        value={percentage}
+                    />
+                </div>
+            ) : (
+                <IconButton
+                    color="inherit"
+                    size="small"
+                    onClick={handleToggle}
+                    ref={anchorRef}
+                >
+                    <ArrowDropDownIcon size="small" />
+                </IconButton>
+            )}
+            <Popper
+                open={open}
+                anchorEl={anchorRef.current}
+                transition
+                disablePortal
+            >
+                {({ TransitionProps, placement }) => (
+                    <Grow
+                        {...TransitionProps}
+                        style={{
+                            transformOrigin:
+                                placement === 'bottom'
+                                    ? 'center top'
+                                    : 'center bottom',
+                        }}
+                    >
+                        <Paper>
+                            <ClickAwayListener onClickAway={handleClose}>
+                                <MenuList id="split-button-menu">
+                                    {intervals.map((option, index) => (
+                                        <MenuItem
+                                            key={option}
+                                            selected={index === intervalsIndex}
+                                            onClick={event =>
+                                                handleMenuItemClick(
+                                                    event,
+                                                    index
+                                                )
+                                            }
+                                            style={{ fontSize: '0.875rem' }}
+                                        >
+                                            {option[0]}
+                                        </MenuItem>
+                                    ))}
+                                </MenuList>
+                            </ClickAwayListener>
+                        </Paper>
+                    </Grow>
+                )}
+            </Popper>
+        </Fragment>
+    );
+};
+
 const CustomAppBar = ({ ...props }) => {
     const classes = useStyles();
     const theme = useTheme();
@@ -29,7 +202,7 @@ const CustomAppBar = ({ ...props }) => {
         toggleThemeIcon = <Brightness4Icon />;
     }
     return (
-        <AppBar userMenu={<Fragment />} {...props}>
+        <AppBar userMenu={<RefreshSelector />} {...props}>
             <Typography
                 variant="h6"
                 color="inherit"

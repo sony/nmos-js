@@ -1,62 +1,83 @@
-import React, { Fragment } from 'react';
-import { makeStyles } from '@material-ui/core';
-import { Datagrid, List, ShowButton, TextField } from 'react-admin';
-import get from 'lodash/get';
-import ConnectButton from '../../components/ConnectButton';
+import React, { Fragment, useState } from 'react';
+import {
+    Card,
+    CardContent,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+} from '@material-ui/core';
+import { Loading, ShowButton, Title } from 'react-admin';
+import FilterPanel, { StringFilter } from '../../components/FilterPanel';
 import ListActions from '../../components/ListActions';
-import { resourceUrl } from '../../dataProvider';
-
-const ShowField = ({ record = {}, basePath }) => (
-    <ShowButton
-        style={{
-            textTransform: 'none',
-        }}
-        basePath={basePath}
-        record={record}
-        label={get(record, 'name')}
-    />
-);
-
-const useStyles = makeStyles(theme => ({
-    content: {
-        padding: '16px',
-        marginTop: 0,
-        transition: theme.transitions.create('margin-top'),
-        position: 'relative',
-        flex: '1 1 auto',
-        [theme.breakpoints.down('xs')]: {
-            boxShadow: 'none',
-        },
-    },
-}));
+import ConnectButton from '../../components/ConnectButton';
+import useDebounce from '../../components/useDebounce';
+import useGetList from '../../components/useGetList';
 
 const QueryAPIsList = props => {
-    const classes = useStyles();
+    const [filter, setFilter] = useState({});
+    const debouncedFilter = useDebounce(filter, 250);
+    const { data, loaded, url } = useGetList({
+        ...props,
+        filter: debouncedFilter,
+    });
+    if (!loaded) return <Loading />;
+
     return (
         <Fragment>
-            <List
-                actions={<ListActions url={resourceUrl(props.resource)} />}
-                bulkActionButtons={false}
-                classes={classes}
-                title="Query APIs"
-                pagination={<Fragment />}
-                {...props}
-            >
-                <Datagrid>
-                    <ShowField label="Name" />
-                    <TextField
-                        label="API Versions"
-                        source="txt.api_ver"
-                        sortable={false}
-                    />
-                    <TextField
-                        label="Priority"
-                        source="txt.pri"
-                        sortable={false}
-                    />
-                    <ConnectButton variant="text" />
-                </Datagrid>
-            </List>
+            <div style={{ display: 'flex' }}>
+                <span style={{ flexGrow: 1 }} />
+                <ListActions url={url} />
+            </div>
+            <Card>
+                <Title title={'Nodes'} />
+                <CardContent>
+                    <FilterPanel filter={filter} setFilter={setFilter}>
+                        <StringFilter source="domain" />
+                    </FilterPanel>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell
+                                    style={{
+                                        paddingLeft: '32px',
+                                    }}
+                                >
+                                    Name
+                                </TableCell>
+                                <TableCell>API Versions</TableCell>
+                                <TableCell>Priority</TableCell>
+                                <TableCell />
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {data.map(item => (
+                                <TableRow key={item.id}>
+                                    <TableCell component="th" scope="row">
+                                        <ShowButton
+                                            style={{
+                                                textTransform: 'none',
+                                            }}
+                                            basePath="/queryapis"
+                                            record={item}
+                                            label={item.name}
+                                        />
+                                    </TableCell>
+                                    <TableCell>{item.txt.api_ver}</TableCell>
+                                    <TableCell>{item.txt.pri}</TableCell>
+                                    <TableCell>
+                                        <ConnectButton
+                                            record={item}
+                                            variant="text"
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
         </Fragment>
     );
 };

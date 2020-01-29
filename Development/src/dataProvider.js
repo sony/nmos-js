@@ -132,11 +132,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             const pagingLimit = cookies.get('Paging Limit');
             const queryParams = [];
 
-            if (resource === 'queryapis') {
-                return { url: resourceUrl(resource) };
-            }
-
-            if (cookies.get('RQL') === 'false') {
+            if (resource === 'queryapis' || cookies.get('RQL') === 'false') {
                 for (const [key, value] of Object.entries(params.filter)) {
                     if (value || typeof value === 'boolean')
                         queryParams.push(key + '=' + value);

@@ -1,4 +1,5 @@
 import React, { Fragment, useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AppBar, useRefresh, useVersion } from 'react-admin';
 import {
     Button,
@@ -84,10 +85,19 @@ const RefreshSelector = () => {
     );
     const refresh = useRefresh();
     const version = useVersion();
+    const location = useLocation();
+    useEffect(() => {
+        setPercentage(0);
+    }, [location]);
+    const disable = (() => {
+        const url = location.pathname.split('/');
+        if (url.length === 3) return true;
+        return url.pop().toLowerCase() === 'settings';
+    })();
 
     useInterval(
         () => {
-            setPercentage(p => p + 1);
+            if (!disable) setPercentage(p => p + 1);
         },
         intervals[intervalsIndex][1] ? intervals[intervalsIndex][1] / 100 : null
     );
@@ -129,6 +139,7 @@ const RefreshSelector = () => {
                         size="small"
                         style={{ textTransform: 'none' }}
                         onClick={handleToggle}
+                        disabled={disable}
                     >
                         <ArrowDropDownIcon size="small" />
                         {intervals[intervalsIndex][0]}
@@ -143,6 +154,7 @@ const RefreshSelector = () => {
                     color="inherit"
                     size="small"
                     onClick={handleToggle}
+                    disabled={disable}
                     ref={anchorRef}
                 >
                     <ArrowDropDownIcon size="small" />

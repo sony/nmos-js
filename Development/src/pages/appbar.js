@@ -1,4 +1,5 @@
 import React, { Fragment, useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AppBar, useRefresh, useVersion } from 'react-admin';
 import {
     Button,
@@ -50,7 +51,7 @@ const ThemedLinearProgress = withStyles(theme => ({
 const intervals = [
     ['Off', null],
     ['5s', 5000],
-    ['10s', 10000],
+    ['15s', 15000],
     ['30s', 30000],
     ['1m', 60000],
     ['5m', 300000],
@@ -84,10 +85,24 @@ const RefreshSelector = () => {
     );
     const refresh = useRefresh();
     const version = useVersion();
+    const location = useLocation();
+    useEffect(() => {
+        setPercentage(0);
+    }, [location]);
+    const disable = (() => {
+        const url = location.pathname.split('/');
+        // #/{resourceType} is a list view
+        // #/{resourceType}/create is (obviously enough) a create view
+        // #/{resourceType}/{resourceId} is (somewhat surprisingly) an edit view
+        // #/{resourceType}/{resourceId}/show is the show view (this arrangement is react-admin historical baggage)
+        if (url.length === 3) return true;
+        // #/settings is our custom Settings edit view
+        return url.pop().toLowerCase() === 'settings';
+    })();
 
     useInterval(
         () => {
-            setPercentage(p => p + 1);
+            if (!disable) setPercentage(p => p + 1);
         },
         intervals[intervalsIndex][1] ? intervals[intervalsIndex][1] / 100 : null
     );
@@ -129,6 +144,7 @@ const RefreshSelector = () => {
                         size="small"
                         style={{ textTransform: 'none' }}
                         onClick={handleToggle}
+                        disabled={disable}
                     >
                         <ArrowDropDownIcon size="small" />
                         {intervals[intervalsIndex][0]}
@@ -143,6 +159,7 @@ const RefreshSelector = () => {
                     color="inherit"
                     size="small"
                     onClick={handleToggle}
+                    disabled={disable}
                     ref={anchorRef}
                 >
                     <ArrowDropDownIcon size="small" />

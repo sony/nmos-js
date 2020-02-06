@@ -51,7 +51,7 @@ const ThemedLinearProgress = withStyles(theme => ({
 const intervals = [
     ['Off', null],
     ['5s', 5000],
-    ['10s', 10000],
+    ['15s', 15000],
     ['30s', 30000],
     ['1m', 60000],
     ['5m', 300000],
@@ -91,7 +91,12 @@ const RefreshSelector = () => {
     }, [location]);
     const disable = (() => {
         const url = location.pathname.split('/');
+        // #/{resourceType} is a list view
+        // #/{resourceType}/create is (obviously enough) a create view
+        // #/{resourceType}/{resourceId} is (somewhat surprisingly) an edit view
+        // #/{resourceType}/{resourceId}/show is the show view (this arrangement is react-admin historical baggage)
         if (url.length === 3) return true;
+        // #/settings is our custom Settings edit view
         return url.pop().toLowerCase() === 'settings';
     })();
 

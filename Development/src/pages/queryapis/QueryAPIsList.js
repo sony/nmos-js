@@ -34,7 +34,10 @@ const QueryAPIsList = props => {
                 <Title title={'Nodes'} />
                 <CardContent>
                     <FilterPanel filter={filter} setFilter={setFilter}>
-                        <StringFilter source="domain" />
+                        <StringFilter
+                            source="query.domain"
+                            label="Browse Domain"
+                        />
                     </FilterPanel>
                     <Table>
                         <TableHead>

@@ -119,14 +119,26 @@ const isNumber = v => {
 };
 
 const convertDataProviderRequestToHTTP = (type, resource, params) => {
+    //fetchJson won't add the Accept header itself if we specify any headers in options
+    const headers = new Headers({ Accept: 'application/json' });
+    if (resource === 'queryapis') {
+        headers.set('Request-Timeout', 1);
+    }
+
     switch (type) {
         case GET_ONE: {
-            return { url: resourceUrl(resource, `/${params.id}`) };
+            return {
+                url: resourceUrl(resource, `/${params.id}`),
+                options: { headers },
+            };
         }
 
         case GET_LIST: {
             if (params.paginationURL) {
-                return { url: params.paginationURL };
+                return {
+                    url: params.paginationURL,
+                    options: { headers },
+                };
             }
 
             const pagingLimit = cookies.get('Paging Limit');
@@ -173,7 +185,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 }
             }
 
-            if (pagingLimit) {
+            if (resource !== 'queryapis' && pagingLimit) {
                 if (resource !== 'logs')
                     queryParams.push('paging.order=update');
                 queryParams.push('paging.limit=' + pagingLimit);
@@ -183,6 +195,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
 
             return {
                 url: resourceUrl(resource, `?${query}`),
+                options: { headers },
             };
         }
         case GET_MANY: {
@@ -195,6 +208,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                     ')';
                 return {
                     url: resourceUrl(resource, `?${total_query}`),
+                    options: { headers },
                 };
             } else {
                 total_query = 'id=' + params.ids[0];
@@ -202,6 +216,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 //as the fetch component must make a valid connection we'll make the first request here
                 return {
                     url: resourceUrl(resource, `?${total_query}`),
+                    options: { headers },
                 };
             }
         }
@@ -221,12 +236,16 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 total_query += '&paging.limit=1000';
                 return {
                     url: resourceUrl(resource, `?${total_query}`),
+                    options: { headers },
                 };
             } else {
-                return { url: resourceUrl(resource) };
+                return {
+                    url: resourceUrl(resource),
+                    options: { headers },
+                };
             }
         }
-        case UPDATE:
+        case UPDATE: {
             let differences = [];
             let allDifferences = diff(
                 get(params, 'previousData.$staged'),
@@ -274,33 +293,39 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 }
             }
 
-            const options = {
-                method: 'PATCH',
-                body: JSON.stringify(patchData),
-            };
             return {
                 url: concatUrl(params.data.$connectionAPI, '/staged'),
-                options: options,
-            };
-        case CREATE: {
-            const url = resourceUrl(resource);
-            const options = {
-                method: 'POST',
-                body: JSON.stringify(params.data),
-            };
-            return {
-                url,
-                options: options,
+                options: {
+                    method: 'PATCH',
+                    headers,
+                    body: JSON.stringify(patchData),
+                },
             };
         }
-        case DELETE:
+        case CREATE: {
+            const url = resourceUrl(resource);
+            return {
+                url,
+                options: {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(params.data),
+                },
+            };
+        }
+        case DELETE: {
             return {
                 url: resourceUrl(resource, `/${params.id}`),
-                options: { method: 'DELETE' },
+                options: {
+                    method: 'DELETE',
+                    headers,
+                },
             };
-        default:
+        }
+        default: {
             //not expected to be used
             return '';
+        }
     }
 };
 

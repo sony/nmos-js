@@ -17,16 +17,14 @@ import FilterPanel, {
 import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
-import useDebounce from '../../components/useDebounce';
 import useGetList from '../../components/useGetList';
 
 const SendersList = props => {
     const [filter, setFilter] = useState({});
-    const debouncedFilter = useDebounce(filter, 250);
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
         ...props,
-        filter: debouncedFilter,
+        filter,
         paginationURL,
     });
     if (!loaded) return <Loading />;

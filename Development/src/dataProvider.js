@@ -122,7 +122,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
     //fetchJson won't add the Accept header itself if we specify any headers in options
     const headers = new Headers({ Accept: 'application/json' });
     if (resource === 'queryapis') {
-        headers.set('Request-Timeout', 1);
+        headers.set('Request-Timeout', 4);
     }
 
     switch (type) {

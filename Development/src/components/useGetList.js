@@ -9,6 +9,7 @@ import {
     useVersion,
 } from 'react-admin';
 import isEqual from 'lodash/isEqual';
+import useDebounce from './useDebounce';
 
 const isEmptyList = data =>
     Array.isArray(data)
@@ -81,6 +82,7 @@ const useGetList = props => {
         props
     );
     const { basePath, resource, hasCreate, paginationURL, filter } = props;
+    const debouncedFilter = useDebounce(filter, 250);
 
     const notify = useNotify();
     const version = useVersion();
@@ -97,7 +99,7 @@ const useGetList = props => {
             type: 'getList',
             resource,
             payload: {
-                filter,
+                filter: debouncedFilter,
                 paginationURL,
             },
         },

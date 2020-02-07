@@ -12,15 +12,13 @@ import { Loading, ShowButton, Title } from 'react-admin';
 import FilterPanel, { StringFilter } from '../../components/FilterPanel';
 import ListActions from '../../components/ListActions';
 import ConnectButton from '../../components/ConnectButton';
-import useDebounce from '../../components/useDebounce';
 import useGetList from '../../components/useGetList';
 
 const QueryAPIsList = props => {
     const [filter, setFilter] = useState({});
-    const debouncedFilter = useDebounce(filter, 250);
     const { data, loaded, url } = useGetList({
         ...props,
-        filter: debouncedFilter,
+        filter,
     });
     if (!loaded) return <Loading />;
 

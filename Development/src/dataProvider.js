@@ -193,10 +193,17 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
 
             const query = queryParams.join('&');
 
-            return {
-                url: resourceUrl(resource, `?${query}`),
-                options: { headers },
-            };
+            if (query !== '') {
+                return {
+                    url: resourceUrl(resource, `?${query}`),
+                    options: { headers },
+                };
+            } else {
+                return {
+                    url: resourceUrl(resource),
+                    options: { headers },
+                };
+            }
         }
         case GET_MANY: {
             let total_query;
@@ -303,9 +310,8 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             };
         }
         case CREATE: {
-            const url = resourceUrl(resource);
             return {
-                url,
+                url: resourceUrl(resource),
                 options: {
                     method: 'POST',
                     headers,
@@ -444,7 +450,7 @@ const convertHTTPResponseToDataProvider = async (
                         resourceUrl('devices', `/${resourceJSONData.device_id}`)
                     ).then(result => result.json());
                 } else {
-                    return { url: url, data: json };
+                    return { url, data: json };
                 }
 
                 let connectionAddresses = {};
@@ -463,7 +469,7 @@ const convertHTTPResponseToDataProvider = async (
                 }
                 // Return IS-04 if no Connection API endpoints
                 if (Object.keys(connectionAddresses).length === 0) {
-                    return { url: url, data: json };
+                    return { url, data: json };
                 }
 
                 const versions = Object.keys(connectionAddresses)
@@ -485,7 +491,7 @@ const convertHTTPResponseToDataProvider = async (
                 // Return IS-04 if no URL was able to connect
                 if (endpointData === undefined) {
                     set(json, '$connectionAPI', null);
-                    return { url: url, data: json };
+                    return { url, data: json };
                 }
 
                 for (let i of endpointData) {
@@ -498,12 +504,13 @@ const convertHTTPResponseToDataProvider = async (
                     });
                 }
             }
-            return { url: url, data: json };
+            return { url, data: json };
 
         case GET_LIST:
             if (resource === 'queryapis') {
                 json.map(_ => (_.id = _.name));
                 return {
+                    url,
                     data: json,
                     total: json ? json.length : 0,
                 };
@@ -530,8 +537,8 @@ const convertHTTPResponseToDataProvider = async (
                 : null;
 
             return {
-                url: url,
-                pagination: pagination,
+                url,
+                pagination,
                 data: json,
                 total: json ? json.length : 0,
             };
@@ -547,16 +554,16 @@ const convertHTTPResponseToDataProvider = async (
                             )
                     )
                 ).then(response => {
-                    return { url: url, data: response };
+                    return { url, data: response };
                 });
             }
             return {
-                url: url,
+                url,
                 data: json,
             };
         case GET_MANY_REFERENCE:
             return {
-                url: url,
+                url,
                 data: json,
                 total: null,
             };
@@ -571,7 +578,7 @@ const convertHTTPResponseToDataProvider = async (
             if (resource === 'queryapis') {
                 json.map(_ => (_.id = _.name));
             }
-            return { url: url, data: json };
+            return { url, data: json };
     }
 };
 

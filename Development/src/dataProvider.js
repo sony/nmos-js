@@ -114,6 +114,13 @@ export const changePaging = newLimit => {
     return paging_limit;
 };
 
+// see https://github.com/persvr/rql/blob/v0.3.3/specification/draft-zyp-rql-00.xml#L355-L357
+const encodeRQLNameChars = str => {
+    return encodeURIComponent(str).replace(/[!'()]/g, c => {
+        return '%' + c.charCodeAt(0).toString(16);
+    });
+};
+
 const isNumber = v => {
     return !isNaN(v) && !isNaN(parseFloat(v));
 };
@@ -147,24 +154,24 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             if (resource === 'queryapis' || cookies.get('RQL') === 'false') {
                 for (const [key, value] of Object.entries(params.filter)) {
                     if (value || typeof value === 'boolean')
-                        queryParams.push(key + '=' + value);
+                        queryParams.push(key + '=' + encodeURIComponent(value));
                 }
             } else {
                 const matchParams = [];
                 for (const [key, value] of Object.entries(params.filter)) {
-                    let parsedValue = encodeURIComponent(value);
-                    parsedValue = parsedValue.split('%2C'); //splits comma separated values
-                    for (let i = 0; i < parsedValue.length; i++) {
+                    let encodedValue = encodeRQLNameChars(value);
+                    encodedValue = encodedValue.split('%2C'); //splits comma separated values
+                    for (let i = 0; i < encodedValue.length; i++) {
                         if (typeof value === 'boolean') {
                             //a few properties are Boolean
                             matchParams.push(
-                                'eq(' + key + ',' + parsedValue[i] + ')'
+                                'eq(' + key + ',' + encodedValue[i] + ')'
                             );
                         } else if (typeof value === 'number') {
                             //a few are integers
                             if (!isNaN(value)) {
                                 matchParams.push(
-                                    'eq(' + key + ',' + parsedValue[i] + ')'
+                                    'eq(' + key + ',' + encodedValue[i] + ')'
                                 );
                             }
                         } else {
@@ -173,7 +180,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                                 'matches(' +
                                     key +
                                     ',string:' +
-                                    parsedValue[i] +
+                                    encodedValue[i] +
                                     ',i)'
                             );
                         }

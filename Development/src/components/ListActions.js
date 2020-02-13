@@ -23,7 +23,7 @@ const ListActions = ({ basePath, hasCreate, url }) => {
                     onClick={() => window.open(url, '_blank')}
                     rel="noopener noreferrer"
                     style={{ float: 'right' }}
-                    title={'View raw'}
+                    title={`View raw\n${url}`}
                 >
                     <JsonIcon />
                 </Button>

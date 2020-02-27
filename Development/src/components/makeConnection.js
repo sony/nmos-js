@@ -1,9 +1,9 @@
-import setJSON from 'json-ptr';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import set from 'lodash/set';
 import dataProvider from '../dataProvider';
 
+// keys for parameters to be copied directly from sender to receiver
 const oneToOneTransportParams = {
     'urn:x-nmos:transport:mqtt': [
         'broker_protocol',
@@ -30,9 +30,11 @@ const oneToOneTransportParams = {
     ],
 };
 
-const getExtParams = transport_params => {
+// get 'ext_' parameters supported by the receiver
+const getExtParams = transportParams => {
+    // each leg should have the same parameters but merge both anyway
     const uniqueKeys = Object.keys(
-        transport_params.reduce((result, obj) => {
+        transportParams.reduce((result, obj) => {
             return Object.assign(result, obj);
         }, {})
     );
@@ -41,26 +43,20 @@ const getExtParams = transport_params => {
     });
 };
 
-const copyTransportParams = (
-    senderTransportParams,
-    senderToReceiver,
-    patchData
-) => {
-    senderTransportParams.forEach((leg, index) => {
-        senderToReceiver.forEach(param => {
-            const lhs = get(leg, param);
+// copy params from sender to receiver of the matching legs
+const copyTransportParams = (senderParams, params, patchParams) => {
+    const legs = Math.min(senderParams.length, patchParams.length);
+    for (let leg = 0; leg < legs; ++leg) {
+        params.forEach(param => {
+            const lhs = get(senderParams[leg], param);
             if (lhs !== undefined) {
-                setJSON.set(
-                    patchData,
-                    `/$staged/transport_params/${index}/${param}`,
-                    lhs,
-                    true
-                );
+                set(patchParams[leg], param, lhs);
             }
         });
-    });
+    }
 };
 
+// 'ipv4' or 'ipv6' multicast address?
 export const isMulticast = address => {
     return (
         address.match(
@@ -72,67 +68,63 @@ export const isMulticast = address => {
 const makePatchDataWithTransportParams = data => {
     let patchData = cloneDeep(data.receiver);
 
-    const senderTransportParams = get(data.sender, '$active.transport_params');
-    if (!Array.isArray(senderTransportParams)) return;
+    const senderParams = get(data.sender, '$active.transport_params');
+    if (!Array.isArray(senderParams)) return;
 
+    let patchParams = get(patchData, '$staged.transport_params');
+    if (!Array.isArray(patchParams)) return;
+
+    // do the easy ones
     copyTransportParams(
-        senderTransportParams,
+        senderParams,
         oneToOneTransportParams[get(data.sender, '$transporttype')],
-        patchData
+        patchParams
     );
 
+    // do the 'ext_' ones
+    copyTransportParams(senderParams, getExtParams(patchParams), patchParams);
+
+    // do the transport-specific stuff
+    const legs = Math.min(senderParams.length, patchParams.length);
     switch (get(data.sender, '$transporttype')) {
         case 'urn:x-nmos:transport:mqtt':
-            copyTransportParams(
-                senderTransportParams,
-                getExtParams(get(data.sender, '$active.transport_params')),
-                patchData
-            );
-            senderTransportParams.forEach((leg, index) => {
-                const destination_host = get(leg, 'destination_host');
-                setJSON.set(
-                    patchData,
-                    `/$staged/transport_params/${index}/source_host`,
-                    destination_host,
-                    true
+            for (let leg = 0; leg < legs; ++leg) {
+                const destination_host = get(
+                    senderParams[leg],
+                    'destination_host'
                 );
-                const destination_port = get(leg, 'destination_port');
-                setJSON.set(
-                    patchData,
-                    `/$staged/transport_params/${index}/source_port`,
-                    destination_port,
-                    true
+                set(patchParams[leg], 'source_host', destination_host);
+                const destination_port = get(
+                    senderParams[leg],
+                    'destination_port'
                 );
-            });
+                set(patchParams[leg], 'source_port', destination_port);
+            }
             break;
         case 'urn:x-nmos:transport:rtp':
-            senderTransportParams.forEach((leg, index) => {
-                const destination_ip = get(leg, 'destination_ip');
-                if (isMulticast(destination_ip)) {
-                    setJSON.set(
-                        patchData,
-                        `/$staged/transport_params/${index}/multicast_ip`,
-                        destination_ip,
-                        true
-                    );
-                } else {
-                    setJSON.set(
-                        patchData,
-                        `/$staged/transport_params/${index}/interface_ip`,
-                        destination_ip,
-                        true
-                    );
-                }
-            });
+            for (let leg = 0; leg < legs; ++leg) {
+                const destination_ip = get(senderParams[leg], 'destination_ip');
+                set(
+                    patchParams[leg],
+                    'multicast_ip',
+                    isMulticast(destination_ip) ? destination_ip : null
+                );
+                set(
+                    patchParams[leg],
+                    'interface_ip',
+                    isMulticast(destination_ip) ? 'auto' : destination_ip
+                );
+            }
+            // additionally disable the second leg of an ST 2022-7 receiver
+            // when connecting a single-legged sender
+            for (let leg = legs; leg < patchParams.length; ++leg) {
+                set(patchParams[leg], 'rtp_enabled', false);
+            }
             break;
         case 'urn:x-nmos:transport:websocket':
-            copyTransportParams(
-                senderTransportParams,
-                getExtParams(get(data.sender, '$active.transport_params')),
-                patchData
-            );
             break;
         default:
+            break;
     }
     return patchData;
 };
@@ -186,11 +178,10 @@ const makeConnection = (senderID, receiverID, endpoint) => {
 
                 let patchData = makePatchDataWithTransportParams(data);
                 if (get(data, 'sender.$transportfile')) {
-                    setJSON.set(
+                    set(
                         patchData,
-                        `/$staged/transport_file/data`,
-                        get(data.sender, '$transportfile'),
-                        true
+                        '$staged.transport_file.data',
+                        get(data.sender, '$transportfile')
                     );
                 }
                 set(patchData, '$staged.master_enable', true);

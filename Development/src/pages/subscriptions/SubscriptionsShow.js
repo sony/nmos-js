@@ -49,11 +49,11 @@ const SubscriptionsShow = props => {
             >
                 <SimpleShowLayout>
                     <TextField source="id" label="ID" />
-                    <TextField source="resource_path" />
-                    <UrlField label="WebSocket Address" source="ws_href" />
+                    <TextField source="resource_path" label="Resource Path" />
+                    <UrlField source="ws_href" label="WebSocket Address" />
                     <TextField
-                        label="Max Update Rate (ms)"
                         source="max_update_rate_ms"
+                        label="Max Update Rate (ms)"
                     />
                     <FunctionField
                         label="Params"

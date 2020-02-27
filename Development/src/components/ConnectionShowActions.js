@@ -13,9 +13,11 @@ export default function ConnectionShowActions({ basePath, id, resource }) {
     let json_href;
     if (data) {
         const tab = window.location.href.split('/').pop();
-        json_href = resourceUrl(resource, `/${data.id}`);
         if (tab === 'active' || tab === 'staged' || tab === 'transportfile') {
             json_href = concatUrl(data.$connectionAPI, `/${tab}`);
+        } else if (tab === 'connect') {
+        } else {
+            json_href = resourceUrl(resource, `/${data.id}`);
         }
     }
     const theme = useTheme();
@@ -31,7 +33,7 @@ export default function ConnectionShowActions({ basePath, id, resource }) {
                 minHeight: theme.spacing(5),
             }}
         >
-            {data ? (
+            {json_href ? (
                 <Button
                     label={'Raw'}
                     title={`View raw\n${json_href}`}

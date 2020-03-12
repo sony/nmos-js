@@ -220,6 +220,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                     'query.rql=or(' +
                     params.ids.map(id => 'eq(id,' + id + ')').join(',') +
                     ')';
+                total_query += '&paging.limit=1000';
                 return {
                     url: resourceUrl(resource, `?${total_query}`),
                     options: { headers },

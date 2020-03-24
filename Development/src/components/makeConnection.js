@@ -183,6 +183,15 @@ const makeConnection = (senderID, receiverID, endpoint) => {
                         '$staged.transport_file.data',
                         get(data.sender, '$transportfile')
                     );
+                    // when preparing a PATCH which might include an SDP file,
+                    // force the dataProvider to include `rtp_enabled`, because
+                    // the spec doesn't define any means to indicate the active
+                    // status of the Sender's legs in the SDP file
+                    const legs = data.receiver.$staged.transport_params.length;
+                    for (let i = 0; i < legs; i++) {
+                        delete data.receiver.$staged.transport_params[i]
+                            .rtp_enabled;
+                    }
                 }
                 set(patchData, '$staged.master_enable', true);
                 set(patchData, '$staged.sender_id', get(data.sender, 'id'));

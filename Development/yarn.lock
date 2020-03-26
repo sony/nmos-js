@@ -4113,10 +4113,10 @@ date-fns@^1.29.0:
   resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-1.30.1.tgz#2e71bf0b119153dbb4cc4e88d9ea5acfb50dc05c"
   integrity sha512-hBSVCvSmWC+QypYObzwGOd9wqdDpOt+0wl0KbU+R+uuZBS1jN8VsD1ss3irQDknRj5NvxiTF6oj/nDRnN/UQNw==
 
-dayjs@^1.8.17:
-  version "1.8.17"
-  resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.8.17.tgz#53ec413f2a7b02afbea1846d61bb260fa8567cea"
-  integrity sha512-47VY/htqYqr9GHd7HW/h56PpQzRBSJcxIQFwqL3P20bMF/3az5c3PWdVY3LmPXFl6cQCYHL7c79b9ov+2bOBbw==
+dayjs@^1.8.23:
+  version "1.8.23"
+  resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.8.23.tgz#07b5a8e759c4d75ae07bdd0ad6977f851c01e510"
+  integrity sha512-NmYHMFONftoZbeOhVz6jfiXI4zSiPN6NoVWJgC0aZQfYVwzy/ZpESPHuCcI0B8BUMpSJQ08zenHDbofOLKq8hQ==
 
 debug@2.6.9, debug@^2.2.0, debug@^2.3.3, debug@^2.6.0, debug@^2.6.8, debug@^2.6.9:
   version "2.6.9"
@@ -9419,7 +9419,7 @@ prompts@^2.0.1:
     kleur "^3.0.3"
     sisteransi "^1.0.3"
 
-prop-types@^15.6.0, prop-types@^15.6.1, prop-types@^15.6.2, prop-types@^15.7.2:
+prop-types@^15.6.0, prop-types@^15.6.1, prop-types@^15.6.2, prop-types@^15.7.0, prop-types@^15.7.2:
   version "15.7.2"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
   integrity sha512-8QQikdH7//R2vurIJSutZ1smHYTcLpRWEOlHnzcWHmBYrOGUysKwSsrC89BCiFj3CbrfJ/nXFdJepOVrY1GCHQ==
@@ -9535,15 +9535,6 @@ query-string@^5.1.1:
     object-assign "^4.1.0"
     strict-uri-encode "^1.0.0"
 
-query-string@~6.9.0:
-  version "6.9.0"
-  resolved "https://registry.yarnpkg.com/query-string/-/query-string-6.9.0.tgz#1c3b727c370cf00f177c99f328fda2108f8fa3dd"
-  integrity sha512-KG4bhCFYapExLsUHrFt+kQVEegF2agm4cpF/VNc6pZVthIfCc/GK8t8VyNIE3nyXG9DK3Tf2EGkxjR6/uRdYsA==
-  dependencies:
-    decode-uri-component "^0.2.0"
-    split-on-first "^1.0.0"
-    strict-uri-encode "^2.0.0"
-
 querystring-es3@^0.2.0:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/querystring-es3/-/querystring-es3-0.2.1.tgz#9ec61f79049875707d69414596fd907a4d711e73"
@@ -9559,10 +9550,10 @@ querystringify@^2.1.1:
   resolved "https://registry.yarnpkg.com/querystringify/-/querystringify-2.1.1.tgz#60e5a5fd64a7f8bfa4d2ab2ed6fdf4c85bad154e"
   integrity sha512-w7fLxIRCRT7U8Qu53jQnJyPkYZIaR4n5151KMfcJlO/A9397Wxb1amJvROTK6TOnp7PfoAmg/qXiNHI+08jRfA==
 
-ra-core@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/ra-core/-/ra-core-3.0.3.tgz#bdc951d1cff77bbd256dbd21b2ee98b0b65942c1"
-  integrity sha512-Zo6tg4puROIIIBCx/rXB1iPPpUSObGpA3zoI4fZQUDdALSCi2xjO1AuOYzVfZWzlvAAcAYMYA+kIUeBBkC+GTA==
+ra-core@^3.3.3:
+  version "3.3.3"
+  resolved "https://registry.yarnpkg.com/ra-core/-/ra-core-3.3.3.tgz#a1a827f7dfc3628bb60802a994fde891f0a783f7"
+  integrity sha512-SwbKf/qnYfCSTrbjnRo0w6PM3cHcyA6iKNElSqf0OlV6FeXxVrTjuxE5lAbjRaxBKZBE62h7LtBj48z2TjYr/g==
   dependencies:
     "@testing-library/react" "^8.0.7"
     classnames "~2.2.5"
@@ -9571,27 +9562,27 @@ ra-core@^3.0.3:
     inflection "~1.12.0"
     lodash "~4.17.5"
     prop-types "^15.6.1"
-    query-string "~6.9.0"
+    query-string "^5.1.1"
     recompose "~0.26.0"
     reselect "~3.0.0"
 
-ra-i18n-polyglot@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/ra-i18n-polyglot/-/ra-i18n-polyglot-3.0.3.tgz#a0eb4de5769ba5373c50a22fba1707842cef58c0"
-  integrity sha512-azvYJKFuYurFSMi+OPCYJr/50PvjWD370B92Jhd7tA/RJkzI3zlEzY1/cBJjOcoHIZdAztfWd9sUX+zgG54lDw==
+ra-i18n-polyglot@^3.3.3:
+  version "3.3.3"
+  resolved "https://registry.yarnpkg.com/ra-i18n-polyglot/-/ra-i18n-polyglot-3.3.3.tgz#52cad332a71c6cda26fd02be1372e03ee1bc8b27"
+  integrity sha512-dV00IZ5/gLLhTAbcmKeb4F5BsDE1anQMYRR1y6DeZobW4uMDjIX23HPUPGUGi4Cj6Na3M+j+lXqKsjpuQu6ZVg==
   dependencies:
     node-polyglot "^2.2.2"
-    ra-core "^3.0.3"
+    ra-core "^3.3.3"
 
-ra-language-english@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/ra-language-english/-/ra-language-english-3.0.0.tgz#45d8a76dcc3a43f2c11c3865d4a666c889f69cc0"
-  integrity sha512-eG27ljHM0So1agbfS37o312JTkXLlCLJALgBnO8sc+IYHMV8ZU3CnAxxICipx9JBgz0PqvtRQD1QAQXByP/gOA==
+ra-language-english@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/ra-language-english/-/ra-language-english-3.2.0.tgz#2ca13b767d834b43fefd128f48e452449f812b61"
+  integrity sha512-/XmwYWoQoB4MBkkzBCbg/ykCuRGjHQOHLk2ik6n1aM10AWHxiiJNyRw2aoLzH7Vc5rcp4BBJQCuhT+DgfYIJ2Q==
 
-ra-ui-materialui@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/ra-ui-materialui/-/ra-ui-materialui-3.0.3.tgz#ffdfd47a6e4c74e0fbafe873d46257b4824f5e5a"
-  integrity sha512-4PyWO/XtamiFzE8/XMVv+MQM0daF+YbYIUf3l+lfYSFfx+Jgk8zR1SX3aksapFXHb9bTrs2IUQP6bB7BVekejg==
+ra-ui-materialui@^3.3.3:
+  version "3.3.3"
+  resolved "https://registry.yarnpkg.com/ra-ui-materialui/-/ra-ui-materialui-3.3.3.tgz#143e22dcee4d3e4d83c976354367ee00f02a95a6"
+  integrity sha512-qtJH16NQl+ebyNIyrCtYNHiR2IwyZx9XSyRILoJgPdPITiAr+j/cuz7DB6o1D5HQUl5/VOSu4IQIM3jlXjrYFQ==
   dependencies:
     autosuggest-highlight "^3.1.1"
     classnames "~2.2.5"
@@ -9601,7 +9592,7 @@ ra-ui-materialui@^3.0.3:
     inflection "~1.12.0"
     jsonexport "^2.4.1"
     lodash "~4.17.5"
-    prop-types "^15.6.1"
+    prop-types "^15.7.0"
     query-string "^5.1.1"
     react-dropzone "^10.1.7"
     react-transition-group "^2.2.1"
@@ -9654,10 +9645,10 @@ rc@^1.2.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-react-admin@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/react-admin/-/react-admin-3.0.3.tgz#765ba72c09c11359b74b9c762728cd9f55011072"
-  integrity sha512-SawOgrYZQBU3AIlxsDey+09K8iOqnHSN8XN8YsuRV3e/myD5/Pm1t5YC/QXUf8Axk0yefj5c8gqttWjeAvL6CA==
+react-admin@^3.3.3:
+  version "3.3.3"
+  resolved "https://registry.yarnpkg.com/react-admin/-/react-admin-3.3.3.tgz#05d03ea8bcb7425caf4e48076138f4da1a4825b8"
+  integrity sha512-sUiwC/jaL+0RvJFuA/8dsKB7brmno0+d+++Y52G9coBeJceEmY41gEh9Q9w/GUQb4+9VstyJj9Aoq1ns2Qnteg==
   dependencies:
     "@material-ui/core" "^4.3.3"
     "@material-ui/icons" "^4.2.1"
@@ -9665,10 +9656,10 @@ react-admin@^3.0.3:
     connected-react-router "^6.5.2"
     final-form "^4.18.5"
     final-form-arrays "^3.0.1"
-    ra-core "^3.0.3"
-    ra-i18n-polyglot "^3.0.3"
-    ra-language-english "^3.0.0"
-    ra-ui-materialui "^3.0.3"
+    ra-core "^3.3.3"
+    ra-i18n-polyglot "^3.3.3"
+    ra-language-english "^3.2.0"
+    ra-ui-materialui "^3.3.3"
     react-final-form "^6.3.3"
     react-final-form-arrays "^3.1.1"
     react-redux "^7.1.0"
@@ -10814,11 +10805,6 @@ spdy@^4.0.1:
     select-hose "^2.0.0"
     spdy-transport "^3.0.0"
 
-split-on-first@^1.0.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/split-on-first/-/split-on-first-1.1.0.tgz#f610afeee3b12bce1d0c30425e76398b78249a5f"
-  integrity sha512-43ZssAJaMusuKWL8sKUBQXHWOpq8d6CfN/u1p4gUzfJkM05C8rxTmYrkIPTXapZpORA6LkkzcUulJ8FqA7Uudw==
-
 split-string@^3.0.1, split-string@^3.0.2:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/split-string/-/split-string-3.1.0.tgz#7cb09dda3a86585705c64b39a6466038682e8fe2"
@@ -10925,11 +10911,6 @@ strict-uri-encode@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/strict-uri-encode/-/strict-uri-encode-1.1.0.tgz#279b225df1d582b1f54e65addd4352e18faa0713"
   integrity sha1-J5siXfHVgrH1TmWt3UNS4Y+qBxM=
-
-strict-uri-encode@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/strict-uri-encode/-/strict-uri-encode-2.0.0.tgz#b9c7330c7042862f6b142dc274bbcc5866ce3546"
-  integrity sha1-ucczDHBChi9rFC3CdLvMWGbONUY=
 
 string-length@^2.0.0:
   version "2.0.0"

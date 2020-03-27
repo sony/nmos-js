@@ -30,16 +30,13 @@ const oneToOneTransportParams = {
     ],
 };
 
-// create a map of receiver leg to sender leg
+// create an array mapping receiver leg to sender leg
 const createLegMap = (senderParams, patchParams, options) => {
-    const nLegs = Math.min(senderParams.length, patchParams.length);
-    const legMap = Object.fromEntries(
-        Array.from(Array(nLegs).keys()).map(key => [key, key])
-    );
-    if ('singleSenderLeg' in options && nLegs === 1) {
-        legMap[0] = get(options, 'singleSenderLeg');
+    const legs = Math.min(senderParams.length, patchParams.length);
+    if ('singleSenderLeg' in options && legs === 1) {
+        return [get(options, 'singleSenderLeg')];
     }
-    return legMap;
+    return [...Array(legs).keys()];
 };
 
 // get 'ext_' parameters supported by the receiver
@@ -57,14 +54,14 @@ const getExtParams = transportParams => {
 
 // copy params from sender to receiver of the matching legs
 const copyTransportParams = (senderParams, params, patchParams, legMap) => {
-    for (let [receiverLeg, senderLeg] of Object.entries(legMap)) {
+    legMap.forEach((senderLeg, receiverLeg) => {
         params.forEach(param => {
             const lhs = get(senderParams[senderLeg], param);
             if (lhs !== undefined) {
                 set(patchParams[receiverLeg], param, lhs);
             }
         });
-    }
+    });
 };
 
 // 'ipv4' or 'ipv6' multicast address?
@@ -107,7 +104,7 @@ const makePatchDataWithTransportParams = (data, options) => {
     // do the transport-specific stuff
     switch (get(data.sender, '$transporttype')) {
         case 'urn:x-nmos:transport:mqtt':
-            for (let [receiverLeg, senderLeg] of Object.entries(legMap)) {
+            legMap.forEach((senderLeg, receiverLeg) => {
                 const destination_host = get(
                     senderParams[senderLeg],
                     'destination_host'
@@ -118,10 +115,10 @@ const makePatchDataWithTransportParams = (data, options) => {
                     'destination_port'
                 );
                 set(patchParams[receiverLeg], 'source_port', destination_port);
-            }
+            });
             break;
         case 'urn:x-nmos:transport:rtp':
-            for (let [receiverLeg, senderLeg] of Object.entries(legMap)) {
+            legMap.forEach((senderLeg, receiverLeg) => {
                 const destination_ip = get(
                     senderParams[senderLeg],
                     'destination_ip'
@@ -136,14 +133,10 @@ const makePatchDataWithTransportParams = (data, options) => {
                     'interface_ip',
                     isMulticast(destination_ip) ? 'auto' : destination_ip
                 );
-            }
+            });
             // additionally disable the second leg of an ST 2022-7 receiver
             // when connecting a single-legged sender
-            for (
-                let leg = Object.keys(legMap).length;
-                leg < patchParams.length;
-                ++leg
-            ) {
+            for (let leg = legMap.length; leg < patchParams.length; ++leg) {
                 set(patchParams[leg], 'rtp_enabled', false);
             }
             break;

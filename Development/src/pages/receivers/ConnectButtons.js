@@ -9,7 +9,7 @@ import dataProvider from '../../dataProvider';
 
 const ConnectButtons = ({ senderData, receiverData }) => {
     const [anchorEl, setAnchorEl] = useState(null);
-    const [nSenderLegs, setNSenderLegs] = useState(0);
+    const [senderLegs, setSenderLegs] = useState(0);
     const [endpoint, setEndpoint] = useState('');
 
     const history = useHistory();
@@ -47,7 +47,7 @@ const ConnectButtons = ({ senderData, receiverData }) => {
             }).then(({ data: senderData }) => {
                 if (get(senderData, '$staged.transport_params').length > 1) {
                     setAnchorEl(ref);
-                    setNSenderLegs(
+                    setSenderLegs(
                         get(senderData, '$staged.transport_params').length
                     );
                 } else {
@@ -89,18 +89,18 @@ const ConnectButtons = ({ senderData, receiverData }) => {
                 open={Boolean(anchorEl)}
                 onClose={() => setAnchorEl(null)}
             >
-                {Array.from(Array(nSenderLegs).keys()).map(key => (
+                {[...Array(senderLegs).keys()].map(leg => (
                     <MenuItem
-                        key={key}
+                        key={leg}
                         onClick={() =>
                             connect(
                                 endpoint,
-                                key
+                                leg
                             )
                         }
                         style={{ fontSize: '0.875rem' }}
                     >
-                        Leg {key + 1}
+                        Leg {leg + 1}
                     </MenuItem>
                 ))}
             </Menu>

@@ -2,7 +2,6 @@ import React, { Fragment, useEffect, useState } from 'react';
 import Link from 'react-router-dom/Link';
 import { Route } from 'react-router-dom';
 import {
-    Button,
     Paper,
     Tab,
     Table,
@@ -23,8 +22,6 @@ import {
     SimpleShowLayout,
     TextField,
     linkToRecord,
-    useNotify,
-    useRefresh,
     useShowController,
 } from 'react-admin';
 import get from 'lodash/get';
@@ -38,7 +35,6 @@ import FilterPanel, {
 } from '../../components/FilterPanel';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
-import makeConnection from '../../components/makeConnection';
 import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
 import useGetList from '../../components/useGetList';
@@ -46,7 +42,7 @@ import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
 import MapObject from '../../components/ObjectField';
 import TAIField from '../../components/TAIField';
 import TransportFileViewer from '../../components/TransportFileViewer';
-import { ActivateImmediateIcon, StageIcon } from '../../icons';
+import ConnectButtons from './ConnectButtons';
 
 const ReceiversTitle = ({ record }) => (
     <span>
@@ -349,8 +345,6 @@ const ConnectionManagementTab = ({
     receiverData,
     ...props
 }) => {
-    const notify = useNotify();
-    const refreshWholeView = useRefresh();
     const [filter, setFilter] = useState({
         transport: get(receiverData, 'transport'),
     });
@@ -372,29 +366,6 @@ const ConnectionManagementTab = ({
 
     const nextPage = label => {
         setPaginationURL(pagination[label]);
-    };
-
-    const connect = (senderID, receiverID, endpoint) => {
-        makeConnection(senderID, receiverID, endpoint)
-            .then(() => {
-                notify('Element updated', 'info');
-                refreshWholeView();
-                props.history.push(
-                    `${props.basePath}/${props.id}/show/${endpoint}`
-                );
-            })
-            .catch(error => {
-                if (error && error.hasOwnProperty('body'))
-                    notify(
-                        get(error.body, 'error') +
-                            ' - ' +
-                            get(error.body, 'code') +
-                            ' - ' +
-                            get(error.body, 'debug'),
-                        'warning'
-                    );
-                notify(error.toString(), 'warning');
-            });
     };
 
     return (
@@ -519,34 +490,10 @@ const ConnectionManagementTab = ({
                                         </TableCell>
                                     )}
                                     <TableCell>
-                                        <Button
-                                            onClick={() =>
-                                                connect(
-                                                    item.id,
-                                                    get(receiverData, 'id'),
-                                                    'active'
-                                                )
-                                            }
-                                            color="primary"
-                                            startIcon={
-                                                <ActivateImmediateIcon />
-                                            }
-                                        >
-                                            Activate
-                                        </Button>
-                                        <Button
-                                            onClick={() =>
-                                                connect(
-                                                    item.id,
-                                                    get(receiverData, 'id'),
-                                                    'staged'
-                                                )
-                                            }
-                                            color="primary"
-                                            startIcon={<StageIcon />}
-                                        >
-                                            Stage
-                                        </Button>
+                                        <ConnectButtons
+                                            senderData={item}
+                                            receiverData={receiverData}
+                                        />
                                     </TableCell>
                                 </TableRow>
                             ))}

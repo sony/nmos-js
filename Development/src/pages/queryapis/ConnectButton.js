@@ -2,8 +2,8 @@ import React, { Fragment, useState } from 'react';
 import { Menu, MenuItem, Snackbar } from '@material-ui/core';
 import get from 'lodash/get';
 import Button from '@material-ui/core/Button';
-import { changeAPIEndpoint } from '../dataProvider';
-import { ConnectRegistryIcon } from '../icons';
+import { changeAPIEndpoint } from '../../dataProvider';
+import { ConnectRegistryIcon } from '../../icons';
 
 const ConnectButton = ({ record, variant = 'contained', size }) => {
     const [anchorEl, setAnchorEl] = useState(null);

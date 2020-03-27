@@ -30,6 +30,15 @@ const oneToOneTransportParams = {
     ],
 };
 
+// create an array mapping receiver leg to sender leg
+const createLegMap = (senderParams, patchParams, options) => {
+    const legs = Math.min(senderParams.length, patchParams.length);
+    if ('singleSenderLeg' in options && legs === 1) {
+        return [get(options, 'singleSenderLeg')];
+    }
+    return [...Array(legs).keys()];
+};
+
 // get 'ext_' parameters supported by the receiver
 const getExtParams = transportParams => {
     // each leg should have the same parameters but merge both anyway
@@ -44,16 +53,15 @@ const getExtParams = transportParams => {
 };
 
 // copy params from sender to receiver of the matching legs
-const copyTransportParams = (senderParams, params, patchParams) => {
-    const legs = Math.min(senderParams.length, patchParams.length);
-    for (let leg = 0; leg < legs; ++leg) {
+const copyTransportParams = (senderParams, params, patchParams, legMap) => {
+    legMap.forEach((senderLeg, receiverLeg) => {
         params.forEach(param => {
-            const lhs = get(senderParams[leg], param);
+            const lhs = get(senderParams[senderLeg], param);
             if (lhs !== undefined) {
-                set(patchParams[leg], param, lhs);
+                set(patchParams[receiverLeg], param, lhs);
             }
         });
-    }
+    });
 };
 
 // 'ipv4' or 'ipv6' multicast address?
@@ -65,7 +73,7 @@ export const isMulticast = address => {
     );
 };
 
-const makePatchDataWithTransportParams = data => {
+const makePatchDataWithTransportParams = (data, options) => {
     let patchData = cloneDeep(data.receiver);
 
     const senderParams = get(data.sender, '$active.transport_params');
@@ -74,50 +82,61 @@ const makePatchDataWithTransportParams = data => {
     let patchParams = get(patchData, '$staged.transport_params');
     if (!Array.isArray(patchParams)) return;
 
+    // create a map of receiver leg to sender leg
+    const legMap = createLegMap(senderParams, patchParams, options);
+
     // do the easy ones
     copyTransportParams(
         senderParams,
         oneToOneTransportParams[get(data.sender, '$transporttype')],
-        patchParams
+        patchParams,
+        legMap
     );
 
     // do the 'ext_' ones
-    copyTransportParams(senderParams, getExtParams(patchParams), patchParams);
+    copyTransportParams(
+        senderParams,
+        getExtParams(patchParams),
+        patchParams,
+        legMap
+    );
 
     // do the transport-specific stuff
-    const legs = Math.min(senderParams.length, patchParams.length);
     switch (get(data.sender, '$transporttype')) {
         case 'urn:x-nmos:transport:mqtt':
-            for (let leg = 0; leg < legs; ++leg) {
+            legMap.forEach((senderLeg, receiverLeg) => {
                 const destination_host = get(
-                    senderParams[leg],
+                    senderParams[senderLeg],
                     'destination_host'
                 );
-                set(patchParams[leg], 'source_host', destination_host);
+                set(patchParams[receiverLeg], 'source_host', destination_host);
                 const destination_port = get(
-                    senderParams[leg],
+                    senderParams[senderLeg],
                     'destination_port'
                 );
-                set(patchParams[leg], 'source_port', destination_port);
-            }
+                set(patchParams[receiverLeg], 'source_port', destination_port);
+            });
             break;
         case 'urn:x-nmos:transport:rtp':
-            for (let leg = 0; leg < legs; ++leg) {
-                const destination_ip = get(senderParams[leg], 'destination_ip');
+            legMap.forEach((senderLeg, receiverLeg) => {
+                const destination_ip = get(
+                    senderParams[senderLeg],
+                    'destination_ip'
+                );
                 set(
-                    patchParams[leg],
+                    patchParams[receiverLeg],
                     'multicast_ip',
                     isMulticast(destination_ip) ? destination_ip : null
                 );
                 set(
-                    patchParams[leg],
+                    patchParams[receiverLeg],
                     'interface_ip',
                     isMulticast(destination_ip) ? 'auto' : destination_ip
                 );
-            }
+            });
             // additionally disable the second leg of an ST 2022-7 receiver
             // when connecting a single-legged sender
-            for (let leg = legs; leg < patchParams.length; ++leg) {
+            for (let leg = legMap.length; leg < patchParams.length; ++leg) {
                 set(patchParams[leg], 'rtp_enabled', false);
             }
             break;
@@ -129,7 +148,7 @@ const makePatchDataWithTransportParams = data => {
     return patchData;
 };
 
-const makeConnection = (senderID, receiverID, endpoint) => {
+const makeConnection = (senderID, receiverID, endpoint, options) => {
     return new Promise((resolve, reject) => {
         if (endpoint !== 'active' && endpoint !== 'staged') {
             return reject('Invalid endpoint');
@@ -176,7 +195,7 @@ const makeConnection = (senderID, receiverID, endpoint) => {
                     return reject(new Error('Sender is not enabled'));
                 }
 
-                let patchData = makePatchDataWithTransportParams(data);
+                let patchData = makePatchDataWithTransportParams(data, options);
                 if (get(data, 'sender.$transportfile')) {
                     set(
                         patchData,

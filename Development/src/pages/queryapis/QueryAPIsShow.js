@@ -12,7 +12,7 @@ import {
 } from 'react-admin';
 import { makeStyles } from '@material-ui/core';
 import get from 'lodash/get';
-import ConnectButton from '../../components/ConnectButton';
+import ConnectButton from './ConnectButton';
 import ItemArrayField from '../../components/ItemArrayField';
 import RawButton from '../../components/RawButton';
 

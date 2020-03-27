@@ -46,10 +46,10 @@ const ConnectButtons = ({ senderData, receiverData }) => {
                 id: senderData.id,
             }).then(({ data: senderData }) => {
                 if (get(senderData, '$staged.transport_params').length > 1) {
-                    setAnchorEl(ref);
                     setSenderLegs(
                         get(senderData, '$staged.transport_params').length
                     );
+                    setAnchorEl(ref);
                 } else {
                     connect(endpoint);
                 }

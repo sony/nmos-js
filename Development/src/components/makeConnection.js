@@ -33,8 +33,8 @@ const oneToOneTransportParams = {
 // create an array mapping receiver leg to sender leg
 const createLegMap = (senderParams, patchParams, options) => {
     const legs = Math.min(senderParams.length, patchParams.length);
-    if ('singleSenderLeg' in options && legs === 1) {
-        return [get(options, 'singleSenderLeg')];
+    if (legs === 1) {
+        return [get(options, 'singleSenderLeg') || 0];
     }
     return [...Array(legs).keys()];
 };

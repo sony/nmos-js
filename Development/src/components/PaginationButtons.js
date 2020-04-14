@@ -6,9 +6,8 @@ import {
     LastPage,
 } from '@material-ui/icons';
 import { Button } from '@material-ui/core';
-import Cookies from 'universal-cookie';
-
-const cookies = new Cookies();
+import includes from 'lodash/includes';
+import keys from 'lodash/keys';
 
 const components = {
     prev: ChevronLeft,
@@ -17,19 +16,19 @@ const components = {
     first: FirstPage,
 };
 
-export const PaginationButton = ({ disabled, nextPage, rel, label = rel }) => {
+export const PaginationButton = ({
+    pagination,
+    disabled,
+    nextPage,
+    rel,
+    label = rel,
+}) => {
     rel.toLowerCase();
-    const paginationSupport = cookies.get('Pagination');
+    const buttons = keys(pagination);
+
     const enabled = (() => {
         if (disabled) return false;
-        if (paginationSupport === 'enabled') {
-            return true;
-        } else if (paginationSupport === 'disabled') {
-            return false;
-        } else {
-            // paginationSupport === 'partial'
-            return rel === 'next' || rel === 'prev';
-        }
+        return includes(buttons, rel);
     })();
 
     const getIcon = label => {

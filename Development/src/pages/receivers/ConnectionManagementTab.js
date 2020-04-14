@@ -44,7 +44,10 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
     // receiverData initialises undefined, update when no longer null
     useEffect(() => {
         if (receiverData !== null)
-            setFilter({ transport: get(receiverData, 'transport') });
+            setFilter(f => ({
+                ...f,
+                transport: get(receiverData, 'transport'),
+            }));
     }, [receiverData]);
 
     if (!loaded) return <Loading />;
@@ -187,7 +190,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                     </Table>
                     <br />
                     <PaginationButtons
-                        disabled={!pagination}
+                        pagination={pagination}
                         nextPage={nextPage}
                     />
                 </CardContent>

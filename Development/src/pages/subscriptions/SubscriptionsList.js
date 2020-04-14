@@ -106,7 +106,7 @@ const SubscriptionsList = props => {
                         </TableBody>
                     </Table>
                     <PaginationButtons
-                        disabled={!pagination}
+                        pagination={pagination}
                         nextPage={nextPage}
                         {...props}
                     />

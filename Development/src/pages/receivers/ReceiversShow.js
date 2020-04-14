@@ -1,50 +1,31 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import Link from 'react-router-dom/Link';
 import { Route } from 'react-router-dom';
-import {
-    Paper,
-    Tab,
-    Table,
-    TableBody,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableRow,
-    Tabs,
-} from '@material-ui/core';
+import { Paper, Tab, Tabs } from '@material-ui/core';
 import {
     ArrayField,
     BooleanField,
     FunctionField,
-    Loading,
     ReferenceField,
     ShowView,
     SimpleShowLayout,
     TextField,
-    linkToRecord,
     useShowController,
 } from 'react-admin';
 import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
-import ActiveField from '../../components/ActiveField';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
-import FilterPanel, {
-    BooleanFilter,
-    StringFilter,
-} from '../../components/FilterPanel';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
-import PaginationButtons from '../../components/PaginationButtons';
 import QueryVersion from '../../components/QueryVersion';
-import useGetList from '../../components/useGetList';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
 import MapObject from '../../components/ObjectField';
 import TAIField from '../../components/TAIField';
 import TransportFileViewer from '../../components/TransportFileViewer';
-import ConnectButtons from './ConnectButtons';
+import ConnectionManagementTab from './ConnectionManagementTab';
 
-const ReceiversTitle = ({ record }) => (
+export const ReceiversTitle = ({ record }) => (
     <span>
         Receiver:{' '}
         {record
@@ -58,6 +39,7 @@ const ReceiversTitle = ({ record }) => (
 const ReceiversShow = props => {
     const [useConnectionAPI, setUseConnectionAPI] = useState(false);
     const controllerProps = useShowController(props);
+    const [connectTab, setConnectTab] = useState(() => <Fragment />);
 
     useEffect(() => {
         if (get(controllerProps.record, '$connectionAPI') !== undefined) {
@@ -66,6 +48,19 @@ const ReceiversShow = props => {
             setUseConnectionAPI(false);
         }
     }, [controllerProps.record]);
+
+    const { basePath } = props;
+    const receiverData = controllerProps.record;
+    useEffect(
+        () =>
+            setConnectTab(() => (
+                <ConnectionManagementTab
+                    basePath={basePath}
+                    receiverData={receiverData}
+                />
+            )),
+        [basePath, receiverData]
+    );
 
     const theme = useTheme();
     const tabBackgroundColor =
@@ -120,47 +115,18 @@ const ReceiversShow = props => {
                 <span style={{ flexGrow: 1 }} />
                 <ConnectionShowActions {...props} />
             </div>
-            <Route
-                exact
-                path={`${props.basePath}/${props.id}/show/`}
-                render={() => (
-                    <ShowSummaryTab
-                        {...props}
-                        controllerProps={controllerProps}
-                    />
-                )}
-            />
-            <Route
-                exact
-                path={`${props.basePath}/${props.id}/show/active`}
-                render={() => (
-                    <ShowActiveTab
-                        {...props}
-                        controllerProps={controllerProps}
-                    />
-                )}
-            />
-            <Route
-                exact
-                path={`${props.basePath}/${props.id}/show/staged`}
-                render={() => (
-                    <ShowStagedTab
-                        {...props}
-                        controllerProps={controllerProps}
-                    />
-                )}
-            />
-            <Route
-                exact
-                path={`${props.basePath}/${props.id}/show/connect`}
-                render={() => (
-                    <ConnectionManagementTab
-                        {...props}
-                        controllerProps={controllerProps}
-                        receiverData={controllerProps.record}
-                    />
-                )}
-            />
+            <Route exact path={`${props.basePath}/${props.id}/show/`}>
+                <ShowSummaryTab {...props} controllerProps={controllerProps} />
+            </Route>
+            <Route exact path={`${props.basePath}/${props.id}/show/active`}>
+                <ShowActiveTab {...props} controllerProps={controllerProps} />
+            </Route>
+            <Route exact path={`${props.basePath}/${props.id}/show/staged`}>
+                <ShowStagedTab {...props} controllerProps={controllerProps} />
+            </Route>
+            <Route exact path={`${props.basePath}/${props.id}/show/connect`}>
+                {connectTab}
+            </Route>
         </Fragment>
     );
 };
@@ -335,184 +301,6 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
                 </ArrayField>
                 <TransportFileViewer endpoint="$staged.transport_file.data" />
                 <JSONViewer endpoint="$staged" />
-            </SimpleShowLayout>
-        </ShowView>
-    );
-};
-
-const ConnectionManagementTab = ({
-    controllerProps,
-    receiverData,
-    ...props
-}) => {
-    const [filter, setFilter] = useState({
-        transport: get(receiverData, 'transport'),
-    });
-    const [paginationURL, setPaginationURL] = useState(null);
-    const { data, loaded, pagination } = useGetList({
-        ...props,
-        filter,
-        paginationURL,
-        resource: 'senders',
-    });
-
-    // receiverData initialises undefined, update when no longer null
-    useEffect(() => {
-        if (receiverData !== null)
-            setFilter({ transport: get(receiverData, 'transport') });
-    }, [receiverData]);
-
-    if (!loaded) return <Loading />;
-
-    const nextPage = label => {
-        setPaginationURL(pagination[label]);
-    };
-
-    return (
-        <ShowView
-            {...props}
-            {...controllerProps}
-            title={<ReceiversTitle />}
-            actions={<Fragment />}
-        >
-            <SimpleShowLayout>
-                <Fragment>
-                    <FilterPanel
-                        data={data}
-                        filter={filter}
-                        setFilter={setFilter}
-                    >
-                        <StringFilter source="label" label="Sender Label" />
-                        <StringFilter
-                            source="description"
-                            label="Sender Description"
-                        />
-                        {QueryVersion() >= 'v1.2' && (
-                            <BooleanFilter
-                                source="subscription.active"
-                                label="Sender Active"
-                            />
-                        )}
-                        <StringFilter source="id" label="Sender ID" />
-                    </FilterPanel>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell
-                                    style={{
-                                        paddingLeft: '32px',
-                                    }}
-                                >
-                                    Sender
-                                </TableCell>
-                                {QueryVersion() >= 'v1.2' && (
-                                    <TableCell>Active</TableCell>
-                                )}
-                                <TableCell>Flow</TableCell>
-                                <TableCell>Format</TableCell>
-                                {QueryVersion() >= 'v1.1' && (
-                                    <TableCell>Media Type</TableCell>
-                                )}
-                                <TableCell>Connect</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {data.map(item => (
-                                <TableRow
-                                    key={item.id}
-                                    selected={
-                                        get(receiverData, 'id') === item.id
-                                    }
-                                >
-                                    <TableCell component="th" scope="row">
-                                        {
-                                            // Using linkToRecord as ReferenceField will
-                                            // make a new unnecessary network request
-                                        }
-                                        <Link
-                                            to={`${linkToRecord(
-                                                '/senders',
-                                                item.id
-                                            )}/show`}
-                                            style={{ textDecoration: 'none' }}
-                                        >
-                                            <ChipConditionalLabel
-                                                record={item}
-                                                source="label"
-                                                label="ra.action.show"
-                                            />
-                                        </Link>
-                                    </TableCell>
-                                    {QueryVersion() >= 'v1.2' && (
-                                        <TableCell>
-                                            <ActiveField
-                                                record={item}
-                                                resource="senders"
-                                            />
-                                        </TableCell>
-                                    )}
-                                    <TableCell>
-                                        <ReferenceField
-                                            record={item}
-                                            basePath="/flows"
-                                            label="Flow"
-                                            source="flow_id"
-                                            reference="flows"
-                                            link="show"
-                                        >
-                                            <ChipConditionalLabel source="label" />
-                                        </ReferenceField>
-                                    </TableCell>
-                                    <TableCell>
-                                        <ReferenceField
-                                            record={item}
-                                            basePath="/flows"
-                                            label="Flow"
-                                            source="flow_id"
-                                            reference="flows"
-                                            link={false}
-                                        >
-                                            <TextField source="format" />
-                                        </ReferenceField>
-                                    </TableCell>
-                                    {QueryVersion() >= 'v1.1' && (
-                                        <TableCell>
-                                            <ReferenceField
-                                                record={item}
-                                                basePath="/flows"
-                                                label="Flow"
-                                                source="flow_id"
-                                                reference="flows"
-                                                link={false}
-                                            >
-                                                <TextField source="media_type" />
-                                            </ReferenceField>
-                                        </TableCell>
-                                    )}
-                                    <TableCell>
-                                        <ConnectButtons
-                                            senderData={item}
-                                            receiverData={receiverData}
-                                        />
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    <Table>
-                        <TableFooter>
-                            <TableRow>
-                                <TableCell style={{ whiteSpace: 'nowrap' }}>
-                                    <PaginationButtons
-                                        disabled={!pagination}
-                                        nextPage={nextPage}
-                                        {...props}
-                                    />
-                                </TableCell>
-                            </TableRow>
-                        </TableFooter>
-                    </Table>
-                </Fragment>
             </SimpleShowLayout>
         </ShowView>
     );

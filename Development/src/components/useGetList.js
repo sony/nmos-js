@@ -78,10 +78,10 @@ const useQueryWithStore = (query, options, dataSelector, totalSelector) => {
 const useGetList = props => {
     useCheckMinimumRequiredProps(
         'List',
-        ['basePath', 'filter', 'location', 'resource'],
+        ['basePath', 'filter', 'resource'],
         props
     );
-    const { basePath, resource, hasCreate, paginationURL, filter } = props;
+    const { basePath, resource, paginationURL, filter } = props;
     const debouncedFilter = useDebounce(filter, 250);
 
     const notify = useNotify();
@@ -149,7 +149,6 @@ const useGetList = props => {
         basePath,
         data: listDataArray,
         error,
-        hasCreate,
         ids,
         loading,
         loaded,

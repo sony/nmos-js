@@ -16,16 +16,6 @@ import assign from 'lodash/assign';
 import diff from 'deep-diff';
 import Cookies from 'universal-cookie';
 
-let LINK_HEADERS = {
-    nodes: '',
-    devices: '',
-    sources: '',
-    flows: '',
-    senders: '',
-    receivers: '',
-    subscriptions: '',
-    logs: '',
-};
 const LOGGING_API = 'Logging API';
 const QUERY_API = 'Query API';
 const DNS_API = 'DNS-SD API';
@@ -429,19 +419,7 @@ const convertHTTPResponseToDataProvider = async (
     params
 ) => {
     const { headers, json } = response;
-    LINK_HEADERS[resource] = headers.get('Link');
-    if (
-        LINK_HEADERS[resource] !== null &&
-        LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="next"/)
-    ) {
-        if (LINK_HEADERS[resource].match(/<([^>]+)>;[ \t]*rel="first"/)) {
-            cookies.set('Pagination', 'enabled', { path: '/' });
-        } else {
-            cookies.set('Pagination', 'partial', { path: '/' });
-        }
-    } else {
-        cookies.set('Pagination', 'disabled', { path: '/' });
-    }
+
     switch (type) {
         case GET_ONE:
             if (resource === 'queryapis') {
@@ -535,11 +513,12 @@ const convertHTTPResponseToDataProvider = async (
                                       new RegExp(
                                           `<([^>]+)>;[ \\t]*rel="${cursor}"`
                                       )
-                                  )[1],
+                                  ),
                           };
                       })
                       .reduce((object, item) => {
-                          object[item.cursor] = item.data;
+                          if (item.data == null) return object;
+                          object[item.cursor] = item.data[1];
                           return object;
                       }, {})
                 : null;

@@ -101,43 +101,21 @@ const SendersShow = props => {
                 <span style={{ flexGrow: 1 }} />
                 <ConnectionShowActions {...props} />
             </div>
-            <Route
-                exact
-                path={`${props.basePath}/${props.id}/show/`}
-                render={() => (
-                    <ShowSummaryTab
-                        {...props}
-                        controllerProps={controllerProps}
-                    />
-                )}
-            />
-            <Route
-                exact
-                path={`${props.basePath}/${props.id}/show/active`}
-                render={() => (
-                    <ShowActiveTab
-                        {...props}
-                        controllerProps={controllerProps}
-                    />
-                )}
-            />
-            <Route
-                exact
-                path={`${props.basePath}/${props.id}/show/staged`}
-                render={() => (
-                    <ShowStagedTab
-                        {...props}
-                        controllerProps={controllerProps}
-                    />
-                )}
-            />
+            <Route exact path={`${props.basePath}/${props.id}/show/`}>
+                <ShowSummaryTab {...props} controllerProps={controllerProps} />
+            </Route>
+            <Route exact path={`${props.basePath}/${props.id}/show/active`}>
+                <ShowActiveTab {...props} controllerProps={controllerProps} />
+            </Route>
+            <Route exact path={`${props.basePath}/${props.id}/show/staged`}>
+                <ShowStagedTab {...props} controllerProps={controllerProps} />
+            </Route>
             <Route
                 exact
                 path={`${props.basePath}/${props.id}/show/transportfile`}
-                render={() => (
-                    <ShowTransportFileTab record={controllerProps.record} />
-                )}
-            />
+            >
+                <ShowTransportFileTab record={controllerProps.record} />
+            </Route>
         </Fragment>
     );
 };

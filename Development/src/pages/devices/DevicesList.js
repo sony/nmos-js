@@ -79,7 +79,7 @@ const DevicesList = props => {
                     </Table>
                     <br />
                     <PaginationButtons
-                        disabled={!pagination}
+                        pagination={pagination}
                         nextPage={nextPage}
                         {...props}
                     />

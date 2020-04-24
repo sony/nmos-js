@@ -115,7 +115,12 @@ const isNumber = v => {
     return !isNaN(v) && !isNaN(parseFloat(v));
 };
 
-const convertDataProviderRequestToHTTP = (type, resource, params) => {
+const convertDataProviderRequestToHTTP = (
+    type,
+    resource,
+    params,
+    pagingLimit
+) => {
     //fetchJson won't add the Accept header itself if we specify any headers in options
     const headers = new Headers({ Accept: 'application/json' });
     if (resource === 'queryapis') {
@@ -131,10 +136,31 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
         }
 
         case GET_LIST: {
+            const referenceFilter = {};
+            // reference filters have special keys like '$<resourceType>.<param>'
+            // where <resourceType> is e.g. 'flow', implying a 'flow_id' property that refers to a Flow (in /flows) by its 'id'
+            // and <param> is a filter key for that resource, e.g. 'format' or possibly even '$source.channels.symbol'
+            const isReferenceFilter = key => key.startsWith('$');
+            const addReferenceFilter = (key, value) => {
+                const dot = key.indexOf('.');
+                if (dot > 1) {
+                    const ref = key.substring(1, dot);
+                    const refKey = key.substring(dot + 1);
+                    if (!referenceFilter.hasOwnProperty(ref))
+                        set(referenceFilter, ref, {});
+                    referenceFilter[ref][refKey] = value;
+                }
+            };
             if (params.paginationURL) {
+                for (const [key, value] of Object.entries(params.filter)) {
+                    if (isReferenceFilter(key)) {
+                        addReferenceFilter(key, value);
+                    }
+                }
                 return {
                     url: params.paginationURL,
                     options: { headers },
+                    referenceFilter,
                 };
             }
 
@@ -143,6 +169,10 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
 
             if (resource === 'queryapis' || cookies.get('RQL') === 'false') {
                 for (const [key, value] of Object.entries(params.filter)) {
+                    if (isReferenceFilter(key)) {
+                        addReferenceFilter(key, value);
+                        continue;
+                    }
                     if (Array.isArray(value)) {
                         //hmm, in basic query syntax, multiple values are not supported
                     } else if (typeof value == 'string' && value.length > 0) {
@@ -157,6 +187,10 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
             } else {
                 const matchParams = [];
                 for (const [key, value] of Object.entries(params.filter)) {
+                    if (key.startsWith('$')) {
+                        addReferenceFilter(key, value);
+                        continue;
+                    }
                     const values = Array.isArray(value) ? value : [value];
                     for (const value of values) {
                         if (typeof value === 'string') {
@@ -214,11 +248,13 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
                 return {
                     url: resourceUrl(resource, `?${query}`),
                     options: { headers },
+                    referenceFilter,
                 };
             } else {
                 return {
                     url: resourceUrl(resource),
                     options: { headers },
+                    referenceFilter,
                 };
             }
         }
@@ -431,12 +467,36 @@ const getEndpoints = (addresses, resource, id) => {
     });
 };
 
+const filterAsync = async (data, predicate) => {
+    let result = await Promise.all(
+        data.map((element, index) => predicate(element, index, data))
+    );
+    return data.filter((element, index) => {
+        return result[index];
+    });
+};
+
+const filterResult = async (json, referenceFilter) => {
+    return filterAsync(json, async object => {
+        //hm, this could be parallelized too?
+        for (const ref in referenceFilter) {
+            const id = object[ref + '_id'];
+            const data = (await dataProvider(GET_LIST, ref + 's', {
+                filter: { ...referenceFilter[ref], id: id },
+            })).data;
+            if (data.length === 0) return false;
+        }
+        return true;
+    });
+};
+
 const convertHTTPResponseToDataProvider = async (
     url,
     response,
     type,
     resource,
-    params
+    params,
+    referenceFilter
 ) => {
     const { headers, json } = response;
 
@@ -535,6 +595,16 @@ const convertHTTPResponseToDataProvider = async (
                     }
                 }
             }
+            if (referenceFilter && referenceFilter.length !== 0) {
+                let filtered = await filterResult(json, referenceFilter);
+                return {
+                    url,
+                    pagination,
+                    data: filtered,
+                    total: filtered ? filtered.length : 0,
+                    unfilteredTotal: json ? json.length : 0,
+                };
+            }
 
             return {
                 url,
@@ -582,24 +652,70 @@ const convertHTTPResponseToDataProvider = async (
     }
 };
 
-export default async (type, resource, params) => {
+let dataProvider = async (type, resource, params) => {
     const { fetchJson } = fetchUtils;
-    const { url, options } = convertDataProviderRequestToHTTP(
-        type,
-        resource,
-        params
-    );
-    return fetchJson(url, options).then(
-        response =>
-            convertHTTPResponseToDataProvider(
+    const pagingLimit = parseInt(cookies.get('Paging Limit'), 10);
+    const pagingLimitRegex = /paging.limit=\d*/;
+    let recordsToGet = pagingLimit ? pagingLimit : null;
+    let result = null;
+    while (recordsToGet === null || recordsToGet !== 0) {
+        const {
+            url,
+            options,
+            referenceFilter,
+        } = convertDataProviderRequestToHTTP(
+            type,
+            resource,
+            params,
+            recordsToGet
+        );
+        try {
+            let response = await fetchJson(url, options);
+            let data = await convertHTTPResponseToDataProvider(
                 url,
                 response,
                 type,
                 resource,
-                params
-            ),
-        error => {
-            if (error && has(error, 'body.debug'))
+                params,
+                referenceFilter
+            );
+            let pageForward =
+                params.paginationURL &&
+                params.paginationURL.includes('paging.since');
+            if (
+                recordsToGet !== null &&
+                data.unfilteredTotal &&
+                data.unfilteredTotal === recordsToGet &&
+                data.unfilteredTotal !== data.total
+            ) {
+                // unfiltered data returned a whole page of data so more results are potentially available
+                recordsToGet -= data.total;
+                params.paginationURL = (pageForward
+                    ? data.pagination.next
+                    : data.pagination.prev
+                ).replace(pagingLimitRegex, 'paging.limit=' + recordsToGet);
+            } else {
+                recordsToGet = 0;
+            }
+            if (!result) {
+                result = data;
+            } else {
+                if (pageForward) {
+                    result.pagination.next = data.pagination.next.replace(
+                        pagingLimitRegex,
+                        'paging.limit=' + pagingLimit
+                    );
+                } else {
+                    result.pagination.prev = data.pagination.prev.replace(
+                        pagingLimitRegex,
+                        'paging.limit=' + pagingLimit
+                    );
+                }
+                result.data.push(...data.data);
+                result.total += data.total;
+            }
+        } catch (error) {
+            if (error && has(error, 'body.debug')) {
                 throw new Error(
                     get(error.body, 'error') +
                         ' - ' +
@@ -607,7 +723,12 @@ export default async (type, resource, params) => {
                         ' - ' +
                         get(error.body, 'debug')
                 );
+            }
             throw error;
         }
-    );
+    }
+    delete result.unfilteredTotal;
+    return result;
 };
+
+export default dataProvider;

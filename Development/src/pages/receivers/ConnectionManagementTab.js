@@ -30,9 +30,7 @@ import PaginationButtons from '../../components/PaginationButtons';
 import { ReceiversTitle } from './ReceiversShow';
 
 const ConnectionManagementTab = ({ receiverData, basePath }) => {
-    const [filter, setFilter] = useState({
-        transport: get(receiverData, 'transport'),
-    });
+    const [filter, setFilter] = useState({});
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination } = useGetList({
         basePath,
@@ -43,11 +41,25 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
 
     // receiverData initialises undefined, update when no longer null
     useEffect(() => {
-        if (receiverData !== null)
-            setFilter(f => ({
-                ...f,
+        if (receiverData !== null) {
+            let permanentFilter = {
                 transport: get(receiverData, 'transport'),
-            }));
+                '$flow.format': get(receiverData, 'format'),
+            };
+            if (QueryVersion() >= 'v1.1') {
+                permanentFilter['$flow.media_type'] = get(
+                    receiverData,
+                    'caps.media_types'
+                );
+            }
+            if (QueryVersion() >= 'v1.3') {
+                permanentFilter['$flow.event_type'] = get(
+                    receiverData,
+                    'caps.event_types'
+                );
+            }
+            setFilter(f => ({ ...f, ...permanentFilter }));
+        }
     }, [receiverData]);
 
     if (!loaded) return <Loading />;
@@ -81,6 +93,18 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             />
                         )}
                         <StringFilter source="id" label="Sender ID" />
+                        {QueryVersion() >= 'v1.1' && (
+                            <StringFilter
+                                source="$flow.media_type"
+                                label="Media Type"
+                            />
+                        )}
+                        {QueryVersion() >= 'v1.3' && (
+                            <StringFilter
+                                source="$flow.event_type"
+                                label="Event Type"
+                            />
+                        )}
                     </FilterPanel>
                     <Table>
                         <TableHead>
@@ -99,6 +123,9 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                 <TableCell>Format</TableCell>
                                 {QueryVersion() >= 'v1.1' && (
                                     <TableCell>Media Type</TableCell>
+                                )}
+                                {QueryVersion() >= 'v1.3' && (
+                                    <TableCell>Event Type</TableCell>
                                 )}
                                 <TableCell>Connect</TableCell>
                             </TableRow>
@@ -156,7 +183,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                         <ReferenceField
                                             record={item}
                                             basePath="/flows"
-                                            label="Flow"
+                                            label="Format"
                                             source="flow_id"
                                             reference="flows"
                                             link={false}
@@ -169,12 +196,26 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                             <ReferenceField
                                                 record={item}
                                                 basePath="/flows"
-                                                label="Flow"
+                                                label="Media Type"
                                                 source="flow_id"
                                                 reference="flows"
                                                 link={false}
                                             >
                                                 <TextField source="media_type" />
+                                            </ReferenceField>
+                                        </TableCell>
+                                    )}
+                                    {QueryVersion() >= 'v1.3' && (
+                                        <TableCell>
+                                            <ReferenceField
+                                                record={item}
+                                                basePath="/flows"
+                                                label="Event Type"
+                                                source="flow_id"
+                                                reference="flows"
+                                                link={false}
+                                            >
+                                                <TextField source="event_type" />
                                             </ReferenceField>
                                         </TableCell>
                                     )}

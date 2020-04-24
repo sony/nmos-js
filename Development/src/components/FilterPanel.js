@@ -171,7 +171,7 @@ export const RateFilter = ({
     ...props
 }) => {
     const [numeratorValue, setNumeratorValue] = useState(
-        filter[source] ? filter[source].numerator : 1
+        filter[source] ? filter[source].numerator : 0
     );
     const [denominatorValue, setDenominatorValue] = useState(
         filter[source] ? filter[source].denominator : 1

@@ -1,6 +1,5 @@
 import React, { Fragment, useEffect, useState } from 'react';
-import Link from 'react-router-dom/Link';
-import { Route } from 'react-router-dom';
+import { Link, Route } from 'react-router-dom';
 import { Paper, Tab, Tabs } from '@material-ui/core';
 import {
     ArrayField,

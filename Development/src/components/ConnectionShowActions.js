@@ -1,5 +1,5 @@
 import React from 'react';
-import NavLink from 'react-router-dom/NavLink';
+import { NavLink } from 'react-router-dom';
 import { Button, ListButton, TopToolbar, useGetOne } from 'react-admin';
 import get from 'lodash/get';
 import EditIcon from '@material-ui/icons/Edit';

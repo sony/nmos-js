@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useState } from 'react';
-import Link from 'react-router-dom/Link';
+import { Link } from 'react-router-dom';
 import {
     Card,
     CardContent,

@@ -143,36 +143,56 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
 
             if (resource === 'queryapis' || cookies.get('RQL') === 'false') {
                 for (const [key, value] of Object.entries(params.filter)) {
-                    if (value || typeof value === 'boolean')
+                    if (Array.isArray(value)) {
+                        //hmm, in basic query syntax, multiple values are not supported
+                    } else if (typeof value == 'string' && value.length > 0) {
+                        //ignore empty strings
                         queryParams.push(key + '=' + encodeURIComponent(value));
+                    } else if (typeof value === 'boolean') {
+                        queryParams.push(key + '=' + encodeURIComponent(value));
+                    } else if (typeof value === 'number' && !isNaN(value)) {
+                        queryParams.push(key + '=' + encodeURIComponent(value));
+                    }
                 }
             } else {
                 const matchParams = [];
                 for (const [key, value] of Object.entries(params.filter)) {
-                    let encodedValue = encodeRQLNameChars(value);
-                    encodedValue = encodedValue.split('%2C'); //splits comma separated values
-                    for (let i = 0; i < encodedValue.length; i++) {
-                        if (typeof value === 'boolean') {
+                    const values = Array.isArray(value) ? value : [value];
+                    for (const value of values) {
+                        if (typeof value === 'string') {
+                            //most properties are strings for which partial matches are useful
+                            //hmm, event_type wildcards like 'number/temperature/*' are working by chance
+                            let encodedValue = encodeRQLNameChars(value);
+                            encodedValue = encodedValue.split('%2C'); //splits comma separated values
+                            for (const matchValue of encodedValue) {
+                                matchParams.push(
+                                    'matches(' +
+                                        key +
+                                        ',string:' +
+                                        matchValue +
+                                        ',i)'
+                                );
+                            }
+                        } else if (typeof value === 'boolean') {
                             //a few properties are Boolean
                             matchParams.push(
-                                'eq(' + key + ',' + encodedValue[i] + ')'
+                                'eq(' +
+                                    key +
+                                    ',' +
+                                    encodeRQLNameChars(value) +
+                                    ')'
                             );
                         } else if (typeof value === 'number') {
                             //a few are integers
                             if (!isNaN(value)) {
                                 matchParams.push(
-                                    'eq(' + key + ',' + encodedValue[i] + ')'
+                                    'eq(' +
+                                        key +
+                                        ',' +
+                                        encodeRQLNameChars(value) +
+                                        ')'
                                 );
                             }
-                        } else {
-                            //almost everything else is a string for which partial matches are useful
-                            matchParams.push(
-                                'matches(' +
-                                    key +
-                                    ',string:' +
-                                    encodedValue[i] +
-                                    ',i)'
-                            );
                         }
                     }
                 }

@@ -522,26 +522,19 @@ const convertHTTPResponseToDataProvider = async (
                 };
             }
 
-            const pagination = headers.get('Link')
-                ? ['first', 'last', 'next', 'prev']
-                      .map(cursor => {
-                          return {
-                              cursor,
-                              data: headers
-                                  .get('Link')
-                                  .match(
-                                      new RegExp(
-                                          `<([^>]+)>;[ \\t]*rel="${cursor}"`
-                                      )
-                                  ),
-                          };
-                      })
-                      .reduce((object, item) => {
-                          if (item.data == null) return object;
-                          object[item.cursor] = item.data[1];
-                          return object;
-                      }, {})
-                : null;
+            let pagination = null;
+            const linkHeader = headers.get('Link');
+            if (linkHeader) {
+                pagination = {};
+                for (let cursor of ['first', 'last', 'next', 'prev']) {
+                    const match = linkHeader.match(
+                        new RegExp(`<([^>]+)>;[ \\t]*rel="${cursor}"`)
+                    );
+                    if (match) {
+                        pagination[cursor] = match[1];
+                    }
+                }
+            }
 
             return {
                 url,

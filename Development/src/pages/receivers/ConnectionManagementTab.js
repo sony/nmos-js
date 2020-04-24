@@ -20,6 +20,7 @@ import get from 'lodash/get';
 import useGetList from '../../components/useGetList';
 import FilterPanel, {
     BooleanFilter,
+    RateFilter,
     StringFilter,
 } from '../../components/FilterPanel';
 import QueryVersion from '../../components/QueryVersion';
@@ -93,6 +94,18 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             />
                         )}
                         <StringFilter source="id" label="Sender ID" />
+                        {QueryVersion() >= 'v1.1' && (
+                            <RateFilter
+                                source="$flow.grain_rate"
+                                label="Grain Rate"
+                            />
+                        )}
+                        {QueryVersion() >= 'v1.1' && (
+                            <RateFilter
+                                source="$flow.sample_rate"
+                                label="Sample Rate"
+                            />
+                        )}
                         {QueryVersion() >= 'v1.1' && (
                             <StringFilter
                                 source="$flow.media_type"

@@ -162,6 +162,74 @@ export const StringFilter = ({
     );
 };
 
+export const RateFilter = ({
+    source,
+    label,
+    filter,
+    setFilter,
+    autoFocus,
+    ...props
+}) => {
+    const [numeratorValue, setNumeratorValue] = useState(
+        filter[source] ? filter[source].numerator : 1
+    );
+    const [denominatorValue, setDenominatorValue] = useState(
+        filter[source] ? filter[source].denominator : 1
+    );
+    if (!label) label = titleCase(source);
+
+    const inputRef = useRef();
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (autoFocus) inputRef.current.focus();
+        }, 100);
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [autoFocus]);
+
+    useEffect(() => {
+        setFilter(f => ({
+            ...f,
+            [source]: {
+                numerator: parseInt(numeratorValue, 10),
+                denominator: parseInt(denominatorValue, 10),
+            },
+        }));
+        return function cleanup() {
+            setFilter(f => {
+                let newFilter = { ...f };
+                delete newFilter[source];
+                return newFilter;
+            });
+        };
+    }, [numeratorValue, denominatorValue, setFilter, source]);
+    return (
+        <Fragment>
+            <TextField
+                type="number"
+                label={label + ' Numerator'}
+                variant="filled"
+                margin="dense"
+                value={numeratorValue}
+                onChange={event => setNumeratorValue(event.target.value)}
+                inputRef={inputRef}
+                {...props}
+            />
+            <TextField
+                type="number"
+                label={label + ' Denominator'}
+                variant="filled"
+                margin="dense"
+                value={denominatorValue}
+                onChange={event => setDenominatorValue(event.target.value)}
+                inputRef={inputRef}
+                {...props}
+            />
+        </Fragment>
+    );
+};
+
 const FilterPanel = ({ children, filter, setFilter }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [displayedFilters, setDisplayedFilters] = useState({});

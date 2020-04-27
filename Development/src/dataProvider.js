@@ -701,18 +701,18 @@ const dataProvider = async (type, resource, params) => {
                 result = data;
             } else {
                 if (pageForward) {
+                    result.total = result.data.unshift(...data.data);
                     result.pagination.next = data.pagination.next.replace(
                         pagingLimitRegex,
                         'paging.limit=' + pagingLimit
                     );
                 } else {
+                    result.total = result.data.push(...data.data);
                     result.pagination.prev = data.pagination.prev.replace(
                         pagingLimitRegex,
                         'paging.limit=' + pagingLimit
                     );
                 }
-                result.data.push(...data.data);
-                result.total += data.total;
             }
         } catch (error) {
             if (error && has(error, 'body.debug')) {

@@ -652,7 +652,7 @@ const convertHTTPResponseToDataProvider = async (
     }
 };
 
-let dataProvider = async (type, resource, params) => {
+const dataProvider = async (type, resource, params) => {
     const { fetchJson } = fetchUtils;
     const pagingLimit = parseInt(cookies.get('Paging Limit'), 10);
     const pagingLimitRegex = /paging.limit=\d*/;

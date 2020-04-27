@@ -5,6 +5,7 @@ import {
     ArrayField,
     BooleanField,
     FunctionField,
+    Loading,
     ReferenceField,
     ShowView,
     SimpleShowLayout,
@@ -38,7 +39,7 @@ export const ReceiversTitle = ({ record }) => (
 const ReceiversShow = props => {
     const [useConnectionAPI, setUseConnectionAPI] = useState(false);
     const controllerProps = useShowController(props);
-    const [connectTab, setConnectTab] = useState(() => <Fragment />);
+    const [connectTab, setConnectTab] = useState(() => <Loading />);
 
     useEffect(() => {
         if (get(controllerProps.record, '$connectionAPI') !== undefined) {
@@ -50,16 +51,16 @@ const ReceiversShow = props => {
 
     const { basePath } = props;
     const receiverData = controllerProps.record;
-    useEffect(
-        () =>
+    useEffect(() => {
+        if (receiverData) {
             setConnectTab(() => (
                 <ConnectionManagementTab
                     basePath={basePath}
                     receiverData={receiverData}
                 />
-            )),
-        [basePath, receiverData]
-    );
+            ));
+        }
+    }, [basePath, receiverData]);
 
     const theme = useTheme();
     const tabBackgroundColor =

@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { Fragment, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Card,
@@ -31,7 +31,20 @@ import PaginationButtons from '../../components/PaginationButtons';
 import { ReceiversTitle } from './ReceiversShow';
 
 const ConnectionManagementTab = ({ receiverData, basePath }) => {
-    const [filter, setFilter] = useState({});
+    const baseFilter = useMemo(() => {
+        return {
+            transport: get(receiverData, 'transport'),
+            '$flow.format': get(receiverData, 'format'),
+            ...(QueryVersion() >= 'v1.1' && {
+                '$flow.media_type': get(receiverData, 'caps.media_types'),
+            }),
+            ...(QueryVersion() >= 'v1.3' && {
+                '$flow.event_type': get(receiverData, 'caps.event_types'),
+            }),
+        };
+    }, [receiverData]);
+
+    const [filter, setFilter] = useState(baseFilter);
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination } = useGetList({
         basePath,
@@ -40,34 +53,11 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
         resource: 'senders',
     });
 
-    // receiverData initialises undefined, update when no longer null
-    useEffect(() => {
-        if (receiverData !== null) {
-            let permanentFilter = {
-                transport: get(receiverData, 'transport'),
-                '$flow.format': get(receiverData, 'format'),
-            };
-            if (QueryVersion() >= 'v1.1') {
-                permanentFilter['$flow.media_type'] = get(
-                    receiverData,
-                    'caps.media_types'
-                );
-            }
-            if (QueryVersion() >= 'v1.3') {
-                permanentFilter['$flow.event_type'] = get(
-                    receiverData,
-                    'caps.event_types'
-                );
-            }
-            setFilter(f => ({ ...f, ...permanentFilter }));
-        }
-    }, [receiverData]);
-
-    if (!loaded) return <Loading />;
-
     const nextPage = label => {
         setPaginationURL(pagination[label]);
     };
+
+    if (!loaded) return <Loading />;
 
     return (
         <Fragment>

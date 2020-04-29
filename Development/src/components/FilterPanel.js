@@ -310,7 +310,7 @@ const FilterPanel = ({ children, filter, setFilter }) => {
                 }}
                 keepMounted
             >
-                {React.Children.map(children, child => (
+                {React.Children.toArray(children).map(child => (
                     <MenuItem onClick={() => addFilter(child, true)}>
                         {get(child, 'props.label')
                             ? get(child, 'props.label')
@@ -320,7 +320,9 @@ const FilterPanel = ({ children, filter, setFilter }) => {
                 <Divider />
                 <MenuItem
                     onClick={() => {
-                        React.Children.map(children, child => addFilter(child));
+                        React.Children.toArray(children).map(child =>
+                            addFilter(child)
+                        );
                     }}
                 >
                     All

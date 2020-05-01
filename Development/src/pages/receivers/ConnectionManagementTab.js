@@ -48,7 +48,10 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination } = useGetList({
         basePath,
-        filter,
+        filter: useMemo(() => ({ ...baseFilter, ...filter }), [
+            baseFilter,
+            filter,
+        ]),
         paginationURL,
         resource: 'senders',
     });
@@ -69,6 +72,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                 <CardContent>
                     <FilterPanel
                         data={data}
+                        defaultFilter={baseFilter}
                         filter={filter}
                         setFilter={setFilter}
                     >

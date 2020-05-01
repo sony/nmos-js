@@ -310,19 +310,25 @@ const FilterPanel = ({ children, filter, setFilter }) => {
                 }}
                 keepMounted
             >
-                {React.Children.toArray(children).map(child => (
-                    <MenuItem onClick={() => addFilter(child, true)}>
-                        {get(child, 'props.label')
-                            ? get(child, 'props.label')
-                            : titleCase(get(child, 'props.source'))}
-                    </MenuItem>
-                ))}
+                {React.Children.map(children, child => {
+                    if (child) {
+                        return (
+                            <MenuItem onClick={() => addFilter(child, true)}>
+                                {get(child, 'props.label')
+                                    ? get(child, 'props.label')
+                                    : titleCase(get(child, 'props.source'))}
+                            </MenuItem>
+                        );
+                    }
+                })}
                 <Divider />
                 <MenuItem
                     onClick={() => {
-                        React.Children.toArray(children).map(child =>
-                            addFilter(child)
-                        );
+                        React.Children.map(children, child => {
+                            if (child) {
+                                addFilter(child);
+                            }
+                        });
                     }}
                 >
                     All

@@ -44,7 +44,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
         };
     }, [receiverData]);
 
-    const [filter, setFilter] = useState(baseFilter);
+    const [filter, setFilter] = useState({});
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination } = useGetList({
         basePath,

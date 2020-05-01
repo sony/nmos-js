@@ -191,6 +191,7 @@ const convertDataProviderRequestToHTTP = (
                         addReferenceFilter(key, value);
                         continue;
                     }
+                    const keyMatchParams = [];
                     const values = Array.isArray(value) ? value : [value];
                     for (const value of values) {
                         if (typeof value === 'string') {
@@ -199,7 +200,7 @@ const convertDataProviderRequestToHTTP = (
                             let encodedValue = encodeRQLNameChars(value);
                             encodedValue = encodedValue.split('%2C'); //splits comma separated values
                             for (const matchValue of encodedValue) {
-                                matchParams.push(
+                                keyMatchParams.push(
                                     'matches(' +
                                         key +
                                         ',string:' +
@@ -209,7 +210,7 @@ const convertDataProviderRequestToHTTP = (
                             }
                         } else if (typeof value === 'boolean') {
                             //a few properties are Boolean
-                            matchParams.push(
+                            keyMatchParams.push(
                                 'eq(' +
                                     key +
                                     ',' +
@@ -219,7 +220,7 @@ const convertDataProviderRequestToHTTP = (
                         } else if (typeof value === 'number') {
                             //a few are integers
                             if (!isNaN(value)) {
-                                matchParams.push(
+                                keyMatchParams.push(
                                     'eq(' +
                                         key +
                                         ',' +
@@ -228,6 +229,13 @@ const convertDataProviderRequestToHTTP = (
                                 );
                             }
                         }
+                    }
+                    if (keyMatchParams.length > 1) {
+                        matchParams.push(
+                            'or(' + keyMatchParams.join(',') + ')'
+                        );
+                    } else if (keyMatchParams.length === 1) {
+                        matchParams.push(keyMatchParams[0]);
                     }
                 }
                 const rqlFilter = matchParams.join(',');

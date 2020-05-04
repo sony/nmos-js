@@ -9,8 +9,12 @@ import {
     TableRow,
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
-import FilterPanel, { StringFilter } from '../../components/FilterPanel';
+import FilterPanel, {
+    RateFilter,
+    StringFilter,
+} from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
+import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
 
@@ -40,7 +44,19 @@ const SourcesList = props => {
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
                         <StringFilter source="description" />
+                        {QueryVersion() >= 'v1.1' && (
+                            <RateFilter
+                                source="grain_rate"
+                                label="Grain Rate"
+                            />
+                        )}
                         <StringFilter source="format" />
+                        {QueryVersion() >= 'v1.3' && (
+                            <StringFilter
+                                source="event_type"
+                                label="Event Type"
+                            />
+                        )}
                         <StringFilter source="id" label="ID" />
                     </FilterPanel>
                     <Table>
@@ -54,6 +70,9 @@ const SourcesList = props => {
                                     Label
                                 </TableCell>
                                 <TableCell>Format</TableCell>
+                                {QueryVersion() >= 'v1.3' && (
+                                    <TableCell>Event Type</TableCell>
+                                )}
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -70,6 +89,9 @@ const SourcesList = props => {
                                         />
                                     </TableCell>
                                     <TableCell>{item.format}</TableCell>
+                                    {QueryVersion() >= 'v1.3' && (
+                                        <TableCell>{item.event_type}</TableCell>
+                                    )}
                                 </TableRow>
                             ))}
                         </TableBody>

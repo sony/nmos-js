@@ -211,8 +211,8 @@ export const RateFilter = ({
             };
         } else {
             return {
-                numerator: 0,
-                denominator: 1,
+                numerator: '',
+                denominator: '',
             };
         }
     });
@@ -229,17 +229,17 @@ export const RateFilter = ({
     }, [autoFocus]);
 
     useEffect(() => {
+        // for now, flatten the object here rather than in dataProvider
         setFilter(f => ({
             ...f,
-            [source]: {
-                numerator: parseInt(value.numerator, 10),
-                denominator: parseInt(value.denominator, 10),
-            },
+            [source + '.numerator']: parseInt(value.numerator, 10),
+            [source + '.denominator']: parseInt(value.denominator, 10),
         }));
         return function cleanup() {
             setFilter(f => {
                 let newFilter = { ...f };
-                delete newFilter[source];
+                delete newFilter[source + '.numerator'];
+                delete newFilter[source + '.denominator'];
                 return newFilter;
             });
         };

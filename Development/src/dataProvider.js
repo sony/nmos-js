@@ -175,13 +175,31 @@ const convertDataProviderRequestToHTTP = (
                     }
                     if (Array.isArray(value)) {
                         //hmm, in basic query syntax, multiple values are not supported
-                    } else if (typeof value == 'string' && value.length > 0) {
+                        console.warn(
+                            'Basic query - unsupported filter type:',
+                            'Array'
+                        );
+                    } else if (typeof value == 'string') {
                         //ignore empty strings
-                        queryParams.push(key + '=' + encodeURIComponent(value));
+                        if (value.length > 0) {
+                            queryParams.push(
+                                key + '=' + encodeURIComponent(value)
+                            );
+                        }
                     } else if (typeof value === 'boolean') {
                         queryParams.push(key + '=' + encodeURIComponent(value));
-                    } else if (typeof value === 'number' && !isNaN(value)) {
-                        queryParams.push(key + '=' + encodeURIComponent(value));
+                    } else if (typeof value === 'number') {
+                        //ignore NaN
+                        if (!isNaN(value)) {
+                            queryParams.push(
+                                key + '=' + encodeURIComponent(value)
+                            );
+                        }
+                    } else if (value != null) {
+                        console.warn(
+                            'Basic query - unsupported filter type:',
+                            typeof value
+                        );
                     }
                 }
             } else {
@@ -200,18 +218,18 @@ const convertDataProviderRequestToHTTP = (
                             let encodedValue = encodeRQLNameChars(value);
                             encodedValue = encodedValue.split('%2C'); //splits comma separated values
                             for (const matchValue of encodedValue) {
+                                //ignore empty strings
                                 if (value.length > 0) {
-	                                keyMatchParams.push(
-	                                    'matches(' +
-	                                        key +
-	                                        ',string:' +
-	                                        matchValue +
-	                                        ',i)'
-	                                );
-	                            }
+                                    keyMatchParams.push(
+                                        'matches(' +
+                                            key +
+                                            ',string:' +
+                                            matchValue +
+                                            ',i)'
+                                    );
+                                }
                             }
                         } else if (typeof value === 'boolean') {
-                            //a few properties are Boolean
                             keyMatchParams.push(
                                 'eq(' +
                                     key +
@@ -220,7 +238,7 @@ const convertDataProviderRequestToHTTP = (
                                     ')'
                             );
                         } else if (typeof value === 'number') {
-                            //a few are integers
+                            //ignore NaN
                             if (!isNaN(value)) {
                                 keyMatchParams.push(
                                     'eq(' +
@@ -230,6 +248,11 @@ const convertDataProviderRequestToHTTP = (
                                         ')'
                                 );
                             }
+                        } else if (value != null) {
+                            console.warn(
+                                'RQL query - unsupported filter type:',
+                                typeof value
+                            );
                         }
                     }
                     if (keyMatchParams.length > 1) {

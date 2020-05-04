@@ -63,6 +63,20 @@ const FlowsShow = props => {
                     }
                 />
                 <hr />
+                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                    <FunctionField
+                        label="Grain Rate"
+                        render={record =>
+                            record.grain_rate
+                                ? `${record.grain_rate.numerator} : ${
+                                      record.grain_rate.denominator
+                                          ? record.grain_rate.denominator
+                                          : 1
+                                  }`
+                                : null
+                        }
+                    />
+                )}
                 <TextField source="format" />
                 {controllerProps.record && QueryVersion() >= 'v1.1' && (
                     <TextField label="Media Type" source="media_type" />

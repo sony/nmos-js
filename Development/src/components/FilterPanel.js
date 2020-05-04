@@ -32,13 +32,22 @@ const StyledTableCell = withStyles({
 })(TableCell);
 
 export const BooleanFilter = ({
+    defaultValue,
     source,
     label,
     filter,
     setFilter,
     autoFocus,
 }) => {
-    const [checked, setChecked] = useState(!!filter[source]);
+    const [checked, setChecked] = useState(() => {
+        if (filter[source] != null) {
+            return !!filter[source];
+        } else if (defaultValue != null) {
+            return defaultValue;
+        } else {
+            return false;
+        }
+    });
     if (!label) label = titleCase(source);
 
     const inputRef = useRef();
@@ -74,6 +83,7 @@ export const BooleanFilter = ({
 };
 
 export const NumberFilter = ({
+    defaultValue,
     source,
     label,
     filter,
@@ -81,7 +91,15 @@ export const NumberFilter = ({
     autoFocus,
     ...props
 }) => {
-    const [value, setValue] = useState(filter[source] ? filter[source] : '');
+    const [value, setValue] = useState(() => {
+        if (filter[source] != null) {
+            return filter[source];
+        } else if (defaultValue != null) {
+            return defaultValue;
+        } else {
+            return '';
+        }
+    });
     if (!label) label = titleCase(source);
 
     const inputRef = useRef();
@@ -119,6 +137,7 @@ export const NumberFilter = ({
 };
 
 export const StringFilter = ({
+    defaultValue,
     source,
     label,
     filter,
@@ -126,7 +145,15 @@ export const StringFilter = ({
     autoFocus,
     ...props
 }) => {
-    const [value, setValue] = useState(filter[source] ? filter[source] : '');
+    const [value, setValue] = useState(() => {
+        if (filter[source] != null) {
+            return filter[source];
+        } else if (defaultValue != null) {
+            return defaultValue;
+        } else {
+            return '';
+        }
+    });
     if (!label) label = titleCase(source);
 
     const inputRef = useRef();
@@ -163,6 +190,7 @@ export const StringFilter = ({
 };
 
 export const RateFilter = ({
+    defaultValue,
     source,
     label,
     filter,
@@ -170,12 +198,24 @@ export const RateFilter = ({
     autoFocus,
     ...props
 }) => {
-    const [numeratorValue, setNumeratorValue] = useState(
-        filter[source] ? filter[source].numerator : 0
-    );
-    const [denominatorValue, setDenominatorValue] = useState(
-        filter[source] ? filter[source].denominator : 1
-    );
+    const [value, setValue] = useState(() => {
+        if (filter[source] != null) {
+            return {
+                numerator: get(defaultValue, 'numerator'),
+                denominator: get(defaultValue, 'denominator'),
+            };
+        } else if (defaultValue != null) {
+            return {
+                numerator: get(filter[source], 'numerator'),
+                denominator: get(filter[source], 'denominator'),
+            };
+        } else {
+            return {
+                numerator: 0,
+                denominator: 1,
+            };
+        }
+    });
     if (!label) label = titleCase(source);
 
     const inputRef = useRef();
@@ -192,8 +232,8 @@ export const RateFilter = ({
         setFilter(f => ({
             ...f,
             [source]: {
-                numerator: parseInt(numeratorValue, 10),
-                denominator: parseInt(denominatorValue, 10),
+                numerator: parseInt(value.numerator, 10),
+                denominator: parseInt(value.denominator, 10),
             },
         }));
         return function cleanup() {
@@ -203,7 +243,7 @@ export const RateFilter = ({
                 return newFilter;
             });
         };
-    }, [numeratorValue, denominatorValue, setFilter, source]);
+    }, [value, setFilter, source]);
     return (
         <Fragment>
             <TextField
@@ -211,8 +251,10 @@ export const RateFilter = ({
                 label={label + ' Numerator'}
                 variant="filled"
                 margin="dense"
-                value={numeratorValue}
-                onChange={event => setNumeratorValue(event.target.value)}
+                value={value.numerator}
+                onChange={event =>
+                    setValue(v => ({ ...v, numerator: event.target.value }))
+                }
                 inputRef={inputRef}
                 {...props}
             />
@@ -221,16 +263,17 @@ export const RateFilter = ({
                 label={label + ' Denominator'}
                 variant="filled"
                 margin="dense"
-                value={denominatorValue}
-                onChange={event => setDenominatorValue(event.target.value)}
-                inputRef={inputRef}
+                value={value.denominator}
+                onChange={event =>
+                    setValue(v => ({ ...v, denominator: event.target.value }))
+                }
                 {...props}
             />
         </Fragment>
     );
 };
 
-const FilterPanel = ({ children, filter, setFilter }) => {
+const FilterPanel = ({ children, defaultFilter, filter, setFilter }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [displayedFilters, setDisplayedFilters] = useState({});
     const handleClick = event => {
@@ -245,6 +288,7 @@ const FilterPanel = ({ children, filter, setFilter }) => {
         setDisplayedFilters(f => ({
             ...f,
             [get(child, 'props.source')]: React.cloneElement(child, {
+                defaultValue: get(defaultFilter, get(child, 'props.source')),
                 filter: filter,
                 setFilter: setFilter,
                 autoFocus,

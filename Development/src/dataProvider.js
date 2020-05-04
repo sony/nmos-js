@@ -200,13 +200,15 @@ const convertDataProviderRequestToHTTP = (
                             let encodedValue = encodeRQLNameChars(value);
                             encodedValue = encodedValue.split('%2C'); //splits comma separated values
                             for (const matchValue of encodedValue) {
-                                keyMatchParams.push(
-                                    'matches(' +
-                                        key +
-                                        ',string:' +
-                                        matchValue +
-                                        ',i)'
-                                );
+                                if (value.length > 0) {
+	                                keyMatchParams.push(
+	                                    'matches(' +
+	                                        key +
+	                                        ',string:' +
+	                                        matchValue +
+	                                        ',i)'
+	                                );
+	                            }
                             }
                         } else if (typeof value === 'boolean') {
                             //a few properties are Boolean

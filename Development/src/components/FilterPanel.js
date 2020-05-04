@@ -40,10 +40,12 @@ export const BooleanFilter = ({
     autoFocus,
 }) => {
     const [checked, setChecked] = useState(() => {
-        if (defaultValue != null) {
+        if (filter[source] != null) {
+            return !!filter[source];
+        } else if (defaultValue != null) {
             return defaultValue;
         } else {
-            return !!filter[source];
+            return false;
         }
     });
     if (!label) label = titleCase(source);
@@ -90,10 +92,10 @@ export const NumberFilter = ({
     ...props
 }) => {
     const [value, setValue] = useState(() => {
-        if (defaultValue) {
-            return defaultValue;
-        } else if (filter[source]) {
+        if (filter[source] != null) {
             return filter[source];
+        } else if (defaultValue != null) {
+            return defaultValue;
         } else {
             return '';
         }
@@ -144,10 +146,10 @@ export const StringFilter = ({
     ...props
 }) => {
     const [value, setValue] = useState(() => {
-        if (defaultValue) {
-            return defaultValue;
-        } else if (filter[source]) {
+        if (filter[source] != null) {
             return filter[source];
+        } else if (defaultValue != null) {
+            return defaultValue;
         } else {
             return '';
         }
@@ -197,12 +199,12 @@ export const RateFilter = ({
     ...props
 }) => {
     const [value, setValue] = useState(() => {
-        if (defaultValue) {
+        if (filter[source] != null) {
             return {
                 numerator: get(defaultValue, 'numerator'),
                 denominator: get(defaultValue, 'denominator'),
             };
-        } else if (filter[source]) {
+        } else if (defaultValue != null) {
             return {
                 numerator: get(filter[source], 'numerator'),
                 denominator: get(filter[source], 'denominator'),

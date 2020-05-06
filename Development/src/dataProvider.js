@@ -164,7 +164,6 @@ const convertDataProviderRequestToHTTP = (
                 };
             }
 
-            const pagingLimit = cookies.get('Paging Limit');
             const queryParams = [];
 
             if (resource === 'queryapis' || cookies.get('RQL') === 'false') {
@@ -687,11 +686,13 @@ const convertHTTPResponseToDataProvider = async (
 
 const dataProvider = async (type, resource, params) => {
     const { fetchJson } = fetchUtils;
-    const pagingLimit = parseInt(cookies.get('Paging Limit'), 10);
+    // default paging limit to 10 rather than letting the Query API use its default,
+    // in order to simplify pagination with filtered results
+    const pagingLimit = parseInt(cookies.get('Paging Limit'), 10) || 10;
     const pagingLimitRegex = /paging.limit=\d*/;
-    let recordsToGet = pagingLimit ? pagingLimit : null;
+    let recordsToGet = pagingLimit;
     let result = null;
-    while (recordsToGet === null || recordsToGet !== 0) {
+    while (recordsToGet > 0) {
         const {
             url,
             options,
@@ -716,7 +717,6 @@ const dataProvider = async (type, resource, params) => {
                 params.paginationURL &&
                 params.paginationURL.includes('paging.since');
             if (
-                recordsToGet !== null &&
                 data.unfilteredTotal &&
                 data.unfilteredTotal === recordsToGet &&
                 data.unfilteredTotal !== data.total
@@ -760,7 +760,9 @@ const dataProvider = async (type, resource, params) => {
             throw error;
         }
     }
-    delete result.unfilteredTotal;
+    if (result) {
+        delete result.unfilteredTotal;
+    }
     return result;
 };
 

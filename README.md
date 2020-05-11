@@ -20,7 +20,7 @@ Copy the contents of the nmos-js build directory into the admin directory next t
 
 ## Agile Development
 
-[![JT-NM Tested 03/20 NMOS & TR-1001-1 Controller](Documents/images/jt-nm-tested-03-20-controller.png?raw=true)](https://jt-nm.org/jt-nm_tested/)
+[<img alt="JT-NM Tested 03/20 NMOS & TR-1001-1 Controller" src="Documents/images/jt-nm-tested-03-20-controller.png?raw=true" height="135" align="right"/>](https://jt-nm.org/jt-nm_tested/)
 
 The nmos-js client, like the NMOS Specifications, is intended to be always ready, but continually developing.
 The nmos-js client works as both an NMOS Registry browser, using the IS-04 Query API, and provides connection management, using the IS-05 Connection API.

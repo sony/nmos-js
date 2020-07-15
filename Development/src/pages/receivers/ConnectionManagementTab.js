@@ -81,6 +81,10 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             source="description"
                             label="Sender Description"
                         />
+                        <StringFilter
+                            source="transport"
+                            label="Sender Transport"
+                        />
                         {QueryVersion() >= 'v1.2' && (
                             <BooleanFilter
                                 source="subscription.active"
@@ -91,25 +95,25 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                         {QueryVersion() >= 'v1.1' && (
                             <RateFilter
                                 source="$flow.grain_rate"
-                                label="Grain Rate"
+                                label="Flow Grain Rate"
                             />
                         )}
                         {QueryVersion() >= 'v1.1' && (
                             <RateFilter
                                 source="$flow.sample_rate"
-                                label="Sample Rate"
+                                label="Flow Sample Rate"
                             />
                         )}
                         {QueryVersion() >= 'v1.1' && (
                             <StringFilter
                                 source="$flow.media_type"
-                                label="Media Type"
+                                label="Flow Media Type"
                             />
                         )}
                         {QueryVersion() >= 'v1.3' && (
                             <StringFilter
                                 source="$flow.event_type"
-                                label="Event Type"
+                                label="Flow Event Type"
                             />
                         )}
                     </FilterPanel>
@@ -123,6 +127,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                 >
                                     Sender
                                 </TableCell>
+                                <TableCell>Transport</TableCell>
                                 {QueryVersion() >= 'v1.2' && (
                                     <TableCell>Active</TableCell>
                                 )}
@@ -166,6 +171,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                             />
                                         </Link>
                                     </TableCell>
+                                    <TableCell>{item.transport}</TableCell>
                                     {QueryVersion() >= 'v1.2' && (
                                         <TableCell>
                                             <ActiveField

@@ -248,7 +248,8 @@ export const RateFilter = ({
         <Fragment>
             <TextField
                 type="number"
-                label={label + ' Numerator'}
+                label={label}
+                helperText="Numerator"
                 variant="filled"
                 margin="dense"
                 value={value.numerator}
@@ -260,7 +261,7 @@ export const RateFilter = ({
             />
             <TextField
                 type="number"
-                label={label + ' Denominator'}
+                helperText="Denominator"
                 variant="filled"
                 margin="dense"
                 value={value.denominator}

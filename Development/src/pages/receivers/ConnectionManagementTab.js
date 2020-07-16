@@ -92,6 +92,10 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             />
                         )}
                         <StringFilter source="id" label="Sender ID" />
+                        <StringFilter
+                            source="$flow.format"
+                            label="Flow Format"
+                        />
                         {QueryVersion() >= 'v1.1' && (
                             <RateFilter
                                 source="$flow.grain_rate"

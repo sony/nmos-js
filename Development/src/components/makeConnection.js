@@ -182,12 +182,12 @@ const makeConnection = (senderID, receiverID, endpoint, options) => {
                     return reject(new Error("Couldn't get sender data"));
                 if (get(data, 'receiver') === undefined)
                     return reject(new Error("Couldn't get receiver data"));
-                if (
-                    get(data.sender, '$transporttype') !==
-                    get(data.receiver, '$transporttype')
-                ) {
-                    return reject(new Error('Transport types do not match'));
-                }
+
+                // don't test '$transporttype' here, as there's a sensible
+                // default filter in the ConnectionManagementTab, but users
+                // may choose to override that and rely on checking of
+                // transport parameters at the receiver itself
+
                 if (
                     endpoint === 'active' &&
                     !get(data, 'sender.$active.master_enable')

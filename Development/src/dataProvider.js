@@ -262,6 +262,106 @@ const convertDataProviderRequestToHTTP = (
                         matchParams.push(keyMatchParams[0]);
                     }
                 }
+                // turn some '$flow' reference filters back into RQL 'rel' call-operators
+                const flowFilters = [];
+                const flow = get(referenceFilter, 'flow');
+                if (flow) {
+                    const format = get(flow, 'format');
+                    if (format) {
+                        flowFilters.push(
+                            'eq(format,' +
+                                'string:' +
+                                encodeRQLNameChars(format) +
+                                ')'
+                        );
+                        delete flow['format'];
+                    }
+                    const mediaTypes = get(flow, 'media_type');
+                    if (mediaTypes) {
+                        flowFilters.push(
+                            'in(media_type,(' +
+                                mediaTypes
+                                    .map(
+                                        mt => 'string:' + encodeRQLNameChars(mt)
+                                    )
+                                    .join(',') +
+                                '))'
+                        );
+                        delete flow['media_type'];
+                    }
+                }
+                // do the same for '$constraint_sets'
+                const constraintSets = get(params.filter, '$constraint_sets');
+                const constraintSetsActive = get(
+                    params.filter,
+                    '$constraint_sets_active'
+                );
+                if (constraintSets && constraintSetsActive !== undefined) {
+                    const paramConstraintFun = {
+                        'urn:x-nmos:cap:format:grain_rate': constraint => {
+                            const values = get(constraint, 'enum');
+                            const filter =
+                                'in(grain_rate,(' +
+                                values
+                                    .map(
+                                        v =>
+                                            'rational:' +
+                                            encodeRQLNameChars(
+                                                get(v, 'numerator') +
+                                                    '/' +
+                                                    get(v, 'denominator')
+                                            )
+                                    )
+                                    .join(',') +
+                                '))';
+                            return (
+                                'or(' +
+                                filter +
+                                ',' +
+                                'and(eq(grain_rate,null),rel(source_id,' +
+                                filter +
+                                ')))'
+                            );
+                        },
+                    };
+                    const constraintSetsFilters = [];
+                    for (const constraintSet of constraintSets) {
+                        const paramFilters = [];
+                        for (const paramConstraint in constraintSet) {
+                            if (paramConstraint in paramConstraintFun) {
+                                paramFilters.push(
+                                    paramConstraintFun[paramConstraint](
+                                        constraintSet[paramConstraint]
+                                    )
+                                );
+                            }
+                        }
+                        const constraintSetFilter = paramFilters.join(',');
+                        if (constraintSetFilter) {
+                            constraintSetsFilters.push(
+                                'and(' + constraintSetFilter + ')'
+                            );
+                        }
+                    }
+                    const constraintSetsFilter = constraintSetsFilters.join(
+                        ','
+                    );
+                    if (constraintSetsFilter) {
+                        if (constraintSetsActive) {
+                            flowFilters.push(
+                                'or(' + constraintSetsFilter + ')'
+                            );
+                        } else {
+                            flowFilters.push(
+                                'not(or(' + constraintSetsFilter + '))'
+                            );
+                        }
+                    }
+                }
+                const flowFilter = flowFilters.join(',');
+                if (flowFilter) {
+                    matchParams.push('rel(flow_id,and(' + flowFilter + '))');
+                }
                 const rqlFilter = matchParams.join(',');
                 if (rqlFilter) {
                     queryParams.push('query.rql=and(' + rqlFilter + ')');

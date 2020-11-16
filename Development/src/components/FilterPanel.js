@@ -45,7 +45,7 @@ export const BooleanFilter = ({
         } else if (defaultValue != null) {
             return defaultValue;
         } else {
-            return false;
+            return true;
         }
     });
     if (!label) label = titleCase(source);
@@ -201,13 +201,13 @@ export const RateFilter = ({
     const [value, setValue] = useState(() => {
         if (filter[source] != null) {
             return {
-                numerator: get(defaultValue, 'numerator'),
-                denominator: get(defaultValue, 'denominator'),
+                numerator: get(filter[source], 'numerator'),
+                denominator: get(filter[source], 'denominator'),
             };
         } else if (defaultValue != null) {
             return {
-                numerator: get(filter[source], 'numerator'),
-                denominator: get(filter[source], 'denominator'),
+                numerator: get(defaultValue, 'numerator'),
+                denominator: get(defaultValue, 'denominator'),
             };
         } else {
             return {

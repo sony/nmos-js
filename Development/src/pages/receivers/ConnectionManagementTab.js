@@ -41,6 +41,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
             ...(QueryVersion() >= 'v1.3' && {
                 '$flow.event_type': get(receiverData, 'caps.event_types'),
             }),
+            $constraint_sets: get(receiverData, 'caps.constraint_sets'),
         };
     }, [receiverData]);
 
@@ -120,6 +121,11 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                 label="Flow Event Type"
                             />
                         )}
+                        <BooleanFilter
+                            defaultValue={true}
+                            source="$constraint_sets_active"
+                            label="Constraint Sets"
+                        />
                     </FilterPanel>
                     <Table>
                         <TableHead>

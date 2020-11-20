@@ -306,7 +306,7 @@ const convertDataProviderRequestToHTTP = (
                 }
 
                 if (constraintSets && constraintSetsActive !== undefined) {
-                    // JRT: I collapsed the RQL definitions as it was starting to confuse me
+                    // JRT: I collapsed the RQL definitions as they were starting to confuse me
                     const generateFilterRQL = (constraint, name, parameterTransform) => {
                         let filter;
                         
@@ -321,13 +321,24 @@ const convertDataProviderRequestToHTTP = (
                         }
 
                         // JRT: it doesn't make sense to fallback to the source for all constraints - strategy for other constraints needed
-                        return ('or(' + filter + ',' + 'and(eq(' + name + ',null),rel(source_id,' + filter + ')))');
+                        return ('or(' + filter + ',and(eq(' + name + ',null),rel(source_id,' + filter + ')))');
                     }
 
-                    const rationalTransform = v => 'rational:' + encodeRQLNameChars(get(v, 'numerator') + '/' + get(v, 'denominator'));
-                    const identityTransform = v => v;
-                    const samplingTransform = v => 'sampling:' + encodeRQLNameChars(v);
+                    const generateChannelCountFilterRQL = (constraint) => {
 
+                        if (has(constraint, 'enum')) {
+                            return 'or(' + get(constraint, 'enum').map(v => 'rel(source_id,eq(count(channels),' + encodeRQLNameChars(v) + '))').join(',') + ')';
+                        }
+
+                        // JRT: Error state? should we return a dummy query for graceful degredation?  or throw a wobbly?
+                        return;
+                    }
+
+
+                    const rationalTransform = v => 'rational:' + encodeRQLNameChars(get(v, 'numerator') + '/' + get(v, 'denominator'));
+                    const identityTransform = v => encodeRQLNameChars(v);
+                    const samplingTransform = v => 'sampling:' + encodeRQLNameChars(v);
+                    
                     // JRT paramConstraintMap? paramConstraintSet? paramConstraintRQL? 
                     const paramConstraintFun = {
                         'urn:x-nmos:cap:format:grain_rate': constraint => generateFilterRQL(constraint, 'grain_rate', rationalTransform),
@@ -340,7 +351,7 @@ const convertDataProviderRequestToHTTP = (
                         'urn:x-nmos:cap:format:transfer_characteristic': constraint => generateFilterRQL(constraint, 'transfer_characteristic', identityTransform),
                         //urn:x-nmos:cap:format:component_depth
                         // Audio Constraints
-                        //urn:x-nmos:cap:format:channel_count
+                        'urn:x-nmos:cap:format:channel_count': constraint => generateChannelCountFilterRQL(constraint),
                         'urn:x-nmos:cap:format:sample_rate': constraint => generateFilterRQL(constraint, 'sample_rate', rationalTransform),
                         'urn:x-nmos:cap:format:sample_depth': constraint => generateFilterRQL(constraint, 'bit_depth', identityTransform),
                         // Event Constraints

@@ -307,7 +307,7 @@ const convertDataProviderRequestToHTTP = (
 
                 if (constraintSets && constraintSetsActive !== undefined) {
 
-                    const rationalTransform = v => 'rational:' + encodeRQLNameChars(get(v, 'numerator') + '/' + get(v, 'denominator'));
+                    const rationalTransform = v => 'rational:' + encodeRQLNameChars(get(v, 'numerator') + '/' + get(v, 'denominator', 1.0));
                     const identityTransform = v => encodeRQLNameChars(v);
                     const samplingTransform = v => 'sampling:' + encodeRQLNameChars(v);
 
@@ -387,11 +387,6 @@ const convertDataProviderRequestToHTTP = (
                         //urn:x-nmos:cap:transport:packet_time
                         //urn:x-nmos:cap:transport:max_packet_time
                         //urn:x-nmos:cap:transport:st2110_21_sender_type
-                        //urn:x-nmos:cap:transport:st2110_21_tr_offset
-                        //urn:x-nmos:cap:transport:bandwidth
-                        //urn:x-nmos:cap:transport:fec_scheme_id
-
-
                     };
                     const constraintSetsFilters = [];
                     for (const constraintSet of constraintSets) {

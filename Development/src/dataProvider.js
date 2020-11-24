@@ -309,13 +309,12 @@ const convertDataProviderRequestToHTTP = (
                         let maxConstraint = has(constraint, 'maximum') ? parameterTransform(get(constraint, 'maximum')) : null;
                         let enumConstraint = has(constraint, 'enum') ? get(constraint, 'enum').map(parameterTransform) : null;
 
-                        // if the constraint is the parameter default then sender support may be implicit (i.e. will not be explicitly stated)
+                        // if the constraint is the parameter default then sender support may be implicit (i.e. may not be explicitly stated)
                         if (enumConstraint && enumConstraint.includes(defaultValue)) {
                             enumConstraint.push('null');
                         }
 
                         let minMaxTerm;
-                        // generate Minimum/Maximum term
                         if (minConstraint && maxConstraint){
                             minMaxTerm = 'and(ge(' + name + ', ' + minConstraint + '),le(' + name + ',' + maxConstraint + '))';
                         }
@@ -326,11 +325,7 @@ const convertDataProviderRequestToHTTP = (
                             minMaxTerm = 'le(' + name + ', ' + maxConstraint + ')';
                         }
 
-                        let enumTerm;
-                        // generate Enum term
-                        if (enumConstraint) {
-                            enumTerm = 'in(' + name + ',(' + enumConstraint.join(',') + '))';
-                        }
+                        const enumTerm = enumConstraint ? 'in(' + name + ',(' + enumConstraint.join(',') + '))' : null;
 
                         // combine terms into RQL filter query
                         if ((minConstraint || maxConstraint) && enumConstraint) {
@@ -340,11 +335,11 @@ const convertDataProviderRequestToHTTP = (
                             return minMaxTerm;
                         }
 
-                        return enumTerm;
+                        // Note: if the parameter is unconstrained there is neither enumConstraint, minConstraint, or maxConstraint and null is returned
+                        return enumTerm; 
                     }
 
-                    // JRT paramConstraintMap? paramConstraintSet? paramConstraintRQL?
-                    const paramConstraintFun = {
+                    const paramConstraintMap = {
                         'urn:x-nmos:cap:format:grain_rate': constraint => {
                             const filter = generateFilterRQL(constraint, 'grain_rate', null, rationalTransform);
 
@@ -365,20 +360,21 @@ const convertDataProviderRequestToHTTP = (
                         // Event Constraints
                         'urn:x-nmos:cap:format:event_type': constraint => generateFilterRQL(constraint, 'event_type'),
                         // Transport Constraints
-                        //urn:x-nmos:cap:transport:packet_time
-                        //urn:x-nmos:cap:transport:max_packet_time
-                        //urn:x-nmos:cap:transport:st2110_21_sender_type
+                        //urn:x-nmos:cap:transport:packet_time TODO:
+                        //urn:x-nmos:cap:transport:max_packet_time TODO:
+                        //urn:x-nmos:cap:transport:st2110_21_sender_type TODO:
                     };
                     const constraintSetsFilters = [];
                     for (const constraintSet of constraintSets) {
                         const paramFilters = [];
                         for (const paramConstraint in constraintSet) {
-                            if (paramConstraint in paramConstraintFun) {
-                                paramFilters.push(
-                                    paramConstraintFun[paramConstraint](
-                                        constraintSet[paramConstraint]
-                                    )
-                                );
+                            if (paramConstraint in paramConstraintMap) {
+
+                                const filter = paramConstraintMap[paramConstraint](constraintSet[paramConstraint]);
+                                // check for unconstrained parameters
+                                if (filter) {
+                                    paramFilters.push(filter);
+                                }
                             }
                         }
                         const constraintSetFilter = paramFilters.join(',');

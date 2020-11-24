@@ -298,31 +298,65 @@ const convertDataProviderRequestToHTTP = (
                 );
 
                 if (constraintSets && constraintSetsActive !== undefined) {
-
-                    const rationalTransform = v => 'rational:' + encodeRQLNameChars(get(v, 'numerator') + '/' + get(v, 'denominator', 1.0));
+                    const rationalTransform = v =>
+                        'rational:' +
+                        encodeRQLNameChars(
+                            get(v, 'numerator') +
+                                '/' +
+                                get(v, 'denominator', 1.0)
+                        );
                     const identityTransform = v => encodeRQLNameChars(v);
-                    const samplingTransform = v => 'sampling:' + encodeRQLNameChars(v);
+                    const samplingTransform = v =>
+                        'sampling:' + encodeRQLNameChars(v);
 
-                    const generateFilterRQL = (constraint, name, defaultValue = null, parameterTransform = identityTransform) => {
-
+                    const generateFilterRQL = (
+                        constraint,
+                        name,
+                        defaultValue = null,
+                        parameterTransform = identityTransform
+                    ) => {
                         const terms = [];
 
                         if (has(constraint, 'minimum')) {
-                            terms.push('ge(' + name + ', ' + parameterTransform(get(constraint, 'minimum')) + ')');
+                            terms.push(
+                                'ge(' +
+                                    name +
+                                    ', ' +
+                                    parameterTransform(
+                                        get(constraint, 'minimum')
+                                    ) +
+                                    ')'
+                            );
                         }
 
                         if (has(constraint, 'maximum')) {
-                            terms.push('le(' + name + ', ' + parameterTransform(get(constraint, 'maximum')) + ')');
+                            terms.push(
+                                'le(' +
+                                    name +
+                                    ', ' +
+                                    parameterTransform(
+                                        get(constraint, 'maximum')
+                                    ) +
+                                    ')'
+                            );
                         }
 
                         if (has(constraint, 'enum')) {
-                            const enumConstraint = get(constraint, 'enum').map(parameterTransform);
+                            const enumConstraint = get(constraint, 'enum').map(
+                                parameterTransform
+                            );
 
                             // if the constraint is the parameter default then sender support may be implicit (i.e. may not be explicitly stated)
                             if (enumConstraint.includes(defaultValue)) {
                                 enumConstraint.push('null');
                             }
-                            terms.push('in(' + name + ',(' + enumConstraint.join(',') + '))');
+                            terms.push(
+                                'in(' +
+                                    name +
+                                    ',(' +
+                                    enumConstraint.join(',') +
+                                    '))'
+                            );
                         }
 
                         if (terms.length > 1) {
@@ -335,30 +369,71 @@ const convertDataProviderRequestToHTTP = (
 
                         //(terms.length === 0): if there is neither minimum, maximum, nor enum then the parameter is explicitly unconstrained and null is returned
                         return null;
-                    }
+                    };
 
                     const paramConstraintMap = {
                         // If grain_rate is not expressed in the flow, fall back to querying the source
                         'urn:x-nmos:cap:format:grain_rate': constraint => {
-                            const filter = generateFilterRQL(constraint, 'grain_rate', null, rationalTransform);
+                            const filter = generateFilterRQL(
+                                constraint,
+                                'grain_rate',
+                                null,
+                                rationalTransform
+                            );
 
-                            return ('or(' + filter + ',and(eq(grain_rate,null),rel(source_id,' + filter + ')))');
+                            return (
+                                'or(' +
+                                filter +
+                                ',and(eq(grain_rate,null),rel(source_id,' +
+                                filter +
+                                ')))'
+                            );
                         },
                         //Video Constraints
-                        'urn:x-nmos:cap:format:frame_height': constraint => generateFilterRQL(constraint, 'frame_height'),
-                        'urn:x-nmos:cap:format:frame_width': constraint => generateFilterRQL(constraint, 'frame_width'),
-                        'urn:x-nmos:cap:format:color_sampling': constraint => generateFilterRQL(constraint, 'components', null, samplingTransform),
-                        'urn:x-nmos:cap:format:interlace_mode': constraint => generateFilterRQL(constraint, 'interlace_mode', 'progressive'),
-                        'urn:x-nmos:cap:format:colorspace': constraint => generateFilterRQL(constraint, 'colorspace'),
-                        'urn:x-nmos:cap:format:transfer_characteristic': constraint => generateFilterRQL(constraint, 'transfer_characteristic', 'SDR'),
+                        'urn:x-nmos:cap:format:frame_height': constraint =>
+                            generateFilterRQL(constraint, 'frame_height'),
+                        'urn:x-nmos:cap:format:frame_width': constraint =>
+                            generateFilterRQL(constraint, 'frame_width'),
+                        'urn:x-nmos:cap:format:color_sampling': constraint =>
+                            generateFilterRQL(
+                                constraint,
+                                'components',
+                                null,
+                                samplingTransform
+                            ),
+                        'urn:x-nmos:cap:format:interlace_mode': constraint =>
+                            generateFilterRQL(
+                                constraint,
+                                'interlace_mode',
+                                'progressive'
+                            ),
+                        'urn:x-nmos:cap:format:colorspace': constraint =>
+                            generateFilterRQL(constraint, 'colorspace'),
+                        'urn:x-nmos:cap:format:transfer_characteristic': constraint =>
+                            generateFilterRQL(
+                                constraint,
+                                'transfer_characteristic',
+                                'SDR'
+                            ),
                         //urn:x-nmos:cap:format:component_depth TODO:
                         // Audio Constraints
                         // Channel count is not expressed in the flow, but is implicitly expressed in the source
-                        'urn:x-nmos:cap:format:channel_count': constraint => 'rel(source_id,' + generateFilterRQL(constraint, 'count(channels)') + ')',
-                        'urn:x-nmos:cap:format:sample_rate': constraint => generateFilterRQL(constraint, 'sample_rate', null, rationalTransform),
-                        'urn:x-nmos:cap:format:sample_depth': constraint => generateFilterRQL(constraint, 'bit_depth'),
+                        'urn:x-nmos:cap:format:channel_count': constraint =>
+                            'rel(source_id,' +
+                            generateFilterRQL(constraint, 'count(channels)') +
+                            ')',
+                        'urn:x-nmos:cap:format:sample_rate': constraint =>
+                            generateFilterRQL(
+                                constraint,
+                                'sample_rate',
+                                null,
+                                rationalTransform
+                            ),
+                        'urn:x-nmos:cap:format:sample_depth': constraint =>
+                            generateFilterRQL(constraint, 'bit_depth'),
                         // Event Constraints
-                        'urn:x-nmos:cap:format:event_type': constraint => generateFilterRQL(constraint, 'event_type'),
+                        'urn:x-nmos:cap:format:event_type': constraint =>
+                            generateFilterRQL(constraint, 'event_type'),
                         // Transport Constraints
                         //urn:x-nmos:cap:transport:packet_time TODO:
                         //urn:x-nmos:cap:transport:max_packet_time TODO:
@@ -368,14 +443,18 @@ const convertDataProviderRequestToHTTP = (
                     for (const constraintSet of constraintSets) {
                         // ignore a contraint_set if the enabled flag is set to false
                         // note that constraintSet['urn:x-nmos:cap:meta:enabled'] being undefined is considered as enabled=true
-                        if (constraintSet['urn:x-nmos:cap:meta:enabled'] === false) {
+                        if (
+                            constraintSet['urn:x-nmos:cap:meta:enabled'] ===
+                            false
+                        ) {
                             continue;
                         }
                         const paramFilters = [];
                         for (const paramConstraint in constraintSet) {
                             if (paramConstraint in paramConstraintMap) {
-
-                                const filter = paramConstraintMap[paramConstraint](constraintSet[paramConstraint]);
+                                const filter = paramConstraintMap[
+                                    paramConstraint
+                                ](constraintSet[paramConstraint]);
                                 // check for unconstrained parameters
                                 if (filter) {
                                     paramFilters.push(filter);
@@ -659,9 +738,11 @@ const filterResult = async (json, referenceFilter) => {
         //hm, this could be parallelized too?
         for (const ref in referenceFilter) {
             const id = object[ref + '_id'];
-            const data = (await dataProvider(GET_LIST, ref + 's', {
-                filter: { ...referenceFilter[ref], id: id },
-            })).data;
+            const data = (
+                await dataProvider(GET_LIST, ref + 's', {
+                    filter: { ...referenceFilter[ref], id: id },
+                })
+            ).data;
             if (data.length === 0) return false;
         }
         return true;

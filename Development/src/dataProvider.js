@@ -316,7 +316,13 @@ const convertDataProviderRequestToHTTP = (
                         }
 
                         if (has(constraint, 'enum')) {
-                            terms.push('in(' + name + ',(' + get(constraint, 'enum').map(parameterTransform).join(',') + '))');
+                            const enumConstraint = get(constraint, 'enum').map(parameterTransform);
+
+                            // if the constraint is the parameter default then sender support may be implicit (i.e. may not be explicitly stated)
+                            if (enumConstraint.includes(defaultValue)) {
+                                enumConstraint.push('null');
+                            }
+                            terms.push('in(' + name + ',(' + enumConstraint.join(',') + '))');
                         }
 
                         if (terms.length > 1) {
@@ -360,6 +366,10 @@ const convertDataProviderRequestToHTTP = (
                     };
                     const constraintSetsFilters = [];
                     for (const constraintSet of constraintSets) {
+                        // ignore a contraint_set if the enabled flag is set to false
+                        if (constraintSet['urn:x-nmos:cap:meta:enabled'] === false) {
+                            continue;
+                        }
                         const paramFilters = [];
                         for (const paramConstraint in constraintSet) {
                             if (paramConstraint in paramConstraintMap) {

@@ -306,18 +306,50 @@ const convertDataProviderRequestToHTTP = (
                 }
 
                 if (constraintSets && constraintSetsActive !== undefined) {
-                    // JRT: I collapsed the RQL definitions as they were starting to confuse me
-                    const generateFilterRQL = (constraint, name, parameterTransform) => {
-                        let filter;
-                        
-                        if (has(constraint, 'minimum') && has(constraint, 'maximum')) {  // For Integer values only
-                            filter = 'and(ge(' + name + ',' + get(constraint, 'minimum') + '),le(' + name + ',' + get(constraint, 'maximum') + '))';
+
+                    const rationalTransform = v => 'rational:' + encodeRQLNameChars(get(v, 'numerator') + '/' + get(v, 'denominator'));
+                    const identityTransform = v => encodeRQLNameChars(v);
+                    const samplingTransform = v => 'sampling:' + encodeRQLNameChars(v);
+
+                    const generateFilterRQL = (constraint, name, defaultValue = null, parameterTransform = identityTransform) => {
+
+                        let minConstraint = has(constraint, 'minimum') ? parameterTransform(get(constraint, 'minimum')) : null;
+                        let maxConstraint = has(constraint, 'maximum') ? parameterTransform(get(constraint, 'maximum')) : null;
+                        let enumConstraint = has(constraint, 'enum') ? get(constraint, 'enum').map(parameterTransform) : null;
+
+                        // if the constraint is the parameter default then sender support may be implicit (i.e. will not be explicitly stated)
+                        if (enumConstraint.includes(defaultValue)) {
+                            enumConstraint.push('null');
                         }
-                        else if (has(constraint, 'enum')) {
-                            filter = 'in(' + name + ',(' + get(constraint, 'enum').map(parameterTransform).join(',') + '))';
+
+                        let minMaxTerm;
+                        // generate Minimum/Maximum term
+                        if (has(constraint, 'minimum') && has(constraint, 'maximum')){
+                            minMaxTerm = 'and(ge(' + name + ', ' + minConstraint + '),le(' + name + ',' + maxConstraint + '))';
+                        }
+                        else if (has(constraint, 'minimum')) {
+                            minMaxTerm = 'ge(' + name + ', ' + minConstraint + ')';
+                        }
+                        else if (has(constraint, 'maximum')) {
+                            minMaxTerm = 'le(' + name + ', ' + maxConstraint + ')';
+                        }
+
+                        let enumTerm;
+                        // generate Enum term
+                        if (has(constraint, 'enum')) {
+                            enumTerm = 'in(' + name + ',(' + enumConstraint.join(',') + '))';
+                        }
+
+                        let filter;
+                        // combine terms into RQL filter query
+                        if (((has(constraint, 'minimum') || has(constraint, 'maximum')) && has(constraint, 'enum'))) {
+                            filter = 'or(' + minMaxTerm + ',' + enumTerm + ')';
+                        }
+                        else if (has(constraint, 'minimum') || has(constraint, 'maximum')) {
+                            filter = minMaxTerm;
                         }
                         else {
-                            // JRT: Error state? should we return a dummy query for graceful degredation?  or throw a wobbly?
+                            filter = enumTerm;
                         }
 
                         // JRT: it doesn't make sense to fallback to the source for all constraints - strategy for other constraints needed
@@ -334,28 +366,23 @@ const convertDataProviderRequestToHTTP = (
                         return;
                     }
 
-
-                    const rationalTransform = v => 'rational:' + encodeRQLNameChars(get(v, 'numerator') + '/' + get(v, 'denominator'));
-                    const identityTransform = v => encodeRQLNameChars(v);
-                    const samplingTransform = v => 'sampling:' + encodeRQLNameChars(v);
-                    
                     // JRT paramConstraintMap? paramConstraintSet? paramConstraintRQL? 
                     const paramConstraintFun = {
-                        'urn:x-nmos:cap:format:grain_rate': constraint => generateFilterRQL(constraint, 'grain_rate', rationalTransform),
+                        'urn:x-nmos:cap:format:grain_rate': constraint => generateFilterRQL(constraint, 'grain_rate', null, rationalTransform),
                         //Video Constraints
-                        'urn:x-nmos:cap:format:frame_height': constraint => generateFilterRQL(constraint, 'frame_height', identityTransform),
-                        'urn:x-nmos:cap:format:frame_width': constraint => generateFilterRQL(constraint, 'frame_width', identityTransform),
-                        'urn:x-nmos:cap:format:color_sampling': constraint => generateFilterRQL(constraint, 'components', samplingTransform),
-                        'urn:x-nmos:cap:format:interlace_mode': constraint => generateFilterRQL(constraint, 'interlace_mode', identityTransform),
-                        'urn:x-nmos:cap:format:colorspace': constraint => generateFilterRQL(constraint, 'colorspace', identityTransform),
-                        'urn:x-nmos:cap:format:transfer_characteristic': constraint => generateFilterRQL(constraint, 'transfer_characteristic', identityTransform),
+                        'urn:x-nmos:cap:format:frame_height': constraint => generateFilterRQL(constraint, 'frame_height'),
+                        'urn:x-nmos:cap:format:frame_width': constraint => generateFilterRQL(constraint, 'frame_width'),
+                        'urn:x-nmos:cap:format:color_sampling': constraint => generateFilterRQL(constraint, 'components', null, samplingTransform),
+                        'urn:x-nmos:cap:format:interlace_mode': constraint => generateFilterRQL(constraint, 'interlace_mode', 'progressive'),
+                        'urn:x-nmos:cap:format:colorspace': constraint => generateFilterRQL(constraint, 'colorspace'),
+                        'urn:x-nmos:cap:format:transfer_characteristic': constraint => generateFilterRQL(constraint, 'transfer_characteristic', 'SDR'),
                         //urn:x-nmos:cap:format:component_depth
                         // Audio Constraints
                         'urn:x-nmos:cap:format:channel_count': constraint => generateChannelCountFilterRQL(constraint),
-                        'urn:x-nmos:cap:format:sample_rate': constraint => generateFilterRQL(constraint, 'sample_rate', rationalTransform),
-                        'urn:x-nmos:cap:format:sample_depth': constraint => generateFilterRQL(constraint, 'bit_depth', identityTransform),
+                        'urn:x-nmos:cap:format:sample_rate': constraint => generateFilterRQL(constraint, 'sample_rate', null, rationalTransform),
+                        'urn:x-nmos:cap:format:sample_depth': constraint => generateFilterRQL(constraint, 'bit_depth'),
                         // Event Constraints
-                        'urn:x-nmos:cap:format:event_type': constraint => generateFilterRQL(constraint, 'event_type', identityTransform),
+                        'urn:x-nmos:cap:format:event_type': constraint => generateFilterRQL(constraint, 'event_type'),
                         // Transport Constraints
                         //urn:x-nmos:cap:transport:packet_time
                         //urn:x-nmos:cap:transport:max_packet_time

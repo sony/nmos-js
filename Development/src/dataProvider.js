@@ -305,41 +305,34 @@ const convertDataProviderRequestToHTTP = (
 
                     const generateFilterRQL = (constraint, name, defaultValue = null, parameterTransform = identityTransform) => {
 
-                        let minConstraint = has(constraint, 'minimum') ? parameterTransform(get(constraint, 'minimum')) : null;
-                        let maxConstraint = has(constraint, 'maximum') ? parameterTransform(get(constraint, 'maximum')) : null;
-                        let enumConstraint = has(constraint, 'enum') ? get(constraint, 'enum').map(parameterTransform) : null;
+                        const terms = [];
 
-                        // if the constraint is the parameter default then sender support may be implicit (i.e. may not be explicitly stated)
-                        if (enumConstraint && enumConstraint.includes(defaultValue)) {
-                            enumConstraint.push('null');
+                        if (has(constraint, 'minimum')) {
+                            terms.push('ge(' + name + ', ' + parameterTransform(get(constraint, 'minimum')) + ')');
                         }
 
-                        let minMaxTerm;
-                        if (minConstraint && maxConstraint){
-                            minMaxTerm = 'and(ge(' + name + ', ' + minConstraint + '),le(' + name + ',' + maxConstraint + '))';
-                        }
-                        else if (minConstraint) {
-                            minMaxTerm = 'ge(' + name + ', ' + minConstraint + ')';
-                        }
-                        else if (maxConstraint) {
-                            minMaxTerm = 'le(' + name + ', ' + maxConstraint + ')';
+                        if (has(constraint, 'maximum')) {
+                            terms.push('le(' + name + ', ' + parameterTransform(get(constraint, 'maximum')) + ')');
                         }
 
-                        const enumTerm = enumConstraint ? 'in(' + name + ',(' + enumConstraint.join(',') + '))' : null;
-
-                        // combine terms into RQL filter query
-                        if ((minConstraint || maxConstraint) && enumConstraint) {
-                            return 'or(' + minMaxTerm + ',' + enumTerm + ')';
-                        }
-                        else if (minConstraint || maxConstraint) {
-                            return minMaxTerm;
+                        if (has(constraint, 'enum')) {
+                            terms.push('in(' + name + ',(' + get(constraint, 'enum').map(parameterTransform).join(',') + '))');
                         }
 
-                        // Note: if the parameter is unconstrained there is neither enumConstraint, minConstraint, or maxConstraint and null is returned
-                        return enumTerm; 
+                        if (terms.length > 1) {
+                            return 'and(' + terms.join(',') + ')';
+                        }
+
+                        if (terms.length === 1) {
+                            return terms[0];
+                        }
+
+                        //(terms.length === 0): if there is neither minimum, maximum, nor enum then the parameter is explicitly unconstrained and null is returned
+                        return null;
                     }
 
                     const paramConstraintMap = {
+                        // If grain_rate is not expressed in the flow, fall back to querying the source
                         'urn:x-nmos:cap:format:grain_rate': constraint => {
                             const filter = generateFilterRQL(constraint, 'grain_rate', null, rationalTransform);
 
@@ -354,6 +347,7 @@ const convertDataProviderRequestToHTTP = (
                         'urn:x-nmos:cap:format:transfer_characteristic': constraint => generateFilterRQL(constraint, 'transfer_characteristic', 'SDR'),
                         //urn:x-nmos:cap:format:component_depth TODO:
                         // Audio Constraints
+                        // Channel count is not expressed in the flow, but is implicitly expressed in the source
                         'urn:x-nmos:cap:format:channel_count': constraint => 'rel(source_id,' + generateFilterRQL(constraint, 'count(channels)') + ')',
                         'urn:x-nmos:cap:format:sample_rate': constraint => generateFilterRQL(constraint, 'sample_rate', null, rationalTransform),
                         'urn:x-nmos:cap:format:sample_depth': constraint => generateFilterRQL(constraint, 'bit_depth'),

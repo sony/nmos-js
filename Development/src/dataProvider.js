@@ -372,6 +372,9 @@ const convertDataProviderRequestToHTTP = (
                     };
 
                     const paramConstraintMap = {
+                        // General Constraints
+                        'urn:x-nmos:cap:format:media_type': constraint =>
+                            generateFilterRQL(constraint, 'media_type'),
                         // If grain_rate is not expressed in the flow, fall back to querying the source
                         'urn:x-nmos:cap:format:grain_rate': constraint => {
                             const filter = generateFilterRQL(
@@ -389,7 +392,7 @@ const convertDataProviderRequestToHTTP = (
                                 ')))'
                             );
                         },
-                        //Video Constraints
+                        // Video Constraints
                         'urn:x-nmos:cap:format:frame_height': constraint =>
                             generateFilterRQL(constraint, 'frame_height'),
                         'urn:x-nmos:cap:format:frame_width': constraint =>
@@ -415,7 +418,7 @@ const convertDataProviderRequestToHTTP = (
                                 'transfer_characteristic',
                                 'SDR'
                             ),
-                        //urn:x-nmos:cap:format:component_depth TODO:
+                        // TODO: urn:x-nmos:cap:format:component_depth
                         // Audio Constraints
                         // Channel count is not expressed in the flow, but is implicitly expressed in the source
                         'urn:x-nmos:cap:format:channel_count': constraint =>
@@ -435,9 +438,9 @@ const convertDataProviderRequestToHTTP = (
                         'urn:x-nmos:cap:format:event_type': constraint =>
                             generateFilterRQL(constraint, 'event_type'),
                         // Transport Constraints
-                        //urn:x-nmos:cap:transport:packet_time TODO:
-                        //urn:x-nmos:cap:transport:max_packet_time TODO:
-                        //urn:x-nmos:cap:transport:st2110_21_sender_type TODO:
+                        //TODO: urn:x-nmos:cap:transport:packet_time
+                        //TODO: urn:x-nmos:cap:transport:max_packet_time
+                        //TODO: urn:x-nmos:cap:transport:st2110_21_sender_type
                     };
                     const constraintSetsFilters = [];
                     for (const constraintSet of constraintSets) {
@@ -738,11 +741,9 @@ const filterResult = async (json, referenceFilter) => {
         //hm, this could be parallelized too?
         for (const ref in referenceFilter) {
             const id = object[ref + '_id'];
-            const data = (
-                await dataProvider(GET_LIST, ref + 's', {
-                    filter: { ...referenceFilter[ref], id: id },
-                })
-            ).data;
+            const data = (await dataProvider(GET_LIST, ref + 's', {
+                filter: { ...referenceFilter[ref], id: id },
+            })).data;
             if (data.length === 0) return false;
         }
         return true;

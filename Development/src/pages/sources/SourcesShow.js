@@ -16,6 +16,7 @@ import {
 } from 'react-admin';
 import MapObject from '../../components/ObjectField';
 import RawButton from '../../components/RawButton';
+import RateField from '../../components/RateField';
 import TAIField from '../../components/TAIField';
 import QueryVersion from '../../components/QueryVersion';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
@@ -64,18 +65,7 @@ const SourcesShow = props => {
                 />
                 <hr />
                 {controllerProps.record && QueryVersion() >= 'v1.1' && (
-                    <FunctionField
-                        label="Grain Rate"
-                        render={record =>
-                            record.grain_rate
-                                ? `${record.grain_rate.numerator} : ${
-                                      record.grain_rate.denominator
-                                          ? record.grain_rate.denominator
-                                          : 1
-                                  }`
-                                : null
-                        }
-                    />
+                    <RateField label="Grain Rate" source="grain_rate" />
                 )}
                 {controllerProps.record && QueryVersion() >= 'v1.1' && (
                     <TextField label="Clock Name" source="clock_name" />

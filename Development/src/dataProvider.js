@@ -367,6 +367,7 @@ const convertDataProviderRequestToHTTP = (
                     const constraintSetsFilters = [];
                     for (const constraintSet of constraintSets) {
                         // ignore a contraint_set if the enabled flag is set to false
+                        // note that constraintSet['urn:x-nmos:cap:meta:enabled'] being undefined is considered as enabled=true
                         if (constraintSet['urn:x-nmos:cap:meta:enabled'] === false) {
                             continue;
                         }

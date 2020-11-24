@@ -297,14 +297,6 @@ const convertDataProviderRequestToHTTP = (
                     '$constraint_sets_active'
                 );
 
-                // add defaults for not required constraints if they don't exist
-                if (constraintSets && !has(constraintSets[0], 'urn:x-nmos:cap:format:transfer_characteristic')) {
-                    constraintSets[0]['urn:x-nmos:cap:format:transfer_characteristic'] = { enum: ['SDR'] };
-                }
-                if (constraintSets && !has(constraintSets[0], 'urn:x-nmos:cap:format:interlace_mode')) {
-                    constraintSets[0]['urn:x-nmos:cap:format:interlace_mode'] = { enum: ['progressive'] };
-                }
-
                 if (constraintSets && constraintSetsActive !== undefined) {
 
                     const rationalTransform = v => 'rational:' + encodeRQLNameChars(get(v, 'numerator') + '/' + get(v, 'denominator', 1.0));

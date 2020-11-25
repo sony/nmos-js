@@ -82,6 +82,31 @@ export const BooleanFilter = ({
     );
 };
 
+export const ConstFilter = ({
+    label,
+    source,
+    filter,
+    setFilter,
+}) => {
+    if (!label) label = titleCase(source);
+
+    useEffect(() => {
+        setFilter(f => ({ ...f, [source]: null }));
+        return function cleanup() {
+            setFilter(f => {
+                let newFilter = { ...f };
+                delete newFilter[source];
+                return newFilter;
+            });
+        };
+    }, [setFilter, source]);
+    return (
+        <div style={{ display: 'flex' }}>
+            <Typography style={{ alignSelf: 'center' }}>{label}</Typography>
+        </div>
+    );
+};
+
 export const NumberFilter = ({
     defaultValue,
     source,

@@ -432,15 +432,9 @@ const convertDataProviderRequestToHTTP = (
                         ','
                     );
                     if (constraintSetsFilter) {
-                        if (constraintSetsActive) {
-                            flowFilters.push(
-                                'or(' + constraintSetsFilter + ')'
-                            );
-                        } else {
-                            flowFilters.push(
-                                'not(or(' + constraintSetsFilter + '))'
-                            );
-                        }
+                        flowFilters.push(
+                            'or(' + constraintSetsFilter + ')'
+                        );
                     }
                 }
                 const flowFilter = flowFilters.join(',');

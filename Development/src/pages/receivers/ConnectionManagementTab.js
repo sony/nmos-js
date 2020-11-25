@@ -21,6 +21,7 @@ import get from 'lodash/get';
 import useGetList from '../../components/useGetList';
 import FilterPanel, {
     BooleanFilter,
+    ConstFilter,
     RateFilter,
     StringFilter,
 } from '../../components/FilterPanel';
@@ -125,8 +126,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             />
                         )}
                         {cookies.get('RQL') !== 'false' && (
-                            <BooleanFilter
-                                defaultValue={true}
+                            <ConstFilter
                                 source="$constraint_sets_active"
                                 label="Constraint Sets"
                             />

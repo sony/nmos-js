@@ -9,6 +9,7 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
+import Cookies from 'universal-cookie';
 import {
     Loading,
     ReferenceField,
@@ -29,6 +30,8 @@ import ActiveField from '../../components/ActiveField';
 import ConnectButtons from './ConnectButtons';
 import PaginationButtons from '../../components/PaginationButtons';
 import { ReceiversTitle } from './ReceiversShow';
+
+const cookies = new Cookies();
 
 const ConnectionManagementTab = ({ receiverData, basePath }) => {
     const baseFilter = useMemo(() => {
@@ -121,11 +124,13 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                 label="Flow Event Type"
                             />
                         )}
-                        <BooleanFilter
-                            defaultValue={true}
-                            source="$constraint_sets_active"
-                            label="Constraint Sets"
-                        />
+                        {cookies.get('RQL') !== 'false' && (
+                            <BooleanFilter
+                                defaultValue={true}
+                                source="$constraint_sets_active"
+                                label="Constraint Sets"
+                            />
+                        )}
                     </FilterPanel>
                     <Table>
                         <TableHead>

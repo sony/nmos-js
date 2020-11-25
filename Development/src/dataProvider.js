@@ -418,7 +418,16 @@ const convertDataProviderRequestToHTTP = (
                                 'transfer_characteristic',
                                 'SDR'
                             ),
-                        // TODO: urn:x-nmos:cap:format:component_depth
+                        // Check bit depths of *all* components satisfy the constraint
+                        // using the experimental extension to 'rel' and a double negation
+                        // i.e. constraint is *not* satisfied when *any* component's bit depth is *not* acceptable
+                        'urn:x-nmos:cap:format:component_depth': constraint => {
+                            const filter = generateFilterRQL(
+                                constraint,
+                                'bit_depth'
+                            );
+                            return 'not(rel(components,not(' + filter + ')))';
+                        },
                         // Audio Constraints
                         // Channel count is not expressed in the flow, but is implicitly expressed in the source
                         'urn:x-nmos:cap:format:channel_count': constraint =>

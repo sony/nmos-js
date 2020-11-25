@@ -82,12 +82,7 @@ export const BooleanFilter = ({
     );
 };
 
-export const ConstFilter = ({
-    label,
-    source,
-    filter,
-    setFilter,
-}) => {
+export const ConstFilter = ({ label, source, filter, setFilter }) => {
     if (!label) label = titleCase(source);
 
     useEffect(() => {

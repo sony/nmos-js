@@ -258,11 +258,11 @@ const paramConstraintMap = {
     'urn:x-nmos:cap:format:transfer_characteristic': constraint =>
         encodeRQLConstraint(constraint, 'transfer_characteristic', 'SDR'),
     // check bit depths of *all* components satisfy the constraint
-    // using the experimental extension to 'rel' and a double negation
+    // using the experimental 'sub' call-operator and a double negation
     // i.e. constraint is *not* satisfied when *any* component's bit depth is *not* acceptable
     'urn:x-nmos:cap:format:component_depth': constraint => {
         const filter = encodeRQLConstraint(constraint, 'bit_depth');
-        return 'not(rel(components,not(' + filter + ')))';
+        return 'not(sub(components,not(' + filter + ')))';
     },
 
     // Audio Constraints

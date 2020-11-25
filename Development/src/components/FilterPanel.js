@@ -249,17 +249,17 @@ export const RateFilter = ({
     }, [autoFocus]);
 
     useEffect(() => {
-        // for now, flatten the object here rather than in dataProvider
         setFilter(f => ({
             ...f,
-            [source + '.numerator']: parseInt(value.numerator, 10),
-            [source + '.denominator']: parseInt(value.denominator, 10),
+            [source]: {
+                numerator: parseInt(value.numerator, 10),
+                denominator: parseInt(value.denominator, 10),
+            },
         }));
         return function cleanup() {
             setFilter(f => {
                 let newFilter = { ...f };
-                delete newFilter[source + '.numerator'];
-                delete newFilter[source + '.denominator'];
+                delete newFilter[source];
                 return newFilter;
             });
         };

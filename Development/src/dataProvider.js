@@ -11,6 +11,7 @@ import {
 import get from 'lodash/get';
 import set from 'lodash/set';
 import has from 'lodash/has';
+import isEmpty from 'lodash/isEmpty';
 import setJSON from 'json-ptr';
 import assign from 'lodash/assign';
 import diff from 'deep-diff';
@@ -104,8 +105,18 @@ export const changePaging = newLimit => {
     return paging_limit;
 };
 
-const isNumber = v => {
-    return !isNaN(v) && !isNaN(parseFloat(v));
+const isNumber = value => {
+    return !isNaN(value) && !isNaN(parseFloat(value));
+};
+
+const isRational = value => {
+    return has(value, 'numerator');
+};
+
+const isRationalNaN = value => {
+    const n = get(value, 'numerator');
+    const d = get(value, 'denominator');
+    return isNaN(n) && isNaN(d);
 };
 
 const encodeBasicKeyValueFilter = (key, value) => {
@@ -124,6 +135,18 @@ const encodeBasicKeyValueFilter = (key, value) => {
         if (!isNaN(value)) {
             return key + '=' + encodeURIComponent(value);
         }
+    } else if (isRational(value)) {
+        // in basic query syntax, the rational's numerator and denominator are passed independently
+        const n = get(value, 'numerator');
+        const d = get(value, 'denominator');
+        const r = [];
+        if (!isNaN(n)) {
+            r.push(key + '.numerator=' + encodeURIComponent(n));
+        }
+        if (!isNaN(d)) {
+            r.push(key + '.denominator=' + encodeURIComponent(d));
+        }
+        return r.join('&');
     } else if (value != null) {
         console.warn('Basic query - unsupported filter type:', typeof value);
     }
@@ -137,10 +160,16 @@ const encodeRQLNameChars = str => {
     });
 };
 
-const encodeRQLRational = v =>
-    'rational:' +
-    encodeRQLNameChars(get(v, 'numerator') + '/' + get(v, 'denominator', 1));
-const encodeRQLSampling = v => 'sampling:' + encodeRQLNameChars(v);
+const encodeRQLRational = value => {
+    const n = get(value, 'numerator');
+    const d = get(value, 'denominator');
+    return (
+        'rational:' +
+        encodeRQLNameChars((!isNaN(n) ? n : 0) + '/' + (!isNaN(d) ? d : 1))
+    );
+};
+
+const encodeRQLSampling = value => 'sampling:' + encodeRQLNameChars(value);
 
 const encodeRQLKeyValueFilter = (key, value) => {
     const values = Array.isArray(value) ? value : [value];
@@ -165,6 +194,10 @@ const encodeRQLKeyValueFilter = (key, value) => {
             // ignore NaN
             if (!isNaN(value)) {
                 terms.push('eq(' + key + ',' + encodeRQLNameChars(value) + ')');
+            }
+        } else if (isRational(value)) {
+            if (!isRationalNaN(value)) {
+                terms.push('eq(' + key + ',' + encodeRQLRational(value) + ')');
             }
         } else if (value != null) {
             console.warn('RQL query - unsupported filter type:', typeof value);
@@ -367,28 +400,27 @@ const convertDataProviderRequestToHTTP = (
                 const flowFilters = [];
                 const flow = get(referenceFilter, 'flow');
                 if (flow) {
-                    const format = get(flow, 'format');
-                    if (format) {
-                        flowFilters.push(
-                            'eq(format,' +
-                                'string:' +
-                                encodeRQLNameChars(format) +
-                                ')'
-                        );
-                        delete flow['format'];
+                    for (const key of [
+                        'format',
+                        'media_type',
+                        'event_type',
+                        'grain_rate',
+                        'sample_rate',
+                    ]) {
+                        const value = get(flow, key);
+                        if (value) {
+                            const keyValueParam = encodeRQLKeyValueFilter(
+                                key,
+                                value
+                            );
+                            if (keyValueParam) {
+                                flowFilters.push(keyValueParam);
+                            }
+                        }
+                        delete flow[key];
                     }
-                    const mediaTypes = get(flow, 'media_type');
-                    if (mediaTypes) {
-                        flowFilters.push(
-                            'in(media_type,(' +
-                                mediaTypes
-                                    .map(
-                                        mt => 'string:' + encodeRQLNameChars(mt)
-                                    )
-                                    .join(',') +
-                                '))'
-                        );
-                        delete flow['media_type'];
+                    if (isEmpty(flow)) {
+                        delete referenceFilter['flow'];
                     }
                 }
                 // do the same for '$constraint_sets'
@@ -421,27 +453,35 @@ const convertDataProviderRequestToHTTP = (
                                 }
                             }
                         }
-                        const constraintSetFilter = paramFilters.join(',');
-                        if (constraintSetFilter) {
+                        if (paramFilters.length > 1) {
                             constraintSetsFilters.push(
-                                'and(' + constraintSetFilter + ')'
+                                'and(' + paramFilters.join(',') + ')'
                             );
+                        } else if (paramFilters.length === 1) {
+                            constraintSetsFilters.push(paramFilters[0]);
                         }
                     }
-                    const constraintSetsFilter = constraintSetsFilters.join(
-                        ','
-                    );
-                    if (constraintSetsFilter) {
-                        flowFilters.push('or(' + constraintSetsFilter + ')');
+                    if (constraintSetsFilters.length > 1) {
+                        flowFilters.push(
+                            'or(' + constraintSetsFilters.join(',') + ')'
+                        );
+                    } else if (constraintSetsFilters.length === 1) {
+                        flowFilters.push(constraintSetsFilters[0]);
                     }
                 }
-                const flowFilter = flowFilters.join(',');
-                if (flowFilter) {
-                    matchParams.push('rel(flow_id,and(' + flowFilter + '))');
+                if (flowFilters.length > 1) {
+                    matchParams.push(
+                        'rel(flow_id,and(' + flowFilters.join(',') + '))'
+                    );
+                } else if (flowFilters.length === 1) {
+                    matchParams.push('rel(flow_id,' + flowFilters[0] + ')');
                 }
-                const rqlFilter = matchParams.join(',');
-                if (rqlFilter) {
-                    queryParams.push('query.rql=and(' + rqlFilter + ')');
+                if (matchParams.length > 1) {
+                    queryParams.push(
+                        'query.rql=and(' + matchParams.join(',') + ')'
+                    );
+                } else if (matchParams.length === 1) {
+                    queryParams.push('query.rql=' + matchParams[0]);
                 }
             }
 

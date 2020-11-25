@@ -19,6 +19,7 @@ import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
 import QueryVersion from '../../components/QueryVersion';
+import ReceiverConstraintSetCardsGrid from './ReceiverConstraintSets';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
 import MapObject from '../../components/ObjectField';
 import TAIField from '../../components/TAIField';
@@ -173,6 +174,21 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                             label="Event Types Capability"
                             source="caps.event_types"
                         />
+                    )}
+                {controllerProps.record &&
+                    controllerProps.record.caps.constraint_sets && (
+                        <ArrayField
+                            label="Constraint Sets"
+                            source="caps.constraint_sets"
+                        >
+                            <ReceiverConstraintSetCardsGrid
+                                record={controllerProps.record}
+                            />
+                        </ArrayField>
+                    )}
+                {controllerProps.record &&
+                    controllerProps.record.caps.version && (
+                        <TAIField source="version" />
                     )}
                 <TextField source="format" />
                 {controllerProps.record && QueryVersion() >= 'v1.2' && (

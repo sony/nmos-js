@@ -9,6 +9,7 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
+import Cookies from 'universal-cookie';
 import {
     Loading,
     ReferenceField,
@@ -20,6 +21,7 @@ import get from 'lodash/get';
 import useGetList from '../../components/useGetList';
 import FilterPanel, {
     BooleanFilter,
+    ConstFilter,
     RateFilter,
     StringFilter,
 } from '../../components/FilterPanel';
@@ -29,6 +31,8 @@ import ActiveField from '../../components/ActiveField';
 import ConnectButtons from './ConnectButtons';
 import PaginationButtons from '../../components/PaginationButtons';
 import { ReceiversTitle } from './ReceiversShow';
+
+const cookies = new Cookies();
 
 const ConnectionManagementTab = ({ receiverData, basePath }) => {
     const baseFilter = useMemo(() => {
@@ -41,6 +45,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
             ...(QueryVersion() >= 'v1.3' && {
                 '$flow.event_type': get(receiverData, 'caps.event_types'),
             }),
+            $constraint_sets: get(receiverData, 'caps.constraint_sets'),
         };
     }, [receiverData]);
 
@@ -118,6 +123,12 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             <StringFilter
                                 source="$flow.event_type"
                                 label="Flow Event Type"
+                            />
+                        )}
+                        {cookies.get('RQL') !== 'false' && (
+                            <ConstFilter
+                                source="$constraint_sets_active"
+                                label="Constraint Sets"
                             />
                         )}
                     </FilterPanel>

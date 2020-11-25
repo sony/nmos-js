@@ -11,6 +11,7 @@ import {
 import get from 'lodash/get';
 import set from 'lodash/set';
 import has from 'lodash/has';
+import isEmpty from 'lodash/isEmpty';
 import setJSON from 'json-ptr';
 import assign from 'lodash/assign';
 import diff from 'deep-diff';
@@ -38,7 +39,7 @@ const defaultUrl = api => {
         case DNS_API:
             return baseUrl + '/x-dns-sd/v1.0';
         default:
-            //not expected to be used
+            // not expected to be used
             return '';
     }
 };
@@ -57,7 +58,7 @@ export const resourceUrl = (resource, subresourceQuery = '') => {
             res = '_nmos-query._tcp';
             break;
         default:
-            //all pages other than logs/queryapis
+            // all pages other than logs/queryapis
             api = QUERY_API;
             res = resource;
             break;
@@ -104,6 +105,54 @@ export const changePaging = newLimit => {
     return paging_limit;
 };
 
+const isNumber = value => {
+    return !isNaN(value) && !isNaN(parseFloat(value));
+};
+
+const isRational = value => {
+    return has(value, 'numerator');
+};
+
+const isRationalNaN = value => {
+    const n = get(value, 'numerator');
+    const d = get(value, 'denominator');
+    return isNaN(n) && isNaN(d);
+};
+
+const encodeBasicKeyValueFilter = (key, value) => {
+    if (Array.isArray(value)) {
+        // hmm, in basic query syntax, multiple values are not supported
+        console.warn('Basic query - unsupported filter type:', 'Array');
+    } else if (typeof value == 'string') {
+        // ignore empty strings
+        if (value.length > 0) {
+            return key + '=' + encodeURIComponent(value);
+        }
+    } else if (typeof value === 'boolean') {
+        return key + '=' + encodeURIComponent(value);
+    } else if (typeof value === 'number') {
+        // ignore NaN
+        if (!isNaN(value)) {
+            return key + '=' + encodeURIComponent(value);
+        }
+    } else if (isRational(value)) {
+        // in basic query syntax, the rational's numerator and denominator are passed independently
+        const n = get(value, 'numerator');
+        const d = get(value, 'denominator');
+        const r = [];
+        if (!isNaN(n)) {
+            r.push(key + '.numerator=' + encodeURIComponent(n));
+        }
+        if (!isNaN(d)) {
+            r.push(key + '.denominator=' + encodeURIComponent(d));
+        }
+        return r.join('&');
+    } else if (value != null) {
+        console.warn('Basic query - unsupported filter type:', typeof value);
+    }
+    return null;
+};
+
 // see https://github.com/persvr/rql/blob/v0.3.3/specification/draft-zyp-rql-00.xml#L355-L357
 const encodeRQLNameChars = str => {
     return encodeURIComponent(str).replace(/[!'()]/g, c => {
@@ -111,8 +160,166 @@ const encodeRQLNameChars = str => {
     });
 };
 
-const isNumber = v => {
-    return !isNaN(v) && !isNaN(parseFloat(v));
+const encodeRQLRational = value => {
+    const n = get(value, 'numerator');
+    const d = get(value, 'denominator');
+    return (
+        'rational:' +
+        encodeRQLNameChars((!isNaN(n) ? n : 0) + '/' + (!isNaN(d) ? d : 1))
+    );
+};
+
+const encodeRQLSampling = value => 'sampling:' + encodeRQLNameChars(value);
+
+const encodeRQLKeyValueFilter = (key, value) => {
+    const values = Array.isArray(value) ? value : [value];
+    const terms = [];
+    for (const value of values) {
+        if (typeof value === 'string') {
+            // most properties are strings for which partial matches are useful
+            // hmm, event_type wildcards like 'number/temperature/*' are working by chance
+            let encodedValue = encodeRQLNameChars(value);
+            encodedValue = encodedValue.split('%2C'); // splits comma separated values
+            for (const matchValue of encodedValue) {
+                // ignore empty strings
+                if (value.length > 0) {
+                    terms.push(
+                        'matches(' + key + ',string:' + matchValue + ',i)'
+                    );
+                }
+            }
+        } else if (typeof value === 'boolean') {
+            terms.push('eq(' + key + ',' + encodeRQLNameChars(value) + ')');
+        } else if (typeof value === 'number') {
+            // ignore NaN
+            if (!isNaN(value)) {
+                terms.push('eq(' + key + ',' + encodeRQLNameChars(value) + ')');
+            }
+        } else if (isRational(value)) {
+            if (!isRationalNaN(value)) {
+                terms.push('eq(' + key + ',' + encodeRQLRational(value) + ')');
+            }
+        } else if (value != null) {
+            console.warn('RQL query - unsupported filter type:', typeof value);
+        }
+    }
+    if (terms.length > 1) {
+        return 'or(' + terms.join(',') + ')';
+    } else if (terms.length === 1) {
+        return terms[0];
+    } else {
+        return null;
+    }
+};
+
+const encodeRQLConstraint = (
+    constraint,
+    name,
+    defaultValue = null,
+    encodeValue = encodeRQLNameChars
+) => {
+    const terms = [];
+
+    if (has(constraint, 'minimum')) {
+        terms.push(
+            'ge(' + name + ',' + encodeValue(get(constraint, 'minimum')) + ')'
+        );
+    }
+
+    if (has(constraint, 'maximum')) {
+        terms.push(
+            'le(' + name + ',' + encodeValue(get(constraint, 'maximum')) + ')'
+        );
+    }
+
+    if (has(constraint, 'enum')) {
+        const enumConstraint = get(constraint, 'enum').map(encodeValue);
+
+        // if the constraint is the parameter default then sender support may be implicit
+        // (i.e. may not be explicitly stated)
+        if (enumConstraint.includes(defaultValue)) {
+            enumConstraint.push('null');
+        }
+        terms.push('in(' + name + ',(' + enumConstraint.join(',') + '))');
+    }
+
+    if (terms.length > 1) {
+        return 'and(' + terms.join(',') + ')';
+    } else if (terms.length === 1) {
+        return terms[0];
+    } else {
+        // if there is neither minimum, maximum, nor enum then the parameter is explicitly
+        // unconstrained and null is returned
+        return null;
+    }
+};
+
+const paramConstraintMap = {
+    // General Constraints
+
+    'urn:x-nmos:cap:format:media_type': constraint =>
+        encodeRQLConstraint(constraint, 'media_type'),
+    // if grain_rate is not expressed in the flow, fall back to querying the source
+    'urn:x-nmos:cap:format:grain_rate': constraint => {
+        const filter = encodeRQLConstraint(
+            constraint,
+            'grain_rate',
+            null,
+            encodeRQLRational
+        );
+        return (
+            'or(' +
+            filter +
+            ',and(eq(grain_rate,null),rel(source_id,' +
+            filter +
+            ')))'
+        );
+    },
+
+    // Video Constraints
+
+    'urn:x-nmos:cap:format:frame_height': constraint =>
+        encodeRQLConstraint(constraint, 'frame_height'),
+    'urn:x-nmos:cap:format:frame_width': constraint =>
+        encodeRQLConstraint(constraint, 'frame_width'),
+    'urn:x-nmos:cap:format:color_sampling': constraint =>
+        encodeRQLConstraint(constraint, 'components', null, encodeRQLSampling),
+    'urn:x-nmos:cap:format:interlace_mode': constraint =>
+        encodeRQLConstraint(constraint, 'interlace_mode', 'progressive'),
+    'urn:x-nmos:cap:format:colorspace': constraint =>
+        encodeRQLConstraint(constraint, 'colorspace'),
+    'urn:x-nmos:cap:format:transfer_characteristic': constraint =>
+        encodeRQLConstraint(constraint, 'transfer_characteristic', 'SDR'),
+    // check bit depths of *all* components satisfy the constraint
+    // using the experimental 'sub' call-operator and a double negation
+    // i.e. constraint is *not* satisfied when *any* component's bit depth is *not* acceptable
+    'urn:x-nmos:cap:format:component_depth': constraint => {
+        const filter = encodeRQLConstraint(constraint, 'bit_depth');
+        return 'not(sub(components,not(' + filter + ')))';
+    },
+
+    // Audio Constraints
+
+    // channel count is not expressed in the flow, but is implicitly expressed in the source
+    'urn:x-nmos:cap:format:channel_count': constraint =>
+        'rel(source_id,' +
+        encodeRQLConstraint(constraint, 'count(channels)') +
+        ')',
+    'urn:x-nmos:cap:format:sample_rate': constraint =>
+        encodeRQLConstraint(constraint, 'sample_rate', null, encodeRQLRational),
+    'urn:x-nmos:cap:format:sample_depth': constraint =>
+        encodeRQLConstraint(constraint, 'bit_depth'),
+
+    // Event Constraints
+
+    'urn:x-nmos:cap:format:event_type': constraint =>
+        encodeRQLConstraint(constraint, 'event_type'),
+
+    // Transport Constraints
+
+    //TODO: urn:x-nmos:cap:transport:packet_time
+    //TODO: urn:x-nmos:cap:transport:max_packet_time
+    //TODO: urn:x-nmos:cap:transport:st2110_21_sender_type
 };
 
 const convertDataProviderRequestToHTTP = (
@@ -121,7 +328,7 @@ const convertDataProviderRequestToHTTP = (
     params,
     pagingLimit
 ) => {
-    //fetchJson won't add the Accept header itself if we specify any headers in options
+    // fetchJson won't add the Accept header itself if we specify any headers in options
     const headers = new Headers({ Accept: 'application/json' });
     if (resource === 'queryapis') {
         headers.set('Request-Timeout', 4);
@@ -172,99 +379,109 @@ const convertDataProviderRequestToHTTP = (
                         addReferenceFilter(key, value);
                         continue;
                     }
-                    if (Array.isArray(value)) {
-                        //hmm, in basic query syntax, multiple values are not supported
-                        console.warn(
-                            'Basic query - unsupported filter type:',
-                            'Array'
-                        );
-                    } else if (typeof value == 'string') {
-                        //ignore empty strings
-                        if (value.length > 0) {
-                            queryParams.push(
-                                key + '=' + encodeURIComponent(value)
-                            );
-                        }
-                    } else if (typeof value === 'boolean') {
-                        queryParams.push(key + '=' + encodeURIComponent(value));
-                    } else if (typeof value === 'number') {
-                        //ignore NaN
-                        if (!isNaN(value)) {
-                            queryParams.push(
-                                key + '=' + encodeURIComponent(value)
-                            );
-                        }
-                    } else if (value != null) {
-                        console.warn(
-                            'Basic query - unsupported filter type:',
-                            typeof value
-                        );
+                    const keyValueParam = encodeBasicKeyValueFilter(key, value);
+                    if (keyValueParam) {
+                        queryParams.push(keyValueParam);
                     }
                 }
             } else {
                 const matchParams = [];
                 for (const [key, value] of Object.entries(params.filter)) {
-                    if (key.startsWith('$')) {
+                    if (isReferenceFilter(key)) {
                         addReferenceFilter(key, value);
                         continue;
                     }
-                    const keyMatchParams = [];
-                    const values = Array.isArray(value) ? value : [value];
-                    for (const value of values) {
-                        if (typeof value === 'string') {
-                            //most properties are strings for which partial matches are useful
-                            //hmm, event_type wildcards like 'number/temperature/*' are working by chance
-                            let encodedValue = encodeRQLNameChars(value);
-                            encodedValue = encodedValue.split('%2C'); //splits comma separated values
-                            for (const matchValue of encodedValue) {
-                                //ignore empty strings
-                                if (value.length > 0) {
-                                    keyMatchParams.push(
-                                        'matches(' +
-                                            key +
-                                            ',string:' +
-                                            matchValue +
-                                            ',i)'
-                                    );
-                                }
-                            }
-                        } else if (typeof value === 'boolean') {
-                            keyMatchParams.push(
-                                'eq(' +
-                                    key +
-                                    ',' +
-                                    encodeRQLNameChars(value) +
-                                    ')'
-                            );
-                        } else if (typeof value === 'number') {
-                            //ignore NaN
-                            if (!isNaN(value)) {
-                                keyMatchParams.push(
-                                    'eq(' +
-                                        key +
-                                        ',' +
-                                        encodeRQLNameChars(value) +
-                                        ')'
-                                );
-                            }
-                        } else if (value != null) {
-                            console.warn(
-                                'RQL query - unsupported filter type:',
-                                typeof value
-                            );
-                        }
-                    }
-                    if (keyMatchParams.length > 1) {
-                        matchParams.push(
-                            'or(' + keyMatchParams.join(',') + ')'
-                        );
-                    } else if (keyMatchParams.length === 1) {
-                        matchParams.push(keyMatchParams[0]);
+                    const keyValueParam = encodeRQLKeyValueFilter(key, value);
+                    if (keyValueParam) {
+                        matchParams.push(keyValueParam);
                     }
                 }
-                const rqlFilter = matchParams.join(',');
-                if (rqlFilter) {
-                    queryParams.push('query.rql=and(' + rqlFilter + ')');
+                // turn some '$flow' reference filters back into RQL 'rel' call-operators
+                const flowFilters = [];
+                const flow = get(referenceFilter, 'flow');
+                if (flow) {
+                    for (const key of [
+                        'format',
+                        'media_type',
+                        'event_type',
+                        'grain_rate',
+                        'sample_rate',
+                    ]) {
+                        const value = get(flow, key);
+                        if (value) {
+                            const keyValueParam = encodeRQLKeyValueFilter(
+                                key,
+                                value
+                            );
+                            if (keyValueParam) {
+                                flowFilters.push(keyValueParam);
+                            }
+                        }
+                        delete flow[key];
+                    }
+                    if (isEmpty(flow)) {
+                        delete referenceFilter['flow'];
+                    }
+                }
+                // do the same for '$constraint_sets'
+                const constraintSets = get(params.filter, '$constraint_sets');
+                const constraintSetsActive = get(
+                    params.filter,
+                    '$constraint_sets_active'
+                );
+
+                if (constraintSets && constraintSetsActive !== undefined) {
+                    const constraintSetsFilters = [];
+                    for (const constraintSet of constraintSets) {
+                        // ignore a contraint_set if the enabled flag is set to false
+                        // note that constraintSet['urn:x-nmos:cap:meta:enabled'] being undefined is considered as enabled=true
+                        if (
+                            constraintSet['urn:x-nmos:cap:meta:enabled'] ===
+                            false
+                        ) {
+                            continue;
+                        }
+                        const paramFilters = [];
+                        for (const paramConstraint in constraintSet) {
+                            if (paramConstraint in paramConstraintMap) {
+                                const filter = paramConstraintMap[
+                                    paramConstraint
+                                ](constraintSet[paramConstraint]);
+                                // check for unconstrained parameters
+                                if (filter) {
+                                    paramFilters.push(filter);
+                                }
+                            }
+                        }
+                        if (paramFilters.length > 1) {
+                            constraintSetsFilters.push(
+                                'and(' + paramFilters.join(',') + ')'
+                            );
+                        } else if (paramFilters.length === 1) {
+                            constraintSetsFilters.push(paramFilters[0]);
+                        }
+                    }
+                    if (constraintSetsFilters.length > 1) {
+                        flowFilters.push(
+                            'or(' + constraintSetsFilters.join(',') + ')'
+                        );
+                    } else if (constraintSetsFilters.length === 1) {
+                        flowFilters.push(constraintSetsFilters[0]);
+                    }
+                }
+                if (flowFilters.length > 1) {
+                    matchParams.push(
+                        'rel(flow_id,and(' + flowFilters.join(',') + '))'
+                    );
+                } else if (flowFilters.length === 1) {
+                    matchParams.push('rel(flow_id,' + flowFilters[0] + ')');
+                }
+                if (matchParams.length > 1) {
+                    queryParams.push(
+                        'query.rql=and(' + matchParams.join(',') + ')'
+                    );
+                } else if (matchParams.length === 1) {
+                    queryParams.push('query.rql=' + matchParams[0]);
                 }
             }
 
@@ -305,8 +522,8 @@ const convertDataProviderRequestToHTTP = (
                 };
             } else {
                 total_query = 'id=' + params.ids[0];
-                //hmm, need to make multiple requests if we have to match one at a time with basic query syntax
-                //as the fetch component must make a valid connection we'll make the first request here
+                // hmm, need to make multiple requests if we have to match one at a time with basic query syntax
+                // as the fetch component must make a valid connection we'll make the first request here
                 return {
                     url: resourceUrl(resource, `?${total_query}`),
                     options: { headers },
@@ -415,7 +632,7 @@ const convertDataProviderRequestToHTTP = (
             };
         }
         default: {
-            //not expected to be used
+            // not expected to be used
             return '';
         }
     }
@@ -510,7 +727,7 @@ const filterAsync = async (data, predicate) => {
 
 const filterResult = async (json, referenceFilter) => {
     return filterAsync(json, async object => {
-        //hm, this could be parallelized too?
+        // hm, this could be parallelized too?
         for (const ref in referenceFilter) {
             const id = object[ref + '_id'];
             const data = (await dataProvider(GET_LIST, ref + 's', {
@@ -676,7 +893,7 @@ const convertHTTPResponseToDataProvider = async (
         case DELETE:
             return { data: { id: params.id } };
         default:
-            //used for prev, next, first, last
+            // used for prev, next, first, last
             if (resource === 'queryapis') {
                 json.map(_ => (_.id = _.name));
             }

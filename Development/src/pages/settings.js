@@ -60,10 +60,6 @@ const paging = [
     },
 ];
 
-function getBool(cookie) {
-    return cookie !== 'false';
-}
-
 const Settings = () => {
     const classes = useStyles();
     const [values, setValues] = React.useState({
@@ -71,7 +67,7 @@ const Settings = () => {
         loggingAPI: changeAPIEndpoint('Logging API', ''),
         dnssdAPI: changeAPIEndpoint('DNS-SD API', ''),
         paging: parseInt(changePaging('valueRequest'), 10),
-        rql: getBool(cookies.get('RQL')),
+        rql: cookies.get('RQL') !== 'false',
     });
 
     const handleInputChange = name => event => {

@@ -45,7 +45,7 @@ export const BooleanFilter = ({
         } else if (defaultValue != null) {
             return defaultValue;
         } else {
-            return false;
+            return true;
         }
     });
     if (!label) label = titleCase(source);
@@ -78,6 +78,26 @@ export const BooleanFilter = ({
                 onChange={() => setChecked(!checked)}
                 inputRef={inputRef}
             />
+        </div>
+    );
+};
+
+export const ConstFilter = ({ label, source, filter, setFilter }) => {
+    if (!label) label = titleCase(source);
+
+    useEffect(() => {
+        setFilter(f => ({ ...f, [source]: null }));
+        return function cleanup() {
+            setFilter(f => {
+                let newFilter = { ...f };
+                delete newFilter[source];
+                return newFilter;
+            });
+        };
+    }, [setFilter, source]);
+    return (
+        <div style={{ display: 'flex' }}>
+            <Typography style={{ alignSelf: 'center' }}>{label}</Typography>
         </div>
     );
 };
@@ -201,13 +221,13 @@ export const RateFilter = ({
     const [value, setValue] = useState(() => {
         if (filter[source] != null) {
             return {
-                numerator: get(defaultValue, 'numerator'),
-                denominator: get(defaultValue, 'denominator'),
+                numerator: get(filter[source], 'numerator'),
+                denominator: get(filter[source], 'denominator'),
             };
         } else if (defaultValue != null) {
             return {
-                numerator: get(filter[source], 'numerator'),
-                denominator: get(filter[source], 'denominator'),
+                numerator: get(defaultValue, 'numerator'),
+                denominator: get(defaultValue, 'denominator'),
             };
         } else {
             return {
@@ -229,17 +249,17 @@ export const RateFilter = ({
     }, [autoFocus]);
 
     useEffect(() => {
-        // for now, flatten the object here rather than in dataProvider
         setFilter(f => ({
             ...f,
-            [source + '.numerator']: parseInt(value.numerator, 10),
-            [source + '.denominator']: parseInt(value.denominator, 10),
+            [source]: {
+                numerator: parseInt(value.numerator, 10),
+                denominator: parseInt(value.denominator, 10),
+            },
         }));
         return function cleanup() {
             setFilter(f => {
                 let newFilter = { ...f };
-                delete newFilter[source + '.numerator'];
-                delete newFilter[source + '.denominator'];
+                delete newFilter[source];
                 return newFilter;
             });
         };

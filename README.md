@@ -11,7 +11,16 @@ For more information about AMWA, NMOS and the Networked Media Incubator, please 
 
 The [repository structure](Documents/Repository-Structure.md), and the [external dependencies](Documents/Dependencies.md), are outlined in the documentation.
 
-### Getting Started
+### Getting Started With NMOS
+
+The [Easy-NMOS](https://github.com/rhastie/easy-nmos) starter kit allows the user to launch a simple NMOS setup with minimal installation steps.
+It relies on nmos-js to provide an NMOS Client that works with an NMOS Registry and a virtual NMOS Node in a Docker Compose network, along with the AMWA NMOS Testing Tool and supporting services.
+
+### Getting Started For Developers
+
+Easy-NMOS is also a great first way to explore the relationship between NMOS services.
+
+The nmos-js codebase is intended to work with any NMOS Registry, but can take advantage of the features of the [nmos-cpp](https://github.com/sony/nmos-cpp) implementation.
 
 After setting up the dependencies, follow these [instructions](Documents/Getting-Started.md) to build and deploy the nmos-js client itself.
 
@@ -22,7 +31,7 @@ Copy the contents of the nmos-js build directory into the admin directory next t
 
 [<img alt="JT-NM Tested 03/20 NMOS & TR-1001-1 Controller" src="Documents/images/jt-nm-tested-03-20-controller.png?raw=true" height="135" align="right"/>](https://jt-nm.org/jt-nm_tested/)
 
-The nmos-js client, like the NMOS Specifications, is intended to be always ready, but continually developing.
+The nmos-js client, like the NMOS Specifications, is intended to be always ready, but steadily developing.
 The nmos-js client works as both an NMOS Registry browser, using the IS-04 Query API, and provides connection management, using the IS-05 Connection API.
 When used with the nmos-cpp-registry, it also provides access to registry log messages.
 It has been successfully tested in many AMWA Networked Media Incubator workshops, and in the [JT-NM Tested](https://jt-nm.org/jt-nm_tested/) programme.
@@ -33,6 +42,7 @@ The implementation is designed to be extended. Development is ongoing, following
 
 Recent activity on the project (newest first):
 
+- Prototype implementation of BCP-004-01 Receiver Capabilities
 - JT-NM Tested 03/20 badge (packaged and deployed on a Mellanox SN2010 Switch)
 - Improved and simplified connection management
 - Periodic refresh

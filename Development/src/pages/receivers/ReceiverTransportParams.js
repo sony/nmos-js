@@ -11,6 +11,7 @@ import {
     TextInput,
 } from 'react-admin';
 import get from 'lodash/get';
+import has from 'lodash/has';
 import { CardFormIterator } from '../../components/CardFormIterator';
 import CheckIcon from '@material-ui/icons/Check';
 import ClearIcon from '@material-ui/icons/Clear';
@@ -21,108 +22,83 @@ const SanitizedDivider = ({ ...rest }) => (
     <Divider {...sanitizeRestProps(rest)} />
 );
 
-const MQTTReceiver = ({ dataObject }) => {
-    const params_ext = Object.keys(dataObject[0]).filter(function(x) {
-        return x.startsWith('ext_');
-    });
+const MQTTReceiver = ({ data }) => (
+    <Grid container spacing={2}>
+        {Object.keys(data).map(i => (
+            <Grid item sm key={i}>
+                <MQTTReceiverLeg data={data[i]} />
+            </Grid>
+        ))}
+    </Grid>
+);
+
+const MQTTReceiverLeg = ({ data }) => {
+    const params_ext = Object.keys(data).filter(x => x.startsWith('ext_'));
     return (
-        <Grid container spacing={2}>
-            {Object.keys(dataObject).map(i => (
-                <Grid item sm key={i}>
-                    <Card elevation={3}>
-                        <CardContent>
-                            <SimpleShowLayout record={dataObject[i]}>
-                                {dataObject[i].hasOwnProperty(
-                                    'source_host'
-                                ) && (
-                                    <TextField
-                                        source="source_host"
-                                        label="Source Host"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'source_port'
-                                ) && (
-                                    <TextField
-                                        source="source_port"
-                                        label="Source Port"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'broker_protocol'
-                                ) && (
-                                    <TextField
-                                        source="broker_protocol"
-                                        label="Broker Protocol"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'broker_authorization'
-                                ) && (
-                                    <SelectField
-                                        source="broker_authorization"
-                                        label="Broker Authorization"
-                                        choices={[
-                                            {
-                                                id: true,
-                                                name: <CheckIcon />,
-                                            },
-                                            {
-                                                id: false,
-                                                name: <ClearIcon />,
-                                            },
-                                            { id: 'auto', name: 'auto' },
-                                        ]}
-                                        translateChoice={false}
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'broker_topic'
-                                ) && (
-                                    <TextField
-                                        source="broker_topic"
-                                        label="Broker Topic"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'connection_status_broker_topic'
-                                ) && (
-                                    <TextField
-                                        source="connection_status_broker_topic"
-                                        label="Connection Status Broker Topic"
-                                    />
-                                )}
-                                {params_ext.length !== 0 && (
-                                    <SanitizedDivider />
-                                )}
-                                {params_ext.map(value => {
-                                    return (
-                                        <TextField
-                                            record={dataObject[i]}
-                                            source={value}
-                                            key={value}
-                                        />
-                                    );
-                                })}
-                            </SimpleShowLayout>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            ))}
-        </Grid>
+        <Card elevation={3}>
+            <CardContent>
+                <SimpleShowLayout record={data}>
+                    {has(data, 'source_host') && (
+                        <TextField source="source_host" label="Source Host" />
+                    )}
+                    {has(data, 'source_port') && (
+                        <TextField source="source_port" label="Source Port" />
+                    )}
+                    {has(data, 'broker_protocol') && (
+                        <TextField
+                            source="broker_protocol"
+                            label="Broker Protocol"
+                        />
+                    )}
+                    {has(data, 'broker_authorization') && (
+                        <SelectField
+                            source="broker_authorization"
+                            label="Broker Authorization"
+                            choices={[
+                                {
+                                    id: true,
+                                    name: <CheckIcon />,
+                                },
+                                {
+                                    id: false,
+                                    name: <ClearIcon />,
+                                },
+                                { id: 'auto', name: 'auto' },
+                            ]}
+                            translateChoice={false}
+                        />
+                    )}
+                    {has(data, 'broker_topic') && (
+                        <TextField source="broker_topic" label="Broker Topic" />
+                    )}
+                    {has(data, 'connection_status_broker_topic') && (
+                        <TextField
+                            source="connection_status_broker_topic"
+                            label="Connection Status Broker Topic"
+                        />
+                    )}
+                    {params_ext.length !== 0 && <SanitizedDivider />}
+                    {params_ext.map(value => {
+                        return (
+                            <TextField
+                                record={data}
+                                source={value}
+                                key={value}
+                            />
+                        );
+                    })}
+                </SimpleShowLayout>
+            </CardContent>
+        </Card>
     );
 };
 
 const MQTTReceiverEdit = ({ record }) => {
     const data = get(record, '$staged.transport_params');
     const uniqueKeys = Object.keys(
-        data.reduce(function(result, obj) {
-            return Object.assign(result, obj);
-        }, {})
+        data.reduce((result, obj) => Object.assign(result, obj), {})
     );
-    const params_ext = uniqueKeys.filter(function(x) {
-        return x.startsWith('ext_');
-    });
+    const params_ext = uniqueKeys.filter(x => x.startsWith('ext_'));
     return (
         <ArrayInput
             label="Transport Parameters"
@@ -173,148 +149,110 @@ const MQTTReceiverEdit = ({ record }) => {
     );
 };
 
-const RTPReceiver = ({ dataObject }) => {
-    const params_ext = Object.keys(dataObject[0]).filter(function(x) {
-        return x.startsWith('ext_');
-    });
+const RTPReceiver = ({ data }) => (
+    <Grid container spacing={2}>
+        {Object.keys(data).map(i => (
+            <Grid item sm key={i}>
+                <RTPReceiverLeg data={data[i]} />
+            </Grid>
+        ))}
+    </Grid>
+);
+
+const RTPReceiverLeg = ({ data }) => {
+    const params_ext = Object.keys(data).filter(x => x.startsWith('ext_'));
     return (
-        <Grid container spacing={2}>
-            {Object.keys(dataObject).map(i => (
-                <Grid item sm key={i}>
-                    <Card elevation={3}>
-                        <CardContent>
-                            <SimpleShowLayout record={dataObject[i]}>
-                                {dataObject[i].hasOwnProperty(
-                                    'rtp_enabled'
-                                ) && (
-                                    <BooleanField
-                                        source="rtp_enabled"
-                                        label="RTP Enabled"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty('source_ip') && (
-                                    <TextField
-                                        source="source_ip"
-                                        label="Source IP"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'multicast_ip'
-                                ) && (
-                                    <TextField
-                                        source="multicast_ip"
-                                        label="Multicast IP"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'interface_ip'
-                                ) && (
-                                    <TextField
-                                        source="interface_ip"
-                                        label="Interface IP"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'destination_port'
-                                ) && (
-                                    <TextField
-                                        source="destination_port"
-                                        label="Destination Port"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'fec_enabled'
-                                ) && <SanitizedDivider /> && (
-                                        <BooleanField
-                                            source="fec_enabled"
-                                            label="FEC Enabled"
-                                        />
-                                    )}
-                                {dataObject[i].hasOwnProperty('fec_mode') && (
-                                    <TextField
-                                        source="fec_mode"
-                                        label="FEC Mode"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'fec_destination_ip'
-                                ) && (
-                                    <TextField
-                                        source="fec_destination_ip"
-                                        label="FEC Destination IP"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'fec1D_destination_port'
-                                ) && (
-                                    <TextField
-                                        source="fec1D_destination_port"
-                                        label="FEC1D Destination Port"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'fec2D_destination_port'
-                                ) && (
-                                    <TextField
-                                        source="fec2D_destination_port"
-                                        label="FEC2D Destination Port"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'rtcp_enabled'
-                                ) && <SanitizedDivider /> && (
-                                        <BooleanField
-                                            source="rtcp_enabled"
-                                            label="RTCP Enabled"
-                                        />
-                                    )}
-                                {dataObject[i].hasOwnProperty(
-                                    'rtcp_destination_ip'
-                                ) && (
-                                    <TextField
-                                        source="rtcp_destination_ip"
-                                        label="RTCP Destination IP"
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'rtcp_destination_port'
-                                ) && (
-                                    <TextField
-                                        source="rtcp_destination_port"
-                                        label="RTCP Destination Port"
-                                    />
-                                )}
-                                {params_ext.length !== 0 && (
-                                    <SanitizedDivider />
-                                )}
-                                {params_ext.map(value => {
-                                    return (
-                                        <TextField
-                                            record={dataObject[i]}
-                                            source={value}
-                                            key={value}
-                                        />
-                                    );
-                                })}
-                            </SimpleShowLayout>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            ))}
-        </Grid>
+        <Card elevation={3}>
+            <CardContent>
+                <SimpleShowLayout record={data}>
+                    {has(data, 'rtp_enabled') && (
+                        <BooleanField
+                            source="rtp_enabled"
+                            label="RTP Enabled"
+                        />
+                    )}
+                    {has(data, 'source_ip') && (
+                        <TextField source="source_ip" label="Source IP" />
+                    )}
+                    {has(data, 'multicast_ip') && (
+                        <TextField source="multicast_ip" label="Multicast IP" />
+                    )}
+                    {has(data, 'interface_ip') && (
+                        <TextField source="interface_ip" label="Interface IP" />
+                    )}
+                    {has(data, 'destination_port') && (
+                        <TextField
+                            source="destination_port"
+                            label="Destination Port"
+                        />
+                    )}
+                    {has(data, 'fec_enabled') && <SanitizedDivider /> && (
+                        <BooleanField
+                            source="fec_enabled"
+                            label="FEC Enabled"
+                        />
+                    )}
+                    {has(data, 'fec_mode') && (
+                        <TextField source="fec_mode" label="FEC Mode" />
+                    )}
+                    {has(data, 'fec_destination_ip') && (
+                        <TextField
+                            source="fec_destination_ip"
+                            label="FEC Destination IP"
+                        />
+                    )}
+                    {has(data, 'fec1D_destination_port') && (
+                        <TextField
+                            source="fec1D_destination_port"
+                            label="FEC1D Destination Port"
+                        />
+                    )}
+                    {has(data, 'fec2D_destination_port') && (
+                        <TextField
+                            source="fec2D_destination_port"
+                            label="FEC2D Destination Port"
+                        />
+                    )}
+                    {has(data, 'rtcp_enabled') && <SanitizedDivider /> && (
+                        <BooleanField
+                            source="rtcp_enabled"
+                            label="RTCP Enabled"
+                        />
+                    )}
+                    {has(data, 'rtcp_destination_ip') && (
+                        <TextField
+                            source="rtcp_destination_ip"
+                            label="RTCP Destination IP"
+                        />
+                    )}
+                    {has(data, 'rtcp_destination_port') && (
+                        <TextField
+                            source="rtcp_destination_port"
+                            label="RTCP Destination Port"
+                        />
+                    )}
+                    {params_ext.length !== 0 && <SanitizedDivider />}
+                    {params_ext.map(value => {
+                        return (
+                            <TextField
+                                record={data}
+                                source={value}
+                                key={value}
+                            />
+                        );
+                    })}
+                </SimpleShowLayout>
+            </CardContent>
+        </Card>
     );
 };
 
 const RTPReceiverEdit = ({ record }) => {
     const data = get(record, '$staged.transport_params');
     const uniqueKeys = Object.keys(
-        data.reduce(function(result, obj) {
-            return Object.assign(result, obj);
-        }, {})
+        data.reduce((result, obj) => Object.assign(result, obj), {})
     );
-    const params_ext = uniqueKeys.filter(function(x) {
-        return x.startsWith('ext_');
-    });
+    const params_ext = uniqueKeys.filter(x => x.startsWith('ext_'));
     return (
         <ArrayInput
             label="Transport Parameters"
@@ -389,76 +327,68 @@ const RTPReceiverEdit = ({ record }) => {
     );
 };
 
-const WebSocketReceiver = ({ dataObject }) => {
-    const params_ext = Object.keys(dataObject[0]).filter(function(x) {
-        return x.startsWith('ext_');
-    });
+const WebSocketReceiver = ({ data }) => (
+    <Grid container spacing={2}>
+        {Object.keys(data).map(i => (
+            <Grid item sm key={i}>
+                <WebSocketReceiverLeg data={data[i]} />
+            </Grid>
+        ))}
+    </Grid>
+);
+
+const WebSocketReceiverLeg = ({ data }) => {
+    const params_ext = Object.keys(data).filter(x => x.startsWith('ext_'));
     return (
-        <Grid container spacing={2}>
-            {Object.keys(dataObject).map(i => (
-                <Grid item sm key={i}>
-                    <Card elevation={3}>
-                        <CardContent>
-                            <SimpleShowLayout record={dataObject[i]}>
-                                {dataObject[i].hasOwnProperty(
-                                    'connection_authorization'
-                                ) && (
-                                    <SelectField
-                                        source="connection_authorization"
-                                        label="Connection Authorization"
-                                        choices={[
-                                            {
-                                                id: true,
-                                                name: <CheckIcon />,
-                                            },
-                                            {
-                                                id: false,
-                                                name: <ClearIcon />,
-                                            },
-                                            { id: 'auto', name: 'auto' },
-                                        ]}
-                                        translateChoice={false}
-                                    />
-                                )}
-                                {dataObject[i].hasOwnProperty(
-                                    'connection_uri'
-                                ) && (
-                                    <TextField
-                                        source="connection_uri"
-                                        label="Connection URI"
-                                    />
-                                )}
-                                {params_ext.length !== 0 && (
-                                    <SanitizedDivider />
-                                )}
-                                {params_ext.map(value => {
-                                    return (
-                                        <TextField
-                                            record={dataObject[i]}
-                                            source={value}
-                                            key={value}
-                                        />
-                                    );
-                                })}
-                            </SimpleShowLayout>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            ))}
-        </Grid>
+        <Card elevation={3}>
+            <CardContent>
+                <SimpleShowLayout record={data}>
+                    {has(data, 'connection_authorization') && (
+                        <SelectField
+                            source="connection_authorization"
+                            label="Connection Authorization"
+                            choices={[
+                                {
+                                    id: true,
+                                    name: <CheckIcon />,
+                                },
+                                {
+                                    id: false,
+                                    name: <ClearIcon />,
+                                },
+                                { id: 'auto', name: 'auto' },
+                            ]}
+                            translateChoice={false}
+                        />
+                    )}
+                    {has(data, 'connection_uri') && (
+                        <TextField
+                            source="connection_uri"
+                            label="Connection URI"
+                        />
+                    )}
+                    {params_ext.length !== 0 && <SanitizedDivider />}
+                    {params_ext.map(value => {
+                        return (
+                            <TextField
+                                record={data}
+                                source={value}
+                                key={value}
+                            />
+                        );
+                    })}
+                </SimpleShowLayout>
+            </CardContent>
+        </Card>
     );
 };
 
 const WebSocketReceiverEdit = ({ record }) => {
     const data = get(record, '$staged.transport_params');
     const uniqueKeys = Object.keys(
-        data.reduce(function(result, obj) {
-            return Object.assign(result, obj);
-        }, {})
+        data.reduce((result, obj) => Object.assign(result, obj), {})
     );
-    const params_ext = uniqueKeys.filter(function(x) {
-        return x.startsWith('ext_');
-    });
+    const params_ext = uniqueKeys.filter(x => x.startsWith('ext_'));
     return (
         <ArrayInput
             label="Transport Parameters"
@@ -493,18 +423,18 @@ const WebSocketReceiverEdit = ({ record }) => {
 
 const ReceiverTransportParamsCardsGrid = ({ ids, record }) => {
     const type = get(record, '$transporttype');
-    const dataObject = [];
+    const data = [];
     if (ids) {
         for (let i in ids) {
-            dataObject.push(JSON.parse(ids[i]));
+            data.push(JSON.parse(ids[i]));
         }
         switch (type) {
             case 'urn:x-nmos:transport:mqtt':
-                return <MQTTReceiver dataObject={dataObject} />;
+                return <MQTTReceiver data={data} />;
             case 'urn:x-nmos:transport:rtp':
-                return <RTPReceiver dataObject={dataObject} />;
+                return <RTPReceiver data={data} />;
             case 'urn:x-nmos:transport:websocket':
-                return <WebSocketReceiver dataObject={dataObject} />;
+                return <WebSocketReceiver data={data} />;
             default:
                 return <b>Unknown Type</b>;
         }

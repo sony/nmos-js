@@ -312,6 +312,8 @@ const paramConstraintMap = {
 
     // Event Constraints
 
+    // hmm, IS-04 has event_type as optional in the flow, so we could fall back to querying
+    // the source, like for grain_rate, but IS-07 seems to mandate it so not doing so for now
     'urn:x-nmos:cap:format:event_type': constraint =>
         encodeRQLConstraint(constraint, 'event_type'),
 
@@ -353,7 +355,7 @@ const convertDataProviderRequestToHTTP = (
                 if (dot > 1) {
                     const ref = key.substring(1, dot);
                     const refKey = key.substring(dot + 1);
-                    if (!referenceFilter.hasOwnProperty(ref))
+                    if (!has(referenceFilter, ref))
                         set(referenceFilter, ref, {});
                     referenceFilter[ref][refKey] = value;
                 }
@@ -595,7 +597,7 @@ const convertDataProviderRequestToHTTP = (
                 setJSON.set(patchData, `/${d.path.join('/')}`, d.rhs, true);
             }
 
-            if (patchData.hasOwnProperty('transport_file')) {
+            if (has(patchData, 'transport_file')) {
                 if (get(patchData, 'transport_file.data') === null) {
                     set(patchData, 'transport_file.type', null);
                 } else {
@@ -760,7 +762,7 @@ const convertHTTPResponseToDataProvider = async (
                 ).then(result => result.json());
 
                 let deviceJSONData;
-                if (resourceJSONData.hasOwnProperty('device_id')) {
+                if (has(resourceJSONData, 'device_id')) {
                     deviceJSONData = await fetch(
                         resourceUrl('devices', `/${resourceJSONData.device_id}`)
                     ).then(result => result.json());
@@ -770,11 +772,11 @@ const convertHTTPResponseToDataProvider = async (
 
                 let connectionAddresses = {};
                 // Device.controls was added in v1.1
-                if (deviceJSONData.hasOwnProperty('controls')) {
+                if (has(deviceJSONData, 'controls')) {
                     deviceJSONData.controls.forEach(control => {
                         const type = control.type.replace('.', '_');
                         if (type.startsWith('urn:x-nmos:control:sr-ctrl')) {
-                            if (!connectionAddresses.hasOwnProperty(type)) {
+                            if (!has(connectionAddresses, type)) {
                                 set(connectionAddresses, type, [control.href]);
                             } else {
                                 connectionAddresses[type].push(control.href);
@@ -813,7 +815,7 @@ const convertHTTPResponseToDataProvider = async (
                     assign(json, i);
                 }
                 // For Connection API v1.0
-                if (!json.hasOwnProperty('$transporttype')) {
+                if (!has(json, '$transporttype')) {
                     assign(json, {
                         $transporttype: 'urn:x-nmos:transport:rtp',
                     });

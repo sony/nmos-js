@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from 'react';
+import React, { useState } from 'react';
 import {
     Card,
     CardContent,
@@ -35,7 +35,7 @@ const SubscriptionsList = props => {
     };
 
     return (
-        <Fragment>
+        <>
             <div style={{ display: 'flex' }}>
                 <span style={{ flexGrow: 1 }} />
                 <ListActions url={url} {...props} />
@@ -112,7 +112,7 @@ const SubscriptionsList = props => {
                     />
                 </CardContent>
             </Card>
-        </Fragment>
+        </>
     );
 };
 

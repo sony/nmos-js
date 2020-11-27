@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import {
     ChevronLeft,
     ChevronRight,
@@ -45,12 +45,12 @@ export const PaginationButton = ({
 };
 
 const PaginationButtons = props => (
-    <Fragment>
+    <>
         <PaginationButton rel="first" {...props} />
         <PaginationButton rel="prev" {...props} />
         <PaginationButton rel="next" {...props} />
         <PaginationButton rel="last" {...props} />
-    </Fragment>
+    </>
 );
 
 export default PaginationButtons;

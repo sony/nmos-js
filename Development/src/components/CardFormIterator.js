@@ -39,7 +39,7 @@ export class CardFormIterator extends Component {
         } = this.props;
         const records = get(record, source);
         return fields ? (
-            <div>
+            <>
                 <br style={{ lineHeight: 2 }} />
                 <Grid container spacing={2}>
                     {fields.map((member, index) => (
@@ -81,7 +81,7 @@ export class CardFormIterator extends Component {
                         </Grid>
                     ))}
                 </Grid>
-            </div>
+            </>
         ) : null;
     }
 }

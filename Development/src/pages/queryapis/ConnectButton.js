@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from 'react';
+import React, { useState } from 'react';
 import { Menu, MenuItem, Snackbar } from '@material-ui/core';
 import get from 'lodash/get';
 import Button from '@material-ui/core/Button';
@@ -52,7 +52,7 @@ const ConnectButton = ({ record, variant = 'contained', size }) => {
     };
 
     return (
-        <Fragment>
+        <>
             <Button
                 color="primary"
                 onClick={handleButtonClick}
@@ -102,7 +102,7 @@ const ConnectButton = ({ record, variant = 'contained', size }) => {
                 }}
                 message={<span id="text">Connected to: {queryAPI}</span>}
             />
-        </Fragment>
+        </>
     );
 };
 

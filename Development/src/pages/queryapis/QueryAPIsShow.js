@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import {
     BooleanField,
     FunctionField,
@@ -44,7 +44,7 @@ const QueryAPIsShow = props => {
             {...controllerProps}
             {...props}
         >
-            <Fragment>
+            <>
                 <SimpleShowLayout {...props} {...controllerProps}>
                     <TextField source="name" />
                     <hr />
@@ -68,11 +68,11 @@ const QueryAPIsShow = props => {
                     <TextField label="Priority" source="txt.pri" />
                 </SimpleShowLayout>
                 <Toolbar classes={useStyles()}>
-                    <Fragment>
+                    <>
                         <ConnectButton record={controllerProps.record} />
-                    </Fragment>
+                    </>
                 </Toolbar>
-            </Fragment>
+            </>
         </ShowView>
     );
 };

@@ -18,21 +18,19 @@ function MapObject(record, source) {
         arr.push({ key: key, value: get(record, source)[key] });
     });
     return (
-        <div>
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell> Name </TableCell>
-                        <TableCell> Value(s)</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {arr.map(item => (
-                        <ObjectField key={item.key} item={item} />
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
+        <Table>
+            <TableHead>
+                <TableRow>
+                    <TableCell> Name </TableCell>
+                    <TableCell> Value(s)</TableCell>
+                </TableRow>
+            </TableHead>
+            <TableBody>
+                {arr.map(item => (
+                    <ObjectField key={item.key} item={item} />
+                ))}
+            </TableBody>
+        </Table>
     );
 }
 

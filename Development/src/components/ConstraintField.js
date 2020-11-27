@@ -14,19 +14,21 @@ const ConstraintField = ({ record, source }) => {
     const maxConstraint = get(constraint, 'maximum');
     const enumConstraint = get(constraint, 'enum');
     return (
-        <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-            {minConstraint != null && (
-                <Typography variant="body2">
-                    {renderConstraintValue(minConstraint)}
-                </Typography>
-            )}
+        <>
             {(minConstraint != null || maxConstraint != null) && (
-                <Typography variant="body2">&ndash;</Typography>
-            )}
-            {maxConstraint != null && (
-                <Typography variant="body2">
-                    {renderConstraintValue(maxConstraint)}
-                </Typography>
+                <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                    {minConstraint != null && (
+                        <Typography variant="body2">
+                            {renderConstraintValue(minConstraint)}
+                        </Typography>
+                    )}
+                    <Typography variant="body2">&ndash;</Typography>
+                    {maxConstraint != null && (
+                        <Typography variant="body2">
+                            {renderConstraintValue(maxConstraint)}
+                        </Typography>
+                    )}
+                </div>
             )}
             {enumConstraint != null && (
                 <Typography variant="body2">
@@ -35,7 +37,7 @@ const ConstraintField = ({ record, source }) => {
                         .join(', ')}
                 </Typography>
             )}
-        </div>
+        </>
     );
 };
 

@@ -1,4 +1,4 @@
-import React, { Fragment, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Card,
@@ -68,7 +68,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
     if (!loaded) return <Loading />;
 
     return (
-        <Fragment>
+        <>
             <TitleForRecord
                 record={receiverData}
                 title={<ReceiversTitle record={receiverData} />}
@@ -264,7 +264,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                     />
                 </CardContent>
             </Card>
-        </Fragment>
+        </>
     );
 };
 

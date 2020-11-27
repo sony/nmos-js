@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import { useFormState } from 'react-final-form';
 import { Button } from '@material-ui/core';
 import { Toolbar } from 'react-admin';
@@ -31,7 +31,7 @@ const ConnectionEditToolbar = ({ handleSubmitWithRedirect }) => {
     })();
     return (
         <Toolbar>
-            <Fragment>
+            <>
                 <Button
                     onClick={() => handleSubmitWithRedirect()}
                     variant="contained"
@@ -44,7 +44,7 @@ const ConnectionEditToolbar = ({ handleSubmitWithRedirect }) => {
                 >
                     {buttonProps[0]}
                 </Button>
-            </Fragment>
+            </>
         </Toolbar>
     );
 };

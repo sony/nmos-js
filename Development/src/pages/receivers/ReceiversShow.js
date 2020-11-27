@@ -69,7 +69,7 @@ const ReceiversShow = props => {
             ? theme.palette.grey[100]
             : theme.palette.grey[900];
     return (
-        <Fragment>
+        <>
             <div style={{ display: 'flex' }}>
                 <Paper
                     style={{
@@ -128,7 +128,7 @@ const ReceiversShow = props => {
             <Route exact path={`${props.basePath}/${props.id}/show/connect`}>
                 {connectTab}
             </Route>
-        </Fragment>
+        </>
     );
 };
 

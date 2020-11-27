@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FieldTitle, isRequired } from 'react-admin';
 import { useField, useForm } from 'react-final-form';
 import {
@@ -99,7 +99,7 @@ const ObjectInput = ({
     if (data) {
         if (keys) {
             return (
-                <Fragment>
+                <>
                     <br />
                     <InputLabel htmlFor={source} shrink>
                         <FieldTitle
@@ -166,7 +166,7 @@ const ObjectInput = ({
                             </TableRow>
                         </TableFooter>
                     </Table>
-                </Fragment>
+                </>
             );
         } else {
             return null;

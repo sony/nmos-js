@@ -63,7 +63,7 @@ const SendersShow = props => {
             ? theme.palette.grey[100]
             : theme.palette.grey[900];
     return (
-        <Fragment>
+        <>
             <div style={{ display: 'flex' }}>
                 <Paper
                     style={{
@@ -115,7 +115,7 @@ const SendersShow = props => {
             >
                 <ShowTransportFileTab record={controllerProps.record} />
             </Route>
-        </Fragment>
+        </>
     );
 };
 
@@ -308,7 +308,7 @@ const ShowTransportFileTab = ({ record }) => {
             actions={<Fragment />}
         >
             <SimpleShowLayout>
-                <Fragment>
+                <>
                     <pre style={{ fontFamily: 'inherit' }}>
                         <Typography>{get(record, '$transportfile')}</Typography>
                     </pre>
@@ -326,7 +326,7 @@ const ShowTransportFileTab = ({ record }) => {
                         autoHideDuration={3000}
                         message={<span>Transport File Copied</span>}
                     />
-                </Fragment>
+                </>
             </SimpleShowLayout>
         </ShowView>
     );

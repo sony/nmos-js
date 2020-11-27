@@ -34,7 +34,7 @@ const TransportFileViewer = ({ endpoint, ...props }) => {
     }
 
     return (
-        <div>
+        <>
             <FormControlLabel
                 control={<Switch checked={checked} onChange={handleChange} />}
                 label={'Show Transport File'}
@@ -64,7 +64,7 @@ const TransportFileViewer = ({ endpoint, ...props }) => {
                     </CardContent>
                 </Card>
             </Collapse>
-        </div>
+        </>
     );
 };
 

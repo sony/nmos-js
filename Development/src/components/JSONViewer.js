@@ -42,7 +42,7 @@ export default function JSONViewer({ endpoint, ...controllerProps }) {
     } else rjvTheme = 'rjv-default';
 
     return (
-        <div>
+        <>
             <FormControlLabel
                 control={<Switch checked={checked} onChange={handleChange} />}
                 label={'Show JSON'}
@@ -57,6 +57,6 @@ export default function JSONViewer({ endpoint, ...controllerProps }) {
                     </CardContent>
                 </Card>
             </Collapse>
-        </div>
+        </>
     );
 }

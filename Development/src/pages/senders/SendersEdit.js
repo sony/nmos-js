@@ -35,7 +35,7 @@ const SendersEdit = props => {
             ? theme.palette.grey[100]
             : theme.palette.grey[900];
     return (
-        <Fragment>
+        <>
             <div style={{ display: 'flex' }}>
                 <Paper
                     style={{
@@ -74,7 +74,7 @@ const SendersEdit = props => {
                 path={`${props.basePath}/${props.id}/`}
                 render={() => <EditStagedTab {...props} />}
             />
-        </Fragment>
+        </>
     );
 };
 

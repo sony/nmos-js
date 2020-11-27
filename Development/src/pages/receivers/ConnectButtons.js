@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Menu, MenuItem } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
 import get from 'lodash/get';
@@ -60,7 +60,7 @@ const ConnectButtons = ({ senderData, receiverData }) => {
     };
 
     return (
-        <Fragment>
+        <>
             <Button
                 onClick={event => handleConnect('active', event)}
                 color="primary"
@@ -104,7 +104,7 @@ const ConnectButtons = ({ senderData, receiverData }) => {
                     </MenuItem>
                 ))}
             </Menu>
-        </Fragment>
+        </>
     );
 };
 

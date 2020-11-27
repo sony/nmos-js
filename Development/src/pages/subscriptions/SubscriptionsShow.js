@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import {
     BooleanField,
     FunctionField,
@@ -40,7 +40,7 @@ const SubscriptionsShowActions = ({ basePath, data, resource }) => (
 const SubscriptionsShow = props => {
     const controllerProps = useShowController(props);
     return (
-        <Fragment>
+        <>
             <ShowView
                 title={<SubscriptionsTitle />}
                 actions={<SubscriptionsShowActions />}
@@ -77,7 +77,7 @@ const SubscriptionsShow = props => {
                     <DeleteButton id={get(controllerProps.record, 'id')} />
                 </Toolbar>
             )}
-        </Fragment>
+        </>
     );
 };
 

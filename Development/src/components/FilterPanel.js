@@ -265,7 +265,7 @@ export const RateFilter = ({
         };
     }, [value, setFilter, source]);
     return (
-        <Fragment>
+        <>
             <TextField
                 type="number"
                 label={label}
@@ -290,7 +290,7 @@ export const RateFilter = ({
                 }
                 {...props}
             />
-        </Fragment>
+        </>
     );
 };
 

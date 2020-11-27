@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AppBar, useRefresh, useVersion } from 'react-admin';
 import {
@@ -135,7 +135,7 @@ const RefreshSelector = () => {
     };
 
     return (
-        <Fragment>
+        <>
             {' '}
             {intervals[intervalsIndex][1] ? (
                 <div ref={anchorRef}>
@@ -205,7 +205,7 @@ const RefreshSelector = () => {
                     </Grow>
                 )}
             </Popper>
-        </Fragment>
+        </>
     );
 };
 

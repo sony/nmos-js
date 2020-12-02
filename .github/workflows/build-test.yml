@@ -1,0 +1,21 @@
+name: 'build-test'
+
+on: [pull_request, push]
+
+defaults:
+  run:
+    working-directory: Development
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-node@v1
+
+    - run: yarn install
+
+    - run: yarn run lint-check
+    - run: yarn run build
+    - run: yarn test --passWithNoTests --coverage --watchAll=false

@@ -1,4 +1,5 @@
-# An NMOS Client in JavaScript [![Build Status](https://travis-ci.org/sony/nmos-js.svg?branch=master)](https://travis-ci.org/sony/nmos-js)
+# An NMOS Client in JavaScript [![Build Status](https://github.com/sony/nmos-js/workflows/build-test/badge.svg)][build-test]
+[build-test]: https://github.com/sony/nmos-js/actions?query=workflow%3Abuild-test
 
 ## Introduction
 

@@ -15,7 +15,7 @@ import DeleteButton from '../../components/DeleteButton';
 import MapObject from '../../components/ObjectField';
 import RawButton from '../../components/RawButton';
 import UrlField from '../../components/URLField';
-import QueryVersion from '../../components/QueryVersion';
+import { queryVersion } from '../../settings';
 
 const SubscriptionsTitle = ({ record }) => {
     return (
@@ -66,7 +66,7 @@ const SubscriptionsShow = props => {
                     <hr />
                     <BooleanField source="persist" />
                     <BooleanField source="secure" />
-                    {QueryVersion() >= 'v1.3' && (
+                    {queryVersion() >= 'v1.3' && (
                         <BooleanField source="authorization" />
                     )}
                 </SimpleShowLayout>

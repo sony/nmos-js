@@ -29,8 +29,8 @@ import MapObject from '../../components/ObjectField';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
-import QueryVersion from '../../components/QueryVersion';
 import { ContentCopyIcon } from '../../icons';
+import { queryVersion } from '../../settings';
 
 const SendersTitle = ({ record }) => {
     return (
@@ -147,13 +147,13 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     label="Manifest Address"
                     source="manifest_href"
                 />
-                {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                {controllerProps.record && queryVersion() >= 'v1.2' && (
                     <ItemArrayField
                         label="Interface Bindings"
                         source="interface_bindings"
                     />
                 )}
-                {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                {controllerProps.record && queryVersion() >= 'v1.2' && (
                     <BooleanField label="Active" source="subscription.active" />
                 )}
                 <hr />
@@ -174,7 +174,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     <ChipConditionalLabel source="label" />
                 </ReferenceField>
                 {controllerProps.record &&
-                    QueryVersion() >= 'v1.2' &&
+                    queryVersion() >= 'v1.2' &&
                     controllerProps.record.subscription.receiver_id && (
                         <ReferenceField
                             label="Receiver"

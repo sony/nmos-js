@@ -5,7 +5,8 @@ import get from 'lodash/get';
 import EditIcon from '@material-ui/icons/Edit';
 import JsonIcon from '../icons/JsonIcon';
 import { useTheme } from '@material-ui/styles';
-import { concatUrl, resourceUrl } from '../dataProvider';
+import { concatUrl } from '../settings';
+import { resourceUrl } from '../dataProvider';
 
 export default function ConnectionShowActions({ basePath, id, resource }) {
     const { data } = useGetOne(resource, id);

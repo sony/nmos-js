@@ -9,7 +9,6 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import Cookies from 'universal-cookie';
 import {
     Loading,
     ReferenceField,
@@ -25,24 +24,22 @@ import FilterPanel, {
     RateFilter,
     StringFilter,
 } from '../../components/FilterPanel';
-import QueryVersion from '../../components/QueryVersion';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import ActiveField from '../../components/ActiveField';
 import ConnectButtons from './ConnectButtons';
 import PaginationButtons from '../../components/PaginationButtons';
 import { ReceiversTitle } from './ReceiversShow';
-
-const cookies = new Cookies();
+import { QUERY_API, apiUseRql, queryVersion } from '../../settings';
 
 const ConnectionManagementTab = ({ receiverData, basePath }) => {
     const baseFilter = useMemo(() => {
         return {
             transport: get(receiverData, 'transport'),
             '$flow.format': get(receiverData, 'format'),
-            ...(QueryVersion() >= 'v1.1' && {
+            ...(queryVersion() >= 'v1.1' && {
                 '$flow.media_type': get(receiverData, 'caps.media_types'),
             }),
-            ...(QueryVersion() >= 'v1.3' && {
+            ...(queryVersion() >= 'v1.3' && {
                 '$flow.event_type': get(receiverData, 'caps.event_types'),
             }),
             $constraint_sets: get(receiverData, 'caps.constraint_sets'),
@@ -90,7 +87,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             source="transport"
                             label="Sender Transport"
                         />
-                        {QueryVersion() >= 'v1.2' && (
+                        {queryVersion() >= 'v1.2' && (
                             <BooleanFilter
                                 source="subscription.active"
                                 label="Sender Active"
@@ -101,31 +98,31 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             source="$flow.format"
                             label="Flow Format"
                         />
-                        {QueryVersion() >= 'v1.1' && (
+                        {queryVersion() >= 'v1.1' && (
                             <RateFilter
                                 source="$flow.grain_rate"
                                 label="Flow Grain Rate"
                             />
                         )}
-                        {QueryVersion() >= 'v1.1' && (
+                        {queryVersion() >= 'v1.1' && (
                             <RateFilter
                                 source="$flow.sample_rate"
                                 label="Flow Sample Rate"
                             />
                         )}
-                        {QueryVersion() >= 'v1.1' && (
+                        {queryVersion() >= 'v1.1' && (
                             <StringFilter
                                 source="$flow.media_type"
                                 label="Flow Media Type"
                             />
                         )}
-                        {QueryVersion() >= 'v1.3' && (
+                        {queryVersion() >= 'v1.3' && (
                             <StringFilter
                                 source="$flow.event_type"
                                 label="Flow Event Type"
                             />
                         )}
-                        {cookies.get('RQL') !== 'false' && (
+                        {apiUseRql(QUERY_API) && (
                             <ConstFilter
                                 source="$constraint_sets_active"
                                 label="Constraint Sets"
@@ -143,15 +140,15 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                     Sender
                                 </TableCell>
                                 <TableCell>Transport</TableCell>
-                                {QueryVersion() >= 'v1.2' && (
+                                {queryVersion() >= 'v1.2' && (
                                     <TableCell>Active</TableCell>
                                 )}
                                 <TableCell>Flow</TableCell>
                                 <TableCell>Format</TableCell>
-                                {QueryVersion() >= 'v1.1' && (
+                                {queryVersion() >= 'v1.1' && (
                                     <TableCell>Media Type</TableCell>
                                 )}
-                                {QueryVersion() >= 'v1.3' && (
+                                {queryVersion() >= 'v1.3' && (
                                     <TableCell>Event Type</TableCell>
                                 )}
                                 <TableCell>Connect</TableCell>
@@ -187,7 +184,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                         </Link>
                                     </TableCell>
                                     <TableCell>{item.transport}</TableCell>
-                                    {QueryVersion() >= 'v1.2' && (
+                                    {queryVersion() >= 'v1.2' && (
                                         <TableCell>
                                             <ActiveField
                                                 record={item}
@@ -219,7 +216,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                             <TextField source="format" />
                                         </ReferenceField>
                                     </TableCell>
-                                    {QueryVersion() >= 'v1.1' && (
+                                    {queryVersion() >= 'v1.1' && (
                                         <TableCell>
                                             <ReferenceField
                                                 record={item}
@@ -233,7 +230,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                             </ReferenceField>
                                         </TableCell>
                                     )}
-                                    {QueryVersion() >= 'v1.3' && (
+                                    {queryVersion() >= 'v1.3' && (
                                         <TableCell>
                                             <ReferenceField
                                                 record={item}

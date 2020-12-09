@@ -15,9 +15,9 @@ import FilterPanel, {
     StringFilter,
 } from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
-import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
+import { queryVersion } from '../../settings';
 
 const SendersList = props => {
     const [filter, setFilter] = useState({});
@@ -46,7 +46,7 @@ const SendersList = props => {
                         <StringFilter source="label" />
                         <StringFilter source="description" />
                         <StringFilter source="transport" />
-                        {QueryVersion() >= 'v1.2' && (
+                        {queryVersion() >= 'v1.2' && (
                             <BooleanFilter
                                 source="subscription.active"
                                 label="Active"
@@ -65,7 +65,7 @@ const SendersList = props => {
                                     Label
                                 </TableCell>
                                 <TableCell>Transport</TableCell>
-                                {QueryVersion() >= 'v1.2' && (
+                                {queryVersion() >= 'v1.2' && (
                                     <TableCell>Active</TableCell>
                                 )}
                             </TableRow>
@@ -84,7 +84,7 @@ const SendersList = props => {
                                         />
                                     </TableCell>
                                     <TableCell>{item.transport}</TableCell>
-                                    {QueryVersion() >= 'v1.2' && (
+                                    {queryVersion() >= 'v1.2' && (
                                         <TableCell>
                                             <ActiveField
                                                 record={item}

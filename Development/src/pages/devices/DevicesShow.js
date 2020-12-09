@@ -19,8 +19,8 @@ import MapObject from '../../components/ObjectField';
 import RawButton from '../../components/RawButton';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
-import QueryVersion from '../../components/QueryVersion';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import { queryVersion } from '../../settings';
 
 const DevicesTitle = ({ record }) => {
     return (
@@ -55,10 +55,10 @@ const DevicesShow = props => {
                 <TextField label="ID" source="id" />
                 <TAIField source="version" />
                 <TextField source="label" />
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {controllerProps.record && queryVersion() >= 'v1.1' && (
                     <TextField source="description" />
                 )}
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {controllerProps.record && queryVersion() >= 'v1.1' && (
                     <FunctionField
                         label="Tags"
                         render={record =>
@@ -70,12 +70,12 @@ const DevicesShow = props => {
                 )}
                 <hr />
                 <TextField source="type" />
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {controllerProps.record && queryVersion() >= 'v1.1' && (
                     <ArrayField source="controls">
                         <Datagrid>
                             <UrlField source="href" label="Address" />
                             <TextField source="type" />
-                            {QueryVersion() >= 'v1.3' && (
+                            {queryVersion() >= 'v1.3' && (
                                 <BooleanField source="authorization" />
                             )}
                         </Datagrid>

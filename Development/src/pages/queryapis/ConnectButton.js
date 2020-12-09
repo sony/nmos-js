@@ -2,17 +2,15 @@ import React, { useState } from 'react';
 import { Menu, MenuItem, Snackbar } from '@material-ui/core';
 import get from 'lodash/get';
 import Button from '@material-ui/core/Button';
-import { changeAPIEndpoint } from '../../dataProvider';
+import { QUERY_API, apiUrl, setApiUrl } from '../../settings';
 import { ConnectRegistryIcon } from '../../icons';
 
 const ConnectButton = ({ record, variant = 'contained', size }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [queryAPI, setQueryAPI] = useState(
-        changeAPIEndpoint('Query API', '')
-    );
+    const [queryAPI, setQueryAPI] = useState(apiUrl(QUERY_API));
 
-    const makeQueryAPIAddress = selectedAddress => {
+    const makeQueryAPI = selectedAddress => {
         return (
             get(record, 'txt.api_proto') +
             '://' +
@@ -27,9 +25,9 @@ const ConnectButton = ({ record, variant = 'contained', size }) => {
     };
 
     const changeQueryAPI = selectedAddress => {
-        const newQueryAPI = makeQueryAPIAddress(selectedAddress);
+        const newQueryAPI = makeQueryAPI(selectedAddress);
         setQueryAPI(newQueryAPI);
-        changeAPIEndpoint('Query API', newQueryAPI);
+        setApiUrl(QUERY_API, newQueryAPI);
     };
 
     if (!get(record, 'addresses')) {
@@ -85,7 +83,7 @@ const ConnectButton = ({ record, variant = 'contained', size }) => {
                         onClick={() => handleMenuItemClick(option)}
                         style={{ fontSize: '0.875rem' }}
                     >
-                        {makeQueryAPIAddress(option)}
+                        {makeQueryAPI(option)}
                     </MenuItem>
                 ))}
             </Menu>

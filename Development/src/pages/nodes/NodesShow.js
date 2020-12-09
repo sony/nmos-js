@@ -19,8 +19,8 @@ import MapObject from '../../components/ObjectField';
 import RawButton from '../../components/RawButton';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
-import QueryVersion from '../../components/QueryVersion';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import { queryVersion } from '../../settings';
 
 const NodesTitle = ({ record }) => {
     return (
@@ -59,10 +59,10 @@ export const NodesShow = props => {
                 <TextField label="ID" source="id" />
                 <TAIField source="version" />
                 <TextField source="label" />
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {controllerProps.record && queryVersion() >= 'v1.1' && (
                     <TextField source="description" />
                 )}
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {controllerProps.record && queryVersion() >= 'v1.1' && (
                     <FunctionField
                         label="Tags"
                         render={record =>
@@ -75,19 +75,19 @@ export const NodesShow = props => {
                 <hr />
                 <UrlField source="href" label="Address" />
                 <TextField source="hostname" />
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {controllerProps.record && queryVersion() >= 'v1.1' && (
                     <ItemArrayField
                         label="API Versions"
                         source="api.versions"
                     />
                 )}
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {controllerProps.record && queryVersion() >= 'v1.1' && (
                     <ArrayField label="API Endpoints" source="api.endpoints">
                         <Datagrid>
                             <TextField source="host" />
                             <TextField source="port" />
                             <TextField source="protocol" />
-                            {QueryVersion() >= 'v1.3' && (
+                            {queryVersion() >= 'v1.3' && (
                                 <BooleanField source="authorization" />
                             )}
                             <FunctionField
@@ -109,7 +109,7 @@ export const NodesShow = props => {
                         </Datagrid>
                     </ArrayField>
                 )}
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {controllerProps.record && queryVersion() >= 'v1.1' && (
                     <ArrayField source="clocks">
                         <Datagrid>
                             <TextField source="name" />
@@ -121,12 +121,12 @@ export const NodesShow = props => {
                     <Datagrid>
                         <UrlField source="href" label="Address" />
                         <TextField source="type" />
-                        {QueryVersion() >= 'v1.3' && (
+                        {queryVersion() >= 'v1.3' && (
                             <BooleanField source="authorization" />
                         )}
                     </Datagrid>
                 </ArrayField>
-                {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                {controllerProps.record && queryVersion() >= 'v1.2' && (
                     <ArrayField source="interfaces">
                         <Datagrid>
                             <TextField source="name" />
@@ -135,13 +135,13 @@ export const NodesShow = props => {
                                 label="Local Chassis ID"
                             />
                             <TextField source="port_id" label="Local Port ID" />
-                            {QueryVersion() >= 'v1.3' && (
+                            {queryVersion() >= 'v1.3' && (
                                 <TextField
                                     source="attached_network_device.chassis_id"
                                     label="Remote Chassis ID"
                                 />
                             )}
-                            {QueryVersion() >= 'v1.3' && (
+                            {queryVersion() >= 'v1.3' && (
                                 <TextField
                                     source="attached_network_device.port_id"
                                     label="Remote Port ID"

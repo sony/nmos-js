@@ -18,13 +18,13 @@ import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
-import QueryVersion from '../../components/QueryVersion';
 import ReceiverConstraintSetCardsGrid from './ReceiverConstraintSets';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
 import MapObject from '../../components/ObjectField';
 import TAIField from '../../components/TAIField';
 import TransportFileViewer from '../../components/TransportFileViewer';
 import ConnectionManagementTab from './ConnectionManagementTab';
+import { queryVersion } from '../../settings';
 
 export const ReceiversTitle = ({ record }) => (
     <span>
@@ -155,7 +155,7 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                 />
                 <hr />
                 <TextField source="transport" />
-                {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                {controllerProps.record && queryVersion() >= 'v1.2' && (
                     <ItemArrayField
                         label="Interface Bindings"
                         source="interface_bindings"
@@ -191,11 +191,11 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                         <TAIField source="version" />
                     )}
                 <TextField source="format" />
-                {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                {controllerProps.record && queryVersion() >= 'v1.2' && (
                     <BooleanField label="Active" source="subscription.active" />
                 )}
                 {controllerProps.record &&
-                    QueryVersion() >= 'v1.2' &&
+                    queryVersion() >= 'v1.2' &&
                     controllerProps.record.subscription.sender_id && (
                         <ReferenceField
                             label="Sender"

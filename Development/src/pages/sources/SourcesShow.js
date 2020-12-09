@@ -18,8 +18,8 @@ import MapObject from '../../components/ObjectField';
 import RawButton from '../../components/RawButton';
 import RateField from '../../components/RateField';
 import TAIField from '../../components/TAIField';
-import QueryVersion from '../../components/QueryVersion';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import { queryVersion } from '../../settings';
 
 const SourcesTitle = ({ record }) => {
     return (
@@ -64,15 +64,15 @@ const SourcesShow = props => {
                     }
                 />
                 <hr />
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {controllerProps.record && queryVersion() >= 'v1.1' && (
                     <RateField label="Grain Rate" source="grain_rate" />
                 )}
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {controllerProps.record && queryVersion() >= 'v1.1' && (
                     <TextField label="Clock Name" source="clock_name" />
                 )}
                 <TextField source="format" />
                 {controllerProps.record &&
-                    QueryVersion() >= 'v1.1' &&
+                    queryVersion() >= 'v1.1' &&
                     controllerProps.record.format ===
                         'urn:x-nmos:format:audio' && (
                         <ArrayField source="channels">
@@ -83,7 +83,7 @@ const SourcesShow = props => {
                         </ArrayField>
                     )}
                 {controllerProps.record &&
-                    QueryVersion() >= 'v1.3' &&
+                    queryVersion() >= 'v1.3' &&
                     controllerProps.record.format ===
                         'urn:x-nmos:format:data' && (
                         <TextField label="Event Type" source="event_type" />

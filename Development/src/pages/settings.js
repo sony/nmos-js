@@ -13,13 +13,20 @@ import {
     TextField,
     makeStyles,
 } from '@material-ui/core';
-import Cookies from 'universal-cookie';
 import SaveIcon from '@material-ui/icons/Save';
 
 import sealion from '../assets/sea-lion.png';
-import { changeAPIEndpoint, changePaging } from '../dataProvider';
-
-const cookies = new Cookies();
+import {
+    DNSSD_API,
+    LOGGING_API,
+    QUERY_API,
+    apiPagingLimit,
+    apiUrl,
+    apiUseRql,
+    setApiPagingLimit,
+    setApiUrl,
+    setApiUseRql,
+} from '../settings';
 
 const useStyles = makeStyles(theme => ({
     container: {
@@ -37,7 +44,7 @@ const useStyles = makeStyles(theme => ({
     },
 }));
 
-const paging = [
+const pagingLimits = [
     {
         value: 5,
         label: '5',
@@ -63,11 +70,11 @@ const paging = [
 const Settings = () => {
     const classes = useStyles();
     const [values, setValues] = React.useState({
-        queryAPI: changeAPIEndpoint('Query API', ''),
-        loggingAPI: changeAPIEndpoint('Logging API', ''),
-        dnssdAPI: changeAPIEndpoint('DNS-SD API', ''),
-        paging: parseInt(changePaging('valueRequest'), 10),
-        rql: cookies.get('RQL') !== 'false',
+        queryAPI: apiUrl(QUERY_API),
+        loggingAPI: apiUrl(LOGGING_API),
+        dnssdAPI: apiUrl(DNSSD_API),
+        pagingLimit: apiPagingLimit(QUERY_API),
+        rql: apiUseRql(QUERY_API),
     });
 
     const handleInputChange = name => event => {
@@ -83,13 +90,13 @@ const Settings = () => {
     };
 
     const handleSave = () => {
-        changeAPIEndpoint('Query API', values.queryAPI);
-        changeAPIEndpoint('Logging API', values.loggingAPI);
-        changeAPIEndpoint('DNS-SD API', values.dnssdAPI);
-        if (values.paging) {
-            changePaging(values.paging);
+        setApiUrl(QUERY_API, values.queryAPI);
+        setApiUrl(LOGGING_API, values.loggingAPI);
+        setApiUrl(DNSSD_API, values.dnssdAPI);
+        if (values.pagingLimit) {
+            setApiPagingLimit(QUERY_API, values.pagingLimit);
         }
-        cookies.set('RQL', values.rql, { path: '/' });
+        setApiUseRql(QUERY_API, values.rql);
         setOpen(true);
     };
 
@@ -162,11 +169,11 @@ const Settings = () => {
                                     variant="filled"
                                     placeholder=""
                                     className={classes.textField}
-                                    value={values.paging}
-                                    onChange={handleInputChange('paging')}
+                                    value={values.pagingLimit}
+                                    onChange={handleInputChange('pagingLimit')}
                                     margin="normal"
                                 >
-                                    {paging.map(option => (
+                                    {pagingLimits.map(option => (
                                         <MenuItem
                                             key={option.value}
                                             value={option.value}

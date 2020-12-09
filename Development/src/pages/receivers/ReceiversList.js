@@ -11,13 +11,13 @@ import {
 import { Loading, ShowButton, Title } from 'react-admin';
 import ActiveField from '../../components/ActiveField';
 import PaginationButtons from '../../components/PaginationButtons';
-import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
 import FilterPanel, {
     BooleanFilter,
     StringFilter,
 } from '../../components/FilterPanel';
+import { queryVersion } from '../../settings';
 
 const ReceiversList = props => {
     const [filter, setFilter] = useState({});
@@ -47,7 +47,7 @@ const ReceiversList = props => {
                         <StringFilter source="description" />
                         <StringFilter source="format" />
                         <StringFilter source="transport" />
-                        {QueryVersion() >= 'v1.2' && (
+                        {queryVersion() >= 'v1.2' && (
                             <BooleanFilter
                                 source="subscription.active"
                                 label="Active"
@@ -67,7 +67,7 @@ const ReceiversList = props => {
                                 </TableCell>
                                 <TableCell>Format</TableCell>
                                 <TableCell>Transport</TableCell>
-                                {QueryVersion() >= 'v1.2' && (
+                                {queryVersion() >= 'v1.2' && (
                                     <TableCell>Active</TableCell>
                                 )}
                             </TableRow>
@@ -87,7 +87,7 @@ const ReceiversList = props => {
                                     </TableCell>
                                     <TableCell>{item.format}</TableCell>
                                     <TableCell>{item.transport}</TableCell>
-                                    {QueryVersion() >= 'v1.2' && (
+                                    {queryVersion() >= 'v1.2' && (
                                         <TableCell>
                                             <ActiveField
                                                 record={item}

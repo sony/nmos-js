@@ -1,8 +1,3 @@
-import Cookies from 'universal-cookie';
-
-// consider using local storage
-const cookies = new Cookies();
-
 export const LOGGING_API = 'Logging API';
 export const QUERY_API = 'Query API';
 export const DNSSD_API = 'DNS-SD API';
@@ -31,14 +26,13 @@ const defaultUrl = api => {
     }
 };
 
-const cookieOptions = { path: '/', maxAge: 60 * 60 * 12 };
-
-export const apiUrl = api => cookies.get(api) || defaultUrl(api);
+export const apiUrl = api =>
+    window.localStorage.getItem(api) || defaultUrl(api);
 export const setApiUrl = (api, url) => {
     if (url) {
-        cookies.set(api, url, cookieOptions);
+        window.localStorage.setItem(api, url);
     } else {
-        cookies.remove(api, cookieOptions);
+        window.localStorage.removeItem(api);
     }
 };
 
@@ -51,21 +45,22 @@ export const queryVersion = () => apiVersion(QUERY_API);
 // default to 10 rather than leaving undefined and letting the API use its default,
 // in order to simplify pagination with client-side filtered results
 export const apiPagingLimit = api =>
-    parseInt(cookies.get(PAGING_LIMIT), 10) || 10;
+    parseInt(window.localStorage.getItem(PAGING_LIMIT), 10) || 10;
 export const setApiPagingLimit = (api, pagingLimit) => {
     if (typeof pagingLimit === 'number') {
-        cookies.set(PAGING_LIMIT, pagingLimit, cookieOptions);
+        window.localStorage.setItem(PAGING_LIMIT, pagingLimit);
     } else {
-        cookies.remove(PAGING_LIMIT, cookieOptions);
+        window.localStorage.removeItem(PAGING_LIMIT);
     }
 };
 
 // single value, not per-API, right now
-export const apiUseRql = api => cookies.get(USE_RQL) !== 'false';
+export const apiUseRql = api =>
+    window.localStorage.getItem(USE_RQL) !== 'false';
 export const setApiUseRql = (api, rql) => {
     if (typeof rql === 'boolean') {
-        cookies.set(USE_RQL, rql, cookieOptions);
+        window.localStorage.setItem(USE_RQL, rql);
     } else {
-        cookies.remove(USE_RQL, cookieOptions);
+        window.localStorage.removeItem(USE_RQL);
     }
 };

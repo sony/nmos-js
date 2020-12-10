@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import debounce from 'lodash/debounce';
 
 export const useDebouncedCallback = (callback, delay) =>
-    useCallback(debounce(callback, delay), [callback, delay]);
+    useMemo(() => debounce(callback, delay), [callback, delay]);
 
 const useDebounce = (value, delay) => {
     const previousValue = useRef(value);

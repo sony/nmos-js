@@ -3,11 +3,13 @@ import {
     BooleanField,
     FunctionField,
     ListButton,
+    ShowContextProvider,
     ShowView,
     SimpleShowLayout,
     TextField,
     Toolbar,
     TopToolbar,
+    useRecordContext,
     useShowController,
 } from 'react-admin';
 import get from 'lodash/get';
@@ -37,15 +39,23 @@ const SubscriptionsShowActions = ({ basePath, data, resource }) => (
     </TopToolbar>
 );
 
-const SubscriptionsShow = props => {
+export const SubscriptionsShow = props => {
     const controllerProps = useShowController(props);
+    return (
+        <ShowContextProvider value={controllerProps}>
+            <SubscriptionsShowView {...props} />
+        </ShowContextProvider>
+    );
+};
+
+const SubscriptionsShowView = props => {
+    const { record } = useRecordContext();
     return (
         <>
             <ShowView
+                {...props}
                 title={<SubscriptionsTitle />}
                 actions={<SubscriptionsShowActions />}
-                {...controllerProps}
-                {...props}
             >
                 <SimpleShowLayout>
                     <TextField source="id" label="ID" />
@@ -71,10 +81,10 @@ const SubscriptionsShow = props => {
                     )}
                 </SimpleShowLayout>
             </ShowView>
-            {get(controllerProps.record, 'id') && (
+            {get(record, 'id') && (
                 // Toolbar will override the DeleteButton resource prop
                 <Toolbar resource="subscriptions" style={{ marginTop: 0 }}>
-                    <DeleteButton id={get(controllerProps.record, 'id')} />
+                    <DeleteButton id={get(record, 'id')} />
                 </Toolbar>
             )}
         </>

@@ -18,9 +18,7 @@ const ConnectButton = ({ record, variant = 'contained', size }) => {
             ':' +
             get(record, 'port') +
             '/x-nmos/query/' +
-            get(record, 'txt.api_ver')
-                .split(',')
-                .slice(-1)[0]
+            get(record, 'txt.api_ver').split(',').slice(-1)[0]
         );
     };
 

@@ -2,9 +2,6 @@ import React from 'react';
 import { ThemeProvider } from '@material-ui/styles';
 import { createMuiTheme, responsiveFontSizes } from '@material-ui/core/styles';
 import { blue, lightBlue } from '@material-ui/core/colors';
-import Cookies from 'universal-cookie';
-
-const cookies = new Cookies();
 
 export const ThemeContext = React.createContext({
     theme: 'light',
@@ -13,9 +10,8 @@ export const ThemeContext = React.createContext({
 
 export const AppThemeProvider = ({ children }) => {
     const [themeState, setThemeState] = React.useState({
-        mode: cookies.get('theme'),
+        mode: window.localStorage.getItem('theme') || 'light',
     });
-    if (themeState.mode === undefined) setThemeState({ mode: 'light' });
 
     const theme = responsiveFontSizes(
         createMuiTheme({
@@ -33,7 +29,7 @@ export const AppThemeProvider = ({ children }) => {
 
     const toggleTheme = () => {
         const mode = themeState.mode === 'light' ? `dark` : `light`;
-        cookies.set('theme', mode);
+        window.localStorage.setItem('theme', mode);
         setThemeState({ mode: mode });
     };
 

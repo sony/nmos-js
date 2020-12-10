@@ -20,9 +20,6 @@ import Brightness7Icon from '@material-ui/icons/Brightness7';
 import Brightness4Icon from '@material-ui/icons/Brightness4';
 import { ThemeContext } from '../theme/ThemeContext';
 import { useTheme } from '@material-ui/styles';
-import Cookies from 'universal-cookie';
-
-const cookies = new Cookies();
 
 const useStyles = makeStyles({
     title: {
@@ -81,7 +78,7 @@ const RefreshSelector = () => {
     const [percentage, setPercentage] = useState(0);
     const anchorRef = useRef(null);
     const [intervalsIndex, setIntervalsIndex] = React.useState(
-        cookies.get('RefreshTime') || 4
+        window.localStorage.getItem('refresh time') || 4
     );
     const refresh = useRefresh();
     const version = useVersion();
@@ -122,7 +119,7 @@ const RefreshSelector = () => {
         setIntervalsIndex(index);
         setOpen(false);
         setPercentage(0);
-        cookies.set('RefreshTime', index);
+        window.localStorage.setItem('refresh time', index);
     };
     const handleToggle = () => {
         setOpen(prevOpen => !prevOpen);

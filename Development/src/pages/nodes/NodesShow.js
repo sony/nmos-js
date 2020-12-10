@@ -6,6 +6,7 @@ import {
     FunctionField,
     ListButton,
     ReferenceManyField,
+    ShowContextProvider,
     ShowView,
     SimpleShowLayout,
     SingleFieldList,
@@ -49,9 +50,16 @@ const NodesShowActions = ({ basePath, data, resource }) => (
 export const NodesShow = props => {
     const controllerProps = useShowController(props);
     return (
+        <ShowContextProvider value={controllerProps}>
+            <NodesShowView {...props} />
+        </ShowContextProvider>
+    );
+};
+
+const NodesShowView = props => {
+    return (
         <ShowView
             {...props}
-            {...controllerProps}
             title={<NodesTitle />}
             actions={<NodesShowActions />}
         >
@@ -59,10 +67,8 @@ export const NodesShow = props => {
                 <TextField label="ID" source="id" />
                 <TAIField source="version" />
                 <TextField source="label" />
-                {controllerProps.record && queryVersion() >= 'v1.1' && (
-                    <TextField source="description" />
-                )}
-                {controllerProps.record && queryVersion() >= 'v1.1' && (
+                {queryVersion() >= 'v1.1' && <TextField source="description" />}
+                {queryVersion() >= 'v1.1' && (
                     <FunctionField
                         label="Tags"
                         render={record =>
@@ -75,13 +81,13 @@ export const NodesShow = props => {
                 <hr />
                 <UrlField source="href" label="Address" />
                 <TextField source="hostname" />
-                {controllerProps.record && queryVersion() >= 'v1.1' && (
+                {queryVersion() >= 'v1.1' && (
                     <ItemArrayField
                         label="API Versions"
                         source="api.versions"
                     />
                 )}
-                {controllerProps.record && queryVersion() >= 'v1.1' && (
+                {queryVersion() >= 'v1.1' && (
                     <ArrayField label="API Endpoints" source="api.endpoints">
                         <Datagrid>
                             <TextField source="host" />
@@ -109,7 +115,7 @@ export const NodesShow = props => {
                         </Datagrid>
                     </ArrayField>
                 )}
-                {controllerProps.record && queryVersion() >= 'v1.1' && (
+                {queryVersion() >= 'v1.1' && (
                     <ArrayField source="clocks">
                         <Datagrid>
                             <TextField source="name" />
@@ -126,7 +132,7 @@ export const NodesShow = props => {
                         )}
                     </Datagrid>
                 </ArrayField>
-                {controllerProps.record && queryVersion() >= 'v1.2' && (
+                {queryVersion() >= 'v1.2' && (
                     <ArrayField source="interfaces">
                         <Datagrid>
                             <TextField source="name" />

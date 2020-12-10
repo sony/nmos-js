@@ -12,7 +12,7 @@ import get from 'lodash/get';
 import set from 'lodash/set';
 import has from 'lodash/has';
 import isEmpty from 'lodash/isEmpty';
-import setJSON from 'json-ptr';
+import { JsonPointer } from 'json-ptr';
 import assign from 'lodash/assign';
 import diff from 'deep-diff';
 import {
@@ -542,7 +542,7 @@ const convertDataProviderRequestToHTTP = (
             }
 
             for (const d of differences) {
-                setJSON.set(patchData, `/${d.path.join('/')}`, d.rhs, true);
+                JsonPointer.set(patchData, `/${d.path.join('/')}`, d.rhs, true);
             }
 
             if (has(patchData, 'transport_file')) {
@@ -680,9 +680,11 @@ const filterResult = async (json, referenceFilter) => {
         // hm, this could be parallelized too?
         for (const ref in referenceFilter) {
             const id = object[ref + '_id'];
-            const data = (await dataProvider(GET_LIST, ref + 's', {
-                filter: { ...referenceFilter[ref], id: id },
-            })).data;
+            const data = (
+                await dataProvider(GET_LIST, ref + 's', {
+                    filter: { ...referenceFilter[ref], id: id },
+                })
+            ).data;
             if (data.length === 0) return false;
         }
         return true;

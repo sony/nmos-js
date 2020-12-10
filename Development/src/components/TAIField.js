@@ -22,9 +22,7 @@ const TAIConversion = (record, source, mode) => {
         const taiData = get(record, source).split(':', 2);
         const taiTimeMilliseconds = 1e3 * taiData[0] + taiData[1] / 1e6;
         if (get(record, mode) === 'activate_scheduled_relative') {
-            return dayjs(taiTimeMilliseconds)
-                .utc()
-                .format('HH:mm:ss.SSS');
+            return dayjs(taiTimeMilliseconds).utc().format('HH:mm:ss.SSS');
         }
         const unixTimeMilliseconds = tai.atomicToUnix(taiTimeMilliseconds);
         return dayjs(unixTimeMilliseconds).format('YYYY-MM-DD HH:mm:ss.SSS Z');

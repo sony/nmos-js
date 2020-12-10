@@ -8,6 +8,7 @@ import {
     ReferenceArrayField,
     ReferenceField,
     ReferenceManyField,
+    ShowContextProvider,
     ShowView,
     SimpleShowLayout,
     SingleFieldList,
@@ -42,12 +43,19 @@ const DevicesShowActions = ({ basePath, data, resource }) => (
     </TopToolbar>
 );
 
-const DevicesShow = props => {
+export const DevicesShow = props => {
     const controllerProps = useShowController(props);
+    return (
+        <ShowContextProvider value={controllerProps}>
+            <DevicesShowView {...props} />
+        </ShowContextProvider>
+    );
+};
+
+const DevicesShowView = props => {
     return (
         <ShowView
             {...props}
-            {...controllerProps}
             title={<DevicesTitle />}
             actions={<DevicesShowActions />}
         >
@@ -55,10 +63,8 @@ const DevicesShow = props => {
                 <TextField label="ID" source="id" />
                 <TAIField source="version" />
                 <TextField source="label" />
-                {controllerProps.record && queryVersion() >= 'v1.1' && (
-                    <TextField source="description" />
-                )}
-                {controllerProps.record && queryVersion() >= 'v1.1' && (
+                {queryVersion() >= 'v1.1' && <TextField source="description" />}
+                {queryVersion() >= 'v1.1' && (
                     <FunctionField
                         label="Tags"
                         render={record =>
@@ -70,7 +76,7 @@ const DevicesShow = props => {
                 )}
                 <hr />
                 <TextField source="type" />
-                {controllerProps.record && queryVersion() >= 'v1.1' && (
+                {queryVersion() >= 'v1.1' && (
                     <ArrayField source="controls">
                         <Datagrid>
                             <UrlField source="href" label="Address" />

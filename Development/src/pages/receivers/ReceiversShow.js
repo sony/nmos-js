@@ -187,7 +187,10 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     </ArrayField>
                 )}
                 {record.caps.version && (
-                    <TAIField source="version" />
+                    <TAIField
+                        label="Capabilities Version"
+                        source="caps.version"
+                    />
                 )}
                 <TextField source="format" />
                 {queryVersion() >= 'v1.2' && (

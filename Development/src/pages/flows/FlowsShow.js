@@ -7,19 +7,21 @@ import {
     ReferenceArrayField,
     ReferenceField,
     ReferenceManyField,
+    ShowContextProvider,
     ShowView,
     SimpleShowLayout,
     SingleFieldList,
     TextField,
     TopToolbar,
+    useRecordContext,
     useShowController,
 } from 'react-admin';
 import MapObject from '../../components/ObjectField';
 import RawButton from '../../components/RawButton';
 import RateField from '../../components/RateField';
 import TAIField from '../../components/TAIField';
-import QueryVersion from '../../components/QueryVersion';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import { queryVersion } from '../../settings';
 
 const FlowsTitle = ({ record }) => {
     return (
@@ -41,12 +43,20 @@ const FlowsShowActions = ({ basePath, data, resource }) => (
     </TopToolbar>
 );
 
-const FlowsShow = props => {
+export const FlowsShow = props => {
     const controllerProps = useShowController(props);
+    return (
+        <ShowContextProvider value={controllerProps}>
+            <FlowsShowView {...props} />
+        </ShowContextProvider>
+    );
+};
+
+const FlowsShowView = props => {
+    const { record } = useRecordContext();
     return (
         <ShowView
             {...props}
-            {...controllerProps}
             title={<FlowsTitle />}
             actions={<FlowsShowActions />}
         >
@@ -64,44 +74,34 @@ const FlowsShow = props => {
                     }
                 />
                 <hr />
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {queryVersion() >= 'v1.1' && (
                     <RateField label="Grain Rate" source="grain_rate" />
                 )}
                 <TextField source="format" />
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {queryVersion() >= 'v1.1' && (
                     <TextField label="Media Type" source="media_type" />
                 )}
-                {controllerProps.record &&
-                    QueryVersion() >= 'v1.1' &&
-                    controllerProps.record.format ===
-                        'urn:x-nmos:format:video' && (
+                {queryVersion() >= 'v1.1' &&
+                    record.format === 'urn:x-nmos:format:video' && (
                         <TextField label="Frame Width" source="frame_width" />
                     )}
-                {controllerProps.record &&
-                    QueryVersion() >= 'v1.1' &&
-                    controllerProps.record.format ===
-                        'urn:x-nmos:format:video' && (
+                {queryVersion() >= 'v1.1' &&
+                    record.format === 'urn:x-nmos:format:video' && (
                         <TextField label="Frame Height" source="frame_height" />
                     )}
-                {controllerProps.record &&
-                    QueryVersion() >= 'v1.1' &&
-                    controllerProps.record.format ===
-                        'urn:x-nmos:format:video' && (
+                {queryVersion() >= 'v1.1' &&
+                    record.format === 'urn:x-nmos:format:video' && (
                         <TextField
                             label="Interlace Mode"
                             source="interlace_mode"
                         />
                     )}
-                {controllerProps.record &&
-                    QueryVersion() >= 'v1.1' &&
-                    controllerProps.record.format ===
-                        'urn:x-nmos:format:video' && (
+                {queryVersion() >= 'v1.1' &&
+                    record.format === 'urn:x-nmos:format:video' && (
                         <TextField source="colorspace" />
                     )}
-                {controllerProps.record &&
-                    QueryVersion() >= 'v1.1' &&
-                    controllerProps.record.format ===
-                        'urn:x-nmos:format:video' && (
+                {queryVersion() >= 'v1.1' &&
+                    record.format === 'urn:x-nmos:format:video' && (
                         <ArrayField source="components">
                             <Datagrid>
                                 <TextField source="name" />
@@ -114,32 +114,24 @@ const FlowsShow = props => {
                             </Datagrid>
                         </ArrayField>
                     )}
-                {controllerProps.record &&
-                    QueryVersion() >= 'v1.1' &&
-                    controllerProps.record.format ===
-                        'urn:x-nmos:format:video' && (
+                {queryVersion() >= 'v1.1' &&
+                    record.format === 'urn:x-nmos:format:video' && (
                         <TextField
                             label="Transfer Characteristic"
                             source="transfer_characteristic"
                         />
                     )}
-                {controllerProps.record &&
-                    QueryVersion() >= 'v1.1' &&
-                    controllerProps.record.format ===
-                        'urn:x-nmos:format:audio' && (
+                {queryVersion() >= 'v1.1' &&
+                    record.format === 'urn:x-nmos:format:audio' && (
                         <RateField label="Sample Rate" source="sample_rate" />
                     )}
-                {controllerProps.record &&
-                    QueryVersion() >= 'v1.1' &&
-                    controllerProps.record.format ===
-                        'urn:x-nmos:format:audio' &&
-                    controllerProps.record.media_type.startsWith('audio/L') && (
+                {queryVersion() >= 'v1.1' &&
+                    record.format === 'urn:x-nmos:format:audio' &&
+                    record.media_type.startsWith('audio/L') && (
                         <TextField label="Bit Depth" source="bit_depth" />
                     )}
-                {controllerProps.record &&
-                    QueryVersion() >= 'v1.3' &&
-                    controllerProps.record.format ===
-                        'urn:x-nmos:format:data' && (
+                {queryVersion() >= 'v1.3' &&
+                    record.format === 'urn:x-nmos:format:data' && (
                         <TextField label="Event Type" source="event_type" />
                     )}
                 <hr />
@@ -155,7 +147,7 @@ const FlowsShow = props => {
                         <ChipConditionalLabel source="label" />
                     </SingleFieldList>
                 </ReferenceArrayField>
-                {controllerProps.record && QueryVersion() >= 'v1.1' && (
+                {queryVersion() >= 'v1.1' && (
                     <ReferenceField
                         label="Device"
                         source="device_id"

@@ -92,12 +92,7 @@ const ConnectButtons = ({ senderData, receiverData }) => {
                 {[...Array(senderLegs).keys()].map(leg => (
                     <MenuItem
                         key={leg}
-                        onClick={() =>
-                            connect(
-                                endpoint,
-                                leg
-                            )
-                        }
+                        onClick={() => connect(endpoint, leg)}
                         style={{ fontSize: '0.875rem' }}
                     >
                         Leg {leg + 1}

@@ -3,14 +3,15 @@ import {
     BooleanField,
     FunctionField,
     ListButton,
+    ShowContextProvider,
     ShowView,
     SimpleShowLayout,
     TextField,
     Toolbar,
     TopToolbar,
+    useRecordContext,
     useShowController,
 } from 'react-admin';
-import { makeStyles } from '@material-ui/core';
 import get from 'lodash/get';
 import ConnectButton from './ConnectButton';
 import ItemArrayField from '../../components/ItemArrayField';
@@ -27,25 +28,25 @@ const QueryAPIsShowActions = ({ basePath, data, resource }) => (
     </TopToolbar>
 );
 
-const useStyles = makeStyles({
-    toolbar: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        marginTop: '0px',
-    },
-});
-
-const QueryAPIsShow = props => {
+export const QueryAPIsShow = props => {
     const controllerProps = useShowController(props);
     return (
-        <ShowView
-            title={<QueryAPIsTitle />}
-            actions={<QueryAPIsShowActions />}
-            {...controllerProps}
-            {...props}
-        >
-            <>
-                <SimpleShowLayout {...props} {...controllerProps}>
+        <ShowContextProvider value={controllerProps}>
+            <QueryAPIsShowView {...props} />
+        </ShowContextProvider>
+    );
+};
+
+const QueryAPIsShowView = props => {
+    const { record } = useRecordContext();
+    return (
+        <>
+            <ShowView
+                {...props}
+                title={<QueryAPIsTitle />}
+                actions={<QueryAPIsShowActions />}
+            >
+                <SimpleShowLayout>
                     <TextField source="name" />
                     <hr />
                     <TextField label="Host Target" source="host_target" />
@@ -64,16 +65,15 @@ const QueryAPIsShow = props => {
                             />
                         )}
                     />
-                    />
                     <TextField label="Priority" source="txt.pri" />
                 </SimpleShowLayout>
-                <Toolbar classes={useStyles()}>
-                    <>
-                        <ConnectButton record={controllerProps.record} />
-                    </>
-                </Toolbar>
-            </>
-        </ShowView>
+            </ShowView>
+            <Toolbar style={{ marginTop: 0 }}>
+                <>
+                    <ConnectButton record={record} />
+                </>
+            </Toolbar>
+        </>
     );
 };
 

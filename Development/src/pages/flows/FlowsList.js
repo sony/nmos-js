@@ -14,9 +14,9 @@ import FilterPanel, {
     StringFilter,
 } from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
-import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
+import { queryVersion } from '../../settings';
 
 const FlowsList = props => {
     const [filter, setFilter] = useState({});
@@ -44,26 +44,26 @@ const FlowsList = props => {
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
                         <StringFilter source="description" />
-                        {QueryVersion() >= 'v1.1' && (
+                        {queryVersion() >= 'v1.1' && (
                             <RateFilter
                                 source="grain_rate"
                                 label="Grain Rate"
                             />
                         )}
                         <StringFilter source="format" />
-                        {QueryVersion() >= 'v1.1' && (
+                        {queryVersion() >= 'v1.1' && (
                             <StringFilter
                                 source="media_type"
                                 label="Media Type"
                             />
                         )}
-                        {QueryVersion() >= 'v1.1' && (
+                        {queryVersion() >= 'v1.1' && (
                             <RateFilter
                                 source="sample_rate"
                                 label="Sample Rate"
                             />
                         )}
-                        {QueryVersion() >= 'v1.3' && (
+                        {queryVersion() >= 'v1.3' && (
                             <StringFilter
                                 source="event_type"
                                 label="Event Type"
@@ -82,10 +82,10 @@ const FlowsList = props => {
                                     Label
                                 </TableCell>
                                 <TableCell>Format</TableCell>
-                                {QueryVersion() >= 'v1.1' && (
+                                {queryVersion() >= 'v1.1' && (
                                     <TableCell>Media Type</TableCell>
                                 )}
-                                {QueryVersion() >= 'v1.3' && (
+                                {queryVersion() >= 'v1.3' && (
                                     <TableCell>Event Type</TableCell>
                                 )}
                             </TableRow>
@@ -104,10 +104,10 @@ const FlowsList = props => {
                                         />
                                     </TableCell>
                                     <TableCell>{item.format}</TableCell>
-                                    {QueryVersion() >= 'v1.1' && (
+                                    {queryVersion() >= 'v1.1' && (
                                         <TableCell>{item.media_type}</TableCell>
                                     )}
-                                    {QueryVersion() >= 'v1.3' && (
+                                    {queryVersion() >= 'v1.3' && (
                                         <TableCell>{item.event_type}</TableCell>
                                     )}
                                 </TableRow>

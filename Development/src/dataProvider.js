@@ -12,40 +12,20 @@ import get from 'lodash/get';
 import set from 'lodash/set';
 import has from 'lodash/has';
 import isEmpty from 'lodash/isEmpty';
-import setJSON from 'json-ptr';
+import { JsonPointer } from 'json-ptr';
 import assign from 'lodash/assign';
 import diff from 'deep-diff';
-import Cookies from 'universal-cookie';
+import {
+    DNSSD_API,
+    LOGGING_API,
+    QUERY_API,
+    apiPagingLimit,
+    apiUrl,
+    apiUseRql,
+    concatUrl,
+} from './settings';
 
-const LOGGING_API = 'Logging API';
-const QUERY_API = 'Query API';
-const DNS_API = 'DNS-SD API';
-
-const cookies = new Cookies();
-
-export const concatUrl = (url, path) => {
-    return (
-        url + (url.endsWith('/') && path.startsWith('/') ? path.slice(1) : path)
-    );
-};
-
-const defaultUrl = api => {
-    let baseUrl = window.location.protocol + '//' + window.location.host;
-    switch (api) {
-        case LOGGING_API:
-            return baseUrl + '/log/v1.0';
-        case QUERY_API:
-            return baseUrl + '/x-nmos/query/v1.3';
-        case DNS_API:
-            return baseUrl + '/x-dns-sd/v1.0';
-        default:
-            // not expected to be used
-            return '';
-    }
-};
-
-export const resourceUrl = (resource, subresourceQuery = '') => {
-    let url;
+const apiResource = resource => {
     let api;
     let res;
     switch (resource) {
@@ -54,7 +34,7 @@ export const resourceUrl = (resource, subresourceQuery = '') => {
             res = 'events';
             break;
         case 'queryapis':
-            api = DNS_API;
+            api = DNSSD_API;
             res = '_nmos-query._tcp';
             break;
         default:
@@ -63,46 +43,12 @@ export const resourceUrl = (resource, subresourceQuery = '') => {
             res = resource;
             break;
     }
-    url = cookies.get(api);
-    if (url === undefined) {
-        url = defaultUrl(api);
-    }
-
-    return concatUrl(url, `/${res}${subresourceQuery}`);
+    return { api, res };
 };
 
-export const changeAPIEndpoint = (API, cookieQuery) => {
-    if (cookieQuery === '') {
-        if (cookies.get(API) === undefined) {
-            let local = defaultUrl(API);
-            cookies.set(API, local, { path: '/' });
-            return cookies.get(API);
-        } else {
-            return cookies.get(API);
-        }
-    } else {
-        cookies.set(API, cookieQuery, { path: '/' });
-        return cookies.get(API);
-    }
-};
-
-export const queryRqlMode = whatMode => {
-    cookies.set('RQL', whatMode, { path: '/' });
-};
-
-export const changePaging = newLimit => {
-    let paging_limit = cookies.get('Paging Limit');
-    if (newLimit === 'valueRequest') {
-        if (paging_limit) {
-            return paging_limit;
-        }
-        return 'Default';
-    }
-    paging_limit = newLimit;
-    cookies.set('Paging Limit', paging_limit, {
-        path: '/',
-    });
-    return paging_limit;
+export const resourceUrl = (resource, subresourceQuery = '') => {
+    const { api, res } = apiResource(resource);
+    return concatUrl(apiUrl(api), `/${res}${subresourceQuery}`);
 };
 
 const isNumber = value => {
@@ -330,6 +276,9 @@ const convertDataProviderRequestToHTTP = (
     params,
     pagingLimit
 ) => {
+    const { api } = apiResource(resource);
+    const useRql = resource !== 'queryapis' && apiUseRql(api);
+
     // fetchJson won't add the Accept header itself if we specify any headers in options
     const headers = new Headers({ Accept: 'application/json' });
     if (resource === 'queryapis') {
@@ -375,7 +324,7 @@ const convertDataProviderRequestToHTTP = (
 
             const queryParams = [];
 
-            if (resource === 'queryapis' || cookies.get('RQL') === 'false') {
+            if (!useRql) {
                 for (const [key, value] of Object.entries(params.filter)) {
                     if (isReferenceFilter(key)) {
                         addReferenceFilter(key, value);
@@ -511,8 +460,7 @@ const convertDataProviderRequestToHTTP = (
         }
         case GET_MANY: {
             let total_query;
-            if (cookies.get('RQL') !== 'false') {
-                //!false is used as the initial no cookie state has the rql toggle in the enabled state
+            if (useRql) {
                 total_query =
                     'query.rql=or(' +
                     params.ids.map(id => 'eq(id,' + id + ')').join(',') +
@@ -535,7 +483,7 @@ const convertDataProviderRequestToHTTP = (
         case GET_MANY_REFERENCE: {
             let total_query;
             if (params.target !== '' && params.id !== '') {
-                if (cookies.get('RQL') !== 'false') {
+                if (useRql) {
                     total_query =
                         'query.rql=matches(' +
                         params.target +
@@ -594,7 +542,7 @@ const convertDataProviderRequestToHTTP = (
             }
 
             for (const d of differences) {
-                setJSON.set(patchData, `/${d.path.join('/')}`, d.rhs, true);
+                JsonPointer.set(patchData, `/${d.path.join('/')}`, d.rhs, true);
             }
 
             if (has(patchData, 'transport_file')) {
@@ -732,9 +680,11 @@ const filterResult = async (json, referenceFilter) => {
         // hm, this could be parallelized too?
         for (const ref in referenceFilter) {
             const id = object[ref + '_id'];
-            const data = (await dataProvider(GET_LIST, ref + 's', {
-                filter: { ...referenceFilter[ref], id: id },
-            })).data;
+            const data = (
+                await dataProvider(GET_LIST, ref + 's', {
+                    filter: { ...referenceFilter[ref], id: id },
+                })
+            ).data;
             if (data.length === 0) return false;
         }
         return true;
@@ -750,6 +700,9 @@ const convertHTTPResponseToDataProvider = async (
     referenceFilter
 ) => {
     const { headers, json } = response;
+
+    const { api } = apiResource(resource);
+    const useRql = resource !== 'queryapis' && apiUseRql(api);
 
     switch (type) {
         case GET_ONE:
@@ -864,7 +817,7 @@ const convertHTTPResponseToDataProvider = async (
                 total: json ? json.length : 0,
             };
         case GET_MANY:
-            if (cookies.get('RQL') === 'false') {
+            if (!useRql) {
                 return await Promise.all(
                     params.ids.map(
                         id =>
@@ -905,9 +858,8 @@ const convertHTTPResponseToDataProvider = async (
 
 const dataProvider = async (type, resource, params) => {
     const { fetchJson } = fetchUtils;
-    // default paging limit to 10 rather than letting the Query API use its default,
-    // in order to simplify pagination with filtered results
-    const pagingLimit = parseInt(cookies.get('Paging Limit'), 10) || 10;
+    const { api } = apiResource(resource);
+    const pagingLimit = apiPagingLimit(api);
     const pagingLimitRegex = /paging.limit=\d*/;
     let recordsToGet = pagingLimit;
     let result = null;

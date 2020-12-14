@@ -11,9 +11,9 @@ import {
 import { Loading, ShowButton, Title } from 'react-admin';
 import FilterPanel, { StringFilter } from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
-import QueryVersion from '../../components/QueryVersion';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
+import { queryVersion } from '../../settings';
 
 const NodesList = props => {
     const [filter, setFilter] = useState({});
@@ -40,23 +40,23 @@ const NodesList = props => {
                 <CardContent>
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
-                        {QueryVersion() >= 'v1.1' && (
+                        {queryVersion() >= 'v1.1' && (
                             <StringFilter source="description" />
                         )}
                         <StringFilter source="hostname" />
-                        {QueryVersion() >= 'v1.1' && (
+                        {queryVersion() >= 'v1.1' && (
                             <StringFilter
                                 source="api.versions"
                                 label="API Version"
                             />
                         )}
-                        {QueryVersion() >= 'v1.1' && (
+                        {queryVersion() >= 'v1.1' && (
                             <StringFilter
                                 source="api.endpoints.host"
                                 label="API Endpoint Host"
                             />
                         )}
-                        {QueryVersion() >= 'v1.2' && (
+                        {queryVersion() >= 'v1.2' && (
                             <StringFilter
                                 source="interfaces.port_id"
                                 label="Interface Port ID"
@@ -75,7 +75,7 @@ const NodesList = props => {
                                     Label
                                 </TableCell>
                                 <TableCell>Hostname</TableCell>
-                                {QueryVersion() >= 'v1.1' && (
+                                {queryVersion() >= 'v1.1' && (
                                     <TableCell>API Versions</TableCell>
                                 )}
                                 <TableCell>ID</TableCell>
@@ -95,7 +95,7 @@ const NodesList = props => {
                                         />
                                     </TableCell>
                                     <TableCell>{item.hostname}</TableCell>
-                                    {QueryVersion() >= 'v1.1' && (
+                                    {queryVersion() >= 'v1.1' && (
                                         <TableCell>
                                             {item.api.versions.join(', ')}
                                         </TableCell>

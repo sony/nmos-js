@@ -2,10 +2,12 @@ import React from 'react';
 import {
     FunctionField,
     ListButton,
-    Show,
+    ShowContextProvider,
+    ShowView,
     SimpleShowLayout,
     TextField,
     TopToolbar,
+    useShowController,
 } from 'react-admin';
 import MapObject from '../../components/ObjectField';
 import RawButton from '../../components/RawButton';
@@ -21,8 +23,17 @@ const LogsShowActions = ({ basePath, data, resource }) => (
     </TopToolbar>
 );
 
-const LogsShow = props => (
-    <Show title={<LogsTitle />} actions={<LogsShowActions />} {...props}>
+export const LogsShow = props => {
+    const controllerProps = useShowController(props);
+    return (
+        <ShowContextProvider value={controllerProps}>
+            <LogsShowView {...props} />
+        </ShowContextProvider>
+    );
+};
+
+const LogsShowView = props => (
+    <ShowView title={<LogsTitle />} actions={<LogsShowActions />} {...props}>
         <SimpleShowLayout>
             <TextField source="timestamp" />
             <TextField source="level" />
@@ -51,7 +62,7 @@ const LogsShow = props => (
             <TextField source="thread_id" label="Thread ID" />
             <TextField source="id" label="ID" />
         </SimpleShowLayout>
-    </Show>
+    </ShowView>
 );
 
 export default LogsShow;

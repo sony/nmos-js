@@ -13,9 +13,11 @@ import {
     BooleanField,
     FunctionField,
     ReferenceField,
+    ShowContextProvider,
     ShowView,
     SimpleShowLayout,
     TextField,
+    useRecordContext,
     useShowController,
 } from 'react-admin';
 import get from 'lodash/get';
@@ -29,8 +31,8 @@ import MapObject from '../../components/ObjectField';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
-import QueryVersion from '../../components/QueryVersion';
 import { ContentCopyIcon } from '../../icons';
+import { queryVersion } from '../../settings';
 
 const SendersTitle = ({ record }) => {
     return (
@@ -45,17 +47,27 @@ const SendersTitle = ({ record }) => {
     );
 };
 
-const SendersShow = props => {
-    const [useConnectionAPI, setUseConnectionAPI] = useState(false);
+export const SendersShow = props => {
     const controllerProps = useShowController(props);
+    return (
+        <ShowContextProvider value={controllerProps}>
+            <SendersShowView {...props} />
+        </ShowContextProvider>
+    );
+};
+
+const SendersShowView = props => {
+    const { record } = useRecordContext();
+
+    const [useConnectionAPI, setUseConnectionAPI] = useState(false);
 
     useEffect(() => {
-        if (get(controllerProps.record, '$connectionAPI') !== undefined) {
+        if (get(record, '$connectionAPI') !== undefined) {
             setUseConnectionAPI(true);
         } else {
             setUseConnectionAPI(false);
         }
-    }, [controllerProps.record]);
+    }, [record]);
 
     const theme = useTheme();
     const tabBackgroundColor =
@@ -89,7 +101,7 @@ const SendersShow = props => {
                                 component={Link}
                                 to={`${props.basePath}/${props.id}/show/${label}`}
                                 disabled={
-                                    !get(controllerProps.record, `$${label}`) ||
+                                    !get(record, `$${label}`) ||
                                     !useConnectionAPI
                                 }
                                 label={label}
@@ -101,32 +113,27 @@ const SendersShow = props => {
                 <ConnectionShowActions {...props} />
             </div>
             <Route exact path={`${props.basePath}/${props.id}/show/`}>
-                <ShowSummaryTab {...props} controllerProps={controllerProps} />
+                <ShowSummaryTab record={record} {...props} />
             </Route>
             <Route exact path={`${props.basePath}/${props.id}/show/active`}>
-                <ShowActiveTab {...props} controllerProps={controllerProps} />
+                <ShowActiveTab record={record} {...props} />
             </Route>
             <Route exact path={`${props.basePath}/${props.id}/show/staged`}>
-                <ShowStagedTab {...props} controllerProps={controllerProps} />
+                <ShowStagedTab record={record} {...props} />
             </Route>
             <Route
                 exact
                 path={`${props.basePath}/${props.id}/show/transportfile`}
             >
-                <ShowTransportFileTab record={controllerProps.record} />
+                <ShowTransportFileTab record={record} />
             </Route>
         </>
     );
 };
 
-const ShowSummaryTab = ({ controllerProps, ...props }) => {
+const ShowSummaryTab = ({ record, ...props }) => {
     return (
-        <ShowView
-            {...props}
-            {...controllerProps}
-            title={<SendersTitle />}
-            actions={<Fragment />}
-        >
+        <ShowView {...props} title={<SendersTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
                 <TAIField source="version" />
@@ -147,13 +154,13 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                     label="Manifest Address"
                     source="manifest_href"
                 />
-                {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                {queryVersion() >= 'v1.2' && (
                     <ItemArrayField
                         label="Interface Bindings"
                         source="interface_bindings"
                     />
                 )}
-                {controllerProps.record && QueryVersion() >= 'v1.2' && (
+                {queryVersion() >= 'v1.2' && (
                     <BooleanField label="Active" source="subscription.active" />
                 )}
                 <hr />
@@ -173,35 +180,27 @@ const ShowSummaryTab = ({ controllerProps, ...props }) => {
                 >
                     <ChipConditionalLabel source="label" />
                 </ReferenceField>
-                {controllerProps.record &&
-                    QueryVersion() >= 'v1.2' &&
-                    controllerProps.record.subscription.receiver_id && (
-                        <ReferenceField
-                            label="Receiver"
-                            source="subscription.receiver_id"
-                            reference="receivers"
-                            link="show"
-                        >
-                            <ChipConditionalLabel source="label" />
-                        </ReferenceField>
-                    )}
+                {queryVersion() >= 'v1.2' && record.subscription.receiver_id && (
+                    <ReferenceField
+                        label="Receiver"
+                        source="subscription.receiver_id"
+                        reference="receivers"
+                        link="show"
+                    >
+                        <ChipConditionalLabel source="label" />
+                    </ReferenceField>
                 )}
             </SimpleShowLayout>
         </ShowView>
     );
 };
 
-const ShowActiveTab = ({ controllerProps, ...props }) => {
+const ShowActiveTab = ({ record, ...props }) => {
     return (
-        <ShowView
-            {...props}
-            {...controllerProps}
-            title={<SendersTitle />}
-            actions={<Fragment />}
-        >
+        <ShowView {...props} title={<SendersTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
-                {get(controllerProps.record, '$active.receiver_id') && (
+                {get(record, '$active.receiver_id') && (
                     <ReferenceField
                         basePath="/receivers"
                         label="Receiver"
@@ -231,9 +230,7 @@ const ShowActiveTab = ({ controllerProps, ...props }) => {
                     label="Transport Parameters"
                     source="$active.transport_params"
                 >
-                    <SenderTransportParamsCardsGrid
-                        record={controllerProps.record}
-                    />
+                    <SenderTransportParamsCardsGrid record={record} />
                 </ArrayField>
                 <JSONViewer endpoint="$active" />
             </SimpleShowLayout>
@@ -241,17 +238,12 @@ const ShowActiveTab = ({ controllerProps, ...props }) => {
     );
 };
 
-const ShowStagedTab = ({ controllerProps, ...props }) => {
+const ShowStagedTab = ({ record, ...props }) => {
     return (
-        <ShowView
-            {...props}
-            {...controllerProps}
-            title={<SendersTitle />}
-            actions={<Fragment />}
-        >
+        <ShowView {...props} title={<SendersTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
-                {get(controllerProps.record, '$staged.receiver_id') && (
+                {get(record, '$staged.receiver_id') && (
                     <ReferenceField
                         basePath="/receivers"
                         label="Receiver"
@@ -281,9 +273,7 @@ const ShowStagedTab = ({ controllerProps, ...props }) => {
                     label="Transport Parameters"
                     source="$staged.transport_params"
                 >
-                    <SenderTransportParamsCardsGrid
-                        record={controllerProps.record}
-                    />
+                    <SenderTransportParamsCardsGrid record={record} />
                 </ArrayField>
                 <JSONViewer endpoint="$staged" />
             </SimpleShowLayout>

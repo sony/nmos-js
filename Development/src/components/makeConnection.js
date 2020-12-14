@@ -178,10 +178,12 @@ const makeConnection = (senderID, receiverID, endpoint, options) => {
                 return data;
             })
             .then(data => {
-                if (get(data, 'sender') === undefined)
+                if (get(data, 'sender') === undefined) {
                     return reject(new Error("Couldn't get sender data"));
-                if (get(data, 'receiver') === undefined)
+                }
+                if (get(data, 'receiver') === undefined) {
                     return reject(new Error("Couldn't get receiver data"));
+                }
 
                 // don't test '$transporttype' here, as there's a sensible
                 // default filter in the ConnectionManagementTab, but users

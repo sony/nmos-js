@@ -22,6 +22,7 @@ import {
     apiPagingLimit,
     apiUrl,
     apiUseRql,
+    apiVersion,
     concatUrl,
 } from './settings';
 
@@ -48,6 +49,10 @@ const apiResource = resource => {
 
 export const resourceUrl = (resource, subresourceQuery = '') => {
     const { api, res } = apiResource(resource);
+    // cf. special ids for 'queryapis' returned by convertHTTPResponseToDataProvider
+    if (resource === 'queryapis' && subresourceQuery.startsWith('/')) {
+        subresourceQuery = subresourceQuery.replace('@', '?query.domain=');
+    }
     return concatUrl(apiUrl(api), `/${res}${subresourceQuery}`);
 };
 
@@ -304,8 +309,9 @@ const convertDataProviderRequestToHTTP = (
                 if (dot > 1) {
                     const ref = key.substring(1, dot);
                     const refKey = key.substring(dot + 1);
-                    if (!has(referenceFilter, ref))
+                    if (!has(referenceFilter, ref)) {
                         set(referenceFilter, ref, {});
+                    }
                     referenceFilter[ref][refKey] = value;
                 }
             };
@@ -437,8 +443,9 @@ const convertDataProviderRequestToHTTP = (
             }
 
             if (resource !== 'queryapis' && pagingLimit) {
-                if (resource !== 'logs')
+                if (resource !== 'logs') {
                     queryParams.push('paging.order=update');
+                }
                 queryParams.push('paging.limit=' + pagingLimit);
             }
 
@@ -707,7 +714,11 @@ const convertHTTPResponseToDataProvider = async (
     switch (type) {
         case GET_ONE:
             if (resource === 'queryapis') {
-                json.id = json.name;
+                if (apiVersion(api) === 'v1.0') {
+                    json.id = json.name;
+                } else {
+                    json.id = json.name + '@' + json.domain;
+                }
             }
             if (resource === 'receivers' || resource === 'senders') {
                 let resourceJSONData = await fetch(
@@ -778,7 +789,11 @@ const convertHTTPResponseToDataProvider = async (
 
         case GET_LIST:
             if (resource === 'queryapis') {
-                json.map(_ => (_.id = _.name));
+                if (apiVersion(api) === 'v1.0') {
+                    json.map(_ => (_.id = _.name));
+                } else {
+                    json.map(_ => (_.id = _.name + '@' + _.domain));
+                }
                 return {
                     url,
                     data: json,
@@ -850,7 +865,11 @@ const convertHTTPResponseToDataProvider = async (
         default:
             // used for prev, next, first, last
             if (resource === 'queryapis') {
-                json.map(_ => (_.id = _.name));
+                if (apiVersion(api) === 'v1.0') {
+                    json.map(_ => (_.id = _.name));
+                } else {
+                    json.map(_ => (_.id = _.name + '@' + _.domain));
+                }
             }
             return { url, data: json };
     }

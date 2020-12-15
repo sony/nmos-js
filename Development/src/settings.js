@@ -19,7 +19,7 @@ const defaultUrl = api => {
         case QUERY_API:
             return baseUrl + '/x-nmos/query/v1.3';
         case DNSSD_API:
-            return baseUrl + '/x-dns-sd/v1.0';
+            return baseUrl + '/x-dns-sd/v1.1';
         default:
             // not expected to be used
             return '';

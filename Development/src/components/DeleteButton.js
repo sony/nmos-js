@@ -54,7 +54,7 @@ const DeleteButton = ({
             }
         },
         onFailure: error => {
-            if (error.hasOwnProperty('body'))
+            if (error.hasOwnProperty('body')) {
                 notify(
                     get(error.body, 'error') +
                         ' - ' +
@@ -63,6 +63,7 @@ const DeleteButton = ({
                         get(error.body, 'debug'),
                     'warning'
                 );
+            }
             notify(error.toString(), 'warning');
         },
     });

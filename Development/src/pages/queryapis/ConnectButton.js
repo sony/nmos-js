@@ -8,11 +8,16 @@ import { ConnectRegistryIcon } from '../../icons';
 const ConnectButton = ({ record, variant = 'contained', size }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [queryAPI, setQueryAPI] = useState(apiUrl(QUERY_API));
+
+    if (!record) {
+        return null;
+    }
+
+    const scheme = get(record, 'txt.api_proto');
 
     const makeQueryAPI = selectedAddress => {
         return (
-            get(record, 'txt.api_proto') +
+            scheme +
             '://' +
             selectedAddress +
             ':' +
@@ -23,20 +28,31 @@ const ConnectButton = ({ record, variant = 'contained', size }) => {
     };
 
     const changeQueryAPI = selectedAddress => {
-        const newQueryAPI = makeQueryAPI(selectedAddress);
-        setQueryAPI(newQueryAPI);
-        setApiUrl(QUERY_API, newQueryAPI);
+        setApiUrl(QUERY_API, makeQueryAPI(selectedAddress));
     };
 
-    if (!get(record, 'addresses')) {
-        return null;
-    }
+    // heuristic decision about whether to give the user a single-click connect
+    // or whether to pop up a menu of hosts to select from
+    const hosts = (() => {
+        const hostname = get(record, 'host_target');
+        const addresses = get(record, 'addresses');
+        if (!hostname.endsWith('local.')) {
+            // i.e. unicast DNS-SD hostname
+            return [hostname];
+        } else if (scheme === 'http' && addresses.length === 1) {
+            // i.e. mDNS hostname resolved to a single address used with HTTP
+            return [addresses[0]];
+        } else {
+            // i.e. mDNS hostname resolved to multiple addresses or used with HTTPS
+            return [hostname, ...addresses];
+        }
+    })();
 
     const handleButtonClick = event => {
-        if (get(record, 'addresses').length > 1) {
+        if (hosts.length > 1) {
             setAnchorEl(event.currentTarget);
         } else {
-            changeQueryAPI(get(record, 'addresses')[0]);
+            changeQueryAPI(hosts[0]);
             setSnackbarOpen(true);
         }
     };
@@ -75,7 +91,7 @@ const ConnectButton = ({ record, variant = 'contained', size }) => {
                 open={Boolean(anchorEl)}
                 onClose={() => setAnchorEl(null)}
             >
-                {get(record, 'addresses').map(option => (
+                {hosts.map(option => (
                     <MenuItem
                         key={option}
                         onClick={() => handleMenuItemClick(option)}
@@ -96,7 +112,7 @@ const ConnectButton = ({ record, variant = 'contained', size }) => {
                 ContentProps={{
                     'aria-describedby': 'text',
                 }}
-                message={<span id="text">Connected to: {queryAPI}</span>}
+                message={`Connected to: ${apiUrl(QUERY_API)}`}
             />
         </>
     );

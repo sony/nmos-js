@@ -29,7 +29,12 @@ import ActiveField from '../../components/ActiveField';
 import ConnectButtons from './ConnectButtons';
 import PaginationButtons from '../../components/PaginationButtons';
 import { ReceiversTitle } from './ReceiversShow';
-import { QUERY_API, apiUseRql, queryVersion } from '../../settings';
+import {
+    QUERY_API,
+    apiUseRql,
+    queryVersion,
+    useJSONSetting,
+} from '../../settings';
 
 const ConnectionManagementTab = ({ receiverData, basePath }) => {
     const baseFilter = useMemo(() => {
@@ -46,7 +51,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
         };
     }, [receiverData]);
 
-    const [filter, setFilter] = useState({});
+    const [filter, setFilter] = useJSONSetting('Connect Filter');
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination } = useGetList({
         basePath,

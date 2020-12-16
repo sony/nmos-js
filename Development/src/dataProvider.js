@@ -56,18 +56,8 @@ export const resourceUrl = (resource, subresourceQuery = '') => {
     return concatUrl(apiUrl(api), `/${res}${subresourceQuery}`);
 };
 
-const isNumber = value => {
-    return !isNaN(value) && !isNaN(parseFloat(value));
-};
-
 const isRational = value => {
     return has(value, 'numerator');
-};
-
-const isRationalNaN = value => {
-    const n = get(value, 'numerator');
-    const d = get(value, 'denominator');
-    return isNaN(n) && isNaN(d);
 };
 
 const encodeBasicKeyValueFilter = (key, value) => {
@@ -91,10 +81,10 @@ const encodeBasicKeyValueFilter = (key, value) => {
         const n = get(value, 'numerator');
         const d = get(value, 'denominator');
         const r = [];
-        if (!isNaN(n)) {
+        if (typeof n === 'number' && !isNaN(n)) {
             r.push(key + '.numerator=' + encodeURIComponent(n));
         }
-        if (!isNaN(d)) {
+        if (typeof d === 'number' && !isNaN(d)) {
             r.push(key + '.denominator=' + encodeURIComponent(d));
         }
         return r.join('&');
@@ -114,10 +104,9 @@ const encodeRQLNameChars = str => {
 const encodeRQLRational = value => {
     const n = get(value, 'numerator');
     const d = get(value, 'denominator');
-    return (
-        'rational:' +
-        encodeRQLNameChars((!isNaN(n) ? n : 0) + '/' + (!isNaN(d) ? d : 1))
-    );
+    const en = typeof n === 'number' && !isNaN(n) ? n : 0;
+    const ed = typeof d === 'number' && !isNaN(d) ? d : 1;
+    return 'rational:' + encodeRQLNameChars(en + '/' + ed);
 };
 
 const encodeRQLSampling = value => 'sampling:' + encodeRQLNameChars(value);
@@ -147,7 +136,12 @@ const encodeRQLKeyValueFilter = (key, value) => {
                 terms.push('eq(' + key + ',' + encodeRQLNameChars(value) + ')');
             }
         } else if (isRational(value)) {
-            if (!isRationalNaN(value)) {
+            const n = get(value, 'numerator');
+            const d = get(value, 'denominator');
+            if (
+                (typeof n === 'number' && !isNaN(n)) ||
+                (typeof d === 'number' && !isNaN(d))
+            ) {
                 terms.push('eq(' + key + ',' + encodeRQLRational(value) + ')');
             }
         } else if (value != null) {
@@ -521,6 +515,7 @@ const convertDataProviderRequestToHTTP = (
             if (allDifferences !== undefined) {
                 for (const d of allDifferences) {
                     if (d.rhs === '') {
+                        // if the user clears a text input, set the param to null
                         if (d.lhs !== null) {
                             differences.push({
                                 kind: d.kind,
@@ -529,14 +524,20 @@ const convertDataProviderRequestToHTTP = (
                                 rhs: null,
                             });
                         }
-                    } else if (isNumber(d.rhs)) {
+                    } else if (typeof d.rhs === 'string') {
+                        // ideally, if and only if the user enters a number without any extraneous cruft
+                        // (consider e.g. '233.252.0.0'),  set the param to the number
+                        // note that with the following implementation, we avoid e.g. ' ' being coerced to 0,
+                        // but accept that ' 0x2a ' is the answer to life, the universe and everything
+                        const n = Number(d.rhs.trim());
                         differences.push({
                             kind: d.kind,
                             lhs: d.lhs,
                             path: d.path,
-                            rhs: Number(d.rhs),
+                            rhs: !isNaN(n) ? n : d.rhs,
                         });
                     } else {
+                        // e.g. boolean from a toggle switch
                         differences.push(d);
                     }
                 }

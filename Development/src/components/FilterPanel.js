@@ -221,13 +221,13 @@ export const RateFilter = ({
     const [value, setValue] = useState(() => {
         if (filter[source] != null) {
             return {
-                numerator: get(filter[source], 'numerator'),
-                denominator: get(filter[source], 'denominator'),
+                numerator: get(filter[source], 'numerator') || '',
+                denominator: get(filter[source], 'denominator') || '',
             };
         } else if (defaultValue != null) {
             return {
-                numerator: get(defaultValue, 'numerator'),
-                denominator: get(defaultValue, 'denominator'),
+                numerator: get(defaultValue, 'numerator') || '',
+                denominator: get(defaultValue, 'denominator') || '',
             };
         } else {
             return {
@@ -295,8 +295,26 @@ export const RateFilter = ({
 };
 
 const FilterPanel = ({ children, defaultFilter, filter, setFilter }) => {
+    const cloneFilter = (child, autoFocus = false) =>
+        React.cloneElement(child, {
+            defaultValue: get(defaultFilter, get(child, 'props.source')),
+            filter: filter,
+            setFilter: setFilter,
+            autoFocus,
+        });
+
     const [anchorEl, setAnchorEl] = useState(null);
-    const [displayedFilters, setDisplayedFilters] = useState({});
+    const [displayedFilters, setDisplayedFilters] = useState(
+        React.Children.toArray(children).reduce((f, child) => {
+            const source = get(child, 'props.source');
+            const value = get(filter, source);
+            if (value || [0, false, null].includes(value)) {
+                f[source] = cloneFilter(child);
+            }
+            return f;
+        }, {})
+    );
+
     const handleClick = event => {
         setAnchorEl(event.currentTarget);
     };
@@ -308,12 +326,7 @@ const FilterPanel = ({ children, defaultFilter, filter, setFilter }) => {
         handleClose();
         setDisplayedFilters(f => ({
             ...f,
-            [get(child, 'props.source')]: React.cloneElement(child, {
-                defaultValue: get(defaultFilter, get(child, 'props.source')),
-                filter: filter,
-                setFilter: setFilter,
-                autoFocus,
-            }),
+            [get(child, 'props.source')]: cloneFilter(child, autoFocus),
         }));
     };
 

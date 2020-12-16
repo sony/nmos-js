@@ -19,9 +19,10 @@ import FilterPanel, {
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
+import { useJSONSetting } from '../../settings';
 
 const SubscriptionsList = props => {
-    const [filter, setFilter] = useState({});
+    const [filter, setFilter] = useJSONSetting('Subscriptions Filter');
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
         ...props,

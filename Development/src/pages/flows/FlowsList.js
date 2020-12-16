@@ -16,10 +16,10 @@ import FilterPanel, {
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
-import { queryVersion } from '../../settings';
+import { queryVersion, useJSONSetting } from '../../settings';
 
 const FlowsList = props => {
-    const [filter, setFilter] = useState({});
+    const [filter, setFilter] = useJSONSetting('Flows Filter');
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
         ...props,

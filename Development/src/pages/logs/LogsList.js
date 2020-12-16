@@ -45,14 +45,8 @@ const LogsList = props => {
                         <StringFilter source="timestamp" />
                         <NumberFilter source="level" />
                         <StringFilter source="message" />
-                        <StringFilter
-                            source="request_uri"
-                            label="Request URI"
-                        />
-                        <StringFilter
-                            source="http_method"
-                            label="HTTP Method"
-                        />
+                        <StringFilter source="request_uri" />
+                        <StringFilter source="http_method" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

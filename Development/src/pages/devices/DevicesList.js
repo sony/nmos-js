@@ -44,7 +44,7 @@ const DevicesList = props => {
                             <StringFilter source="description" />
                         )}
                         <StringFilter source="type" />
-                        <StringFilter source="id" label="ID" />
+                        <StringFilter source="id" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

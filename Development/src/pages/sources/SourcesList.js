@@ -45,19 +45,13 @@ const SourcesList = props => {
                         <StringFilter source="label" />
                         <StringFilter source="description" />
                         {queryVersion() >= 'v1.1' && (
-                            <RateFilter
-                                source="grain_rate"
-                                label="Grain Rate"
-                            />
+                            <RateFilter source="grain_rate" />
                         )}
                         <StringFilter source="format" />
                         {queryVersion() >= 'v1.3' && (
-                            <StringFilter
-                                source="event_type"
-                                label="Event Type"
-                            />
+                            <StringFilter source="event_type" />
                         )}
-                        <StringFilter source="id" label="ID" />
+                        <StringFilter source="id" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

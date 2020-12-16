@@ -27,24 +27,15 @@ import {
     SubscriptionIcon,
 } from '../icons';
 
+import labelize from '../components/labelize';
+
 const StyledListItem = withStyles({
     root: {
         paddingLeft: '24px',
     },
 })(ListItem);
 
-const titleCase = string => {
-    return string.replace(/\w\S*/g, txt => {
-        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-    });
-};
-
-const NavLinkMenuItem = ({
-    to,
-    icon,
-    label = titleCase(to.substr(1)),
-    ...props
-}) => {
+const NavLinkMenuItem = ({ to, icon, label = labelize(to), ...props }) => {
     const history = useHistory();
     const refresh = useRefresh();
     const refreshHandler = () => {

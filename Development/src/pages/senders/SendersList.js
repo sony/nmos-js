@@ -52,7 +52,7 @@ const SendersList = props => {
                                 label="Active"
                             />
                         )}
-                        <StringFilter source="id" label="ID" />
+                        <StringFilter source="id" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

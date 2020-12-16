@@ -99,33 +99,18 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             />
                         )}
                         <StringFilter source="id" label="Sender ID" />
-                        <StringFilter
-                            source="$flow.format"
-                            label="Flow Format"
-                        />
+                        <StringFilter source="$flow.format" />
                         {queryVersion() >= 'v1.1' && (
-                            <RateFilter
-                                source="$flow.grain_rate"
-                                label="Flow Grain Rate"
-                            />
+                            <RateFilter source="$flow.grain_rate" />
                         )}
                         {queryVersion() >= 'v1.1' && (
-                            <RateFilter
-                                source="$flow.sample_rate"
-                                label="Flow Sample Rate"
-                            />
+                            <RateFilter source="$flow.sample_rate" />
                         )}
                         {queryVersion() >= 'v1.1' && (
-                            <StringFilter
-                                source="$flow.media_type"
-                                label="Flow Media Type"
-                            />
+                            <StringFilter source="$flow.media_type" />
                         )}
                         {queryVersion() >= 'v1.3' && (
-                            <StringFilter
-                                source="$flow.event_type"
-                                label="Flow Event Type"
-                            />
+                            <StringFilter source="$flow.event_type" />
                         )}
                         {apiUseRql(QUERY_API) && (
                             <ConstFilter

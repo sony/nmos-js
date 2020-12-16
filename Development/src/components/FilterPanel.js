@@ -19,11 +19,7 @@ import get from 'lodash/get';
 import ClearIcon from '@material-ui/icons/Clear';
 import FilterListIcon from '@material-ui/icons/FilterList';
 
-const titleCase = string => {
-    return string.replace(/\w\S*/g, txt => {
-        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-    });
-};
+import labelize from './labelize';
 
 const StyledTableCell = withStyles({
     root: {
@@ -48,7 +44,7 @@ export const BooleanFilter = ({
             return true;
         }
     });
-    if (!label) label = titleCase(source);
+    if (!label) label = labelize(source);
 
     const inputRef = useRef();
     useEffect(() => {
@@ -83,7 +79,7 @@ export const BooleanFilter = ({
 };
 
 export const ConstFilter = ({ label, source, filter, setFilter }) => {
-    if (!label) label = titleCase(source);
+    if (!label) label = labelize(source);
 
     useEffect(() => {
         setFilter(f => ({ ...f, [source]: null }));
@@ -120,7 +116,7 @@ export const NumberFilter = ({
             return '';
         }
     });
-    if (!label) label = titleCase(source);
+    if (!label) label = labelize(source);
 
     const inputRef = useRef();
     useEffect(() => {
@@ -174,7 +170,7 @@ export const StringFilter = ({
             return '';
         }
     });
-    if (!label) label = titleCase(source);
+    if (!label) label = labelize(source);
 
     const inputRef = useRef();
     useEffect(() => {
@@ -236,7 +232,7 @@ export const RateFilter = ({
             };
         }
     });
-    if (!label) label = titleCase(source);
+    if (!label) label = labelize(source);
 
     const inputRef = useRef();
     useEffect(() => {
@@ -392,9 +388,8 @@ const FilterPanel = ({ children, defaultFilter, filter, setFilter }) => {
                     if (child) {
                         return (
                             <MenuItem onClick={() => addFilter(child, true)}>
-                                {get(child, 'props.label')
-                                    ? get(child, 'props.label')
-                                    : titleCase(get(child, 'props.source'))}
+                                {get(child, 'props.label') ||
+                                    labelize(get(child, 'props.source'))}
                             </MenuItem>
                         );
                     }

@@ -2,42 +2,21 @@ import React from 'react';
 import {
     BooleanField,
     FunctionField,
-    ListButton,
     ShowContextProvider,
     ShowView,
     SimpleShowLayout,
     TextField,
     Toolbar,
-    TopToolbar,
     useRecordContext,
     useShowController,
 } from 'react-admin';
 import get from 'lodash/get';
 import DeleteButton from '../../components/DeleteButton';
 import MapObject from '../../components/ObjectField';
-import RawButton from '../../components/RawButton';
+import ResourceShowActions from '../../components/ResourceShowActions';
+import ResourceTitle from '../../components/ResourceTitle';
 import UrlField from '../../components/URLField';
 import { queryVersion } from '../../settings';
-
-const SubscriptionsTitle = ({ record }) => {
-    return (
-        <span>
-            Subscription:{' '}
-            {record
-                ? record.label
-                    ? `${record.label}`
-                    : `${record.id}`
-                : 'Unknown'}
-        </span>
-    );
-};
-
-const SubscriptionsShowActions = ({ basePath, data, resource }) => (
-    <TopToolbar title={<SubscriptionsTitle />}>
-        {data ? <RawButton record={data} resource={resource} /> : null}
-        <ListButton basePath={basePath} />
-    </TopToolbar>
-);
 
 export const SubscriptionsShow = props => {
     const controllerProps = useShowController(props);
@@ -54,8 +33,8 @@ const SubscriptionsShowView = props => {
         <>
             <ShowView
                 {...props}
-                title={<SubscriptionsTitle />}
-                actions={<SubscriptionsShowActions />}
+                title={<ResourceTitle />}
+                actions={<ResourceShowActions />}
             >
                 <SimpleShowLayout>
                     <TextField source="id" label="ID" />

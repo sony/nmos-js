@@ -4,7 +4,6 @@ import {
     BooleanField,
     Datagrid,
     FunctionField,
-    ListButton,
     ReferenceArrayField,
     ReferenceField,
     ReferenceManyField,
@@ -13,35 +12,15 @@ import {
     SimpleShowLayout,
     SingleFieldList,
     TextField,
-    TopToolbar,
     useShowController,
 } from 'react-admin';
+import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import MapObject from '../../components/ObjectField';
-import RawButton from '../../components/RawButton';
+import ResourceShowActions from '../../components/ResourceShowActions';
+import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
-import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import { queryVersion } from '../../settings';
-
-const DevicesTitle = ({ record }) => {
-    return (
-        <span>
-            Device:{' '}
-            {record
-                ? record.label
-                    ? `${record.label}`
-                    : `${record.id}`
-                : 'Unknown'}
-        </span>
-    );
-};
-
-const DevicesShowActions = ({ basePath, data, resource }) => (
-    <TopToolbar title={<DevicesTitle />}>
-        {data ? <RawButton record={data} resource={resource} /> : null}
-        <ListButton title={'Return to ' + basePath} basePath={basePath} />
-    </TopToolbar>
-);
 
 export const DevicesShow = props => {
     const controllerProps = useShowController(props);
@@ -56,8 +35,8 @@ const DevicesShowView = props => {
     return (
         <ShowView
             {...props}
-            title={<DevicesTitle />}
-            actions={<DevicesShowActions />}
+            title={<ResourceTitle />}
+            actions={<ResourceShowActions />}
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />

@@ -16,28 +16,16 @@ import {
     useRecordContext,
     useShowController,
 } from 'react-admin';
-import MapObject from '../../components/ObjectField';
-import RawButton from '../../components/RawButton';
-import RateField from '../../components/RateField';
-import TAIField from '../../components/TAIField';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import MapObject from '../../components/ObjectField';
+import RateField from '../../components/RateField';
+import RawButton from '../../components/RawButton';
+import ResourceTitle from '../../components/ResourceTitle';
+import TAIField from '../../components/TAIField';
 import { queryVersion } from '../../settings';
 
-const SourcesTitle = ({ record }) => {
-    return (
-        <span>
-            Source:{' '}
-            {record
-                ? record.label
-                    ? `${record.label}`
-                    : `${record.id}`
-                : 'Unknown'}
-        </span>
-    );
-};
-
 const SourcesShowActions = ({ basePath, data, resource }) => (
-    <TopToolbar title={<SourcesTitle />}>
+    <TopToolbar title={<ResourceTitle />}>
         {data ? <RawButton record={data} resource={resource} /> : null}
         <ListButton title={'Return to ' + basePath} basePath={basePath} />
     </TopToolbar>
@@ -57,7 +45,7 @@ const SourcesShowView = props => {
     return (
         <ShowView
             {...props}
-            title={<SourcesTitle />}
+            title={<ResourceTitle />}
             actions={<SourcesShowActions />}
         >
             <SimpleShowLayout>

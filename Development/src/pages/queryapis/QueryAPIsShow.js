@@ -2,31 +2,19 @@ import React from 'react';
 import {
     BooleanField,
     FunctionField,
-    ListButton,
     ShowContextProvider,
     ShowView,
     SimpleShowLayout,
     TextField,
     Toolbar,
-    TopToolbar,
     useRecordContext,
     useShowController,
 } from 'react-admin';
 import get from 'lodash/get';
-import ConnectButton from './ConnectButton';
 import ItemArrayField from '../../components/ItemArrayField';
-import RawButton from '../../components/RawButton';
-
-const QueryAPIsTitle = ({ record }) => {
-    return <span>Query API{record ? `: ${record.name}` : ''}</span>;
-};
-
-const QueryAPIsShowActions = ({ basePath, data, resource }) => (
-    <TopToolbar title={<QueryAPIsTitle />}>
-        {data ? <RawButton record={data} resource={resource} /> : null}
-        <ListButton title={'Return to ' + basePath} basePath={basePath} />
-    </TopToolbar>
-);
+import ResourceShowActions from '../../components/ResourceShowActions';
+import ResourceTitle from '../../components/ResourceTitle';
+import ConnectButton from './ConnectButton';
 
 export const QueryAPIsShow = props => {
     const controllerProps = useShowController(props);
@@ -43,8 +31,8 @@ const QueryAPIsShowView = props => {
         <>
             <ShowView
                 {...props}
-                title={<QueryAPIsTitle />}
-                actions={<QueryAPIsShowActions />}
+                title={<ResourceTitle resourceName="Query API" />}
+                actions={<ResourceShowActions />}
             >
                 <SimpleShowLayout>
                     <TextField source="name" />

@@ -24,11 +24,11 @@ import FilterPanel, {
     RateFilter,
     StringFilter,
 } from '../../components/FilterPanel';
-import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import ActiveField from '../../components/ActiveField';
-import ConnectButtons from './ConnectButtons';
+import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import PaginationButtons from '../../components/PaginationButtons';
-import { ReceiversTitle } from './ReceiversShow';
+import ResourceTitle from '../../components/ResourceTitle';
+import ConnectButtons from './ConnectButtons';
 import {
     QUERY_API,
     apiUseRql,
@@ -73,7 +73,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
         <>
             <TitleForRecord
                 record={receiverData}
-                title={<ReceiversTitle record={receiverData} />}
+                title={<ResourceTitle record={receiverData} />}
             />
             <Card>
                 <CardContent>

@@ -8,6 +8,7 @@ import { useTheme } from '@material-ui/styles';
 import { concatUrl } from '../settings';
 import { resourceUrl } from '../dataProvider';
 
+// cf. ResourceShowActions
 export default function ConnectionShowActions({ basePath, id, resource }) {
     const { data } = useGetOne(resource, id);
 

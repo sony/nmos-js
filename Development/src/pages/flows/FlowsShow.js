@@ -3,7 +3,6 @@ import {
     ArrayField,
     Datagrid,
     FunctionField,
-    ListButton,
     ReferenceArrayField,
     ReferenceField,
     ReferenceManyField,
@@ -12,36 +11,16 @@ import {
     SimpleShowLayout,
     SingleFieldList,
     TextField,
-    TopToolbar,
     useRecordContext,
     useShowController,
 } from 'react-admin';
-import MapObject from '../../components/ObjectField';
-import RawButton from '../../components/RawButton';
-import RateField from '../../components/RateField';
-import TAIField from '../../components/TAIField';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import MapObject from '../../components/ObjectField';
+import RateField from '../../components/RateField';
+import ResourceShowActions from '../../components/ResourceShowActions';
+import ResourceTitle from '../../components/ResourceTitle';
+import TAIField from '../../components/TAIField';
 import { queryVersion } from '../../settings';
-
-const FlowsTitle = ({ record }) => {
-    return (
-        <span>
-            Flow:{' '}
-            {record
-                ? record.label
-                    ? `${record.label}`
-                    : `${record.id}`
-                : 'Unknown'}
-        </span>
-    );
-};
-
-const FlowsShowActions = ({ basePath, data, resource }) => (
-    <TopToolbar title={<FlowsTitle />}>
-        {data ? <RawButton record={data} resource={resource} /> : null}
-        <ListButton title={'Return to ' + basePath} basePath={basePath} />
-    </TopToolbar>
-);
 
 export const FlowsShow = props => {
     const controllerProps = useShowController(props);
@@ -57,8 +36,8 @@ const FlowsShowView = props => {
     return (
         <ShowView
             {...props}
-            title={<FlowsTitle />}
-            actions={<FlowsShowActions />}
+            title={<ResourceTitle />}
+            actions={<ResourceShowActions />}
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />

@@ -30,7 +30,7 @@ const QueryAPIsList = props => {
                 <ListActions url={url} />
             </div>
             <Card>
-                <Title title={'Nodes'} />
+                <Title title={'Query APIs'} />
                 <CardContent>
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter

@@ -19,11 +19,7 @@ import get from 'lodash/get';
 import ClearIcon from '@material-ui/icons/Clear';
 import FilterListIcon from '@material-ui/icons/FilterList';
 
-const titleCase = string => {
-    return string.replace(/\w\S*/g, txt => {
-        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-    });
-};
+import labelize from './labelize';
 
 const StyledTableCell = withStyles({
     root: {
@@ -48,7 +44,7 @@ export const BooleanFilter = ({
             return true;
         }
     });
-    if (!label) label = titleCase(source);
+    if (!label) label = labelize(source);
 
     const inputRef = useRef();
     useEffect(() => {
@@ -83,7 +79,7 @@ export const BooleanFilter = ({
 };
 
 export const ConstFilter = ({ label, source, filter, setFilter }) => {
-    if (!label) label = titleCase(source);
+    if (!label) label = labelize(source);
 
     useEffect(() => {
         setFilter(f => ({ ...f, [source]: null }));
@@ -120,7 +116,7 @@ export const NumberFilter = ({
             return '';
         }
     });
-    if (!label) label = titleCase(source);
+    if (!label) label = labelize(source);
 
     const inputRef = useRef();
     useEffect(() => {
@@ -174,7 +170,7 @@ export const StringFilter = ({
             return '';
         }
     });
-    if (!label) label = titleCase(source);
+    if (!label) label = labelize(source);
 
     const inputRef = useRef();
     useEffect(() => {
@@ -221,13 +217,13 @@ export const RateFilter = ({
     const [value, setValue] = useState(() => {
         if (filter[source] != null) {
             return {
-                numerator: get(filter[source], 'numerator'),
-                denominator: get(filter[source], 'denominator'),
+                numerator: get(filter[source], 'numerator') || '',
+                denominator: get(filter[source], 'denominator') || '',
             };
         } else if (defaultValue != null) {
             return {
-                numerator: get(defaultValue, 'numerator'),
-                denominator: get(defaultValue, 'denominator'),
+                numerator: get(defaultValue, 'numerator') || '',
+                denominator: get(defaultValue, 'denominator') || '',
             };
         } else {
             return {
@@ -236,7 +232,7 @@ export const RateFilter = ({
             };
         }
     });
-    if (!label) label = titleCase(source);
+    if (!label) label = labelize(source);
 
     const inputRef = useRef();
     useEffect(() => {
@@ -295,8 +291,26 @@ export const RateFilter = ({
 };
 
 const FilterPanel = ({ children, defaultFilter, filter, setFilter }) => {
+    const cloneFilter = (child, autoFocus = false) =>
+        React.cloneElement(child, {
+            defaultValue: get(defaultFilter, get(child, 'props.source')),
+            filter: filter,
+            setFilter: setFilter,
+            autoFocus,
+        });
+
     const [anchorEl, setAnchorEl] = useState(null);
-    const [displayedFilters, setDisplayedFilters] = useState({});
+    const [displayedFilters, setDisplayedFilters] = useState(
+        React.Children.toArray(children).reduce((f, child) => {
+            const source = get(child, 'props.source');
+            const value = get(filter, source);
+            if (value || [0, false, null].includes(value)) {
+                f[source] = cloneFilter(child);
+            }
+            return f;
+        }, {})
+    );
+
     const handleClick = event => {
         setAnchorEl(event.currentTarget);
     };
@@ -308,12 +322,7 @@ const FilterPanel = ({ children, defaultFilter, filter, setFilter }) => {
         handleClose();
         setDisplayedFilters(f => ({
             ...f,
-            [get(child, 'props.source')]: React.cloneElement(child, {
-                defaultValue: get(defaultFilter, get(child, 'props.source')),
-                filter: filter,
-                setFilter: setFilter,
-                autoFocus,
-            }),
+            [get(child, 'props.source')]: cloneFilter(child, autoFocus),
         }));
     };
 
@@ -379,9 +388,8 @@ const FilterPanel = ({ children, defaultFilter, filter, setFilter }) => {
                     if (child) {
                         return (
                             <MenuItem onClick={() => addFilter(child, true)}>
-                                {get(child, 'props.label')
-                                    ? get(child, 'props.label')
-                                    : titleCase(get(child, 'props.source'))}
+                                {get(child, 'props.label') ||
+                                    labelize(get(child, 'props.source'))}
                             </MenuItem>
                         );
                     }

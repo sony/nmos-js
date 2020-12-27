@@ -16,10 +16,10 @@ import FilterPanel, {
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
-import { queryVersion } from '../../settings';
+import { queryVersion, useJSONSetting } from '../../settings';
 
 const SourcesList = props => {
-    const [filter, setFilter] = useState({});
+    const [filter, setFilter] = useJSONSetting('Sources Filter');
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
         ...props,
@@ -45,19 +45,13 @@ const SourcesList = props => {
                         <StringFilter source="label" />
                         <StringFilter source="description" />
                         {queryVersion() >= 'v1.1' && (
-                            <RateFilter
-                                source="grain_rate"
-                                label="Grain Rate"
-                            />
+                            <RateFilter source="grain_rate" />
                         )}
                         <StringFilter source="format" />
                         {queryVersion() >= 'v1.3' && (
-                            <StringFilter
-                                source="event_type"
-                                label="Event Type"
-                            />
+                            <StringFilter source="event_type" />
                         )}
-                        <StringFilter source="id" label="ID" />
+                        <StringFilter source="id" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

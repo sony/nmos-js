@@ -13,10 +13,10 @@ import FilterPanel, { StringFilter } from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
-import { queryVersion } from '../../settings';
+import { queryVersion, useJSONSetting } from '../../settings';
 
 const DevicesList = props => {
-    const [filter, setFilter] = useState({});
+    const [filter, setFilter] = useJSONSetting('Devices Filter');
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
         ...props,
@@ -44,7 +44,7 @@ const DevicesList = props => {
                             <StringFilter source="description" />
                         )}
                         <StringFilter source="type" />
-                        <StringFilter source="id" label="ID" />
+                        <StringFilter source="id" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

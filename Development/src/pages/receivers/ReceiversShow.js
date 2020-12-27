@@ -20,24 +20,14 @@ import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
-import ReceiverConstraintSetCardsGrid from './ReceiverConstraintSets';
-import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
 import MapObject from '../../components/ObjectField';
+import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
 import TransportFileViewer from '../../components/TransportFileViewer';
 import ConnectionManagementTab from './ConnectionManagementTab';
+import ReceiverConstraintSetCardsGrid from './ReceiverConstraintSets';
+import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
 import { queryVersion } from '../../settings';
-
-export const ReceiversTitle = ({ record }) => (
-    <span>
-        Receiver:{' '}
-        {record
-            ? record.label
-                ? `${record.label}`
-                : `${record.id}`
-            : 'Unknown'}
-    </span>
-);
 
 export const ReceiversShow = props => {
     const controllerProps = useShowController(props);
@@ -144,7 +134,7 @@ const ReceiversShowView = props => {
 
 const ShowSummaryTab = ({ record, ...props }) => {
     return (
-        <ShowView {...props} title={<ReceiversTitle />} actions={<Fragment />}>
+        <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
                 <TAIField source="version" />
@@ -222,7 +212,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
 
 const ShowActiveTab = ({ record, ...props }) => {
     return (
-        <ShowView {...props} title={<ReceiversTitle />} actions={<Fragment />}>
+        <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
                 {get(record, '$active.sender_id') && (
@@ -266,7 +256,7 @@ const ShowActiveTab = ({ record, ...props }) => {
 
 const ShowStagedTab = ({ record, ...props }) => {
     return (
-        <ShowView {...props} title={<ReceiversTitle />} actions={<Fragment />}>
+        <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
                 {get(record, '$staged.sender_id') && (

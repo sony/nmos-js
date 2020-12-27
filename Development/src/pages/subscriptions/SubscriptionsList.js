@@ -19,9 +19,10 @@ import FilterPanel, {
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
+import { useJSONSetting } from '../../settings';
 
 const SubscriptionsList = props => {
-    const [filter, setFilter] = useState({});
+    const [filter, setFilter] = useJSONSetting('Subscriptions Filter');
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
         ...props,
@@ -44,16 +45,10 @@ const SubscriptionsList = props => {
                 <Title title={'Subscriptions'} />
                 <CardContent>
                     <FilterPanel filter={filter} setFilter={setFilter}>
-                        <StringFilter
-                            source="resource_path"
-                            label="Resource Path"
-                        />
+                        <StringFilter source="resource_path" />
                         <BooleanFilter source="persist" />
-                        <NumberFilter
-                            source="max_update_rate_ms"
-                            label="Max Update Rate (ms)"
-                        />
-                        <StringFilter source="id" label="ID" />
+                        <NumberFilter source="max_update_rate_ms" />
+                        <StringFilter source="id" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

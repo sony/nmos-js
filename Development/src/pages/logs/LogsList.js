@@ -16,9 +16,10 @@ import FilterPanel, {
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
+import { useJSONSetting } from '../../settings';
 
 const LogsList = props => {
-    const [filter, setFilter] = useState({});
+    const [filter, setFilter] = useJSONSetting('Logs Filter');
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
         ...props,
@@ -44,14 +45,8 @@ const LogsList = props => {
                         <StringFilter source="timestamp" />
                         <NumberFilter source="level" />
                         <StringFilter source="message" />
-                        <StringFilter
-                            source="request_uri"
-                            label="Request URI"
-                        />
-                        <StringFilter
-                            source="http_method"
-                            label="HTTP Method"
-                        />
+                        <StringFilter source="request_uri" />
+                        <StringFilter source="http_method" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

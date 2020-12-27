@@ -4,48 +4,27 @@ import {
     BooleanField,
     Datagrid,
     FunctionField,
-    ListButton,
     ReferenceManyField,
     ShowContextProvider,
     ShowView,
     SimpleShowLayout,
     SingleFieldList,
     TextField,
-    TopToolbar,
     useShowController,
 } from 'react-admin';
 import LinkIcon from '@material-ui/icons/Link';
+import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import ItemArrayField from '../../components/ItemArrayField';
 import MapObject from '../../components/ObjectField';
-import RawButton from '../../components/RawButton';
+import ResourceShowActions from '../../components/ResourceShowActions';
+import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
-import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import { queryVersion } from '../../settings';
-
-const NodesTitle = ({ record }) => {
-    return (
-        <span>
-            Node:{' '}
-            {record
-                ? record.label
-                    ? `${record.label}`
-                    : `${record.id}`
-                : 'Unknown'}
-        </span>
-    );
-};
 
 function buildLink(record) {
     return record.protocol + '://' + record.host + ':' + record.port;
 }
-
-const NodesShowActions = ({ basePath, data, resource }) => (
-    <TopToolbar title={<NodesTitle />}>
-        {data ? <RawButton record={data} resource={resource} /> : null}
-        <ListButton title={'Return to ' + basePath} basePath={basePath} />
-    </TopToolbar>
-);
 
 export const NodesShow = props => {
     const controllerProps = useShowController(props);
@@ -60,8 +39,8 @@ const NodesShowView = props => {
     return (
         <ShowView
             {...props}
-            title={<NodesTitle />}
-            actions={<NodesShowActions />}
+            title={<ResourceTitle />}
+            actions={<ResourceShowActions />}
         >
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />

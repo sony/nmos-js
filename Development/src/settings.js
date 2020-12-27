@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 export const LOGGING_API = 'Logging API';
 export const QUERY_API = 'Query API';
 export const DNSSD_API = 'DNS-SD API';
@@ -63,4 +65,26 @@ export const setApiUseRql = (api, rql) => {
     } else {
         window.localStorage.removeItem(USE_RQL);
     }
+};
+
+export const useJSONSetting = (name, defaultValue = {}) => {
+    const [setting, setSetting] = useState(() => {
+        try {
+            const stored = window.localStorage.getItem(name);
+            return JSON.parse(stored) || defaultValue;
+        } catch (e) {
+            return defaultValue;
+        }
+    });
+    useEffect(() => {
+        // note that e.g. NaN becomes null
+        const stored = JSON.stringify(setting);
+        if (stored !== JSON.stringify(defaultValue)) {
+            window.localStorage.setItem(name, stored);
+        } else {
+            window.localStorage.removeItem(name);
+        }
+    }, [name, setting, defaultValue]);
+
+    return [setting, setSetting];
 };

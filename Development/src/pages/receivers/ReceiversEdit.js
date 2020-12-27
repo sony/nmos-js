@@ -15,18 +15,8 @@ import ClearIcon from '@material-ui/icons/Clear';
 import { useTheme } from '@material-ui/styles';
 import ConnectionEditActions from '../../components/ConnectionEditActions';
 import ConnectionEditToolbar from '../../components/ConnectionEditToolbar';
+import ResourceTitle from '../../components/ResourceTitle';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
-
-const ReceiversTitle = ({ record }) => (
-    <span>
-        Receiver:{' '}
-        {record
-            ? record.label
-                ? `${record.label}`
-                : `${record.id}`
-            : 'Unknown'}
-    </span>
-);
 
 const ReceiversEdit = props => {
     const theme = useTheme();
@@ -87,7 +77,7 @@ const EditStagedTab = props => (
     <Edit
         {...props}
         undoable={false}
-        title={<ReceiversTitle />}
+        title={<ResourceTitle />}
         actions={<Fragment />}
     >
         <SimpleForm

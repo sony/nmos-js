@@ -17,10 +17,10 @@ import FilterPanel, {
     BooleanFilter,
     StringFilter,
 } from '../../components/FilterPanel';
-import { queryVersion } from '../../settings';
+import { queryVersion, useJSONSetting } from '../../settings';
 
 const ReceiversList = props => {
-    const [filter, setFilter] = useState({});
+    const [filter, setFilter] = useJSONSetting('Receivers Filter');
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination, url } = useGetList({
         ...props,
@@ -53,7 +53,7 @@ const ReceiversList = props => {
                                 label="Active"
                             />
                         )}
-                        <StringFilter source="id" label="ID" />
+                        <StringFilter source="id" />
                     </FilterPanel>
                     <Table>
                         <TableHead>

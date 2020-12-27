@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     Card,
     CardContent,
@@ -13,9 +13,10 @@ import FilterPanel, { StringFilter } from '../../components/FilterPanel';
 import ListActions from '../../components/ListActions';
 import ConnectButton from './ConnectButton';
 import useGetList from '../../components/useGetList';
+import { useJSONSetting } from '../../settings';
 
 const QueryAPIsList = props => {
-    const [filter, setFilter] = useState({});
+    const [filter, setFilter] = useJSONSetting('Query APIs Filter');
     const { data, loaded, url } = useGetList({
         ...props,
         filter,
@@ -29,7 +30,7 @@ const QueryAPIsList = props => {
                 <ListActions url={url} />
             </div>
             <Card>
-                <Title title={'Nodes'} />
+                <Title title={'Query APIs'} />
                 <CardContent>
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter

@@ -24,12 +24,17 @@ import FilterPanel, {
     RateFilter,
     StringFilter,
 } from '../../components/FilterPanel';
-import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import ActiveField from '../../components/ActiveField';
-import ConnectButtons from './ConnectButtons';
+import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import PaginationButtons from '../../components/PaginationButtons';
-import { ReceiversTitle } from './ReceiversShow';
-import { QUERY_API, apiUseRql, queryVersion } from '../../settings';
+import ResourceTitle from '../../components/ResourceTitle';
+import ConnectButtons from './ConnectButtons';
+import {
+    QUERY_API,
+    apiUseRql,
+    queryVersion,
+    useJSONSetting,
+} from '../../settings';
 
 const ConnectionManagementTab = ({ receiverData, basePath }) => {
     const baseFilter = useMemo(() => {
@@ -46,7 +51,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
         };
     }, [receiverData]);
 
-    const [filter, setFilter] = useState({});
+    const [filter, setFilter] = useJSONSetting('Connect Filter');
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination } = useGetList({
         basePath,
@@ -68,7 +73,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
         <>
             <TitleForRecord
                 record={receiverData}
-                title={<ReceiversTitle record={receiverData} />}
+                title={<ResourceTitle record={receiverData} />}
             />
             <Card>
                 <CardContent>
@@ -94,33 +99,18 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             />
                         )}
                         <StringFilter source="id" label="Sender ID" />
-                        <StringFilter
-                            source="$flow.format"
-                            label="Flow Format"
-                        />
+                        <StringFilter source="$flow.format" />
                         {queryVersion() >= 'v1.1' && (
-                            <RateFilter
-                                source="$flow.grain_rate"
-                                label="Flow Grain Rate"
-                            />
+                            <RateFilter source="$flow.grain_rate" />
                         )}
                         {queryVersion() >= 'v1.1' && (
-                            <RateFilter
-                                source="$flow.sample_rate"
-                                label="Flow Sample Rate"
-                            />
+                            <RateFilter source="$flow.sample_rate" />
                         )}
                         {queryVersion() >= 'v1.1' && (
-                            <StringFilter
-                                source="$flow.media_type"
-                                label="Flow Media Type"
-                            />
+                            <StringFilter source="$flow.media_type" />
                         )}
                         {queryVersion() >= 'v1.3' && (
-                            <StringFilter
-                                source="$flow.event_type"
-                                label="Flow Event Type"
-                            />
+                            <StringFilter source="$flow.event_type" />
                         )}
                         {apiUseRql(QUERY_API) && (
                             <ConstFilter

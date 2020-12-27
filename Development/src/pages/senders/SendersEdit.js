@@ -14,19 +14,9 @@ import set from 'lodash/set';
 import { useTheme } from '@material-ui/styles';
 import ClearIcon from '@material-ui/icons/Clear';
 import ConnectionEditActions from '../../components/ConnectionEditActions';
-import SenderTransportParamsCardsGrid from './SenderTransportParams';
 import ConnectionEditToolbar from '../../components/ConnectionEditToolbar';
-
-const SendersTitle = ({ record }) => (
-    <span>
-        Sender:{' '}
-        {record
-            ? record.label
-                ? `${record.label}`
-                : `${record.id}`
-            : 'Unknown'}
-    </span>
-);
+import ResourceTitle from '../../components/ResourceTitle';
+import SenderTransportParamsCardsGrid from './SenderTransportParams';
 
 const SendersEdit = props => {
     const theme = useTheme();
@@ -64,6 +54,11 @@ const SendersEdit = props => {
                             component={Link}
                             to={`${props.basePath}/${props.id}/show/staged`}
                         />
+                        <Tab
+                            label="Transportfile"
+                            component={Link}
+                            to={`${props.basePath}/${props.id}/show/transportfile`}
+                        />
                     </Tabs>
                 </Paper>
                 <span style={{ flexGrow: 1 }} />
@@ -82,7 +77,7 @@ const EditStagedTab = props => (
     <Edit
         {...props}
         undoable={false}
-        title={<SendersTitle />}
+        title={<ResourceTitle />}
         actions={<Fragment />}
     >
         <SimpleForm

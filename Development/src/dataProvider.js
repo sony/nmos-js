@@ -674,6 +674,79 @@ const getEndpoints = (addresses, resource, id) => {
     });
 };
 
+const getChannelMappingEndPoints = (addresses, endpoints) => {
+    // Looking for the first promise to succeed or all to fail
+    const invertPromise = p => new Promise((res, rej) => p.then(rej, res));
+    const firstOf = ps => invertPromise(Promise.all(ps.map(invertPromise)));
+    const endpointData = [];
+    let channelMappingAPI;
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    return new Promise((resolve, reject) => {
+        firstOf(
+            addresses.map(address => {
+                return timeout(
+                    5000,
+                    fetch(concatUrl(address, ``), {
+                        signal,
+                    })
+                );
+            })
+        )
+            .then(response => {
+                channelMappingAPI = response.url;
+                return endpoints;
+            })
+            .then(endpoints => {
+                if (get(endpoints, 'code')) {
+                    controller.abort();
+                    reject(new Error(`${endpoints.error} - ${endpoints.code}`));
+                    return;
+                }
+                Promise.all(
+                    endpoints.map(endpoint =>
+                        fetch(concatUrl(channelMappingAPI, `/${endpoint}`), {
+                            signal,
+                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    return response.text();
+                                }
+                            })
+                            .then(text => {
+                                try {
+                                    return JSON.parse(text);
+                                } catch (e) {
+                                    return text;
+                                }
+                            })
+                            .then(data => {
+                                endpointData.push({
+                                    [`$${
+                                        endpoint.split('/').slice(-1)[0]
+                                    }`]: data,
+                                });
+                            })
+                            .catch(error => {
+                                throw error;
+                            })
+                    )
+                ).then(() => {
+                    endpointData.push({
+                        $channelMappingAPI: channelMappingAPI,
+                    });
+                    controller.abort();
+                    resolve(endpointData);
+                });
+            })
+            .catch(errors => {
+                controller.abort();
+                reject(errors[0]);
+            });
+    });
+};
+
 const filterAsync = async (data, predicate) => {
     let result = await Promise.all(
         data.map((element, index) => predicate(element, index, data))
@@ -784,6 +857,60 @@ const convertHTTPResponseToDataProvider = async (
                     assign(json, {
                         $transporttype: 'urn:x-nmos:transport:rtp',
                     });
+                }
+            }
+            if (resource === 'devices') {
+                let deviceJSONData = await fetch(
+                    resourceUrl(resource, `/${params.id}`)
+                ).then(result => result.json());
+
+                let channelmappingAddresses = {};
+                // Device.controls was added in v1.1
+                if (deviceJSONData.hasOwnProperty('controls')) {
+                    deviceJSONData.controls.forEach(control => {
+                        const type = control.type.replace('.', '_');
+                        if (type.startsWith('urn:x-nmos:control:cm-ctrl')) {
+                            if (!channelmappingAddresses.hasOwnProperty(type)) {
+                                set(channelmappingAddresses, type, [
+                                    control.href,
+                                ]);
+                            } else {
+                                channelmappingAddresses[type].push(
+                                    control.href
+                                );
+                            }
+                        }
+                    });
+                }
+                // Return IS-04 if no channel mapping API endpoints
+                if (Object.keys(channelmappingAddresses).length === 0) {
+                    return { url, data: json };
+                }
+
+                const versions = Object.keys(channelmappingAddresses)
+                    .sort()
+                    .reverse();
+
+                let ChannelMappingEndPointData;
+
+                for (let version of versions) {
+                    try {
+                        ChannelMappingEndPointData = await getChannelMappingEndPoints(
+                            channelmappingAddresses[version],
+                            ['io', 'map/active', 'map/activations']
+                        );
+                    } catch (e) {}
+                    if (ChannelMappingEndPointData) break;
+                }
+
+                // Return IS-04 if no channel mapping URL was able to connect
+                if (ChannelMappingEndPointData === undefined) {
+                    set(json, '$channelMappingAPI', null);
+                    return { url, data: json };
+                }
+
+                for (let i of ChannelMappingEndPointData) {
+                    assign(json, i);
                 }
             }
             return { url, data: json };

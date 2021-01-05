@@ -1,9 +1,10 @@
-import React from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import {
     ArrayField,
     BooleanField,
     Datagrid,
     FunctionField,
+    Loading,
     ReferenceArrayField,
     ReferenceField,
     ReferenceManyField,
@@ -12,15 +13,22 @@ import {
     SimpleShowLayout,
     SingleFieldList,
     TextField,
+    Title,
+    useRecordContext,
     useShowController,
 } from 'react-admin';
+import { Card, CardContent, Paper, Tab, Tabs } from '@material-ui/core';
+import { Link, Route } from 'react-router-dom';
+import get from 'lodash/get';
+import { useTheme } from '@material-ui/styles';
 import ChipConditionalLabel from '../../components/ChipConditionalLabel';
 import MapObject from '../../components/ObjectField';
-import ResourceShowActions from '../../components/ResourceShowActions';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
 import { queryVersion } from '../../settings';
+import MappingShowActions from '../../components/MappingShowActions';
+import ChannelMappingMatrix from './ChannelMappingMatrix';
 
 export const DevicesShow = props => {
     const controllerProps = useShowController(props);
@@ -32,12 +40,72 @@ export const DevicesShow = props => {
 };
 
 const DevicesShowView = props => {
+    const { record } = useRecordContext();
+    const [useIS08API, setUseIS08API] = useState(false);
+    useEffect(() => {
+        if (get(record, '$channelMappingAPI') !== undefined) {
+            setUseIS08API(true);
+        } else {
+            setUseIS08API(false);
+        }
+    }, [record]);
+
+    const theme = useTheme();
+    const tabBackgroundColor =
+        theme.palette.type === 'light'
+            ? theme.palette.grey[100]
+            : theme.palette.grey[900];
     return (
-        <ShowView
-            {...props}
-            title={<ResourceTitle />}
-            actions={<ResourceShowActions />}
-        >
+        <>
+            <div style={{ display: 'flex' }}>
+                <Paper
+                    style={{
+                        alignSelf: 'flex-end',
+                        background: tabBackgroundColor,
+                    }}
+                >
+                    <Tabs
+                        value={props.location.pathname}
+                        indicatorColor="primary"
+                        textColor="primary"
+                    >
+                        <Tab
+                            label="Summary"
+                            value={`${props.match.url}`}
+                            component={Link}
+                            to={`${props.basePath}/${props.id}/show/`}
+                        />
+                        {['Active_Matrix', 'Staged_Matrix'].map(label => (
+                            <Tab
+                                key={label}
+                                value={`${props.match.url}/${label}`}
+                                component={Link}
+                                to={`${props.basePath}/${props.id}/show/${label}`}
+                                disabled={!get(record, '$io') || !useIS08API}
+                                label={label.replace('_', ' ')}
+                            />
+                        ))}
+                    </Tabs>
+                </Paper>
+                <span style={{ flexGrow: 1 }} />
+                <MappingShowActions {...props} />
+            </div>
+            <Route exact path={`${props.basePath}/${props.id}/show/`}>
+                <ShowSummaryTab record={record} {...props} />
+            </Route>
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/show/Active_Matrix`}
+            >
+                <ShowActiveMatrixTab deviceData={record} {...props} />
+            </Route>
+        </>
+    );
+};
+
+const ShowSummaryTab = ({ record, ...props }) => {
+    return (
+        <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
                 <TAIField source="version" />
@@ -103,6 +171,24 @@ const DevicesShowView = props => {
                     </SingleFieldList>
                 </ReferenceManyField>
             </SimpleShowLayout>
+        </ShowView>
+    );
+};
+
+const ShowActiveMatrixTab = ({ deviceData, ...props }) => {
+    if (!get(deviceData, `$active.map`)) return <Loading />;
+    return (
+        <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
+            <Card>
+                <Title title={' Active Matrix'} />
+                <CardContent>
+                    <ChannelMappingMatrix
+                        record={deviceData}
+                        is_show={true}
+                        mapping={get(deviceData, `$active.map`)}
+                    />
+                </CardContent>
+            </Card>
         </ShowView>
     );
 };

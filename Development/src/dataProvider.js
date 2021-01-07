@@ -704,8 +704,8 @@ const getChannelMappingEndPoints = (addresses, endpoints) => {
                     reject(new Error(`${endpoints.error} - ${endpoints.code}`));
                     return;
                 }
-                Promise.all(
-                    endpoints.map(endpoint =>
+                endpoints
+                    .map(endpoint => () =>
                         fetch(concatUrl(channelMappingAPI, `/${endpoint}`), {
                             signal,
                         })
@@ -732,13 +732,17 @@ const getChannelMappingEndPoints = (addresses, endpoints) => {
                                 throw error;
                             })
                     )
-                ).then(() => {
-                    endpointData.push({
-                        $channelMappingAPI: channelMappingAPI,
+                    .reduce(
+                        (before, after) => before.then(_ => after()),
+                        Promise.resolve()
+                    )
+                    .then(() => {
+                        endpointData.push({
+                            $channelMappingAPI: channelMappingAPI,
+                        });
+                        controller.abort();
+                        resolve(endpointData);
                     });
-                    controller.abort();
-                    resolve(endpointData);
-                });
             })
             .catch(errors => {
                 controller.abort();

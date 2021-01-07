@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Button, ListButton, TopToolbar, useGetOne } from 'react-admin';
+import { Button, ListButton, TopToolbar, useRecordContext } from 'react-admin';
 import get from 'lodash/get';
 import EditIcon from '@material-ui/icons/Edit';
 import JsonIcon from '../icons/JsonIcon';
@@ -8,18 +8,20 @@ import { useTheme } from '@material-ui/styles';
 import { concatUrl } from '../settings';
 import { resourceUrl } from '../dataProvider';
 
+// cf. ResourceShowActions
 export default function MappingShowActions({ basePath, id, resource }) {
-    const { data } = useGetOne(resource, id);
+    const { record } = useRecordContext();
+
     let json_href;
-    const theme = useTheme();
-    if (data) {
+    if (record) {
         const tab = window.location.href.split('/').pop();
-        if (tab === 'Active_Matrix' && data.$channelMappingAPI) {
-            json_href = concatUrl(data.$channelMappingAPI, `/map/active`);
+        if (tab === 'Active_Matrix' && record.$channelMappingAPI) {
+            json_href = concatUrl(record.$channelMappingAPI, `/map/active`);
         } else {
-            json_href = resourceUrl(resource, `/${data.id}`);
+            json_href = resourceUrl(resource, `/${id}`);
         }
     }
+    const theme = useTheme();
     return (
         <TopToolbar
             style={{
@@ -47,11 +49,11 @@ export default function MappingShowActions({ basePath, id, resource }) {
                 title={'Return to ' + basePath}
                 basePath={basePath}
             />
-            {get(data, '$channelMappingAPI') != null ? (
+            {get(record, '$channelMappingAPI') != null ? (
                 <Button
                     label={'Edit'}
                     component={NavLink}
-                    to={`${basePath}/${data.id}`}
+                    to={`${basePath}/${id}`}
                 >
                     <EditIcon />
                 </Button>

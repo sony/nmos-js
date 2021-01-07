@@ -9,6 +9,8 @@ import {
     Typography,
     withStyles,
 } from '@material-ui/core';
+import ClearIcon from '@material-ui/icons/Clear';
+import DoneIcon from '@material-ui/icons/Done';
 import {
     ReferenceField,
     ReferenceManyField,
@@ -31,20 +33,29 @@ const StyledTableCell = withStyles({
 const getOutputTooltipTitle = (outputItem, io) => {
     return (
         <>
-            <Typography variant="body1">{'Name:'}</Typography>
-            {outputItem.properties.name}
-            <Typography variant="body1">{'Description:'}</Typography>
-            {outputItem.properties.description}
-            <Typography variant="body1">{'Routable inputs:'}</Typography>
-            {outputItem.caps.routable_inputs !== null
-                ? outputItem.caps.routable_inputs
-                      .map(inputId => {
-                          return inputId === null
-                              ? 'MUTE'
-                              : get(io, `inputs.${inputId}.properties.name`);
-                      })
-                      .join(', ')
-                : 'ANY'}
+            {'Name'}
+            <Typography variant="body2">
+                {outputItem.properties.name}
+            </Typography>
+            {'Description'}
+            <Typography variant="body2">
+                {outputItem.properties.description}
+            </Typography>
+            {'Routable Inputs'}
+            <Typography variant="body2">
+                {outputItem.caps.routable_inputs !== null
+                    ? outputItem.caps.routable_inputs
+                          .map(inputId => {
+                              return inputId === null
+                                  ? 'Unrouted'
+                                  : get(
+                                        io,
+                                        `inputs.${inputId}.properties.name`
+                                    );
+                          })
+                          .join(', ')
+                    : 'No Constraints'}
+            </Typography>
         </>
     );
 };
@@ -52,14 +63,24 @@ const getOutputTooltipTitle = (outputItem, io) => {
 const getInputTooltipTitle = inputItem => {
     return (
         <>
-            <Typography variant="body1">{'Name:'}</Typography>
-            {inputItem.properties.name}
-            <Typography variant="body1">{'Description:'}</Typography>
-            {get(inputItem, `properties.description`)}
-            <Typography variant="body1">{'Block size:'}</Typography>
-            {get(inputItem, `caps.block_size`)}
-            <Typography variant="body1">{'Reordering:'}</Typography>
-            {String(get(inputItem, `caps.reordering`))}
+            {'Name'}
+            <Typography variant="body2">{inputItem.properties.name}</Typography>
+            {'Description'}
+            <Typography variant="body2">
+                {get(inputItem, `properties.description`)}
+            </Typography>
+            {'Block Size'}
+            <Typography variant="body2">
+                {get(inputItem, `caps.block_size`)}
+            </Typography>
+            {'Reordering'}
+            <Typography variant="body2">
+                {get(inputItem, `caps.reordering`) ? (
+                    <DoneIcon />
+                ) : (
+                    <ClearIcon />
+                )}
+            </Typography>
         </>
     );
 };
@@ -67,7 +88,7 @@ const getInputTooltipTitle = inputItem => {
 const getSourceTooltip = outputItem => {
     return (
         <>
-            <Typography variant="body1">{'Flows:'} </Typography>
+            {'Flows'}
             <ReferenceManyField
                 record={outputItem}
                 basePath="/flows"
@@ -85,7 +106,7 @@ const getSourceTooltip = outputItem => {
                     <StyledChipConditionalLabel source="label" />
                 </SingleFieldList>
             </ReferenceManyField>
-            <Typography variant="body1">{'Senders:'} </Typography>
+            {'Senders'}
             <ReferenceManyField
                 record={outputItem}
                 basePath="/flows"
@@ -145,7 +166,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded }) =>
                     </div>
                 </Tooltip>
             ) : (
-                'No source'
+                'No Source'
             )}
         </StyledTableCell>
     ));
@@ -153,8 +174,8 @@ const OutputSourceAssociation = ({ outputs, isExpanded }) =>
 const getInputParentTypeTooltip = type => {
     return (
         <>
-            <Typography variant="body1">{'Type:'} </Typography>
-            {type}
+            {'Type'}
+            <Typography variant="body2">{type}</Typography>
         </>
     );
 };
@@ -165,7 +186,7 @@ const InputSourceAssociation = ({ isRowExpanded, inputItem }) => (
         rowSpan={isRowExpanded ? inputItem.channels.length + 1 : 1}
     >
         {inputItem.parent.type === null ? (
-            'No parent'
+            'No Parent'
         ) : (
             <Tooltip
                 title={getInputParentTypeTooltip(inputItem.parent.type)}
@@ -240,20 +261,18 @@ const InputChannelMappingCells = ({
                                     <Tooltip
                                         title={
                                             <>
-                                                <Typography variant="body1">
-                                                    {'Input:'}
+                                                {'Input'}
+                                                <Typography variant="body2">
+                                                    {inputName}
+                                                    {' - '}
+                                                    {inputChannel.label}
                                                 </Typography>
-                                                {[
-                                                    inputName,
-                                                    inputChannel.label,
-                                                ].join(', ')}
-                                                <Typography variant="body1">
-                                                    {'Output:'}
+                                                {'Output'}
+                                                <Typography variant="body2">
+                                                    {outputItem.properties.name}
+                                                    {' - '}
+                                                    {outputChannel.label}
                                                 </Typography>
-                                                {[
-                                                    outputItem.properties.name,
-                                                    outputChannel.label,
-                                                ].join(', ')}
                                             </>
                                         }
                                         placement="bottom"
@@ -290,7 +309,7 @@ const InputChannelMappingCells = ({
     </>
 );
 
-const MuteRow = ({
+const UnroutedRow = ({
     outputs,
     mappingDisabled,
     handleMap,
@@ -299,7 +318,7 @@ const MuteRow = ({
 }) => (
     <TableRow>
         <StyledTableCell align="center" colSpan={3}>
-            {'MUTE'}
+            {'Unrouted'}
         </StyledTableCell>
         {outputs.map(([outputId, outputItem]) => {
             return isColExpanded(outputId) ? (
@@ -308,17 +327,16 @@ const MuteRow = ({
                         <Tooltip
                             title={
                                 <>
-                                    <Typography variant="body1">
-                                        {'Input:'}
+                                    {'Input'}
+                                    <Typography variant="body2">
+                                        {'Unrouted'}
                                     </Typography>
-                                    {'MUTE'}
-                                    <Typography variant="body1">
-                                        {'Output:'}
+                                    {'Output'}
+                                    <Typography variant="body2">
+                                        {outputItem.properties.name}
+                                        {' - '}
+                                        {channel.label}
                                     </Typography>
-                                    {[
-                                        outputItem.properties.name,
-                                        channel.label,
-                                    ].join(', ')}
                                 </>
                             }
                             placement="bottom"
@@ -352,7 +370,7 @@ const MuteRow = ({
     </TableRow>
 );
 
-const OutputsHeadRow = ({ outputs, io, isColExpanded, handleEpandCol }) => (
+const OutputsHeadRow = ({ outputs, io, isColExpanded, handleExpandCol }) => (
     <>
         <TableRow>
             {outputs.map(([outputId, outputItem]) => (
@@ -368,7 +386,7 @@ const OutputsHeadRow = ({ outputs, io, isColExpanded, handleEpandCol }) => (
                     }}
                 >
                     <CollapseButton
-                        onClick={() => handleEpandCol(outputId)}
+                        onClick={() => handleExpandCol(outputId)}
                         isExpanded={isColExpanded(outputId)}
                         title={
                             isColExpanded(outputId)
@@ -408,7 +426,7 @@ const InputsRows = ({
     outputs,
     isColExpanded,
     isRowExpanded,
-    handleEpandRow,
+    handleExpandRow,
     isShow,
     handleMap,
     isMapped,
@@ -429,7 +447,7 @@ const InputsRows = ({
                     colSpan={isRowExpanded(inputId) ? 1 : 2}
                 >
                     <CollapseButton
-                        onClick={() => handleEpandRow(inputId)}
+                        onClick={() => handleExpandRow(inputId)}
                         isExpanded={isRowExpanded(inputId)}
                         title={
                             isRowExpanded(inputId)
@@ -495,7 +513,7 @@ const sortByIOName = ioObject => {
 const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
     const [expandedCols, setExpandedCols] = useState([]);
     const [expandedRows, setExpandedRows] = useState([]);
-    const handleEpandRow = inputId => {
+    const handleExpandRow = inputId => {
         const currentExpandedRows = expandedRows;
         const isRowExpanded = currentExpandedRows.includes(inputId);
         const newExpandedRows = isRowExpanded
@@ -503,7 +521,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
             : currentExpandedRows.concat(inputId);
         setExpandedRows(newExpandedRows);
     };
-    const handleEpandCol = outputId => {
+    const handleExpandCol = outputId => {
         const currentExpandedCols = expandedCols;
         const isColExpanded = currentExpandedCols.includes(outputId);
         const newExpandedCols = isColExpanded
@@ -545,11 +563,11 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                     outputs={sorted_outputs}
                     io={io}
                     isColExpanded={outputId => isColExpanded(outputId)}
-                    handleEpandCol={handleEpandCol}
+                    handleExpandCol={handleExpandCol}
                 />
             </TableHead>
             <TableBody>
-                <MuteRow
+                <UnroutedRow
                     outputs={sorted_outputs}
                     mappingDisabled={isShow}
                     handleMap={handleMap}
@@ -561,7 +579,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                     outputs={sorted_outputs}
                     isColExpanded={outputId => isColExpanded(outputId)}
                     isRowExpanded={inputId => isRowExpanded(inputId)}
-                    handleEpandRow={handleEpandRow}
+                    handleExpandRow={handleExpandRow}
                     isShow={isShow}
                     handleMap={handleMap}
                     isMapped={isMapped}

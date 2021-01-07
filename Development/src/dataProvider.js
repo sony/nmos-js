@@ -722,9 +722,7 @@ const convertHTTPResponseToDataProvider = async (
                 }
             }
             if (resource === 'receivers' || resource === 'senders') {
-                let resourceJSONData = await fetch(
-                    resourceUrl(resource, `/${params.id}`)
-                ).then(result => result.json());
+                let resourceJSONData = json;
 
                 let deviceJSONData;
                 if (has(resourceJSONData, 'device_id')) {

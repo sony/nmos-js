@@ -605,10 +605,13 @@ const timeout = (ms, promise) => {
     });
 };
 
-const getEndpoints = (addresses, resource, id) => {
-    // Looking for the first promise to succeed or all to fail
+// looking for the first promise to succeed or all to fail
+const firstOf = ps => {
     const invertPromise = p => new Promise((res, rej) => p.then(rej, res));
-    const firstOf = ps => invertPromise(Promise.all(ps.map(invertPromise)));
+    return invertPromise(Promise.all(ps.map(invertPromise)));
+};
+
+const getConnectionResourceEndpoints = (addresses, resource, id) => {
     const endpointData = [];
     let connectionAPI;
     const controller = new AbortController();
@@ -759,7 +762,7 @@ const convertHTTPResponseToDataProvider = async (
                 let endpointData;
                 for (let version of versions) {
                     try {
-                        endpointData = await getEndpoints(
+                        endpointData = await getConnectionResourceEndpoints(
                             connectionAddresses[version],
                             resource,
                             params.id

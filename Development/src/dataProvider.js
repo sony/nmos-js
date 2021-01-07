@@ -616,8 +616,8 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
     let connectionAPI;
     const controller = new AbortController();
     const signal = controller.signal;
-
     return new Promise((resolve, reject) => {
+        // Looking for the first promise to succeed or all to fail
         firstOf(
             addresses.map(address => {
                 return timeout(
@@ -682,8 +682,8 @@ const getChannelMappingEndPoints = (addresses, endpoints) => {
     let channelMappingAPI;
     const controller = new AbortController();
     const signal = controller.signal;
-
     return new Promise((resolve, reject) => {
+        // Looking for the first promise to succeed or all to fail
         firstOf(
             addresses.map(address => {
                 return timeout(
@@ -859,7 +859,6 @@ const convertHTTPResponseToDataProvider = async (
             }
             if (resource === 'devices') {
                 let deviceJSONData = json;
-
                 let channelmappingAddresses = {};
                 // Device.controls was added in v1.1
                 if (deviceJSONData.hasOwnProperty('controls')) {

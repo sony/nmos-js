@@ -13,11 +13,10 @@ import {
     SimpleShowLayout,
     SingleFieldList,
     TextField,
-    Title,
     useRecordContext,
     useShowController,
 } from 'react-admin';
-import { Card, CardContent, Paper, Tab, Tabs } from '@material-ui/core';
+import { Paper, Tab, Tabs } from '@material-ui/core';
 import { Link, Route } from 'react-router-dom';
 import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
@@ -41,12 +40,12 @@ export const DevicesShow = props => {
 
 const DevicesShowView = props => {
     const { record } = useRecordContext();
-    const [useIS08API, setUseIS08API] = useState(false);
+    const [useChannelMappingAPI, setChannelMappingAPI] = useState(false);
     useEffect(() => {
         if (get(record, '$channelMappingAPI') !== undefined) {
-            setUseIS08API(true);
+            setChannelMappingAPI(true);
         } else {
-            setUseIS08API(false);
+            setChannelMappingAPI(false);
         }
     }, [record]);
 
@@ -75,13 +74,15 @@ const DevicesShowView = props => {
                             component={Link}
                             to={`${props.basePath}/${props.id}/show/`}
                         />
-                        {['Active_Matrix', 'Staged_Matrix'].map(label => (
+                        {['active_map'].map(label => (
                             <Tab
                                 key={label}
                                 value={`${props.match.url}/${label}`}
                                 component={Link}
                                 to={`${props.basePath}/${props.id}/show/${label}`}
-                                disabled={!get(record, '$io') || !useIS08API}
+                                disabled={
+                                    !get(record, '$io') || !useChannelMappingAPI
+                                }
                                 label={label.replace('_', ' ')}
                             />
                         ))}
@@ -93,11 +94,8 @@ const DevicesShowView = props => {
             <Route exact path={`${props.basePath}/${props.id}/show/`}>
                 <ShowSummaryTab record={record} {...props} />
             </Route>
-            <Route
-                exact
-                path={`${props.basePath}/${props.id}/show/Active_Matrix`}
-            >
-                <ShowActiveMatrixTab deviceData={record} {...props} />
+            <Route exact path={`${props.basePath}/${props.id}/show/active_map`}>
+                <ShowActiveMapTab deviceData={record} {...props} />
             </Route>
         </>
     );
@@ -175,20 +173,17 @@ const ShowSummaryTab = ({ record, ...props }) => {
     );
 };
 
-const ShowActiveMatrixTab = ({ deviceData, ...props }) => {
+const ShowActiveMapTab = ({ deviceData, ...props }) => {
     if (!get(deviceData, `$active.map`)) return <Loading />;
     return (
         <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
-            <Card>
-                <Title title={' Active Matrix'} />
-                <CardContent>
-                    <ChannelMappingMatrix
-                        record={deviceData}
-                        is_show={true}
-                        mapping={get(deviceData, `$active.map`)}
-                    />
-                </CardContent>
-            </Card>
+            <SimpleShowLayout>
+                <ChannelMappingMatrix
+                    record={deviceData}
+                    isShow={true}
+                    mapping={get(deviceData, `$active.map`)}
+                />
+            </SimpleShowLayout>
         </ShowView>
     );
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Button, ListButton, TopToolbar, useGetOne } from 'react-admin';
+import { Button, ListButton, TopToolbar, useRecordContext } from 'react-admin';
 import get from 'lodash/get';
 import EditIcon from '@material-ui/icons/Edit';
 import JsonIcon from '../icons/JsonIcon';
@@ -10,16 +10,16 @@ import { resourceUrl } from '../dataProvider';
 
 // cf. ResourceShowActions
 export default function ConnectionShowActions({ basePath, id, resource }) {
-    const { data } = useGetOne(resource, id);
+    const { record } = useRecordContext();
 
     let json_href;
-    if (data) {
+    if (record) {
         const tab = window.location.href.split('/').pop();
         if (tab === 'active' || tab === 'staged' || tab === 'transportfile') {
-            json_href = concatUrl(data.$connectionAPI, `/${tab}`);
+            json_href = concatUrl(record.$connectionAPI, `/${tab}`);
         } else if (tab === 'connect') {
         } else {
-            json_href = resourceUrl(resource, `/${data.id}`);
+            json_href = resourceUrl(resource, `/${id}`);
         }
     }
     const theme = useTheme();
@@ -50,11 +50,11 @@ export default function ConnectionShowActions({ basePath, id, resource }) {
                 title={'Return to ' + basePath}
                 basePath={basePath}
             />
-            {get(data, '$connectionAPI') != null ? (
+            {get(record, '$connectionAPI') != null ? (
                 <Button
                     label={'Edit'}
                     component={NavLink}
-                    to={`${basePath}/${data.id}`}
+                    to={`${basePath}/${id}`}
                 >
                     <EditIcon />
                 </Button>

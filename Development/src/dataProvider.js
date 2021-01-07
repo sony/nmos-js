@@ -605,10 +605,13 @@ const timeout = (ms, promise) => {
     });
 };
 
-const getEndpoints = (addresses, resource, id) => {
-    // Looking for the first promise to succeed or all to fail
+// looking for the first promise to succeed or all to fail
+const firstOf = ps => {
     const invertPromise = p => new Promise((res, rej) => p.then(rej, res));
-    const firstOf = ps => invertPromise(Promise.all(ps.map(invertPromise)));
+    return invertPromise(Promise.all(ps.map(invertPromise)));
+};
+
+const getConnectionResourceEndpoints = (addresses, resource, id) => {
     const endpointData = [];
     let connectionAPI;
     const controller = new AbortController();
@@ -675,9 +678,6 @@ const getEndpoints = (addresses, resource, id) => {
 };
 
 const getChannelMappingEndPoints = (addresses, endpoints) => {
-    // Looking for the first promise to succeed or all to fail
-    const invertPromise = p => new Promise((res, rej) => p.then(rej, res));
-    const firstOf = ps => invertPromise(Promise.all(ps.map(invertPromise)));
     const endpointData = [];
     let channelMappingAPI;
     const controller = new AbortController();
@@ -795,9 +795,7 @@ const convertHTTPResponseToDataProvider = async (
                 }
             }
             if (resource === 'receivers' || resource === 'senders') {
-                let resourceJSONData = await fetch(
-                    resourceUrl(resource, `/${params.id}`)
-                ).then(result => result.json());
+                let resourceJSONData = json;
 
                 let deviceJSONData;
                 if (has(resourceJSONData, 'device_id')) {
@@ -834,7 +832,7 @@ const convertHTTPResponseToDataProvider = async (
                 let endpointData;
                 for (let version of versions) {
                     try {
-                        endpointData = await getEndpoints(
+                        endpointData = await getConnectionResourceEndpoints(
                             connectionAddresses[version],
                             resource,
                             params.id
@@ -860,9 +858,7 @@ const convertHTTPResponseToDataProvider = async (
                 }
             }
             if (resource === 'devices') {
-                let deviceJSONData = await fetch(
-                    resourceUrl(resource, `/${params.id}`)
-                ).then(result => result.json());
+                let deviceJSONData = json;
 
                 let channelmappingAddresses = {};
                 // Device.controls was added in v1.1

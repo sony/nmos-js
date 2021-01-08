@@ -42,7 +42,7 @@ const DevicesShowView = props => {
     const { record } = useRecordContext();
     const [useChannelMappingAPI, setChannelMappingAPI] = useState(false);
     useEffect(() => {
-        if (get(record, '$channelMappingAPI') !== undefined) {
+        if (get(record, '$channelmappingAPI') !== undefined) {
             setChannelMappingAPI(true);
         } else {
             setChannelMappingAPI(false);

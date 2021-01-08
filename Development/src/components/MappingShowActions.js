@@ -12,8 +12,8 @@ export default function MappingShowActions({ basePath, id, resource }) {
     const theme = useTheme();
     if (record) {
         const tab = window.location.href.split('/').pop();
-        if (tab === 'active_map' && record.$channelMappingAPI) {
-            json_href = concatUrl(record.$channelMappingAPI, `/map/active`);
+        if (tab === 'active_map' && record.$channelmappingAPI) {
+            json_href = concatUrl(record.$channelmappingAPI, `/map/active`);
         } else {
             json_href = resourceUrl(resource, `/${id}`);
         }

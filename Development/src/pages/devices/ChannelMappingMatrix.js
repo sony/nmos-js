@@ -225,8 +225,8 @@ const InputSourceAssociation = ({ isRowExpanded, inputItem }) => (
 const EmptyCellsForCollapsedRow = ({ outputs, isColExpanded }) =>
     outputs.map(([outputId, outputItem]) => {
         return isColExpanded(outputId) ? (
-            outputItem.channels.map(channel => (
-                <StyledTableCell key={channel.label} />
+            outputItem.channels.map((channel, channelIndex) => (
+                <StyledTableCell key={channelIndex} />
             ))
         ) : (
             <StyledTableCell key={outputId} />
@@ -245,7 +245,7 @@ const InputChannelMappingCells = ({
     isMapped,
 }) => (
     <>
-        <StyledTableCell key={inputChannel.label}>
+        <StyledTableCell key={inputChannelIndex}>
             {inputChannel.label}
         </StyledTableCell>
         <>
@@ -323,7 +323,7 @@ const UnroutedRow = ({
         {outputs.map(([outputId, outputItem]) => {
             return isColExpanded(outputId) ? (
                 outputItem.channels.map((channel, channelIndex) => (
-                    <StyledTableCell align="center" key={channel.label}>
+                    <StyledTableCell align="center" key={channelIndex}>
                         <Tooltip
                             title={
                                 <>
@@ -406,11 +406,11 @@ const OutputsHeadRow = ({ outputs, io, isColExpanded, handleExpandCol }) => (
         <TableRow>
             {outputs.map(([outputId, outputItem]) => {
                 return isColExpanded(outputId)
-                    ? outputItem.channels.map(channel => (
+                    ? outputItem.channels.map((channel, channelIndex) => (
                           <StyledTableCell
                               align="center"
                               size="small"
-                              key={channel.label}
+                              key={channelIndex}
                           >
                               {channel.label}
                           </StyledTableCell>
@@ -486,7 +486,7 @@ const InputsRows = ({
                 inputItem.channels.length > 1 &&
                 Object.entries(inputItem.channels).map(
                     ([inputChannelIndex, inputChannel]) => (
-                        <TableRow key={[inputId, inputChannel.label].join('_')}>
+                        <TableRow key={inputChannelIndex}>
                             <InputChannelMappingCells
                                 inputChannel={inputChannel}
                                 inputChannelIndex={inputChannelIndex}

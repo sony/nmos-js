@@ -454,6 +454,7 @@ const InputsRows = ({
                                 ? 'Hide channels'
                                 : 'View channels'
                         }
+                        direction="horizontal"
                     />
                     <Tooltip
                         title={getInputTooltipTitle(inputItem)}

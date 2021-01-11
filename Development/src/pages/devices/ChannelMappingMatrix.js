@@ -183,7 +183,11 @@ const getInputParentTypeTooltip = type => {
 const InputSourceAssociation = ({ isRowExpanded, inputItem }) => (
     <StyledTableCell
         align="center"
-        rowSpan={isRowExpanded ? inputItem.channels.length + 1 : 1}
+        rowSpan={
+            isRowExpanded && inputItem.channels.length > 1
+                ? inputItem.channels.length + 1
+                : 1
+        }
     >
         {inputItem.parent.type === null ? (
             'No Parent'
@@ -440,7 +444,7 @@ const InputsRows = ({
                 />
                 <StyledTableCell
                     rowSpan={
-                        isRowExpanded(inputId)
+                        isRowExpanded(inputId) && inputItem.channels.length > 1
                             ? inputItem.channels.length + 1
                             : 1
                     }

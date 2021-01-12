@@ -183,11 +183,7 @@ const getInputParentTypeTooltip = type => {
 const InputSourceAssociation = ({ isRowExpanded, inputItem }) => (
     <StyledTableCell
         align="center"
-        rowSpan={
-            isRowExpanded && inputItem.channels.length > 1
-                ? inputItem.channels.length + 1
-                : 1
-        }
+        rowSpan={isRowExpanded ? inputItem.channels.length : 1}
     >
         {inputItem.parent.type === null ? (
             'No Parent'
@@ -249,7 +245,7 @@ const InputChannelMappingCells = ({
     isMapped,
 }) => (
     <>
-        <StyledTableCell key={inputChannelIndex}>
+        <StyledTableCell align="center" key={inputChannelIndex}>
             {inputChannel.label}
         </StyledTableCell>
         <>
@@ -443,10 +439,9 @@ const InputsRows = ({
                     inputItem={inputItem}
                 />
                 <StyledTableCell
+                    align="center"
                     rowSpan={
-                        isRowExpanded(inputId) && inputItem.channels.length > 1
-                            ? inputItem.channels.length + 1
-                            : 1
+                        isRowExpanded(inputId) ? inputItem.channels.length : 1
                     }
                     colSpan={isRowExpanded(inputId) ? 1 : 2}
                 >
@@ -472,7 +467,7 @@ const InputsRows = ({
                         outputs={outputs}
                         isColExpanded={isColExpanded}
                     />
-                ) : inputItem.channels.length === 1 ? (
+                ) : inputItem.channels.length >= 1 ? (
                     <InputChannelMappingCells
                         inputChannel={inputItem.channels[0]}
                         inputChannelIndex={0}
@@ -488,8 +483,9 @@ const InputsRows = ({
             </TableRow>
             {isRowExpanded(inputId) &&
                 inputItem.channels.length > 1 &&
-                Object.entries(inputItem.channels).map(
-                    ([inputChannelIndex, inputChannel]) => (
+                Object.entries(inputItem.channels)
+                    .slice(1)
+                    .map(([inputChannelIndex, inputChannel]) => (
                         <TableRow key={inputChannelIndex}>
                             <InputChannelMappingCells
                                 inputChannel={inputChannel}
@@ -503,8 +499,7 @@ const InputsRows = ({
                                 isMapped={isMapped}
                             />
                         </TableRow>
-                    )
-                )}
+                    ))}
         </Fragment>
     ));
 };

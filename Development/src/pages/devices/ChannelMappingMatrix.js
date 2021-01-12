@@ -30,7 +30,7 @@ const StyledTableCell = withStyles({
     },
 })(TableCell);
 
-const getOutputTooltipTitle = (outputId, outputItem, io) => {
+const getOutputTooltip = (outputId, outputItem, io) => {
     return (
         <>
             {'ID'}
@@ -62,7 +62,7 @@ const getOutputTooltipTitle = (outputId, outputItem, io) => {
     );
 };
 
-const getInputTooltipTitle = (inputId, inputItem) => {
+const getInputTooltip = (inputId, inputItem) => {
     return (
         <>
             {'ID'}
@@ -89,7 +89,7 @@ const getInputTooltipTitle = (inputId, inputItem) => {
     );
 };
 
-const getSourceTooltip = outputItem => {
+const getOutputSourceTooltip = outputItem => {
     return (
         <>
             {'Flows'}
@@ -152,7 +152,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded }) =>
             {get(outputItem, `source_id`) ? (
                 <Tooltip
                     interactive
-                    title={getSourceTooltip(outputItem)}
+                    title={getOutputSourceTooltip(outputItem)}
                     placement="bottom"
                     link="true"
                 >
@@ -184,7 +184,7 @@ const getInputParentTypeTooltip = type => {
     );
 };
 
-const InputSourceAssociation = ({ isRowExpanded, inputItem }) => (
+const InputParentAssociation = ({ isRowExpanded, inputItem }) => (
     <StyledTableCell
         align="center"
         rowSpan={isRowExpanded ? inputItem.channels.length : 1}
@@ -399,7 +399,7 @@ const OutputsHeadRow = ({ outputs, io, isColExpanded, handleExpandCol }) => (
                         }
                     />
                     <Tooltip
-                        title={getOutputTooltipTitle(outputId, outputItem, io)}
+                        title={getOutputTooltip(outputId, outputItem, io)}
                         placement="bottom"
                     >
                         <div>{outputItem.properties.name}</div>
@@ -438,7 +438,7 @@ const InputsRows = ({
     return inputs.map(([inputId, inputItem]) => (
         <Fragment key={inputId}>
             <TableRow>
-                <InputSourceAssociation
+                <InputParentAssociation
                     isRowExpanded={isRowExpanded(inputId)}
                     inputItem={inputItem}
                 />
@@ -460,7 +460,7 @@ const InputsRows = ({
                         direction="horizontal"
                     />
                     <Tooltip
-                        title={getInputTooltipTitle(inputId, inputItem)}
+                        title={getInputTooltip(inputId, inputItem)}
                         placement="bottom"
                     >
                         <div>{inputItem.properties.name}</div>

@@ -18,6 +18,10 @@ import get from 'lodash/get';
 
 import ClearIcon from '@material-ui/icons/Clear';
 import FilterListIcon from '@material-ui/icons/FilterList';
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormControl from '@material-ui/core/FormControl';
 
 import labelize from './labelize';
 
@@ -26,6 +30,73 @@ const StyledTableCell = withStyles({
         borderBottom: 'none',
     },
 })(TableCell);
+
+export const GroupFilter = ({
+    defaultValue,
+    source,
+    label,
+    filter,
+    setFilter,
+    autoFocus,
+}) => {
+    const [value, setValue] = useState(() => {
+        if (filter[source] != null) {
+            return filter[source];
+        } else if (defaultValue != null) {
+            return defaultValue;
+        } else {
+            return 'and';
+        }
+    });
+    if (!label) label = labelize(source);
+
+    const inputRef = useRef();
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (autoFocus) inputRef.current.focus();
+        }, 100);
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [autoFocus]);
+
+    useEffect(() => {
+        setFilter(f => ({ ...f, [source]: value }));
+        return function cleanup() {
+            setFilter(f => {
+                let newFilter = { ...f };
+                delete newFilter[source];
+                return newFilter;
+            });
+        };
+    }, [value, setFilter, source]);
+    return (
+        <div style={{ display: 'flex' }}>
+            <FormControl component="fieldset">
+                <Typography>{label}</Typography>
+                <RadioGroup
+                    aria-label={source}
+                    name={source}
+                    value={value}
+                    onChange={event => setValue(event.target.value)}
+                >
+                    <FormControlLabel
+                        value="and"
+                        control={<Radio />}
+                        label="And"
+                        inputRef={inputRef}
+                    />
+                    <FormControlLabel
+                        value="or"
+                        control={<Radio />}
+                        label="Or"
+                        inputRef={inputRef}
+                    />
+                </RadioGroup>
+            </FormControl>
+        </div>
+    );
+};
 
 export const BooleanFilter = ({
     defaultValue,

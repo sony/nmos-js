@@ -30,9 +30,11 @@ const StyledTableCell = withStyles({
     },
 })(TableCell);
 
-const getOutputTooltipTitle = (outputItem, io) => {
+const getOutputTooltipTitle = (outputId, outputItem, io) => {
     return (
         <>
+            {'ID'}
+            <Typography variant="body2">{outputId}</Typography>
             {'Name'}
             <Typography variant="body2">
                 {outputItem.properties.name}
@@ -60,9 +62,11 @@ const getOutputTooltipTitle = (outputItem, io) => {
     );
 };
 
-const getInputTooltipTitle = inputItem => {
+const getInputTooltipTitle = (inputId, inputItem) => {
     return (
         <>
+            {'ID'}
+            <Typography variant="body2">{inputId}</Typography>
             {'Name'}
             <Typography variant="body2">{inputItem.properties.name}</Typography>
             {'Description'}
@@ -395,7 +399,7 @@ const OutputsHeadRow = ({ outputs, io, isColExpanded, handleExpandCol }) => (
                         }
                     />
                     <Tooltip
-                        title={getOutputTooltipTitle(outputItem, io)}
+                        title={getOutputTooltipTitle(outputId, outputItem, io)}
                         placement="bottom"
                     >
                         <div>{outputItem.properties.name}</div>
@@ -456,7 +460,7 @@ const InputsRows = ({
                         direction="horizontal"
                     />
                     <Tooltip
-                        title={getInputTooltipTitle(inputItem)}
+                        title={getInputTooltipTitle(inputId, inputItem)}
                         placement="bottom"
                     >
                         <div>{inputItem.properties.name}</div>

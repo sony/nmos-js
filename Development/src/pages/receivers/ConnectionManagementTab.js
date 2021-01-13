@@ -25,7 +25,7 @@ import FilterPanel, {
     StringFilter,
 } from '../../components/FilterPanel';
 import ActiveField from '../../components/ActiveField';
-import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import LinkChipField from '../../components/LinkChipField';
 import PaginationButtons from '../../components/PaginationButtons';
 import ResourceTitle from '../../components/ResourceTitle';
 import ConnectButtons from './ConnectButtons';
@@ -154,7 +154,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                 >
                                     <TableCell component="th" scope="row">
                                         {
-                                            // Using linkToRecord as ReferenceField will
+                                            // Using linkToRecord because ReferenceField will
                                             // make a new unnecessary network request
                                         }
                                         <Link
@@ -166,11 +166,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                                 textDecoration: 'none',
                                             }}
                                         >
-                                            <ChipConditionalLabel
-                                                record={item}
-                                                source="label"
-                                                label="ra.action.show"
-                                            />
+                                            <LinkChipField record={item} />
                                         </Link>
                                     </TableCell>
                                     <TableCell>{item.transport}</TableCell>
@@ -191,7 +187,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                             reference="flows"
                                             link="show"
                                         >
-                                            <ChipConditionalLabel source="label" />
+                                            <LinkChipField />
                                         </ReferenceField>
                                     </TableCell>
                                     <TableCell>

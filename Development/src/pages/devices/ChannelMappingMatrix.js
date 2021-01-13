@@ -1,5 +1,6 @@
 import { Fragment, useState } from 'react';
 import {
+    Divider,
     Table,
     TableBody,
     TableCell,
@@ -18,10 +19,8 @@ import {
 } from 'react-admin';
 import get from 'lodash/get';
 import has from 'lodash/has';
-import ChipConditionalLabel, {
-    StyledChipConditionalLabel,
-} from '../../components/ChipConditionalLabel';
 import ChipFunctionalLabel from '../../components/ChipFunctionalLabel';
+import LinkChipField from '../../components/LinkChipField';
 import MappingButton from '../../components/MappingButton';
 import CollapseButton from '../../components/CollapseButton';
 import FilterPanel, {
@@ -44,6 +43,25 @@ const StyledTableCell = withStyles({
         border: '1px solid rgba(224, 224, 224, 1)',
     },
 })(TableCell);
+
+const TooltipChipField = props => (
+    <div
+        style={{
+            margin: 2,
+            padding: 2,
+        }}
+    >
+        <LinkChipField {...props} />
+    </div>
+);
+
+const TooltipDivider = withStyles({
+    root: {
+        marginTop: 4,
+        marginBottom: 4,
+        backgroundColor: 'rgb(192, 192, 192)',
+    },
+})(Divider);
 
 const getOutputTooltipTitle = (outputId, outputItem, io, personalName) => {
     return (
@@ -68,6 +86,7 @@ const getOutputTooltipTitle = (outputId, outputItem, io, personalName) => {
             <Typography variant="body2">
                 {outputItem.properties.description}
             </Typography>
+            <TooltipDivider />
             {'Routable Inputs'}
             <Typography variant="body2">
                 {outputItem.caps.routable_inputs !== null
@@ -110,6 +129,7 @@ const getInputTooltipTitle = (inputId, inputItem, personalName) => {
             <Typography variant="body2">
                 {get(inputItem, `properties.description`)}
             </Typography>
+            <TooltipDivider />
             {'Block Size'}
             <Typography variant="body2">
                 {get(inputItem, `caps.block_size`)}
@@ -215,7 +235,7 @@ const getOutputSourceTooltip = outputItem => {
                 reference="sources"
                 link="show"
             >
-                <StyledChipConditionalLabel source="label" />
+                <TooltipChipField />
             </ReferenceField>
             {'Flows'}
             <ReferenceManyField
@@ -232,7 +252,7 @@ const getOutputSourceTooltip = outputItem => {
                 }}
             >
                 <SingleFieldList linkType="show">
-                    <StyledChipConditionalLabel source="label" />
+                    <TooltipChipField />
                 </SingleFieldList>
             </ReferenceManyField>
             {'Senders'}
@@ -258,7 +278,7 @@ const getOutputSourceTooltip = outputItem => {
                         link="show"
                     >
                         <SingleFieldList linkType="show">
-                            <StyledChipConditionalLabel source="label" />
+                            <TooltipChipField />
                         </SingleFieldList>
                     </ReferenceManyField>
                 </SingleFieldList>
@@ -319,7 +339,7 @@ const getInputParentTypeTooltip = (type, inputItem) => {
                     reference="sources"
                     link="show"
                 >
-                    <ChipConditionalLabel source="label" />
+                    <LinkChipField />
                 </ReferenceField>
             ) : (
                 <ReferenceField
@@ -330,7 +350,7 @@ const getInputParentTypeTooltip = (type, inputItem) => {
                     reference="receivers"
                     link="show"
                 >
-                    <ChipConditionalLabel source="label" />
+                    <LinkChipField />
                 </ReferenceField>
             )}
         </>

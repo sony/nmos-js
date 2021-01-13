@@ -16,7 +16,7 @@ import {
     useRecordContext,
     useShowController,
 } from 'react-admin';
-import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import LinkChipField from '../../components/LinkChipField';
 import MapObject from '../../components/ObjectField';
 import RateField from '../../components/RateField';
 import RawButton from '../../components/RawButton';
@@ -92,7 +92,7 @@ const SourcesShowView = props => {
                     link="show"
                 >
                     <SingleFieldList linkType="show">
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </SingleFieldList>
                 </ReferenceArrayField>
                 <ReferenceField
@@ -101,7 +101,7 @@ const SourcesShowView = props => {
                     reference="devices"
                     link="show"
                 >
-                    <ChipConditionalLabel source="label" />
+                    <LinkChipField />
                 </ReferenceField>
                 <hr />
                 <ReferenceManyField
@@ -110,7 +110,7 @@ const SourcesShowView = props => {
                     target="source_id"
                 >
                     <SingleFieldList linkType="show">
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </SingleFieldList>
                 </ReferenceManyField>
             </SimpleShowLayout>

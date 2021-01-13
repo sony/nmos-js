@@ -23,7 +23,7 @@ import {
 import get from 'lodash/get';
 import copy from 'clipboard-copy';
 import { useTheme } from '@material-ui/styles';
-import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import LinkChipField from '../../components/LinkChipField';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
@@ -158,7 +158,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     reference="flows"
                     link="show"
                 >
-                    <ChipConditionalLabel source="label" />
+                    <LinkChipField />
                 </ReferenceField>
                 <ReferenceField
                     label="Device"
@@ -166,7 +166,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     reference="devices"
                     link="show"
                 >
-                    <ChipConditionalLabel source="label" />
+                    <LinkChipField />
                 </ReferenceField>
                 {queryVersion() >= 'v1.2' && record.subscription.receiver_id && (
                     <ReferenceField
@@ -175,7 +175,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                         reference="receivers"
                         link="show"
                     >
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </ReferenceField>
                 )}
             </SimpleShowLayout>
@@ -196,7 +196,7 @@ const ShowActiveTab = ({ record, ...props }) => {
                         reference="receivers"
                         link="show"
                     >
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </ReferenceField>
                 )}
                 <BooleanField
@@ -239,7 +239,7 @@ const ShowStagedTab = ({ record, ...props }) => {
                         reference="receivers"
                         link="show"
                     >
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </ReferenceField>
                 )}
                 <BooleanField

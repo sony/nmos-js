@@ -19,21 +19,7 @@ const channelIncludes = (label, channel_label) => {
     return label.match(RegExp(`${channel_label}`, 'i'));
 };
 
-const filterChannelLabel = (channel_label, item, filterGroup) => {
-    if (filterGroup === 'or' && channel_label === undefined) {
-        return false;
-    } else {
-        return (
-            channel_label === undefined ||
-            channel_label === '' ||
-            item.channels.some(element =>
-                channelIncludes(element.label, channel_label)
-            )
-        );
-    }
-};
-
-const filterPersonalChannelLabel = (
+const filterChannelLabel = (
     channel_label,
     item,
     personalChannelName,
@@ -45,28 +31,38 @@ const filterPersonalChannelLabel = (
         return (
             channel_label === undefined ||
             channel_label === '' ||
-            Object.entries(item.channels).some(([channelIndex, _]) =>
-                channelIncludes(
-                    personalChannelName(channelIndex),
-                    channel_label
-                )
+            Object.entries(item.channels).some(
+                ([channelIndex, channelItem]) =>
+                    channelIncludes(
+                        personalChannelName(channelIndex),
+                        channel_label
+                    ) || channelIncludes(channelItem.label, channel_label)
             )
         );
     }
 };
 
-const routableInputsIncludes = (element, routable_inputs, io) => {
+const routableInputsIncludes = (inputId, routable_inputs, io, getInputName) => {
     return (
-        (element === null &&
+        (inputId === null &&
             'Unrouted'.match(RegExp(`${routable_inputs}`, 'i'))) ||
-        (element != null &&
-            String(get(io, `inputs.${element}.properties.name`)).match(
+        (inputId != null &&
+            (String(get(io, `inputs.${inputId}.properties.name`)).match(
                 RegExp(`${routable_inputs}`, 'i')
-            ))
+            ) ||
+                String(getInputName(inputId)).match(
+                    RegExp(`${routable_inputs}`, 'i')
+                )))
     );
 };
 
-const filterRoutableInputs = (routable_inputs, item, filterGroup, io) => {
+const filterRoutableInputs = (
+    routable_inputs,
+    item,
+    filterGroup,
+    io,
+    getInputName
+) => {
     if (
         filterGroup === 'or' &&
         (routable_inputs === undefined || routable_inputs === '')
@@ -77,8 +73,13 @@ const filterRoutableInputs = (routable_inputs, item, filterGroup, io) => {
             routable_inputs === undefined ||
             routable_inputs === '' ||
             (item.caps.routable_inputs !== null &&
-                item.caps.routable_inputs.some(element =>
-                    routableInputsIncludes(element, routable_inputs, io)
+                item.caps.routable_inputs.some(inputId =>
+                    routableInputsIncludes(
+                        inputId,
+                        routable_inputs,
+                        io,
+                        getInputName
+                    )
                 )) ||
             (item.caps.routable_inputs === null &&
                 'No Constraints'.match(RegExp(`${routable_inputs}`, 'i')))
@@ -86,24 +87,23 @@ const filterRoutableInputs = (routable_inputs, item, filterGroup, io) => {
     }
 };
 
-const filterLabel = (label, item, filterGroup) => {
+const filterLabel = (label, apiName, name, filterGroup) => {
     if (filterGroup === 'or' && label === undefined) {
         return false;
     } else {
         return (
             label === undefined ||
-            item.properties.name.match(RegExp(`${label}`, 'i'))
+            apiName.match(RegExp(`${label}`, 'i')) ||
+            name.match(RegExp(`${label}`, 'i'))
         );
     }
 };
 
-const filterPersonalLabel = (label, personalName, filterGroup) => {
-    if (filterGroup === 'or' && label === undefined) {
+const filterId = (id, itemId, filterGroup) => {
+    if (filterGroup === 'or' && id === undefined) {
         return false;
     } else {
-        return (
-            label === undefined || personalName.match(RegExp(`${label}`, 'i'))
-        );
+        return id === undefined || itemId.match(RegExp(`${id}`, 'i'));
     }
 };
 
@@ -129,33 +129,30 @@ const filterReordering = (reordering, item, filterGroup) => {
 
 const filterIOByChannels = (
     channel_label,
-    personal_channel_label,
     filtered_io,
     personalNames,
     ioKey
 ) => {
-    if (channel_label || personal_channel_label) {
+    if (channel_label) {
         for (const [id, item] of Object.entries(filtered_io)) {
             const getPersonalChannelLabel = channel_index =>
                 getPersonalChannelName(id, ioKey, channel_index, personalNames);
             if (
-                filterChannelLabel(channel_label, item) ||
-                filterPersonalChannelLabel(
-                    personal_channel_label,
-                    item,
-                    getPersonalChannelLabel
-                )
+                filterChannelLabel(channel_label, item, getPersonalChannelLabel)
             ) {
                 filtered_io[id] = JSON.parse(JSON.stringify(item));
-                filtered_io[id].channels = filtered_io[id].channels.filter(
-                    element =>
-                        channelIncludes(element.label, channel_label) ||
-                        channelIncludes(
-                            getPersonalChannelLabel(
-                                filtered_io[id].channels.indexOf(element)
-                            ),
-                            personal_channel_label
-                        )
+                filtered_io[id].channels = Object.fromEntries(
+                    Object.entries(filtered_io[id].channels).filter(
+                        ([channel_index, channel_item]) =>
+                            channelIncludes(
+                                channel_item.label,
+                                channel_label
+                            ) ||
+                            channelIncludes(
+                                getPersonalChannelLabel(channel_index),
+                                channel_label
+                            )
+                    )
                 );
             }
         }
@@ -164,136 +161,116 @@ const filterIOByChannels = (
 
 const FilterInputs = filter => {
     return (
-        has(filter, `input label`) ||
+        has(filter, `input name`) ||
+        has(filter, `input id`) ||
         has(filter, `block size`) ||
         has(filter, `reordering`) ||
-        has(filter, `input channel label`) ||
-        has(filter, 'personal input label') ||
-        has(filter, 'personal input channel label')
+        has(filter, `input channel label`)
     );
 };
 
 const FilterOutputs = filter => {
     return (
-        has(filter, `output label`) ||
+        has(filter, `output name`) ||
+        has(filter, `output id`) ||
         has(filter, `routable inputs`) ||
-        has(filter, `output channel label`) ||
-        has(filter, 'personal output label') ||
-        has(filter, 'personal output channel label')
+        has(filter, `output channel label`)
     );
 };
 
-export const getFilteredIO = (filter, io, personalNames) => {
-    let filter_outputs = get(io, `outputs`);
+export const getFilteredInputs = (filter, io, filter_group, personalNames) => {
     let filter_inputs = get(io, `inputs`);
-    let filter_group = get(filter, `filter group`);
-    if (filter) {
-        if (FilterOutputs(filter)) {
-            let output_label = get(filter, `output label`);
-            let routable_inputs = get(filter, `routable inputs`);
-            let output_channel_label = get(filter, `output channel label`);
-            let personal_output_label = get(filter, 'personal output label');
-            let personal_output_channel_label = get(
-                filter,
-                'personal output channel label'
-            );
-            filter_outputs = Object.fromEntries(
-                Object.entries(filter_outputs).filter(
-                    ([output_id, output_item]) =>
-                        conditionGroup(
-                            filter_group,
-                            filterLabel(
-                                output_label,
-                                output_item,
-                                filter_group
+    if (filter && FilterInputs(filter)) {
+        let input_id_filter = get(filter, `input id`);
+        let input_label = get(filter, `input name`);
+        let block_size = get(filter, `block size`);
+        let reordering = get(filter, `reordering`);
+        let input_channel_label = get(filter, `input channel label`);
+        filter_inputs = Object.fromEntries(
+            Object.entries(filter_inputs).filter(([input_id, input_item]) =>
+                conditionGroup(
+                    filter_group,
+                    filterId(input_id_filter, input_id, filter_group),
+                    filterLabel(
+                        input_label,
+                        input_item.properties.name,
+                        getPersonalName(input_id, 'inputs', personalNames),
+                        filter_group
+                    ),
+                    filterBlockSize(block_size, input_item, filter_group),
+                    filterReordering(reordering, input_item, filter_group),
+                    filterChannelLabel(
+                        input_channel_label,
+                        input_item,
+                        channel_index =>
+                            getPersonalChannelName(
+                                input_id,
+                                `inputs`,
+                                channel_index,
+                                personalNames
                             ),
-                            filterRoutableInputs(
-                                routable_inputs,
-                                output_item,
-                                filter_group,
-                                io
-                            ),
-                            filterChannelLabel(
-                                output_channel_label,
-                                output_item,
-                                filter_group
-                            ),
-                            filterPersonalLabel(
-                                personal_output_label,
-                                getPersonalName(
-                                    output_id,
-                                    'outputs',
-                                    personalNames
-                                ),
-                                filter_group
-                            ),
-                            filterPersonalChannelLabel(
-                                personal_output_channel_label,
-                                output_item,
-                                channel_index =>
-                                    getPersonalChannelName(
-                                        output_id,
-                                        `outputs`,
-                                        channel_index,
-                                        personalNames
-                                    ),
-                                filter_group
-                            )
-                        )
-                )
-            );
-            filterIOByChannels(
-                output_channel_label,
-                personal_output_channel_label,
-                filter_outputs,
-                personalNames,
-                'outputs'
-            );
-        }
-        if (FilterInputs(filter)) {
-            let input_label = get(filter, `input label`);
-            let block_size = get(filter, `block size`);
-            let reordering = get(filter, `reordering`);
-            let input_channel_label = get(filter, `input channel label`);
-            let personal_input_label = get(filter, 'personal input label');
-            let personal_input_channel_label = get(
-                filter,
-                'personal input channel label'
-            );
-            filter_inputs = Object.fromEntries(
-                Object.entries(filter_inputs).filter(([input_id, input_item]) =>
-                    conditionGroup(
-                        filter_group,
-                        filterLabel(input_label, input_item),
-                        filterBlockSize(block_size, input_item),
-                        filterReordering(reordering, input_item),
-                        filterChannelLabel(input_channel_label, input_item),
-                        filterPersonalLabel(
-                            personal_input_label,
-                            getPersonalName(input_id, 'inputs', personalNames)
-                        ),
-                        filterPersonalChannelLabel(
-                            personal_input_channel_label,
-                            input_item,
-                            channel_index =>
-                                getPersonalChannelName(
-                                    input_id,
-                                    `inputs`,
-                                    channel_index,
-                                    personalNames
-                                )
-                        )
+                        filter_group
                     )
                 )
-            );
-            filterIOByChannels(
-                input_channel_label,
-                personal_input_channel_label,
-                filter_inputs,
-                personalNames,
-                'inputs'
-            );
-        }
+            )
+        );
+        filterIOByChannels(
+            input_channel_label,
+            filter_inputs,
+            personalNames,
+            'inputs'
+        );
     }
-    return [filter_inputs, filter_outputs];
+    return filter_inputs;
+};
+
+export const getFilteredOutputs = (filter, io, filter_group, personalNames) => {
+    let filter_outputs = get(io, `outputs`);
+    if (filter && FilterOutputs(filter)) {
+        let output_id_filter = get(filter, `output id`);
+        let output_label = get(filter, `output name`);
+        let routable_inputs = get(filter, `routable inputs`);
+        let output_channel_label = get(filter, `output channel label`);
+        filter_outputs = Object.fromEntries(
+            Object.entries(filter_outputs).filter(([output_id, output_item]) =>
+                conditionGroup(
+                    filter_group,
+                    filterId(output_id_filter, output_id, filter_group),
+                    filterLabel(
+                        output_label,
+                        output_item.properties.name,
+                        getPersonalName(output_id, 'outputs', personalNames),
+                        filter_group
+                    ),
+                    filterRoutableInputs(
+                        routable_inputs,
+                        output_item,
+                        filter_group,
+                        io,
+                        inputId =>
+                            getPersonalName(inputId, 'inputs', personalNames)
+                    ),
+                    filterChannelLabel(
+                        output_channel_label,
+                        output_item,
+                        channel_index =>
+                            getPersonalChannelName(
+                                output_id,
+                                `outputs`,
+                                channel_index,
+                                personalNames
+                            ),
+                        filter_group
+                    )
+                )
+            )
+        );
+        filterIOByChannels(
+            output_channel_label,
+            filter_outputs,
+            personalNames,
+            'outputs'
+        );
+    }
+    return filter_outputs;
 };

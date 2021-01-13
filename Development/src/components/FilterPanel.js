@@ -361,7 +361,13 @@ export const RateFilter = ({
     );
 };
 
-const FilterPanel = ({ children, defaultFilter, filter, setFilter }) => {
+const FilterPanel = ({
+    children,
+    defaultFilter,
+    filter,
+    setFilter,
+    filterListLabel = 'Add Filter',
+}) => {
     const cloneFilter = (child, autoFocus = false) =>
         React.cloneElement(child, {
             defaultValue: get(defaultFilter, get(child, 'props.source')),
@@ -439,7 +445,7 @@ const FilterPanel = ({ children, defaultFilter, filter, setFilter }) => {
                 }}
                 startIcon={<FilterListIcon />}
             >
-                Add Filter
+                {filterListLabel}
             </Button>
             <Menu
                 open={open}

@@ -18,6 +18,7 @@ import {
     SingleFieldList,
 } from 'react-admin';
 import get from 'lodash/get';
+import set from 'lodash/set';
 import has from 'lodash/has';
 import ChipFunctionalLabel from '../../components/ChipFunctionalLabel';
 import LinkChipField from '../../components/LinkChipField';
@@ -35,7 +36,7 @@ import {
 } from './EditMatrixNamesField';
 import { useJSONSetting } from '../../settings';
 import labelize from '../../components/labelize';
-import { getFilteredIO } from './FilterMatrix';
+import { getFilteredInputs, getFilteredOutputs } from './FilterMatrix';
 
 const StyledTableCell = withStyles({
     root: {
@@ -63,24 +64,32 @@ const TooltipDivider = withStyles({
     },
 })(Divider);
 
-const getOutputTooltipTitle = (outputId, outputItem, io, personalName) => {
+const getOutputTooltipTitle = (
+    outputId,
+    outputItem,
+    io,
+    personalNames,
+    setPersonalNames
+) => {
     return (
         <>
             {'ID'}
             <Typography variant="body2">{outputId}</Typography>
             {'Name'}
-            {personalName ? (
+            <EditableIONameField
+                personalNames={personalNames}
+                setPersonalNames={setPersonalNames}
+                source={outputId}
+                defaultValue={outputItem.properties.name}
+                ioKey={'outputs'}
+            />
+            {getPersonalName(outputId, 'outputs', personalNames) && (
                 <>
-                    <Typography variant="body2">{personalName}</Typography>
-                    {'Original Name'}
+                    {'API Name'}
                     <Typography variant="body2">
                         {outputItem.properties.name}
                     </Typography>
                 </>
-            ) : (
-                <Typography variant="body2">
-                    {outputItem.properties.name}
-                </Typography>
             )}
             {'Description'}
             <Typography variant="body2">
@@ -94,6 +103,16 @@ const getOutputTooltipTitle = (outputId, outputItem, io, personalName) => {
                           .map(inputId => {
                               return inputId === null
                                   ? 'Unrouted'
+                                  : getPersonalName(
+                                        inputId,
+                                        'inputs',
+                                        personalNames
+                                    )
+                                  ? getPersonalName(
+                                        inputId,
+                                        'inputs',
+                                        personalNames
+                                    )
                                   : get(
                                         io,
                                         `inputs.${inputId}.properties.name`
@@ -106,24 +125,31 @@ const getOutputTooltipTitle = (outputId, outputItem, io, personalName) => {
     );
 };
 
-const getInputTooltipTitle = (inputId, inputItem, personalName) => {
+const getInputTooltipTitle = (
+    inputId,
+    inputItem,
+    personalNames,
+    setPersonalNames
+) => {
     return (
         <>
             {'ID'}
             <Typography variant="body2">{inputId}</Typography>
             {'Name'}
-            {personalName ? (
+            <EditableIONameField
+                personalNames={personalNames}
+                setPersonalNames={setPersonalNames}
+                source={inputId}
+                defaultValue={inputItem.properties.name}
+                ioKey={'inputs'}
+            />
+            {getPersonalName(inputId, 'inputs', personalNames) && (
                 <>
-                    <Typography variant="body2">{personalName}</Typography>
-                    {'Original Name'}
+                    {'API Name'}
                     <Typography variant="body2">
                         {inputItem.properties.name}
                     </Typography>
                 </>
-            ) : (
-                <Typography variant="body2">
-                    {inputItem.properties.name}
-                </Typography>
             )}
             {'Description'}
             <Typography variant="body2">
@@ -146,18 +172,30 @@ const getInputTooltipTitle = (inputId, inputItem, personalName) => {
     );
 };
 
-const getChannelTooltipTitle = (channelItem, personalName) => {
+const getChannelTooltipTitle = (
+    id,
+    channelLabel,
+    channelIndex,
+    ioKey,
+    personalNames,
+    setPersonalNames
+) => {
     return (
         <>
-            {'Name'}
-            {personalName ? (
+            {'Label'}
+            <EditableChannelNameField
+                personalNames={personalNames}
+                setPersonalNames={setPersonalNames}
+                source={id}
+                defaultValue={channelLabel}
+                channelIndex={channelIndex}
+                ioKey={ioKey}
+            />
+            {getPersonalChannelName(id, ioKey, channelIndex, personalNames) && (
                 <>
-                    <Typography variant="body2">{personalName}</Typography>
-                    {'Original Name'}
-                    <Typography variant="body2">{channelItem.label}</Typography>
+                    {'API Label'}
+                    <Typography variant="body2">{channelLabel}</Typography>
                 </>
-            ) : (
-                <Typography variant="body2">{channelItem.label}</Typography>
             )}
         </>
     );
@@ -175,9 +213,7 @@ const getMappedCellTooltipTitle = (
 ) => {
     return (
         <>
-            {personalInputName || personalInputChannelName
-                ? 'Personal Input'
-                : 'Input'}
+            {'Input'}
             <Typography variant="body2">
                 {personalInputName ? personalInputName : inputName}
                 {inputName !== 'Unrouted' ? ' - ' : ''}
@@ -185,9 +221,7 @@ const getMappedCellTooltipTitle = (
                     ? personalInputChannelName
                     : inputChannelName}
             </Typography>
-            {personalOutputName || personalOutputChannelName
-                ? 'Personal Output'
-                : 'Output'}
+            {'Output'}
             <Typography variant="body2">
                 {personalOutputName ? personalOutputName : outputName}
                 {' - '}
@@ -291,7 +325,11 @@ const OutputSourceAssociation = ({ outputs, isExpanded, labelLength }) =>
     outputs.map(([outputId, outputItem]) => (
         <StyledTableCell
             align="center"
-            colSpan={isExpanded(outputId) ? outputItem.channels.length : 1}
+            colSpan={
+                isExpanded(outputId)
+                    ? Object.keys(outputItem.channels).length
+                    : 1
+            }
             key={outputId}
         >
             {get(outputItem, `source_id`) ? (
@@ -320,7 +358,14 @@ const OutputSourceAssociation = ({ outputs, isExpanded, labelLength }) =>
                     </div>
                 </Tooltip>
             ) : (
-                getLabelByLenght('No Source', labelLength)
+                <Tooltip
+                    title={
+                        <Typography variant="body2">{'No Source'}</Typography>
+                    }
+                    placement="bottom"
+                >
+                    <div>{getLabelByLenght('No Source', labelLength)}</div>
+                </Tooltip>
             )}
         </StyledTableCell>
     ));
@@ -360,10 +405,15 @@ const getInputParentTypeTooltip = (type, inputItem) => {
 const InputParentAssociation = ({ isRowExpanded, inputItem, labelLength }) => (
     <StyledTableCell
         align="center"
-        rowSpan={isRowExpanded ? inputItem.channels.length : 1}
+        rowSpan={isRowExpanded ? Object.keys(inputItem.channels).length : 1}
     >
         {inputItem.parent.type === null ? (
-            getLabelByLenght('No Parent', labelLength)
+            <Tooltip
+                title={<Typography variant="body2">{'No Parent'}</Typography>}
+                placement="bottom"
+            >
+                <div>{getLabelByLenght('No Parent', labelLength)}</div>
+            </Tooltip>
         ) : (
             <Tooltip
                 interactive
@@ -417,7 +467,7 @@ const InputParentAssociation = ({ isRowExpanded, inputItem, labelLength }) => (
 const EmptyCellsForCollapsedRow = ({ outputs, isColExpanded }) =>
     outputs.map(([outputId, outputItem]) => {
         return isColExpanded(outputId) ? (
-            outputItem.channels.map((channel, channelIndex) => (
+            Object.entries(outputItem.channels).map(([channelIndex, _]) => (
                 <StyledTableCell key={channelIndex} />
             ))
         ) : (
@@ -441,30 +491,43 @@ const InputChannelMappingCells = ({
 }) => (
     <>
         <StyledTableCell align="center" key={inputChannelIndex}>
-            <EditableChannelNameField
-                personalNames={personalNames}
-                setPersonalNames={setPersonalNames}
-                source={inputId}
-                defaultValue={inputChannel.label}
-                getLabelByLenght={name => getLabelByLenght(name, labelLength)}
-                channelIndex={inputChannelIndex}
+            <Tooltip
+                interactive
                 title={getChannelTooltipTitle(
-                    inputChannel,
-                    getPersonalChannelName(
+                    inputId,
+                    inputChannel.label,
+                    inputChannelIndex,
+                    'inputs',
+                    personalNames,
+                    setPersonalNames
+                )}
+                placement="bottom"
+            >
+                <div>
+                    {getPersonalChannelName(
                         inputId,
                         'inputs',
                         inputChannelIndex,
                         personalNames
                     )
-                )}
-                ioKey={'inputs'}
-            />
+                        ? getLabelByLenght(
+                              getPersonalChannelName(
+                                  inputId,
+                                  'inputs',
+                                  inputChannelIndex,
+                                  personalNames
+                              ),
+                              labelLength
+                          )
+                        : getLabelByLenght(inputChannel.label, labelLength)}
+                </div>
+            </Tooltip>
         </StyledTableCell>
         <>
             {outputs.map(([outputId, outputItem]) => {
                 return isColExpanded(outputId) ? (
-                    outputItem.channels.map(
-                        (outputChannel, outputChannelIndex) => {
+                    Object.entries(outputItem.channels).map(
+                        ([outputChannelIndex, outputChannel]) => {
                             return (
                                 <StyledTableCell
                                     align="center"
@@ -544,53 +607,55 @@ const UnroutedRow = ({
 }) => (
     <TableRow>
         <StyledTableCell align="center" colSpan={3}>
-            {getLabelByLenght('Unrouted', labelLength)}
+            {'Unrouted'}
         </StyledTableCell>
         {outputs.map(([outputId, outputItem]) => {
             return isColExpanded(outputId) ? (
-                outputItem.channels.map((channel, channelIndex) => (
-                    <StyledTableCell align="center" key={channelIndex}>
-                        <Tooltip
-                            title={getMappedCellTooltipTitle(
-                                outputItem.properties.name,
-                                getPersonalName(
-                                    outputId,
-                                    'outputs',
-                                    personalNames
-                                ),
-                                channel.label,
-                                getPersonalChannelName(
-                                    outputId,
-                                    'outputs',
-                                    channelIndex,
-                                    personalNames
-                                ),
-                                'Unrouted'
-                            )}
-                            placement="bottom"
-                        >
-                            <div>
-                                <MappingButton
-                                    disabled={mappingDisabled}
-                                    onClick={() =>
-                                        handleMap(
+                Object.entries(outputItem.channels).map(
+                    ([channelIndex, channel]) => (
+                        <StyledTableCell align="center" key={channelIndex}>
+                            <Tooltip
+                                title={getMappedCellTooltipTitle(
+                                    outputItem.properties.name,
+                                    getPersonalName(
+                                        outputId,
+                                        'outputs',
+                                        personalNames
+                                    ),
+                                    channel.label,
+                                    getPersonalChannelName(
+                                        outputId,
+                                        'outputs',
+                                        channelIndex,
+                                        personalNames
+                                    ),
+                                    'Unrouted'
+                                )}
+                                placement="bottom"
+                            >
+                                <div>
+                                    <MappingButton
+                                        disabled={mappingDisabled}
+                                        onClick={() =>
+                                            handleMap(
+                                                null,
+                                                outputId,
+                                                null,
+                                                channelIndex
+                                            )
+                                        }
+                                        isMapped={isMapped(
                                             null,
                                             outputId,
                                             null,
                                             channelIndex
-                                        )
-                                    }
-                                    isMapped={isMapped(
-                                        null,
-                                        outputId,
-                                        null,
-                                        channelIndex
-                                    )}
-                                />
-                            </div>
-                        </Tooltip>
-                    </StyledTableCell>
-                ))
+                                        )}
+                                    />
+                                </div>
+                            </Tooltip>
+                        </StyledTableCell>
+                    )
+                )
             ) : (
                 <StyledTableCell key={outputId} />
             );
@@ -613,7 +678,9 @@ const OutputsHeadRow = ({
                 <StyledTableCell
                     align="center"
                     colSpan={
-                        isColExpanded(outputId) ? outputItem.channels.length : 1
+                        isColExpanded(outputId)
+                            ? Object.keys(outputItem.channels).length
+                            : 1
                     }
                     rowSpan={isColExpanded(outputId) ? 1 : 2}
                     key={outputId}
@@ -630,56 +697,83 @@ const OutputsHeadRow = ({
                                 : 'View channels'
                         }
                     />
-                    <EditableIONameField
-                        personalNames={personalNames}
-                        setPersonalNames={setPersonalNames}
-                        source={outputId}
-                        defaultValue={outputItem.properties.name}
-                        getLabelByLenght={name =>
-                            getLabelByLenght(name, labelLength)
-                        }
+                    <Tooltip
+                        interactive
                         title={getOutputTooltipTitle(
                             outputId,
                             outputItem,
                             io,
-                            getPersonalName(outputId, 'outputs', personalNames)
+                            personalNames,
+                            setPersonalNames
                         )}
-                        ioKey={'outputs'}
-                    />
+                        placement="bottom"
+                    >
+                        <div>
+                            {getPersonalName(outputId, 'outputs', personalNames)
+                                ? getLabelByLenght(
+                                      getPersonalName(
+                                          outputId,
+                                          'outputs',
+                                          personalNames
+                                      ),
+                                      labelLength
+                                  )
+                                : getLabelByLenght(
+                                      outputItem.properties.name,
+                                      labelLength
+                                  )}
+                        </div>
+                    </Tooltip>
                 </StyledTableCell>
             ))}
         </TableRow>
         <TableRow>
             {outputs.map(([outputId, outputItem]) => {
                 return isColExpanded(outputId)
-                    ? outputItem.channels.map((channel, channelIndex) => (
-                          <StyledTableCell
-                              align="center"
-                              size="small"
-                              key={channelIndex}
-                          >
-                              <EditableChannelNameField
-                                  personalNames={personalNames}
-                                  setPersonalNames={setPersonalNames}
-                                  source={outputId}
-                                  defaultValue={channel.label}
-                                  getLabelByLenght={name =>
-                                      getLabelByLenght(name, labelLength)
-                                  }
-                                  channelIndex={channelIndex}
-                                  title={getChannelTooltipTitle(
-                                      channel,
-                                      getPersonalChannelName(
+                    ? Object.entries(outputItem.channels).map(
+                          ([channelIndex, channel]) => (
+                              <StyledTableCell
+                                  align="center"
+                                  size="small"
+                                  key={channelIndex}
+                              >
+                                  <Tooltip
+                                      interactive
+                                      title={getChannelTooltipTitle(
                                           outputId,
-                                          'outputs',
+                                          channel.label,
                                           channelIndex,
-                                          personalNames
-                                      )
-                                  )}
-                                  ioKey={'outputs'}
-                              />
-                          </StyledTableCell>
-                      ))
+                                          'outputs',
+                                          personalNames,
+                                          setPersonalNames
+                                      )}
+                                      placement="bottom"
+                                  >
+                                      <div>
+                                          {getPersonalChannelName(
+                                              outputId,
+                                              'outputs',
+                                              channelIndex,
+                                              personalNames
+                                          )
+                                              ? getLabelByLenght(
+                                                    getPersonalChannelName(
+                                                        outputId,
+                                                        'outputs',
+                                                        channelIndex,
+                                                        personalNames
+                                                    ),
+                                                    labelLength
+                                                )
+                                              : getLabelByLenght(
+                                                    channel.label,
+                                                    labelLength
+                                                )}
+                                      </div>
+                                  </Tooltip>
+                              </StyledTableCell>
+                          )
+                      )
                     : null;
             })}
         </TableRow>
@@ -710,7 +804,9 @@ const InputsRows = ({
                 <StyledTableCell
                     align="center"
                     rowSpan={
-                        isRowExpanded(inputId) ? inputItem.channels.length : 1
+                        isRowExpanded(inputId)
+                            ? Object.keys(inputItem.channels).length
+                            : 1
                     }
                     colSpan={isRowExpanded(inputId) ? 1 : 2}
                 >
@@ -724,31 +820,42 @@ const InputsRows = ({
                         }
                         direction="horizontal"
                     />
-                    <EditableIONameField
-                        personalNames={personalNames}
-                        setPersonalNames={setPersonalNames}
-                        source={inputId}
-                        defaultValue={inputItem.properties.name}
-                        getLabelByLenght={name =>
-                            getLabelByLenght(name, labelLength)
-                        }
+                    <Tooltip
+                        interactive
                         title={getInputTooltipTitle(
                             inputId,
                             inputItem,
-                            getPersonalName(inputId, 'inputs', personalNames)
+                            personalNames,
+                            setPersonalNames
                         )}
-                        ioKey={'inputs'}
-                    />
+                        placement="bottom"
+                    >
+                        <div>
+                            {getPersonalName(inputId, 'inputs', personalNames)
+                                ? getLabelByLenght(
+                                      getPersonalName(
+                                          inputId,
+                                          'inputs',
+                                          personalNames
+                                      ),
+                                      labelLength
+                                  )
+                                : getLabelByLenght(
+                                      inputItem.properties.name,
+                                      labelLength
+                                  )}
+                        </div>
+                    </Tooltip>
                 </StyledTableCell>
                 {!isRowExpanded(inputId) ? (
                     <EmptyCellsForCollapsedRow
                         outputs={outputs}
                         isColExpanded={isColExpanded}
                     />
-                ) : inputItem.channels.length >= 1 ? (
+                ) : Object.keys(inputItem.channels).length >= 1 ? (
                     <InputChannelMappingCells
-                        inputChannel={inputItem.channels[0]}
-                        inputChannelIndex={0}
+                        inputChannel={Object.values(inputItem.channels)[0]}
+                        inputChannelIndex={Object.keys(inputItem.channels)[0]}
                         inputName={inputItem.properties.name}
                         inputId={inputId}
                         outputs={outputs}
@@ -763,7 +870,7 @@ const InputsRows = ({
                 ) : null}
             </TableRow>
             {isRowExpanded(inputId) &&
-                inputItem.channels.length > 1 &&
+                Object.keys(inputItem.channels).length > 1 &&
                 Object.entries(inputItem.channels)
                     .slice(1)
                     .map(([inputChannelIndex, inputChannel]) => (
@@ -834,37 +941,75 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                 )
         );
     };
-    const [filter, setFilter] = useJSONSetting('channel mapping Filter');
+    const convertChannelsArrayToObject = () => {
+        for (const item of Object.values(get(io, `outputs`))) {
+            set(item, `channels`, Object.assign({}, item.channels));
+        }
+        for (const item of Object.values(get(io, `inputs`))) {
+            set(item, `channels`, Object.assign({}, item.channels));
+        }
+    };
+
+    const [outputsFilter, setOutputsFilter] = useJSONSetting('outputs Filter');
+    const [inputsFilter, setInputsFilter] = useJSONSetting('inputs Filter');
+    const [settingsFilter, setSettingsFilter] = useJSONSetting(
+        'matrix settings Filter'
+    );
     const [personalNames, setPersonalNames] = useJSONSetting(
         'channel mapping personal names'
     );
     const io = get(record, '$io');
-    let [filter_inputs, filter_outputs] = getFilteredIO(
-        filter,
+    convertChannelsArrayToObject();
+    const labelLength = get(settingsFilter, `limit label length`);
+    const filterGroup = get(settingsFilter, `filter group`);
+    let filter_inputs = getFilteredInputs(
+        inputsFilter,
         io,
+        filterGroup,
         personalNames
     );
+    let filter_outputs = getFilteredOutputs(
+        outputsFilter,
+        io,
+        filterGroup,
+        personalNames
+    );
+
     const sorted_outputs = sortByIOName(filter_outputs, id =>
         getPersonalName(id, 'outputs', personalNames)
     );
     const sorted_inputs = sortByIOName(filter_inputs, id =>
         getPersonalName(id, 'inputs', personalNames)
     );
-    const labelLength = get(filter, `limit label length`);
+
     return (
         <>
-            <FilterPanel filter={filter} setFilter={setFilter}>
-                <StringFilter source="output label" />
-                <StringFilter source="personal output label" />
+            <FilterPanel
+                filter={outputsFilter}
+                setFilter={setOutputsFilter}
+                filterListLabel={'output filter'}
+            >
+                <StringFilter source="output id" />
+                <StringFilter source="output name" />
                 <StringFilter source="output channel label" />
-                <StringFilter source="personal output channel label" />
-                <StringFilter source="input label" />
-                <StringFilter source="personal input label" />
+                <StringFilter source="routable inputs" />
+            </FilterPanel>
+            <FilterPanel
+                filter={inputsFilter}
+                setFilter={setInputsFilter}
+                filterListLabel={'input filter'}
+            >
+                <StringFilter source="input id" />
+                <StringFilter source="input name" />
                 <StringFilter source="input channel label" />
-                <StringFilter source="personal input channel label" />
                 <NumberFilter source="block size" />
                 <BooleanFilter source="reordering" />
-                <StringFilter source="routable inputs" />
+            </FilterPanel>
+            <FilterPanel
+                filter={settingsFilter}
+                setFilter={setSettingsFilter}
+                filterListLabel={'settings'}
+            >
                 <NumberFilter source="limit label length" />
                 <GroupFilter source="filter group" />
             </FilterPanel>
@@ -872,7 +1017,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                 <TableHead>
                     <TableRow>
                         <StyledTableCell align="center" rowSpan={3} colSpan={3}>
-                            {getLabelByLenght('INPUTS \\ OUTPUTS', labelLength)}
+                            {'INPUTS \\ OUTPUTS'}
                         </StyledTableCell>
                         <OutputSourceAssociation
                             outputs={sorted_outputs}

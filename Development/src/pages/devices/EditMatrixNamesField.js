@@ -1,5 +1,5 @@
-import React, { Fragment, useEffect, useRef, useState } from 'react';
-import { Button, IconButton, TextField, Tooltip } from '@material-ui/core';
+import React, { useEffect, useRef, useState } from 'react';
+import { IconButton, TextField, Typography } from '@material-ui/core';
 import get from 'lodash/get';
 import has from 'lodash/has';
 import CreateIcon from '@material-ui/icons/Create';
@@ -15,13 +15,11 @@ export const EditableIONameField = ({
     personalNames,
     setPersonalNames,
     autoFocus,
-    getLabelByLenght,
-    title,
     ioKey,
     ...props
 }) => {
     const [displayRenameField, setDisplayRenameField] = useState(false);
-    const [displayEditIcon, setDisplayEditIcon] = useState(false);
+    const [displayEditIcon, setDisplayEditIcon] = useState(true);
     const [value, setValue] = useState(() => {
         if (get(personalNames, `${ioKey}.${source}.name`)) {
             return get(personalNames, `${ioKey}.${source}.name`);
@@ -43,14 +41,16 @@ export const EditableIONameField = ({
     }, [autoFocus]);
 
     const getName = () => {
-        return get(personalNames, `${ioKey}.${source}.name`)
-            ? getLabelByLenght(get(personalNames, `${ioKey}.${source}.name`))
-            : getLabelByLenght(defaultValue);
+        return get(personalNames, `${ioKey}.${source}.name`);
+    };
+
+    const getDisplayedName = () => {
+        return getName() ? getName() : defaultValue;
     };
 
     const removeOverrideName = () => {
         setDisplayRenameField(false);
-        setDisplayEditIcon(false);
+        setDisplayEditIcon(true);
         setValue(defaultValue);
         setPersonalNames(f => {
             let newpersonalNames = { ...f };
@@ -82,13 +82,13 @@ export const EditableIONameField = ({
             return newpersonalNames;
         });
         setDisplayRenameField(false);
-        setDisplayEditIcon(false);
+        setDisplayEditIcon(true);
     };
 
     const cancleOverrideName = () => {
         setDisplayRenameField(false);
-        setDisplayEditIcon(false);
-        setValue(getName());
+        setDisplayEditIcon(true);
+        setValue(getDisplayedName());
     };
 
     return (
@@ -114,38 +114,31 @@ export const EditableIONameField = ({
                     >
                         <ClearIcon />
                     </IconButton>
-                    <IconButton
-                        size="small"
-                        onClick={() => removeOverrideName()}
-                    >
-                        <DeleteIcon />
-                    </IconButton>
                 </>
             ) : (
-                <div
-                    id={source}
-                    onMouseEnter={() => {
-                        setDisplayEditIcon(true);
-                    }}
-                    onMouseLeave={() => setDisplayEditIcon(false)}
-                >
-                    <Tooltip title={title} placement="bottom">
-                        <div>
-                            <Button
+                <>
+                    <Typography variant="body2" display="inline">
+                        {getDisplayedName()}
+                    </Typography>
+                    {displayEditIcon && (
+                        <>
+                            <IconButton
                                 size="small"
                                 onClick={() => setDisplayRenameField(true)}
-                                endIcon={
-                                    displayEditIcon ? <CreateIcon /> : null
-                                }
-                                style={{ textTransform: 'none' }}
-                                variant={displayEditIcon ? 'contained' : 'text'}
-                                color={displayEditIcon ? 'primary' : 'default'}
                             >
-                                {getName()}
-                            </Button>
-                        </div>
-                    </Tooltip>
-                </div>
+                                <CreateIcon />
+                            </IconButton>
+                            {getName() && (
+                                <IconButton
+                                    size="small"
+                                    onClick={() => removeOverrideName()}
+                                >
+                                    <DeleteIcon />
+                                </IconButton>
+                            )}
+                        </>
+                    )}
+                </>
             )}
         </div>
     );
@@ -159,13 +152,11 @@ export const EditableChannelNameField = ({
     personalNames,
     setPersonalNames,
     autoFocus,
-    getLabelByLenght,
-    title,
     ioKey,
     ...props
 }) => {
     const [displayRenameField, setDisplayRenameField] = useState(false);
-    const [displayEditIcon, setDisplayEditIcon] = useState(false);
+    const [displayEditIcon, setDisplayEditIcon] = useState(true);
     const [value, setValue] = useState(() => {
         if (has(personalNames, `${ioKey}.${source}.channels.${channelIndex}`)) {
             return get(
@@ -189,20 +180,22 @@ export const EditableChannelNameField = ({
         };
     }, [autoFocus]);
 
+    const getPersonalChannelName = () => {
+        return get(
+            personalNames,
+            `${ioKey}.${source}.channels.${channelIndex}`
+        );
+    };
+
     const getChannelName = () => {
         return has(personalNames, `${ioKey}.${source}.channels.${channelIndex}`)
-            ? getLabelByLenght(
-                  get(
-                      personalNames,
-                      `${ioKey}.${source}.channels.${channelIndex}`
-                  )
-              )
-            : getLabelByLenght(defaultValue);
+            ? getPersonalChannelName()
+            : defaultValue;
     };
 
     const removeOverrideName = () => {
         setDisplayRenameField(false);
-        setDisplayEditIcon(false);
+        setDisplayEditIcon(true);
         setValue(defaultValue);
         setPersonalNames(f => {
             let newpersonalNames = { ...f };
@@ -245,12 +238,12 @@ export const EditableChannelNameField = ({
             return newpersonalNames;
         });
         setDisplayRenameField(false);
-        setDisplayEditIcon(false);
+        setDisplayEditIcon(true);
     };
 
     const cancleOverrideName = () => {
         setDisplayRenameField(false);
-        setDisplayEditIcon(false);
+        setDisplayEditIcon(true);
         setValue(getChannelName());
     };
 
@@ -277,38 +270,31 @@ export const EditableChannelNameField = ({
                     >
                         <ClearIcon />
                     </IconButton>
-                    <IconButton
-                        size="small"
-                        onClick={() => removeOverrideName()}
-                    >
-                        <DeleteIcon />
-                    </IconButton>
                 </>
             ) : (
-                <div
-                    id={source}
-                    onMouseEnter={() => {
-                        setDisplayEditIcon(true);
-                    }}
-                    onMouseLeave={() => setDisplayEditIcon(false)}
-                >
-                    <Tooltip title={title} placement="bottom">
-                        <div>
-                            <Button
+                <>
+                    <Typography variant="body2" display="inline">
+                        {getChannelName()}
+                    </Typography>
+                    {displayEditIcon && (
+                        <>
+                            <IconButton
                                 size="small"
                                 onClick={() => setDisplayRenameField(true)}
-                                endIcon={
-                                    displayEditIcon ? <CreateIcon /> : null
-                                }
-                                style={{ textTransform: 'none' }}
-                                variant={displayEditIcon ? 'contained' : 'text'}
-                                color={displayEditIcon ? 'primary' : 'default'}
                             >
-                                {getChannelName()}
-                            </Button>
-                        </div>
-                    </Tooltip>
-                </div>
+                                <CreateIcon />
+                            </IconButton>
+                            {getPersonalChannelName() && (
+                                <IconButton
+                                    size="small"
+                                    onClick={() => removeOverrideName()}
+                                >
+                                    <DeleteIcon />
+                                </IconButton>
+                            )}
+                        </>
+                    )}
+                </>
             )}
         </div>
     );

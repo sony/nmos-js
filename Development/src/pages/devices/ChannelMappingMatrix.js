@@ -18,9 +18,7 @@ import {
     SingleFieldList,
 } from 'react-admin';
 import get from 'lodash/get';
-import ChipConditionalLabel, {
-    StyledChipConditionalLabel,
-} from '../../components/ChipConditionalLabel';
+import LinkChipField from '../../components/LinkChipField';
 import MappingButton from '../../components/MappingButton';
 import CollapseButton from '../../components/CollapseButton';
 
@@ -30,6 +28,17 @@ const StyledTableCell = withStyles({
         border: '1px solid rgba(224, 224, 224, 1)',
     },
 })(TableCell);
+
+const TooltipChipField = props => (
+    <div
+        style={{
+            margin: 2,
+            padding: 2,
+        }}
+    >
+        <LinkChipField {...props} />
+    </div>
+);
 
 const TooltipDivider = withStyles({
     root: {
@@ -118,7 +127,7 @@ const getOutputSourceTooltip = outputItem => {
                 }}
             >
                 <SingleFieldList linkType="show">
-                    <StyledChipConditionalLabel source="label" />
+                    <TooltipChipField />
                 </SingleFieldList>
             </ReferenceManyField>
             {'Senders'}
@@ -144,7 +153,7 @@ const getOutputSourceTooltip = outputItem => {
                         link="show"
                     >
                         <SingleFieldList linkType="show">
-                            <StyledChipConditionalLabel source="label" />
+                            <TooltipChipField />
                         </SingleFieldList>
                     </ReferenceManyField>
                 </SingleFieldList>
@@ -176,7 +185,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded }) =>
                             reference="sources"
                             link="show"
                         >
-                            <ChipConditionalLabel source="label" />
+                            <LinkChipField />
                         </ReferenceField>
                     </div>
                 </Tooltip>
@@ -217,7 +226,7 @@ const InputParentAssociation = ({ isRowExpanded, inputItem }) => (
                             reference="sources"
                             link="show"
                         >
-                            <ChipConditionalLabel source="label" />
+                            <LinkChipField />
                         </ReferenceField>
                     ) : (
                         <ReferenceField
@@ -228,7 +237,7 @@ const InputParentAssociation = ({ isRowExpanded, inputItem }) => (
                             reference="receivers"
                             link="show"
                         >
-                            <ChipConditionalLabel source="label" />
+                            <LinkChipField />
                         </ReferenceField>
                     )}
                 </div>

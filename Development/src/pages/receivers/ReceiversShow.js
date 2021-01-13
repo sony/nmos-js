@@ -16,7 +16,7 @@ import {
 } from 'react-admin';
 import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
-import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import LinkChipField from '../../components/LinkChipField';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
@@ -193,7 +193,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                         reference="senders"
                         link="show"
                     >
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </ReferenceField>
                 )}
                 <hr />
@@ -203,7 +203,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     reference="devices"
                     link="show"
                 >
-                    <ChipConditionalLabel source="label" />
+                    <LinkChipField />
                 </ReferenceField>
             </SimpleShowLayout>
         </ShowView>
@@ -223,7 +223,7 @@ const ShowActiveTab = ({ record, ...props }) => {
                         reference="senders"
                         link="show"
                     >
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </ReferenceField>
                 )}
                 <BooleanField
@@ -267,7 +267,7 @@ const ShowStagedTab = ({ record, ...props }) => {
                         reference="senders"
                         link="show"
                     >
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </ReferenceField>
                 )}
                 <BooleanField

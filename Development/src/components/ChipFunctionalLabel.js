@@ -2,11 +2,11 @@ import React from 'react';
 import Chip from '@material-ui/core/Chip';
 import get from 'lodash/get';
 
-const ChipFanctionalLabel = ({ record, source, getLabelByLenght }) => {
+const ChipFunctionalLabel = ({ record, source, labelFunction }) => {
     const value = get(record, source);
     return record && value ? (
-        <Chip label={getLabelByLenght(value)} clickable={true} />
+        <Chip label={labelFunction(value)} clickable={true} />
     ) : null;
 };
 
-export default ChipFanctionalLabel;
+export default ChipFunctionalLabel;

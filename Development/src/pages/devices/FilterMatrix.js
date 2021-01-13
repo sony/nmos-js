@@ -1,8 +1,8 @@
 import get from 'lodash/get';
 import has from 'lodash/has';
 import {
-    getOverrideChannelName,
-    getOverrideName,
+    getPersonalChannelName,
+    getPersonalName,
 } from './ChannelMappingMatrix';
 
 const conditionGroup = (filterGroup, ...theArgs) => {
@@ -137,7 +137,7 @@ const filterIOByChannels = (
     if (channel_label || personal_channel_label) {
         for (const [id, item] of Object.entries(filtered_io)) {
             const getPersonalChannelLabel = channel_index =>
-                getOverrideChannelName(id, ioKey, channel_index, personalNames);
+                getPersonalChannelName(id, ioKey, channel_index, personalNames);
             if (
                 filterChannelLabel(channel_label, item) ||
                 filterPersonalChannelLabel(
@@ -220,7 +220,7 @@ export const getFilteredIO = (filter, io, personalNames) => {
                             ),
                             filterPersonalLabel(
                                 personal_output_label,
-                                getOverrideName(
+                                getPersonalName(
                                     output_id,
                                     'outputs',
                                     personalNames
@@ -231,7 +231,7 @@ export const getFilteredIO = (filter, io, personalNames) => {
                                 personal_output_channel_label,
                                 output_item,
                                 channel_index =>
-                                    getOverrideChannelName(
+                                    getPersonalChannelName(
                                         output_id,
                                         `outputs`,
                                         channel_index,
@@ -270,13 +270,13 @@ export const getFilteredIO = (filter, io, personalNames) => {
                         filterChannelLabel(input_channel_label, input_item),
                         filterPersonalLabel(
                             personal_input_label,
-                            getOverrideName(input_id, 'inputs', personalNames)
+                            getPersonalName(input_id, 'inputs', personalNames)
                         ),
                         filterPersonalChannelLabel(
                             personal_input_channel_label,
                             input_item,
                             channel_index =>
-                                getOverrideChannelName(
+                                getPersonalChannelName(
                                     input_id,
                                     `inputs`,
                                     channel_index,

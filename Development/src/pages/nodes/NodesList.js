@@ -10,8 +10,8 @@ import {
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
 import FilterPanel, { StringFilter } from '../../components/FilterPanel';
-import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
+import PaginationButtons from '../../components/PaginationButtons';
 import useGetList from '../../components/useGetList';
 import { queryVersion, useJSONSetting } from '../../settings';
 

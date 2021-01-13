@@ -605,15 +605,17 @@ const timeout = (ms, promise) => {
     });
 };
 
-const getEndpoints = (addresses, resource, id) => {
-    // Looking for the first promise to succeed or all to fail
+// looking for the first promise to succeed or all to fail
+const firstOf = ps => {
     const invertPromise = p => new Promise((res, rej) => p.then(rej, res));
-    const firstOf = ps => invertPromise(Promise.all(ps.map(invertPromise)));
+    return invertPromise(Promise.all(ps.map(invertPromise)));
+};
+
+const getConnectionResourceEndpoints = (addresses, resource, id) => {
     const endpointData = [];
     let connectionAPI;
     const controller = new AbortController();
     const signal = controller.signal;
-
     return new Promise((resolve, reject) => {
         firstOf(
             addresses.map(address => {
@@ -674,6 +676,79 @@ const getEndpoints = (addresses, resource, id) => {
     });
 };
 
+const getChannelMappingEndPoints = (addresses, endpoints) => {
+    const endpointData = [];
+    let channelmappingAPI;
+    const controller = new AbortController();
+    const signal = controller.signal;
+    return new Promise((resolve, reject) => {
+        firstOf(
+            addresses.map(address => {
+                return timeout(
+                    5000,
+                    fetch(concatUrl(address, ``), {
+                        signal,
+                    })
+                );
+            })
+        )
+            .then(response => {
+                channelmappingAPI = response.url;
+                return endpoints;
+            })
+            .then(endpoints => {
+                if (get(endpoints, 'code')) {
+                    controller.abort();
+                    reject(new Error(`${endpoints.error} - ${endpoints.code}`));
+                    return;
+                }
+                endpoints
+                    .map(endpoint => () =>
+                        fetch(concatUrl(channelmappingAPI, `/${endpoint}`), {
+                            signal,
+                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    return response.text();
+                                }
+                            })
+                            .then(text => {
+                                try {
+                                    return JSON.parse(text);
+                                } catch (e) {
+                                    return text;
+                                }
+                            })
+                            .then(data => {
+                                endpointData.push({
+                                    [`$${
+                                        endpoint.split('/').slice(-1)[0]
+                                    }`]: data,
+                                });
+                            })
+                            .catch(error => {
+                                throw error;
+                            })
+                    )
+                    .reduce(
+                        (before, after) => before.then(_ => after()),
+                        Promise.resolve()
+                    )
+                    .then(() => {
+                        endpointData.push({
+                            $channelmappingAPI: channelmappingAPI,
+                        });
+                        controller.abort();
+                        resolve(endpointData);
+                    });
+            })
+            .catch(errors => {
+                controller.abort();
+                reject(errors[0]);
+            });
+    });
+};
+
 const filterAsync = async (data, predicate) => {
     let result = await Promise.all(
         data.map((element, index) => predicate(element, index, data))
@@ -720,11 +795,8 @@ const convertHTTPResponseToDataProvider = async (
                 } else {
                     json.id = json.name + '@' + json.domain;
                 }
-            }
-            if (resource === 'receivers' || resource === 'senders') {
-                let resourceJSONData = await fetch(
-                    resourceUrl(resource, `/${params.id}`)
-                ).then(result => result.json());
+            } else if (resource === 'receivers' || resource === 'senders') {
+                let resourceJSONData = json;
 
                 let deviceJSONData;
                 if (has(resourceJSONData, 'device_id')) {
@@ -749,7 +821,7 @@ const convertHTTPResponseToDataProvider = async (
                         }
                     });
                 }
-                // Return IS-04 if no Connection API endpoints
+                // just return IS-04 data if no Connection API endpoints
                 if (Object.keys(connectionAddresses).length === 0) {
                     return { url, data: json };
                 }
@@ -761,7 +833,7 @@ const convertHTTPResponseToDataProvider = async (
                 let endpointData;
                 for (let version of versions) {
                     try {
-                        endpointData = await getEndpoints(
+                        endpointData = await getConnectionResourceEndpoints(
                             connectionAddresses[version],
                             resource,
                             params.id
@@ -770,7 +842,7 @@ const convertHTTPResponseToDataProvider = async (
                     if (endpointData) break;
                 }
 
-                // Return IS-04 if no URL was able to connect
+                // just return IS-04 data if no Connection API was able to connect
                 if (endpointData === undefined) {
                     set(json, '$connectionAPI', null);
                     return { url, data: json };
@@ -779,11 +851,61 @@ const convertHTTPResponseToDataProvider = async (
                 for (let i of endpointData) {
                     assign(json, i);
                 }
-                // For Connection API v1.0
+                // for Connection API v1.0
                 if (!has(json, '$transporttype')) {
                     assign(json, {
                         $transporttype: 'urn:x-nmos:transport:rtp',
                     });
+                }
+            } else if (resource === 'devices') {
+                let deviceJSONData = json;
+
+                let channelmappingAddresses = {};
+                // Device.controls was added in v1.1
+                if (has(deviceJSONData, 'controls')) {
+                    deviceJSONData.controls.forEach(control => {
+                        const type = control.type.replace('.', '_');
+                        if (type.startsWith('urn:x-nmos:control:cm-ctrl')) {
+                            if (!has(channelmappingAddresses, type)) {
+                                set(channelmappingAddresses, type, [
+                                    control.href,
+                                ]);
+                            } else {
+                                channelmappingAddresses[type].push(
+                                    control.href
+                                );
+                            }
+                        }
+                    });
+                }
+                // just return IS-04 data if no Channel Mapping API endpoints
+                if (Object.keys(channelmappingAddresses).length === 0) {
+                    return { url, data: json };
+                }
+
+                const versions = Object.keys(channelmappingAddresses)
+                    .sort()
+                    .reverse();
+
+                let endpointData;
+                for (let version of versions) {
+                    try {
+                        endpointData = await getChannelMappingEndPoints(
+                            channelmappingAddresses[version],
+                            ['io', 'map/active', 'map/activations']
+                        );
+                    } catch (e) {}
+                    if (endpointData) break;
+                }
+
+                // just return IS-04 data if no Channel Mapping API was able to connect
+                if (endpointData === undefined) {
+                    set(json, '$channelmappingAPI', null);
+                    return { url, data: json };
+                }
+
+                for (let i of endpointData) {
+                    assign(json, i);
                 }
             }
             return { url, data: json };

@@ -19,8 +19,6 @@ import {
 } from 'react-admin';
 import get from 'lodash/get';
 import set from 'lodash/set';
-import has from 'lodash/has';
-import ChipFunctionalLabel from '../../components/ChipFunctionalLabel';
 import LinkChipField from '../../components/LinkChipField';
 import MappingButton from '../../components/MappingButton';
 import CollapseButton from '../../components/CollapseButton';
@@ -64,7 +62,7 @@ const TooltipDivider = withStyles({
     },
 })(Divider);
 
-const getOutputTooltipTitle = (
+const getOutputTooltip = (
     outputId,
     outputItem,
     io,
@@ -107,16 +105,11 @@ const getOutputTooltipTitle = (
                                         inputId,
                                         'inputs',
                                         personalNames
-                                    )
-                                  ? getPersonalName(
-                                        inputId,
-                                        'inputs',
-                                        personalNames
-                                    )
-                                  : get(
-                                        io,
-                                        `inputs.${inputId}.properties.name`
-                                    );
+                                    ) ||
+                                        get(
+                                            io,
+                                            `inputs.${inputId}.properties.name`
+                                        );
                           })
                           .join(', ')
                     : 'No Constraints'}
@@ -125,7 +118,7 @@ const getOutputTooltipTitle = (
     );
 };
 
-const getInputTooltipTitle = (
+const getInputTooltip = (
     inputId,
     inputItem,
     personalNames,
@@ -153,16 +146,16 @@ const getInputTooltipTitle = (
             )}
             {'Description'}
             <Typography variant="body2">
-                {get(inputItem, `properties.description`)}
+                {get(inputItem, 'properties.description')}
             </Typography>
             <TooltipDivider />
             {'Block Size'}
             <Typography variant="body2">
-                {get(inputItem, `caps.block_size`)}
+                {get(inputItem, 'caps.block_size')}
             </Typography>
             {'Reordering'}
             <Typography variant="body2">
-                {get(inputItem, `caps.reordering`) ? (
+                {get(inputItem, 'caps.reordering') ? (
                     <DoneIcon />
                 ) : (
                     <ClearIcon />
@@ -172,7 +165,7 @@ const getInputTooltipTitle = (
     );
 };
 
-const getChannelTooltipTitle = (
+const getChannelTooltip = (
     id,
     channelLabel,
     channelIndex,
@@ -201,7 +194,7 @@ const getChannelTooltipTitle = (
     );
 };
 
-const getMappedCellTooltipTitle = (
+const getMappedCellTooltip = (
     outputName,
     personalOutputName,
     outputChannelName,
@@ -215,35 +208,31 @@ const getMappedCellTooltipTitle = (
         <>
             {'Input'}
             <Typography variant="body2">
-                {personalInputName ? personalInputName : inputName}
+                {personalInputName || inputName}
                 {inputName !== 'Unrouted' ? ' - ' : ''}
-                {personalInputChannelName
-                    ? personalInputChannelName
-                    : inputChannelName}
+                {personalInputChannelName || inputChannelName}
             </Typography>
             {'Output'}
             <Typography variant="body2">
-                {personalOutputName ? personalOutputName : outputName}
+                {personalOutputName || outputName}
                 {' - '}
-                {personalOutputChannelName
-                    ? personalOutputChannelName
-                    : outputChannelName}
+                {personalOutputChannelName || outputChannelName}
             </Typography>
         </>
     );
 };
 
-const getLabelByLenght = (label, limit_lenght) => {
-    return (limit_lenght !== undefined || !isNaN(limit_lenght)) &&
-        label.length > limit_lenght
-        ? label.substring(0, limit_lenght) + '...'
-        : label;
+const truncateValueAtLength = (value, maxLength) => {
+    const ellipsis = '\u2026';
+    return maxLength !== undefined &&
+        !isNaN(maxLength) &&
+        value.length > maxLength
+        ? value.substring(0, maxLength) + ellipsis
+        : value;
 };
 
 export const getPersonalName = (id, ioKey, personalNames) => {
-    return get(personalNames, `${ioKey}.${id}.name`)
-        ? get(personalNames, `${ioKey}.${id}.name`)
-        : '';
+    return get(personalNames, `${ioKey}.${id}.name`) || '';
 };
 
 export const getPersonalChannelName = (
@@ -252,9 +241,7 @@ export const getPersonalChannelName = (
     channelIndex,
     personalNames
 ) => {
-    return has(personalNames, `${ioKey}.${id}.channels.${channelIndex}`)
-        ? get(personalNames, `${ioKey}.${id}.channels.${channelIndex}`)
-        : '';
+    return get(personalNames, `${ioKey}.${id}.channels.${channelIndex}`) || '';
 };
 
 const getOutputSourceTooltip = outputItem => {
@@ -321,7 +308,7 @@ const getOutputSourceTooltip = outputItem => {
     );
 };
 
-const OutputSourceAssociation = ({ outputs, isExpanded, labelLength }) =>
+const OutputSourceAssociation = ({ outputs, isExpanded, truncateValue }) =>
     outputs.map(([outputId, outputItem]) => (
         <StyledTableCell
             align="center"
@@ -332,7 +319,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded, labelLength }) =>
             }
             key={outputId}
         >
-            {get(outputItem, `source_id`) ? (
+            {get(outputItem, 'source_id') ? (
                 <Tooltip
                     interactive
                     title={getOutputSourceTooltip(outputItem)}
@@ -348,12 +335,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded, labelLength }) =>
                             reference="sources"
                             link="show"
                         >
-                            <ChipFunctionalLabel
-                                source="label"
-                                labelFunction={name =>
-                                    getLabelByLenght(name, labelLength)
-                                }
-                            />
+                            <LinkChipField transform={truncateValue} />
                         </ReferenceField>
                     </div>
                 </Tooltip>
@@ -364,7 +346,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded, labelLength }) =>
                     }
                     placement="bottom"
                 >
-                    <div>{getLabelByLenght('No Source', labelLength)}</div>
+                    <div>{truncateValue('No Source')}</div>
                 </Tooltip>
             )}
         </StyledTableCell>
@@ -373,7 +355,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded, labelLength }) =>
 const getInputParentTypeTooltip = (type, inputItem) => {
     return (
         <>
-            {labelize(type)}
+            {'Parent ' + labelize(type)}
             <Typography />
             {type === 'source' ? (
                 <ReferenceField
@@ -402,7 +384,11 @@ const getInputParentTypeTooltip = (type, inputItem) => {
     );
 };
 
-const InputParentAssociation = ({ isRowExpanded, inputItem, labelLength }) => (
+const InputParentAssociation = ({
+    isRowExpanded,
+    inputItem,
+    truncateValue,
+}) => (
     <StyledTableCell
         align="center"
         rowSpan={isRowExpanded ? Object.keys(inputItem.channels).length : 1}
@@ -412,7 +398,7 @@ const InputParentAssociation = ({ isRowExpanded, inputItem, labelLength }) => (
                 title={<Typography variant="body2">{'No Parent'}</Typography>}
                 placement="bottom"
             >
-                <div>{getLabelByLenght('No Parent', labelLength)}</div>
+                <div>{truncateValue('No Parent')}</div>
             </Tooltip>
         ) : (
             <Tooltip
@@ -434,12 +420,7 @@ const InputParentAssociation = ({ isRowExpanded, inputItem, labelLength }) => (
                             reference="sources"
                             link="show"
                         >
-                            <ChipFunctionalLabel
-                                source="label"
-                                labelFunction={name =>
-                                    getLabelByLenght(name, labelLength)
-                                }
-                            />
+                            <LinkChipField transform={truncateValue} />
                         </ReferenceField>
                     ) : (
                         <ReferenceField
@@ -450,12 +431,7 @@ const InputParentAssociation = ({ isRowExpanded, inputItem, labelLength }) => (
                             reference="receivers"
                             link="show"
                         >
-                            <ChipFunctionalLabel
-                                source="label"
-                                labelFunction={name =>
-                                    getLabelByLenght(name, labelLength)
-                                }
-                            />
+                            <LinkChipField transform={truncateValue} />
                         </ReferenceField>
                     )}
                 </div>
@@ -485,7 +461,7 @@ const InputChannelMappingCells = ({
     mappingDisabled,
     handleMap,
     isMapped,
-    labelLength,
+    truncateValue,
     personalNames,
     setPersonalNames,
 }) => (
@@ -493,7 +469,7 @@ const InputChannelMappingCells = ({
         <StyledTableCell align="center" key={inputChannelIndex}>
             <Tooltip
                 interactive
-                title={getChannelTooltipTitle(
+                title={getChannelTooltip(
                     inputId,
                     inputChannel.label,
                     inputChannelIndex,
@@ -504,22 +480,14 @@ const InputChannelMappingCells = ({
                 placement="bottom"
             >
                 <div>
-                    {getPersonalChannelName(
-                        inputId,
-                        'inputs',
-                        inputChannelIndex,
-                        personalNames
-                    )
-                        ? getLabelByLenght(
-                              getPersonalChannelName(
-                                  inputId,
-                                  'inputs',
-                                  inputChannelIndex,
-                                  personalNames
-                              ),
-                              labelLength
-                          )
-                        : getLabelByLenght(inputChannel.label, labelLength)}
+                    {truncateValue(
+                        getPersonalChannelName(
+                            inputId,
+                            'inputs',
+                            inputChannelIndex,
+                            personalNames
+                        ) || inputChannel.label
+                    )}
                 </div>
             </Tooltip>
         </StyledTableCell>
@@ -534,7 +502,7 @@ const InputChannelMappingCells = ({
                                     key={outputChannelIndex}
                                 >
                                     <Tooltip
-                                        title={getMappedCellTooltipTitle(
+                                        title={getMappedCellTooltip(
                                             outputItem.properties.name,
                                             getPersonalName(
                                                 outputId,
@@ -602,7 +570,7 @@ const UnroutedRow = ({
     handleMap,
     isMapped,
     isColExpanded,
-    labelLength,
+    truncateValue,
     personalNames,
 }) => (
     <TableRow>
@@ -615,7 +583,7 @@ const UnroutedRow = ({
                     ([channelIndex, channel]) => (
                         <StyledTableCell align="center" key={channelIndex}>
                             <Tooltip
-                                title={getMappedCellTooltipTitle(
+                                title={getMappedCellTooltip(
                                     outputItem.properties.name,
                                     getPersonalName(
                                         outputId,
@@ -668,7 +636,7 @@ const OutputsHeadRow = ({
     io,
     isColExpanded,
     handleExpandCol,
-    labelLength,
+    truncateValue,
     personalNames,
     setPersonalNames,
 }) => (
@@ -699,7 +667,7 @@ const OutputsHeadRow = ({
                     />
                     <Tooltip
                         interactive
-                        title={getOutputTooltipTitle(
+                        title={getOutputTooltip(
                             outputId,
                             outputItem,
                             io,
@@ -709,19 +677,13 @@ const OutputsHeadRow = ({
                         placement="bottom"
                     >
                         <div>
-                            {getPersonalName(outputId, 'outputs', personalNames)
-                                ? getLabelByLenght(
-                                      getPersonalName(
-                                          outputId,
-                                          'outputs',
-                                          personalNames
-                                      ),
-                                      labelLength
-                                  )
-                                : getLabelByLenght(
-                                      outputItem.properties.name,
-                                      labelLength
-                                  )}
+                            {truncateValue(
+                                getPersonalName(
+                                    outputId,
+                                    'outputs',
+                                    personalNames
+                                ) || outputItem.properties.name
+                            )}
                         </div>
                     </Tooltip>
                 </StyledTableCell>
@@ -739,7 +701,7 @@ const OutputsHeadRow = ({
                               >
                                   <Tooltip
                                       interactive
-                                      title={getChannelTooltipTitle(
+                                      title={getChannelTooltip(
                                           outputId,
                                           channel.label,
                                           channelIndex,
@@ -750,25 +712,14 @@ const OutputsHeadRow = ({
                                       placement="bottom"
                                   >
                                       <div>
-                                          {getPersonalChannelName(
-                                              outputId,
-                                              'outputs',
-                                              channelIndex,
-                                              personalNames
-                                          )
-                                              ? getLabelByLenght(
-                                                    getPersonalChannelName(
-                                                        outputId,
-                                                        'outputs',
-                                                        channelIndex,
-                                                        personalNames
-                                                    ),
-                                                    labelLength
-                                                )
-                                              : getLabelByLenght(
-                                                    channel.label,
-                                                    labelLength
-                                                )}
+                                          {truncateValue(
+                                              getPersonalChannelName(
+                                                  outputId,
+                                                  'outputs',
+                                                  channelIndex,
+                                                  personalNames
+                                              ) || channel.label
+                                          )}
                                       </div>
                                   </Tooltip>
                               </StyledTableCell>
@@ -789,7 +740,7 @@ const InputsRows = ({
     isShow,
     handleMap,
     isMapped,
-    labelLength,
+    truncateValue,
     personalNames,
     setPersonalNames,
 }) => {
@@ -799,7 +750,7 @@ const InputsRows = ({
                 <InputParentAssociation
                     isRowExpanded={isRowExpanded(inputId)}
                     inputItem={inputItem}
-                    labelLength={labelLength}
+                    truncateValue={truncateValue}
                 />
                 <StyledTableCell
                     align="center"
@@ -822,7 +773,7 @@ const InputsRows = ({
                     />
                     <Tooltip
                         interactive
-                        title={getInputTooltipTitle(
+                        title={getInputTooltip(
                             inputId,
                             inputItem,
                             personalNames,
@@ -831,19 +782,13 @@ const InputsRows = ({
                         placement="bottom"
                     >
                         <div>
-                            {getPersonalName(inputId, 'inputs', personalNames)
-                                ? getLabelByLenght(
-                                      getPersonalName(
-                                          inputId,
-                                          'inputs',
-                                          personalNames
-                                      ),
-                                      labelLength
-                                  )
-                                : getLabelByLenght(
-                                      inputItem.properties.name,
-                                      labelLength
-                                  )}
+                            {truncateValue(
+                                getPersonalName(
+                                    inputId,
+                                    'inputs',
+                                    personalNames
+                                ) || inputItem.properties.name
+                            )}
                         </div>
                     </Tooltip>
                 </StyledTableCell>
@@ -863,7 +808,7 @@ const InputsRows = ({
                         mappingDisabled={isShow}
                         handleMap={handleMap}
                         isMapped={isMapped}
-                        labelLength={labelLength}
+                        truncateValue={truncateValue}
                         personalNames={personalNames}
                         setPersonalNames={setPersonalNames}
                     />
@@ -885,7 +830,7 @@ const InputsRows = ({
                                 mappingDisabled={isShow}
                                 handleMap={handleMap}
                                 isMapped={isMapped}
-                                labelLength={labelLength}
+                                truncateValue={truncateValue}
                                 personalNames={personalNames}
                                 setPersonalNames={setPersonalNames}
                             />
@@ -897,12 +842,8 @@ const InputsRows = ({
 
 const sortByIOName = (ioObject, getPersonalName) => {
     return Object.entries(ioObject).sort((ioItem1, ioItem2) => {
-        let name1 = getPersonalName(ioItem1[0])
-            ? getPersonalName(ioItem1[0])
-            : ioItem1[1].properties.name;
-        let name2 = getPersonalName(ioItem2[0])
-            ? getPersonalName(ioItem2[0])
-            : ioItem2[1].properties.name;
+        let name1 = getPersonalName(ioItem1[0]) || ioItem1[1].properties.name;
+        let name2 = getPersonalName(ioItem2[0]) || ioItem2[1].properties.name;
         return name1.localeCompare(name2);
     });
 };
@@ -942,11 +883,11 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
         );
     };
     const convertChannelsArrayToObject = () => {
-        for (const item of Object.values(get(io, `outputs`))) {
-            set(item, `channels`, Object.assign({}, item.channels));
+        for (const item of Object.values(get(io, 'outputs'))) {
+            set(item, 'channels', Object.assign({}, item.channels));
         }
-        for (const item of Object.values(get(io, `inputs`))) {
-            set(item, `channels`, Object.assign({}, item.channels));
+        for (const item of Object.values(get(io, 'inputs'))) {
+            set(item, 'channels', Object.assign({}, item.channels));
         }
     };
 
@@ -960,8 +901,9 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
     );
     const io = get(record, '$io');
     convertChannelsArrayToObject();
-    const labelLength = get(settingsFilter, `limit label length`);
-    const filterGroup = get(settingsFilter, `filter group`);
+    const maxLength = get(settingsFilter, 'limit label length');
+    const truncateValue = value => truncateValueAtLength(value, maxLength);
+    const filterGroup = get(settingsFilter, 'filter group');
     let filter_inputs = getFilteredInputs(
         inputsFilter,
         io,
@@ -1022,7 +964,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         <OutputSourceAssociation
                             outputs={sorted_outputs}
                             isExpanded={outputId => isColExpanded(outputId)}
-                            labelLength={labelLength}
+                            truncateValue={truncateValue}
                         />
                     </TableRow>
                     <OutputsHeadRow
@@ -1030,7 +972,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         io={io}
                         isColExpanded={outputId => isColExpanded(outputId)}
                         handleExpandCol={handleExpandCol}
-                        labelLength={labelLength}
+                        truncateValue={truncateValue}
                         personalNames={personalNames}
                         setPersonalNames={setPersonalNames}
                     />
@@ -1042,7 +984,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         handleMap={handleMap}
                         isMapped={isMapped}
                         isColExpanded={outputId => isColExpanded(outputId)}
-                        labelLength={labelLength}
+                        truncateValue={truncateValue}
                         personalNames={personalNames}
                     />
                     <InputsRows
@@ -1054,7 +996,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         isShow={isShow}
                         handleMap={handleMap}
                         isMapped={isMapped}
-                        labelLength={labelLength}
+                        truncateValue={truncateValue}
                         personalNames={personalNames}
                         setPersonalNames={setPersonalNames}
                     />

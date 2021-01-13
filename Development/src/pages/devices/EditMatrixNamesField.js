@@ -45,7 +45,7 @@ export const EditableIONameField = ({
     };
 
     const getDisplayedName = () => {
-        return getName() ? getName() : defaultValue;
+        return getName() || defaultValue;
     };
 
     const removeOverrideName = () => {
@@ -188,9 +188,7 @@ export const EditableChannelNameField = ({
     };
 
     const getChannelName = () => {
-        return has(personalNames, `${ioKey}.${source}.channels.${channelIndex}`)
-            ? getPersonalChannelName()
-            : defaultValue;
+        return getPersonalChannelName() || defaultValue;
     };
 
     const removeOverrideName = () => {
@@ -198,24 +196,24 @@ export const EditableChannelNameField = ({
         setDisplayEditIcon(true);
         setValue(defaultValue);
         setPersonalNames(f => {
-            let newpersonalNames = { ...f };
+            let newPersonalNames = { ...f };
             if (
                 has(
-                    newpersonalNames,
+                    newPersonalNames,
                     `${ioKey}.${source}.channels.${channelIndex}`
                 )
             ) {
-                delete newpersonalNames[ioKey][source]['channels'][
+                delete newPersonalNames[ioKey][source]['channels'][
                     channelIndex
                 ];
             }
             if (
-                isEmpty(get(newpersonalNames, `${ioKey}.${source}.channels`)) &&
-                get(newpersonalNames, `${ioKey}.${source}.name`) === ''
+                isEmpty(get(newPersonalNames, `${ioKey}.${source}.channels`)) &&
+                get(newPersonalNames, `${ioKey}.${source}.name`) === ''
             ) {
-                delete newpersonalNames[ioKey][source];
+                delete newPersonalNames[ioKey][source];
             }
-            return newpersonalNames;
+            return newPersonalNames;
         });
     };
 

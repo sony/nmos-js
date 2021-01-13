@@ -24,6 +24,14 @@ export const AppThemeProvider = ({ children }) => {
                 width: 240,
                 closedWidth: 72,
             },
+            overrides: {
+                RaReferenceField: {
+                    link: {
+                        color: null,
+                        textDecoration: null,
+                    },
+                },
+            },
         })
     );
 

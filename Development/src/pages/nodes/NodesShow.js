@@ -13,7 +13,7 @@ import {
     useShowController,
 } from 'react-admin';
 import LinkIcon from '@material-ui/icons/Link';
-import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import LinkChipField from '../../components/LinkChipField';
 import ItemArrayField from '../../components/ItemArrayField';
 import MapObject from '../../components/ObjectField';
 import ResourceShowActions from '../../components/ResourceShowActions';
@@ -143,7 +143,7 @@ const NodesShowView = props => {
                     foo="show"
                 >
                     <SingleFieldList linkType="show">
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </SingleFieldList>
                 </ReferenceManyField>
             </SimpleShowLayout>

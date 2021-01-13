@@ -20,7 +20,7 @@ import { Paper, Tab, Tabs } from '@material-ui/core';
 import { Link, Route } from 'react-router-dom';
 import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
-import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import LinkChipField from '../../components/LinkChipField';
 import MapObject from '../../components/ObjectField';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
@@ -138,16 +138,16 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     reference="nodes"
                     link="show"
                 >
-                    <ChipConditionalLabel source="label" />
+                    <LinkChipField />
                 </ReferenceField>
                 <ReferenceArrayField source="receivers" reference="receivers">
                     <SingleFieldList linkType="show">
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </SingleFieldList>
                 </ReferenceArrayField>
                 <ReferenceArrayField source="senders" reference="senders">
                     <SingleFieldList linkType="show">
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </SingleFieldList>
                 </ReferenceArrayField>
                 <ReferenceManyField
@@ -156,7 +156,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     target="device_id"
                 >
                     <SingleFieldList linkType="show">
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </SingleFieldList>
                 </ReferenceManyField>
                 <ReferenceManyField
@@ -165,7 +165,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     target="device_id"
                 >
                     <SingleFieldList linkType="show">
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </SingleFieldList>
                 </ReferenceManyField>
             </SimpleShowLayout>

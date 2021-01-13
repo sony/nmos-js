@@ -14,7 +14,7 @@ import {
     useRecordContext,
     useShowController,
 } from 'react-admin';
-import ChipConditionalLabel from '../../components/ChipConditionalLabel';
+import LinkChipField from '../../components/LinkChipField';
 import MapObject from '../../components/ObjectField';
 import RateField from '../../components/RateField';
 import ResourceShowActions from '../../components/ResourceShowActions';
@@ -123,7 +123,7 @@ const FlowsShowView = props => {
                     link="show"
                 >
                     <SingleFieldList linkType="show">
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </SingleFieldList>
                 </ReferenceArrayField>
                 {queryVersion() >= 'v1.1' && (
@@ -133,7 +133,7 @@ const FlowsShowView = props => {
                         reference="devices"
                         link="show"
                     >
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </ReferenceField>
                 )}
                 <ReferenceField
@@ -142,7 +142,7 @@ const FlowsShowView = props => {
                     reference="sources"
                     link="show"
                 >
-                    <ChipConditionalLabel source="label" />
+                    <LinkChipField />
                 </ReferenceField>
                 <hr />
                 <ReferenceManyField
@@ -151,7 +151,7 @@ const FlowsShowView = props => {
                     target="flow_id"
                 >
                     <SingleFieldList linkType="show">
-                        <ChipConditionalLabel source="label" />
+                        <LinkChipField />
                     </SingleFieldList>
                 </ReferenceManyField>
             </SimpleShowLayout>

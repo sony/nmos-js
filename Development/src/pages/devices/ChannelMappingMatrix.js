@@ -1,5 +1,6 @@
 import { Fragment, useState } from 'react';
 import {
+    Divider,
     Table,
     TableBody,
     TableCell,
@@ -30,6 +31,14 @@ const StyledTableCell = withStyles({
     },
 })(TableCell);
 
+const TooltipDivider = withStyles({
+    root: {
+        marginTop: 4,
+        marginBottom: 4,
+        backgroundColor: 'rgb(192, 192, 192)',
+    },
+})(Divider);
+
 const getOutputTooltip = (outputId, outputItem, io) => {
     return (
         <>
@@ -43,6 +52,7 @@ const getOutputTooltip = (outputId, outputItem, io) => {
             <Typography variant="body2">
                 {outputItem.properties.description}
             </Typography>
+            <TooltipDivider />
             {'Routable Inputs'}
             <Typography variant="body2">
                 {outputItem.caps.routable_inputs !== null
@@ -73,6 +83,7 @@ const getInputTooltip = (inputId, inputItem) => {
             <Typography variant="body2">
                 {get(inputItem, `properties.description`)}
             </Typography>
+            <TooltipDivider />
             {'Block Size'}
             <Typography variant="body2">
                 {get(inputItem, `caps.block_size`)}

@@ -1,12 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { IconButton, TextField, Typography } from '@material-ui/core';
-import get from 'lodash/get';
-import has from 'lodash/has';
 import CreateIcon from '@material-ui/icons/Create';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ClearIcon from '@material-ui/icons/Clear';
 import DoneIcon from '@material-ui/icons/Done';
-import { isEmpty, set } from 'lodash';
+import { get, has, isEmpty, set } from 'lodash';
 
 export const EditableIONameField = ({
     defaultValue,
@@ -16,13 +14,15 @@ export const EditableIONameField = ({
     setCustomNames,
     autoFocus,
     ioKey,
+    deviceID,
+    displayEditTextField,
+    setDisplayEditTextField,
     ...props
 }) => {
-    const [displayRenameField, setDisplayRenameField] = useState(false);
     const [displayEditIcon, setDisplayEditIcon] = useState(true);
     const [value, setValue] = useState(() => {
-        if (get(customNames, `${ioKey}.${source}.name`)) {
-            return get(customNames, `${ioKey}.${source}.name`);
+        if (get(customNames, `${deviceID}.${ioKey}.${source}.name`)) {
+            return get(customNames, `${deviceID}.${ioKey}.${source}.name`);
         } else if (defaultValue != null) {
             return defaultValue;
         } else {
@@ -33,13 +33,13 @@ export const EditableIONameField = ({
     const inputRef = useRef();
     useEffect(() => {
         const timeout = setTimeout(() => {
-            if (autoFocus) inputRef.current.focus();
+            if (displayEditTextField) inputRef.current.focus();
         }, 100);
         return () => clearTimeout(timeout);
-    }, [autoFocus]);
+    }, [autoFocus, displayEditTextField]);
 
     const getCustomName = () => {
-        return get(customNames, `${ioKey}.${source}.name`);
+        return get(customNames, `${deviceID}.${ioKey}.${source}.name`);
     };
 
     const getName = () => {
@@ -47,16 +47,23 @@ export const EditableIONameField = ({
     };
 
     const removeCustomName = () => {
-        setDisplayRenameField(false);
+        setDisplayEditTextField(false);
         setDisplayEditIcon(true);
         setValue(defaultValue);
         setCustomNames(f => {
             let newCustomNames = { ...f };
-            if (has(newCustomNames, `${ioKey}.${source}.name`)) {
-                set(newCustomNames, `${ioKey}.${source}.name`, '');
+            if (has(newCustomNames, `${deviceID}.${ioKey}.${source}.name`)) {
+                set(newCustomNames, `${deviceID}.${ioKey}.${source}.name`, '');
             }
-            if (isEmpty(get(newCustomNames, `${ioKey}.${source}.channels`))) {
-                delete newCustomNames[source];
+            if (
+                isEmpty(
+                    get(
+                        newCustomNames,
+                        `${deviceID}.${ioKey}.${source}.channels`
+                    )
+                )
+            ) {
+                delete newCustomNames[deviceID][source];
             }
             return newCustomNames;
         });
@@ -65,33 +72,34 @@ export const EditableIONameField = ({
     const saveCustomName = () => {
         setCustomNames(f => {
             let newCustomNames = { ...f };
-            if (!has(newCustomNames, `${ioKey}`)) {
-                set(newCustomNames, `${ioKey}`, {});
+            if (!has(newCustomNames, `${deviceID}`)) {
+                set(newCustomNames, `${deviceID}`, {});
             }
-            if (value === defaultValue) {
-            } else if (!has(newCustomNames, `${ioKey}.${source}`)) {
-                set(newCustomNames, `${ioKey}.${source}`, {
+            if (!has(newCustomNames, `${deviceID}.${ioKey}`)) {
+                set(newCustomNames, `${deviceID}.${ioKey}`, {});
+            }
+            if (!has(newCustomNames, `${deviceID}.${ioKey}.${source}`)) {
+                set(newCustomNames, `${deviceID}.${ioKey}.${source}`, {
                     name: value,
                     channels: {},
                 });
-            } else {
-                set(newCustomNames, `${ioKey}.${source}.name`, value);
             }
+            set(newCustomNames, `${deviceID}.${ioKey}.${source}.name`, value);
             return newCustomNames;
         });
-        setDisplayRenameField(false);
+        setDisplayEditTextField(false);
         setDisplayEditIcon(true);
     };
 
     const cancelCustomName = () => {
-        setDisplayRenameField(false);
+        setDisplayEditTextField(false);
         setDisplayEditIcon(true);
         setValue(getName());
     };
 
     return (
         <div>
-            {displayRenameField ? (
+            {displayEditTextField ? (
                 <>
                     <TextField
                         label={label}
@@ -101,9 +109,21 @@ export const EditableIONameField = ({
                         onChange={event => setValue(event.target.value)}
                         inputRef={inputRef}
                         fullWidth={true}
+                        onKeyPress={event => {
+                            if (event.key === 'Enter') {
+                                saveCustomName();
+                            }
+                        }}
                         {...props}
                     />
-                    <IconButton size="small" onClick={saveCustomName}>
+                    <IconButton
+                        size="small"
+                        onClick={
+                            value === defaultValue
+                                ? removeCustomName
+                                : saveCustomName
+                        }
+                    >
                         <DoneIcon />
                     </IconButton>
                     <IconButton size="small" onClick={cancelCustomName}>
@@ -119,7 +139,7 @@ export const EditableIONameField = ({
                         <>
                             <IconButton
                                 size="small"
-                                onClick={() => setDisplayRenameField(true)}
+                                onClick={() => setDisplayEditTextField(true)}
                             >
                                 <CreateIcon />
                             </IconButton>
@@ -148,15 +168,22 @@ export const EditableChannelLabelField = ({
     setCustomNames,
     autoFocus,
     ioKey,
+    deviceID,
+    displayEditTextField,
+    setDisplayEditTextField,
     ...props
 }) => {
-    const [displayRenameField, setDisplayRenameField] = useState(false);
     const [displayEditIcon, setDisplayEditIcon] = useState(true);
     const [value, setValue] = useState(() => {
-        if (get(customNames, `${ioKey}.${source}.channels.${channelIndex}`)) {
+        if (
+            get(
+                customNames,
+                `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`
+            )
+        ) {
             return get(
                 customNames,
-                `${ioKey}.${source}.channels.${channelIndex}`
+                `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`
             );
         } else if (defaultValue != null) {
             return defaultValue;
@@ -174,7 +201,10 @@ export const EditableChannelLabelField = ({
     }, [autoFocus]);
 
     const getCustomChannelLabel = () => {
-        return get(customNames, `${ioKey}.${source}.channels.${channelIndex}`);
+        return get(
+            customNames,
+            `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`
+        );
     };
 
     const getChannelLabel = () => {
@@ -182,7 +212,7 @@ export const EditableChannelLabelField = ({
     };
 
     const removeCustomChannelLabel = () => {
-        setDisplayRenameField(false);
+        setDisplayEditTextField(false);
         setDisplayEditIcon(true);
         setValue(defaultValue);
         setCustomNames(f => {
@@ -190,14 +220,22 @@ export const EditableChannelLabelField = ({
             if (
                 has(
                     newCustomNames,
-                    `${ioKey}.${source}.channels.${channelIndex}`
+                    `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`
                 )
             ) {
-                delete newCustomNames[ioKey][source]['channels'][channelIndex];
+                delete newCustomNames[deviceID][ioKey][source]['channels'][
+                    channelIndex
+                ];
             }
             if (
-                isEmpty(get(newCustomNames, `${ioKey}.${source}.channels`)) &&
-                get(newCustomNames, `${ioKey}.${source}.name`) === ''
+                isEmpty(
+                    get(
+                        newCustomNames,
+                        `${deviceID}.${ioKey}.${source}.channels`
+                    )
+                ) &&
+                get(newCustomNames, `${deviceID}.${ioKey}.${source}.name`) ===
+                    ''
             ) {
                 delete newCustomNames[ioKey][source];
             }
@@ -208,34 +246,35 @@ export const EditableChannelLabelField = ({
     const saveCustomChannelLabel = () => {
         setCustomNames(f => {
             let newCustomNames = { ...f };
-            if (value !== defaultValue) {
-                if (!has(newCustomNames, `${ioKey}.${source}`)) {
-                    set(newCustomNames, `${ioKey}.${source}`, {
-                        name: '',
-                        channels: {},
-                    });
-                }
-                set(
-                    newCustomNames,
-                    `${ioKey}.${source}.channels.${channelIndex}`,
-                    value
-                );
+            if (!has(newCustomNames, `${deviceID}.${ioKey}`)) {
+                set(newCustomNames, `${deviceID}.${ioKey}`, {});
             }
+            if (!has(newCustomNames, `${deviceID}.${ioKey}.${source}`)) {
+                set(newCustomNames, `${deviceID}.${ioKey}.${source}`, {
+                    name: '',
+                    channels: {},
+                });
+            }
+            set(
+                newCustomNames,
+                `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`,
+                value
+            );
             return newCustomNames;
         });
-        setDisplayRenameField(false);
+        setDisplayEditTextField(false);
         setDisplayEditIcon(true);
     };
 
     const cancelCustomChannelLabel = () => {
-        setDisplayRenameField(false);
+        setDisplayEditTextField(false);
         setDisplayEditIcon(true);
         setValue(getChannelLabel());
     };
 
     return (
         <div>
-            {displayRenameField ? (
+            {displayEditTextField ? (
                 <>
                     <TextField
                         label={label}
@@ -246,8 +285,20 @@ export const EditableChannelLabelField = ({
                         inputRef={inputRef}
                         fullWidth={true}
                         {...props}
+                        onKeyPress={event => {
+                            if (event.key === 'Enter') {
+                                saveCustomChannelLabel();
+                            }
+                        }}
                     />
-                    <IconButton size="small" onClick={saveCustomChannelLabel}>
+                    <IconButton
+                        size="small"
+                        onClick={
+                            value === defaultValue
+                                ? removeCustomChannelLabel
+                                : saveCustomChannelLabel
+                        }
+                    >
                         <DoneIcon />
                     </IconButton>
                     <IconButton size="small" onClick={cancelCustomChannelLabel}>
@@ -263,7 +314,7 @@ export const EditableChannelLabelField = ({
                         <>
                             <IconButton
                                 size="small"
-                                onClick={() => setDisplayRenameField(true)}
+                                onClick={() => setDisplayEditTextField(true)}
                             >
                                 <CreateIcon />
                             </IconButton>

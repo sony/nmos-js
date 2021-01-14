@@ -62,12 +62,51 @@ const TooltipDivider = withStyles({
     },
 })(Divider);
 
+const InteractiveTooltip = ({
+    getTooltip,
+    display,
+    tooltipOpen,
+    setTooltipOpen,
+}) => {
+    const [displayEditTextField, setDisplayEditTextField] = useState(false);
+    const [open, setOpen] = useState(false);
+    const handleClose = () => {
+        if (open && !displayEditTextField) {
+            setOpen(false);
+            setTooltipOpen(false);
+        }
+    };
+
+    const handleOpen = () => {
+        if (!tooltipOpen) {
+            setOpen(true);
+            setTooltipOpen(true);
+        }
+    };
+
+    return (
+        <Tooltip
+            open={open}
+            interactive
+            title={getTooltip(displayEditTextField, setDisplayEditTextField)}
+            placement="bottom"
+            onOpen={handleOpen}
+            onClose={handleClose}
+        >
+            <div>{display()}</div>
+        </Tooltip>
+    );
+};
+
 const getOutputTooltip = (
     outputId,
     outputItem,
     io,
     customNames,
-    setCustomNames
+    setCustomNames,
+    deviceID,
+    displayEditTextField,
+    setDisplayEditTextField
 ) => (
     <>
         {'ID'}
@@ -79,8 +118,11 @@ const getOutputTooltip = (
             source={outputId}
             defaultValue={outputItem.properties.name}
             ioKey={'outputs'}
+            deviceID={deviceID}
+            displayEditTextField={displayEditTextField}
+            setDisplayEditTextField={setDisplayEditTextField}
         />
-        {getCustomName(outputId, 'outputs', customNames) && (
+        {getCustomName(outputId, 'outputs', customNames, deviceID) && (
             <>
                 {'API Name'}
                 <Typography variant="body2">
@@ -100,7 +142,12 @@ const getOutputTooltip = (
                       .map(inputId =>
                           inputId === null
                               ? 'Unrouted'
-                              : getCustomName(inputId, 'inputs', customNames) ||
+                              : getCustomName(
+                                    inputId,
+                                    'inputs',
+                                    customNames,
+                                    deviceID
+                                ) ||
                                 get(io, `inputs.${inputId}.properties.name`)
                       )
                       .join(', ')
@@ -109,7 +156,15 @@ const getOutputTooltip = (
     </>
 );
 
-const getInputTooltip = (inputId, inputItem, customNames, setCustomNames) => (
+const getInputTooltip = (
+    inputId,
+    inputItem,
+    customNames,
+    setCustomNames,
+    deviceID,
+    displayEditTextField,
+    setDisplayEditTextField
+) => (
     <>
         {'ID'}
         <Typography variant="body2">{inputId}</Typography>
@@ -120,8 +175,11 @@ const getInputTooltip = (inputId, inputItem, customNames, setCustomNames) => (
             source={inputId}
             defaultValue={inputItem.properties.name}
             ioKey={'inputs'}
+            deviceID={deviceID}
+            displayEditTextField={displayEditTextField}
+            setDisplayEditTextField={setDisplayEditTextField}
         />
-        {getCustomName(inputId, 'inputs', customNames) && (
+        {getCustomName(inputId, 'inputs', customNames, deviceID) && (
             <>
                 {'API Name'}
                 <Typography variant="body2">
@@ -151,7 +209,10 @@ const getChannelTooltip = (
     channelIndex,
     ioKey,
     customNames,
-    setCustomNames
+    setCustomNames,
+    deviceID,
+    displayEditTextField,
+    setDisplayEditTextField
 ) => (
     <>
         {'Label'}
@@ -162,8 +223,17 @@ const getChannelTooltip = (
             defaultValue={channelLabel}
             channelIndex={channelIndex}
             ioKey={ioKey}
+            deviceID={deviceID}
+            displayEditTextField={displayEditTextField}
+            setDisplayEditTextField={setDisplayEditTextField}
         />
-        {getCustomChannelLabel(id, ioKey, channelIndex, customNames) && (
+        {getCustomChannelLabel(
+            id,
+            ioKey,
+            channelIndex,
+            customNames,
+            deviceID
+        ) && (
             <>
                 {'API Label'}
                 <Typography variant="body2">{channelLabel}</Typography>
@@ -207,12 +277,23 @@ const truncateValueAtLength = (value, maxLength) => {
         : value;
 };
 
-export const getCustomName = (id, ioKey, customNames) => {
-    return get(customNames, `${ioKey}.${id}.name`) || '';
+export const getCustomName = (id, ioKey, customNames, deviceID) => {
+    return get(customNames, `${deviceID}.${ioKey}.${id}.name`) || '';
 };
 
-export const getCustomChannelLabel = (id, ioKey, channelIndex, customNames) => {
-    return get(customNames, `${ioKey}.${id}.channels.${channelIndex}`) || '';
+export const getCustomChannelLabel = (
+    id,
+    ioKey,
+    channelIndex,
+    customNames,
+    deviceID
+) => {
+    return (
+        get(
+            customNames,
+            `${deviceID}.${ioKey}.${id}.channels.${channelIndex}`
+        ) || ''
+    );
 };
 
 const getOutputSourceTooltip = outputItem => (
@@ -277,7 +358,12 @@ const getOutputSourceTooltip = outputItem => (
     </>
 );
 
-const OutputSourceAssociation = ({ outputs, isExpanded, truncateValue }) =>
+const OutputSourceAssociation = ({
+    outputs,
+    isExpanded,
+    truncateValue,
+    tooltipOpen,
+}) =>
     outputs.map(([outputId, outputItem]) => (
         <StyledTableCell
             align="center"
@@ -290,6 +376,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded, truncateValue }) =>
         >
             {get(outputItem, 'source_id') ? (
                 <Tooltip
+                    disableHoverListener={tooltipOpen}
                     interactive
                     title={getOutputSourceTooltip(outputItem)}
                     placement="bottom"
@@ -310,6 +397,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded, truncateValue }) =>
                 </Tooltip>
             ) : (
                 <Tooltip
+                    disableHoverListener={tooltipOpen}
                     title={
                         <Typography variant="body2">{'No Source'}</Typography>
                     }
@@ -355,6 +443,7 @@ const InputParentAssociation = ({
     isRowExpanded,
     inputItem,
     truncateValue,
+    tooltipOpen,
 }) => (
     <StyledTableCell
         align="center"
@@ -362,6 +451,7 @@ const InputParentAssociation = ({
     >
         {inputItem.parent.type === null ? (
             <Tooltip
+                disableHoverListener={tooltipOpen}
                 title={<Typography variant="body2">{'No Parent'}</Typography>}
                 placement="bottom"
             >
@@ -369,6 +459,7 @@ const InputParentAssociation = ({
             </Tooltip>
         ) : (
             <Tooltip
+                disableHoverListener={tooltipOpen}
                 interactive
                 title={getInputParentTypeTooltip(
                     inputItem.parent.type,
@@ -431,32 +522,40 @@ const InputChannelMappingCells = ({
     truncateValue,
     customNames,
     setCustomNames,
+    deviceID,
+    tooltipOpen,
+    setTooltipOpen,
 }) => (
     <>
         <StyledTableCell align="center" key={inputChannelIndex}>
-            <Tooltip
-                interactive
-                title={getChannelTooltip(
-                    inputId,
-                    inputChannel.label,
-                    inputChannelIndex,
-                    'inputs',
-                    customNames,
-                    setCustomNames
-                )}
-                placement="bottom"
-            >
-                <div>
-                    {truncateValue(
+            <InteractiveTooltip
+                getTooltip={(displayEditTextField, setDisplayEditTextField) =>
+                    getChannelTooltip(
+                        inputId,
+                        inputChannel.label,
+                        inputChannelIndex,
+                        'inputs',
+                        customNames,
+                        setCustomNames,
+                        deviceID,
+                        displayEditTextField,
+                        setDisplayEditTextField
+                    )
+                }
+                display={() =>
+                    truncateValue(
                         getCustomChannelLabel(
                             inputId,
                             'inputs',
                             inputChannelIndex,
-                            customNames
+                            customNames,
+                            deviceID
                         ) || inputChannel.label
-                    )}
-                </div>
-            </Tooltip>
+                    )
+                }
+                tooltipOpen={tooltipOpen}
+                setTooltipOpen={setTooltipOpen}
+            />
         </StyledTableCell>
         <>
             {outputs.map(([outputId, outputItem]) =>
@@ -468,32 +567,37 @@ const InputChannelMappingCells = ({
                                 key={outputChannelIndex}
                             >
                                 <Tooltip
+                                    disableHoverListener={tooltipOpen}
                                     title={getMappedCellTooltip(
                                         outputItem.properties.name,
                                         getCustomName(
                                             outputId,
                                             'outputs',
-                                            customNames
+                                            customNames,
+                                            deviceID
                                         ),
                                         outputChannel.label,
                                         getCustomChannelLabel(
                                             outputId,
                                             'outputs',
                                             outputChannelIndex,
-                                            customNames
+                                            customNames,
+                                            deviceID
                                         ),
                                         inputName,
                                         getCustomName(
                                             inputId,
                                             'inputs',
-                                            customNames
+                                            customNames,
+                                            deviceID
                                         ),
                                         inputChannel.label,
                                         getCustomChannelLabel(
                                             inputId,
                                             'inputs',
                                             inputChannelIndex,
-                                            customNames
+                                            customNames,
+                                            deviceID
                                         )
                                     )}
                                     placement="bottom"
@@ -535,8 +639,9 @@ const UnroutedRow = ({
     handleMap,
     isMapped,
     isColExpanded,
-    truncateValue,
     customNames,
+    deviceID,
+    tooltipOpen,
 }) => (
     <TableRow>
         <StyledTableCell align="center" colSpan={3}>
@@ -548,19 +653,22 @@ const UnroutedRow = ({
                     ([channelIndex, channel]) => (
                         <StyledTableCell align="center" key={channelIndex}>
                             <Tooltip
+                                disableHoverListener={tooltipOpen}
                                 title={getMappedCellTooltip(
                                     outputItem.properties.name,
                                     getCustomName(
                                         outputId,
                                         'outputs',
-                                        customNames
+                                        customNames,
+                                        deviceID
                                     ),
                                     channel.label,
                                     getCustomChannelLabel(
                                         outputId,
                                         'outputs',
                                         channelIndex,
-                                        customNames
+                                        customNames,
+                                        deviceID
                                     ),
                                     'Unrouted'
                                 )}
@@ -604,6 +712,9 @@ const OutputsHeadRow = ({
     truncateValue,
     customNames,
     setCustomNames,
+    deviceID,
+    tooltipOpen,
+    setTooltipOpen,
 }) => (
     <>
         <TableRow>
@@ -630,27 +741,35 @@ const OutputsHeadRow = ({
                                 : 'View channels'
                         }
                     />
-                    <Tooltip
-                        interactive
-                        title={getOutputTooltip(
-                            outputId,
-                            outputItem,
-                            io,
-                            customNames,
-                            setCustomNames
-                        )}
-                        placement="bottom"
-                    >
-                        <div>
-                            {truncateValue(
+                    <InteractiveTooltip
+                        getTooltip={(
+                            displayEditTextField,
+                            setDisplayEditTextField
+                        ) =>
+                            getOutputTooltip(
+                                outputId,
+                                outputItem,
+                                io,
+                                customNames,
+                                setCustomNames,
+                                deviceID,
+                                displayEditTextField,
+                                setDisplayEditTextField
+                            )
+                        }
+                        display={() =>
+                            truncateValue(
                                 getCustomName(
                                     outputId,
                                     'outputs',
-                                    customNames
+                                    customNames,
+                                    deviceID
                                 ) || outputItem.properties.name
-                            )}
-                        </div>
-                    </Tooltip>
+                            )
+                        }
+                        tooltipOpen={tooltipOpen}
+                        setTooltipOpen={setTooltipOpen}
+                    />
                 </StyledTableCell>
             ))}
         </TableRow>
@@ -664,29 +783,37 @@ const OutputsHeadRow = ({
                                   size="small"
                                   key={channelIndex}
                               >
-                                  <Tooltip
-                                      interactive
-                                      title={getChannelTooltip(
-                                          outputId,
-                                          channel.label,
-                                          channelIndex,
-                                          'outputs',
-                                          customNames,
-                                          setCustomNames
-                                      )}
-                                      placement="bottom"
-                                  >
-                                      <div>
-                                          {truncateValue(
+                                  <InteractiveTooltip
+                                      getTooltip={(
+                                          displayEditTextField,
+                                          setDisplayEditTextField
+                                      ) =>
+                                          getChannelTooltip(
+                                              outputId,
+                                              channel.label,
+                                              channelIndex,
+                                              'outputs',
+                                              customNames,
+                                              setCustomNames,
+                                              deviceID,
+                                              displayEditTextField,
+                                              setDisplayEditTextField
+                                          )
+                                      }
+                                      display={() =>
+                                          truncateValue(
                                               getCustomChannelLabel(
                                                   outputId,
                                                   'outputs',
                                                   channelIndex,
-                                                  customNames
+                                                  customNames,
+                                                  deviceID
                                               ) || channel.label
-                                          )}
-                                      </div>
-                                  </Tooltip>
+                                          )
+                                      }
+                                      tooltipOpen={tooltipOpen}
+                                      setTooltipOpen={setTooltipOpen}
+                                  />
                               </StyledTableCell>
                           )
                       )
@@ -708,6 +835,9 @@ const InputsRows = ({
     truncateValue,
     customNames,
     setCustomNames,
+    deviceID,
+    tooltipOpen,
+    setTooltipOpen,
 }) =>
     inputs.map(([inputId, inputItem]) => (
         <Fragment key={inputId}>
@@ -716,6 +846,7 @@ const InputsRows = ({
                     isRowExpanded={isRowExpanded(inputId)}
                     inputItem={inputItem}
                     truncateValue={truncateValue}
+                    tooltipOpen={tooltipOpen}
                 />
                 <StyledTableCell
                     align="center"
@@ -736,23 +867,34 @@ const InputsRows = ({
                         }
                         direction="horizontal"
                     />
-                    <Tooltip
-                        interactive
-                        title={getInputTooltip(
-                            inputId,
-                            inputItem,
-                            customNames,
-                            setCustomNames
-                        )}
-                        placement="bottom"
-                    >
-                        <div>
-                            {truncateValue(
-                                getCustomName(inputId, 'inputs', customNames) ||
-                                    inputItem.properties.name
-                            )}
-                        </div>
-                    </Tooltip>
+                    <InteractiveTooltip
+                        getTooltip={(
+                            displayEditTextField,
+                            setDisplayEditTextField
+                        ) =>
+                            getInputTooltip(
+                                inputId,
+                                inputItem,
+                                customNames,
+                                setCustomNames,
+                                deviceID,
+                                displayEditTextField,
+                                setDisplayEditTextField
+                            )
+                        }
+                        display={() =>
+                            truncateValue(
+                                getCustomName(
+                                    inputId,
+                                    'inputs',
+                                    customNames,
+                                    deviceID
+                                ) || inputItem.properties.name
+                            )
+                        }
+                        tooltipOpen={tooltipOpen}
+                        setTooltipOpen={setTooltipOpen}
+                    />
                 </StyledTableCell>
                 {!isRowExpanded(inputId) ? (
                     <EmptyCellsForCollapsedRow
@@ -773,6 +915,9 @@ const InputsRows = ({
                         truncateValue={truncateValue}
                         customNames={customNames}
                         setCustomNames={setCustomNames}
+                        deviceID={deviceID}
+                        tooltipOpen={tooltipOpen}
+                        setTooltipOpen={setTooltipOpen}
                     />
                 ) : null}
             </TableRow>
@@ -795,6 +940,9 @@ const InputsRows = ({
                                 truncateValue={truncateValue}
                                 customNames={customNames}
                                 setCustomNames={setCustomNames}
+                                deviceID={deviceID}
+                                tooltipOpen={tooltipOpen}
+                                setTooltipOpen={setTooltipOpen}
                             />
                         </TableRow>
                     ))}
@@ -812,6 +960,7 @@ const sortByIOName = (ioObject, getCustomName) => {
 const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
     const [expandedCols, setExpandedCols] = useState([]);
     const [expandedRows, setExpandedRows] = useState([]);
+    const [tooltipOpen, setTooltipOpen] = useState(false);
     const handleExpandRow = inputId => {
         const currentExpandedRows = expandedRows;
         const isRowExpanded = currentExpandedRows.includes(inputId);
@@ -858,20 +1007,23 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
     );
     const io = get(record, '$io');
     convertChannelsArrayToObject();
+    const filterGroup = get(settingsFilter, 'filter group');
     const maxLength = get(settingsFilter, 'limit label length');
     const truncateValue = value => truncateValueAtLength(value, maxLength);
-    const filterGroup = get(settingsFilter, 'filter group');
     let filter_inputs = getFilteredInputs(
         inputsFilter,
-        io,
         filterGroup,
-        customNames
+        customNames,
+        get(io, `inputs`),
+        get(record, `id`)
     );
     let filter_outputs = getFilteredOutputs(
         outputsFilter,
-        io,
+        inputId => get(io, `inputs.${inputId}.properties.name`),
         filterGroup,
-        customNames
+        customNames,
+        get(io, `outputs`),
+        get(record, `id`)
     );
 
     const sorted_outputs = sortByIOName(filter_outputs, id =>
@@ -936,6 +1088,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                             outputs={sorted_outputs}
                             isExpanded={outputId => isColExpanded(outputId)}
                             truncateValue={truncateValue}
+                            tooltipOpen={tooltipOpen}
                         />
                     </TableRow>
                     <OutputsHeadRow
@@ -946,6 +1099,9 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         truncateValue={truncateValue}
                         customNames={customNames}
                         setCustomNames={setCustomNames}
+                        deviceID={get(record, `id`)}
+                        tooltipOpen={tooltipOpen}
+                        setTooltipOpen={setTooltipOpen}
                     />
                 </TableHead>
                 <TableBody>
@@ -955,8 +1111,9 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         handleMap={handleMap}
                         isMapped={isMapped}
                         isColExpanded={outputId => isColExpanded(outputId)}
-                        truncateValue={truncateValue}
                         customNames={customNames}
+                        deviceID={get(record, `id`)}
+                        tooltipOpen={tooltipOpen}
                     />
                     <InputsRows
                         inputs={sorted_inputs}
@@ -970,6 +1127,9 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         truncateValue={truncateValue}
                         customNames={customNames}
                         setCustomNames={setCustomNames}
+                        deviceID={get(record, `id`)}
+                        tooltipOpen={tooltipOpen}
+                        setTooltipOpen={setTooltipOpen}
                     />
                 </TableBody>
             </Table>

@@ -11,136 +11,164 @@ const conditionGroup = (filterGroup, ...theArgs) =>
         }
     });
 
-const channelIncludes = (label, channel_label) =>
-    label.match(RegExp(`${channel_label}`, 'i'));
+const channelIncludes = (label, channelLabelReg) => {
+    return label.match(RegExp(`${channelLabelReg}`, 'i'));
+};
 
 const filterChannelLabel = (
-    channel_label,
+    channelLabelReg,
     item,
     customChannelLabel,
     filterGroup
 ) => {
-    if (filterGroup === 'or' && channel_label === undefined) {
+    if (filterGroup === 'or' && channelLabelReg === undefined) {
         return false;
     } else {
         return (
-            channel_label === undefined ||
-            channel_label === '' ||
+            channelLabelReg === undefined ||
+            channelLabelReg === '' ||
             Object.entries(item.channels).some(
                 ([channelIndex, channelItem]) =>
                     channelIncludes(
                         customChannelLabel(channelIndex),
-                        channel_label
-                    ) || channelIncludes(channelItem.label, channel_label)
+                        channelLabelReg
+                    ) || channelIncludes(channelItem.label, channelLabelReg)
             )
         );
     }
 };
 
-const routableInputsIncludes = (inputId, routable_inputs, io, getInputName) => {
+const routableInputsIncludes = (
+    inputId,
+    routableInputsReg,
+    getInputAPIName,
+    getInputName
+) => {
     return (
         (inputId === null &&
-            'Unrouted'.match(RegExp(`${routable_inputs}`, 'i'))) ||
+            'Unrouted'.match(RegExp(`${routableInputsReg}`, 'i'))) ||
         (inputId != null &&
-            (String(get(io, `inputs.${inputId}.properties.name`)).match(
-                RegExp(`${routable_inputs}`, 'i')
+            (String(getInputAPIName(inputId)).match(
+                RegExp(`${routableInputsReg}`, 'i')
             ) ||
                 String(getInputName(inputId)).match(
-                    RegExp(`${routable_inputs}`, 'i')
+                    RegExp(`${routableInputsReg}`, 'i')
                 )))
     );
 };
 
 const filterRoutableInputs = (
-    routable_inputs,
+    routableInputsReg,
     item,
     filterGroup,
-    io,
+    getInputAPIName,
     getInputName
 ) => {
     if (
         filterGroup === 'or' &&
-        (routable_inputs === undefined || routable_inputs === '')
+        (routableInputsReg === undefined || routableInputsReg === '')
     ) {
         return false;
     } else {
         return (
-            routable_inputs === undefined ||
-            routable_inputs === '' ||
+            routableInputsReg === undefined ||
+            routableInputsReg === '' ||
             (item.caps.routable_inputs !== null &&
                 item.caps.routable_inputs.some(inputId =>
                     routableInputsIncludes(
                         inputId,
-                        routable_inputs,
-                        io,
+                        routableInputsReg,
+                        getInputAPIName,
                         getInputName
                     )
                 )) ||
             (item.caps.routable_inputs === null &&
-                'No Constraints'.match(RegExp(`${routable_inputs}`, 'i')))
+                'No Constraints'.match(RegExp(`${routableInputsReg}`, 'i')))
         );
     }
 };
 
-const filterLabel = (label, apiName, name, filterGroup) => {
-    if (filterGroup === 'or' && label === undefined) {
+const filterName = (nameReg, apiName, name, filterGroup) => {
+    if (filterGroup === 'or' && nameReg === undefined) {
         return false;
     } else {
         return (
-            label === undefined ||
-            apiName.match(RegExp(`${label}`, 'i')) ||
-            name.match(RegExp(`${label}`, 'i'))
+            nameReg === undefined ||
+            apiName.match(RegExp(`${nameReg}`, 'i')) ||
+            name.match(RegExp(`${nameReg}`, 'i'))
         );
     }
 };
 
-const filterId = (id, itemId, filterGroup) => {
-    if (filterGroup === 'or' && id === undefined) {
+const filterId = (idReg, itemId, filterGroup) => {
+    if (filterGroup === 'or' && idReg === undefined) {
         return false;
     } else {
-        return id === undefined || itemId.match(RegExp(`${id}`, 'i'));
+        return idReg === undefined || itemId.match(RegExp(`${idReg}`, 'i'));
     }
 };
 
-const filterBlockSize = (blockSize, item, filterGroup) => {
-    if (filterGroup === 'or' && (blockSize === undefined || isNaN(blockSize))) {
+const filterBlockSize = (blockSizeReg, item, filterGroup) => {
+    if (
+        filterGroup === 'or' &&
+        (blockSizeReg === undefined || isNaN(blockSizeReg))
+    ) {
         return false;
     } else {
         return (
-            blockSize === undefined ||
-            isNaN(blockSize) ||
-            item.caps.block_size === blockSize
+            blockSizeReg === undefined ||
+            isNaN(blockSizeReg) ||
+            item.caps.block_size === blockSizeReg
         );
     }
 };
 
-const filterReordering = (reordering, item, filterGroup) => {
-    if (filterGroup === 'or' && reordering === undefined) {
+const filterReordering = (reorderingReg, item, filterGroup) => {
+    if (filterGroup === 'or' && reorderingReg === undefined) {
         return false;
     } else {
-        return reordering === undefined || item.caps.reordering === reordering;
+        return (
+            reorderingReg === undefined ||
+            item.caps.reordering === reorderingReg
+        );
     }
 };
 
-const filterIOByChannels = (channel_label, filtered_io, customNames, ioKey) => {
-    if (channel_label) {
-        for (const [id, item] of Object.entries(filtered_io)) {
+const filterIOByChannels = (
+    channelLabelReg,
+    filteredIo,
+    customNames,
+    ioKey,
+    deviceID
+) => {
+    if (channelLabelReg) {
+        for (const [id, item] of Object.entries(filteredIo)) {
             const getCustomIOChannelLabel = channel_index =>
-                getCustomChannelLabel(id, ioKey, channel_index, customNames);
+                getCustomChannelLabel(
+                    id,
+                    ioKey,
+                    channel_index,
+                    customNames,
+                    deviceID
+                );
             if (
-                filterChannelLabel(channel_label, item, getCustomIOChannelLabel)
+                filterChannelLabel(
+                    channelLabelReg,
+                    item,
+                    getCustomIOChannelLabel
+                )
             ) {
-                filtered_io[id] = JSON.parse(JSON.stringify(item));
-                filtered_io[id].channels = Object.fromEntries(
-                    Object.entries(filtered_io[id].channels).filter(
+                filteredIo[id] = JSON.parse(JSON.stringify(item));
+                filteredIo[id].channels = Object.fromEntries(
+                    Object.entries(filteredIo[id].channels).filter(
                         ([channel_index, channel_item]) =>
                             channelIncludes(
                                 channel_item.label,
-                                channel_label
+                                channelLabelReg
                             ) ||
                             channelIncludes(
                                 getCustomIOChannelLabel(channel_index),
-                                channel_label
+                                channelLabelReg
                             )
                     )
                 );
@@ -168,97 +196,130 @@ const hasOutputFilters = filter => {
     );
 };
 
-export const getFilteredInputs = (filter, io, filter_group, customNames) => {
-    let filter_inputs = get(io, 'inputs');
+export const getFilteredInputs = (
+    filter,
+    filterGroup,
+    customNames,
+    inputs,
+    deviceID
+) => {
+    let filter_inputs = inputs;
     if (filter && hasInputFilters(filter)) {
-        let input_id_filter = get(filter, 'input id');
-        let input_label = get(filter, 'input name');
-        let block_size = get(filter, 'block size');
-        let reordering = get(filter, 'reordering');
-        let input_channel_label = get(filter, 'input channel label');
+        let inputIdReg = get(filter, 'input id');
+        let inputNameReg = get(filter, 'input name');
+        let blockSizeReg = get(filter, 'block size');
+        let reorderingReg = get(filter, 'reordering');
+        let inputChannelLabelReg = get(filter, 'input channel label');
         filter_inputs = Object.fromEntries(
             Object.entries(filter_inputs).filter(([input_id, input_item]) =>
                 conditionGroup(
-                    filter_group,
-                    filterId(input_id_filter, input_id, filter_group),
-                    filterLabel(
-                        input_label,
+                    filterGroup,
+                    filterId(inputIdReg, input_id, filterGroup),
+                    filterName(
+                        inputNameReg,
                         input_item.properties.name,
-                        getCustomName(input_id, 'inputs', customNames),
-                        filter_group
+                        getCustomName(
+                            input_id,
+                            'inputs',
+                            customNames,
+                            deviceID
+                        ),
+                        filterGroup
                     ),
-                    filterBlockSize(block_size, input_item, filter_group),
-                    filterReordering(reordering, input_item, filter_group),
+                    filterBlockSize(blockSizeReg, input_item, filterGroup),
+                    filterReordering(reorderingReg, input_item, filterGroup),
                     filterChannelLabel(
-                        input_channel_label,
+                        inputChannelLabelReg,
                         input_item,
                         channel_index =>
                             getCustomChannelLabel(
                                 input_id,
                                 'inputs',
                                 channel_index,
-                                customNames
+                                customNames,
+                                deviceID
                             ),
-                        filter_group
+                        filterGroup
                     )
                 )
             )
         );
         filterIOByChannels(
-            input_channel_label,
+            inputChannelLabelReg,
             filter_inputs,
             customNames,
-            'inputs'
+            'inputs',
+            deviceID
         );
     }
     return filter_inputs;
 };
 
-export const getFilteredOutputs = (filter, io, filter_group, customNames) => {
-    let filter_outputs = get(io, 'outputs');
+export const getFilteredOutputs = (
+    filter,
+    getInputAPIName,
+    filterGroup,
+    customNames,
+    outputs,
+    deviceID
+) => {
+    let filter_outputs = outputs;
     if (filter && hasOutputFilters(filter)) {
-        let output_id_filter = get(filter, 'output id');
-        let output_label = get(filter, 'output name');
-        let routable_inputs = get(filter, 'routable inputs');
-        let output_channel_label = get(filter, 'output channel label');
+        let outputIdReg = get(filter, 'output id');
+        let outputNameReg = get(filter, 'output name');
+        let routableInputsReg = get(filter, 'routable inputs');
+        let outputChannelLabelReg = get(filter, 'output channel label');
         filter_outputs = Object.fromEntries(
             Object.entries(filter_outputs).filter(([output_id, output_item]) =>
                 conditionGroup(
-                    filter_group,
-                    filterId(output_id_filter, output_id, filter_group),
-                    filterLabel(
-                        output_label,
+                    filterGroup,
+                    filterId(outputIdReg, output_id, filterGroup),
+                    filterName(
+                        outputNameReg,
                         output_item.properties.name,
-                        getCustomName(output_id, 'outputs', customNames),
-                        filter_group
+                        getCustomName(
+                            output_id,
+                            'outputs',
+                            customNames,
+                            deviceID
+                        ),
+                        filterGroup
                     ),
                     filterRoutableInputs(
-                        routable_inputs,
+                        routableInputsReg,
                         output_item,
-                        filter_group,
-                        io,
-                        inputId => getCustomName(inputId, 'inputs', customNames)
+                        filterGroup,
+                        getInputAPIName,
+                        inputId =>
+                            getCustomName(
+                                inputId,
+                                'inputs',
+                                customNames,
+                                deviceID
+                            )
                     ),
                     filterChannelLabel(
-                        output_channel_label,
+                        outputChannelLabelReg,
                         output_item,
                         channel_index =>
                             getCustomChannelLabel(
                                 output_id,
                                 'outputs',
                                 channel_index,
-                                customNames
+                                customNames,
+                                deviceID
                             ),
-                        filter_group
+                        filterGroup
                     )
                 )
             )
         );
         filterIOByChannels(
-            output_channel_label,
+            outputChannelLabelReg,
             filter_outputs,
             customNames,
-            'outputs'
+            'outputs',
+            deviceID
         );
     }
     return filter_outputs;

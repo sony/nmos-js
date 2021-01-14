@@ -344,6 +344,11 @@ export const RateFilter = ({
                     setValue(v => ({ ...v, numerator: event.target.value }))
                 }
                 inputRef={inputRef}
+                InputProps={{
+                    inputProps: {
+                        min: 0,
+                    },
+                }}
                 {...props}
             />
             <TextField
@@ -355,6 +360,11 @@ export const RateFilter = ({
                 onChange={event =>
                     setValue(v => ({ ...v, denominator: event.target.value }))
                 }
+                InputProps={{
+                    inputProps: {
+                        min: 1,
+                    },
+                }}
                 {...props}
             />
         </>

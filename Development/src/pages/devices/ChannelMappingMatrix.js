@@ -901,7 +901,14 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                 <StringFilter source="input id" />
                 <StringFilter source="input name" />
                 <StringFilter source="input channel label" />
-                <NumberFilter source="block size" />
+                <NumberFilter
+                    source="block size"
+                    InputProps={{
+                        inputProps: {
+                            min: 1,
+                        },
+                    }}
+                />
                 <BooleanFilter source="reordering" />
             </FilterPanel>
             <FilterPanel
@@ -909,7 +916,14 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                 setFilter={setSettingsFilter}
                 filterListLabel={'settings'}
             >
-                <NumberFilter source="limit label length" />
+                <NumberFilter
+                    source="limit label length"
+                    InputProps={{
+                        inputProps: {
+                            min: 1,
+                        },
+                    }}
+                />
                 <GroupFilter source="filter group" />
             </FilterPanel>
             <Table>

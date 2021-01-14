@@ -82,13 +82,13 @@ export const GroupFilter = ({
                 >
                     <FormControlLabel
                         value="and"
-                        control={<Radio />}
+                        control={<Radio size="small" />}
                         label="And"
                         inputRef={inputRef}
                     />
                     <FormControlLabel
                         value="or"
-                        control={<Radio />}
+                        control={<Radio size="small" />}
                         label="Or"
                         inputRef={inputRef}
                     />

@@ -75,7 +75,7 @@ export const GroupFilter = ({
             <FormControl component="fieldset">
                 <Typography>{label}</Typography>
                 <RadioGroup
-                    aria-label={source}
+                    row
                     name={source}
                     value={value}
                     onChange={event => setValue(event.target.value)}
@@ -376,7 +376,7 @@ const FilterPanel = ({
     defaultFilter,
     filter,
     setFilter,
-    filterListLabel = 'Add Filter',
+    filterButtonLabel = 'Add filter',
 }) => {
     const cloneFilter = (child, autoFocus = false) =>
         React.cloneElement(child, {
@@ -455,7 +455,7 @@ const FilterPanel = ({
                 }}
                 startIcon={<FilterListIcon />}
             >
-                {filterListLabel}
+                {filterButtonLabel}
             </Button>
             <Menu
                 open={open}

@@ -886,7 +886,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
             <FilterPanel
                 filter={outputsFilter}
                 setFilter={setOutputsFilter}
-                filterListLabel={'output filter'}
+                filterButtonLabel={'Add output filter'}
             >
                 <StringFilter source="output id" />
                 <StringFilter source="output name" />
@@ -896,7 +896,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
             <FilterPanel
                 filter={inputsFilter}
                 setFilter={setInputsFilter}
-                filterListLabel={'input filter'}
+                filterButtonLabel={'Add input filter'}
             >
                 <StringFilter source="input id" />
                 <StringFilter source="input name" />
@@ -914,7 +914,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
             <FilterPanel
                 filter={settingsFilter}
                 setFilter={setSettingsFilter}
-                filterListLabel={'settings'}
+                filterButtonLabel={'settings'}
             >
                 <NumberFilter
                     source="limit label length"

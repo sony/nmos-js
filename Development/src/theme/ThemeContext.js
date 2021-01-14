@@ -25,6 +25,13 @@ export const AppThemeProvider = ({ children }) => {
                 closedWidth: 72,
             },
             overrides: {
+                MuiTableCell: {
+                    sizeSmall: {
+                        '&:last-child': {
+                            paddingRight: null,
+                        },
+                    },
+                },
                 RaReferenceField: {
                     link: {
                         color: null,

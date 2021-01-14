@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import {
     Divider,
+    IconButton,
     Table,
     TableBody,
     TableCell,
@@ -36,12 +37,55 @@ import { useJSONSetting } from '../../settings';
 import labelize from '../../components/labelize';
 import { getFilteredInputs, getFilteredOutputs } from './FilterMatrix';
 
-const StyledTableCell = withStyles({
+// passing variant="head" doesn't seem to work inside TableBody
+const TableHeadCell = props => <TableCell component="th" {...props} />;
+
+const mappingCellStyle = theme => ({
+    textAlign: 'center',
+    padding: '1px 2px',
+    border: `solid 1px ${
+        theme.palette.type === 'dark' ? '#515151' : '#e0e0e0'
+    }`,
+});
+
+const mappingHeadStyle = theme => ({
+    backgroundColor: theme.palette.type === 'dark' ? '#212121' : '#f5f5f5',
+});
+
+const MappingCell = withStyles(theme => ({
+    root: mappingCellStyle(theme),
+}))(TableCell);
+
+// for column and row headings
+const MappingHeadCell = withStyles(theme => ({
     root: {
-        padding: 2,
-        border: '1px solid rgba(224, 224, 224, 1)',
+        ...mappingCellStyle(theme),
+        ...mappingHeadStyle(theme),
     },
-})(TableCell);
+}))(TableHeadCell);
+
+const MappingCornerCell = withStyles(theme => ({
+    root: {
+        ...mappingCellStyle(theme),
+        borderLeft: 0,
+        borderTop: 0,
+    },
+}))(TableHeadCell);
+
+// Midline Horizontal Ellipsis for when columns have been collapsed
+const HorizontalEllipsisButton = props => (
+    <IconButton size="small" children={'\u22ef'} {...props} />
+);
+
+// Vertical Ellipsis for when rows have been collapsed
+const VerticalEllipsisButton = props => (
+    <IconButton size="small" disabled children={'\u22ee'} {...props} />
+);
+
+// Down Right Diagonal Ellipsis for when both rows and columnns have been collapsed
+const DiagonalEllipsisButton = props => (
+    <IconButton size="small" disabled children={'\u22f1'} {...props} />
+);
 
 const TooltipChipField = props => (
     <div
@@ -365,8 +409,7 @@ const OutputSourceAssociation = ({
     tooltipOpen,
 }) =>
     outputs.map(([outputId, outputItem]) => (
-        <StyledTableCell
-            align="center"
+        <MappingHeadCell
             colSpan={
                 isExpanded(outputId)
                     ? Object.keys(outputItem.channels).length
@@ -406,7 +449,7 @@ const OutputSourceAssociation = ({
                     <div>{truncateValue('No Source')}</div>
                 </Tooltip>
             )}
-        </StyledTableCell>
+        </MappingHeadCell>
     ));
 
 const getInputParentTypeTooltip = (type, inputItem) => (
@@ -445,8 +488,7 @@ const InputParentAssociation = ({
     truncateValue,
     tooltipOpen,
 }) => (
-    <StyledTableCell
-        align="center"
+    <MappingHeadCell
         rowSpan={isRowExpanded ? Object.keys(inputItem.channels).length : 1}
     >
         {inputItem.parent.type === null ? (
@@ -495,17 +537,21 @@ const InputParentAssociation = ({
                 </div>
             </Tooltip>
         )}
-    </StyledTableCell>
+    </MappingHeadCell>
 );
 
 const EmptyCellsForCollapsedRow = ({ outputs, isColExpanded }) =>
     outputs.map(([outputId, outputItem]) =>
         isColExpanded(outputId) ? (
             Object.entries(outputItem.channels).map(([channelIndex, _]) => (
-                <StyledTableCell key={channelIndex} />
+                <MappingCell key={channelIndex}>
+                    <VerticalEllipsisButton disabled />
+                </MappingCell>
             ))
         ) : (
-            <StyledTableCell key={outputId} />
+            <MappingCell key={outputId}>
+                <DiagonalEllipsisButton disabled />
+            </MappingCell>
         )
     );
 
@@ -527,7 +573,7 @@ const InputChannelMappingCells = ({
     setTooltipOpen,
 }) => (
     <>
-        <StyledTableCell align="center" key={inputChannelIndex}>
+        <MappingHeadCell key={inputChannelIndex}>
             <InteractiveTooltip
                 getTooltip={(displayEditTextField, setDisplayEditTextField) =>
                     getChannelTooltip(
@@ -556,16 +602,13 @@ const InputChannelMappingCells = ({
                 tooltipOpen={tooltipOpen}
                 setTooltipOpen={setTooltipOpen}
             />
-        </StyledTableCell>
+        </MappingHeadCell>
         <>
             {outputs.map(([outputId, outputItem]) =>
                 isColExpanded(outputId) ? (
                     Object.entries(outputItem.channels).map(
                         ([outputChannelIndex, outputChannel]) => (
-                            <StyledTableCell
-                                align="center"
-                                key={outputChannelIndex}
-                            >
+                            <MappingCell key={outputChannelIndex}>
                                 <Tooltip
                                     disableHoverListener={tooltipOpen}
                                     title={getMappedCellTooltip(
@@ -622,11 +665,13 @@ const InputChannelMappingCells = ({
                                         />
                                     </div>
                                 </Tooltip>
-                            </StyledTableCell>
+                            </MappingCell>
                         )
                     )
                 ) : (
-                    <StyledTableCell key={outputId} />
+                    <MappingCell key={outputId}>
+                        <HorizontalEllipsisButton disabled />
+                    </MappingCell>
                 )
             )}
         </>
@@ -644,14 +689,12 @@ const UnroutedRow = ({
     tooltipOpen,
 }) => (
     <TableRow>
-        <StyledTableCell align="center" colSpan={3}>
-            {'Unrouted'}
-        </StyledTableCell>
+        <MappingHeadCell colSpan={3}>{'Unrouted'}</MappingHeadCell>
         {outputs.map(([outputId, outputItem]) =>
             isColExpanded(outputId) ? (
                 Object.entries(outputItem.channels).map(
                     ([channelIndex, channel]) => (
-                        <StyledTableCell align="center" key={channelIndex}>
+                        <MappingCell key={channelIndex}>
                             <Tooltip
                                 disableHoverListener={tooltipOpen}
                                 title={getMappedCellTooltip(
@@ -694,11 +737,13 @@ const UnroutedRow = ({
                                     />
                                 </div>
                             </Tooltip>
-                        </StyledTableCell>
+                        </MappingCell>
                     )
                 )
             ) : (
-                <StyledTableCell key={outputId} />
+                <MappingCell key={outputId}>
+                    <HorizontalEllipsisButton disabled />
+                </MappingCell>
             )
         )}
     </TableRow>
@@ -719,8 +764,7 @@ const OutputsHeadRow = ({
     <>
         <TableRow>
             {outputs.map(([outputId, outputItem]) => (
-                <StyledTableCell
-                    align="center"
+                <MappingHeadCell
                     colSpan={
                         isColExpanded(outputId)
                             ? Object.keys(outputItem.channels).length
@@ -728,9 +772,6 @@ const OutputsHeadRow = ({
                     }
                     rowSpan={isColExpanded(outputId) ? 1 : 2}
                     key={outputId}
-                    style={{
-                        padding: 4,
-                    }}
                 >
                     <CollapseButton
                         onClick={() => handleExpandCol(outputId)}
@@ -770,7 +811,7 @@ const OutputsHeadRow = ({
                         tooltipOpen={tooltipOpen}
                         setTooltipOpen={setTooltipOpen}
                     />
-                </StyledTableCell>
+                </MappingHeadCell>
             ))}
         </TableRow>
         <TableRow>
@@ -778,11 +819,7 @@ const OutputsHeadRow = ({
                 isColExpanded(outputId)
                     ? Object.entries(outputItem.channels).map(
                           ([channelIndex, channel]) => (
-                              <StyledTableCell
-                                  align="center"
-                                  size="small"
-                                  key={channelIndex}
-                              >
+                              <MappingHeadCell key={channelIndex}>
                                   <InteractiveTooltip
                                       getTooltip={(
                                           displayEditTextField,
@@ -814,7 +851,7 @@ const OutputsHeadRow = ({
                                       tooltipOpen={tooltipOpen}
                                       setTooltipOpen={setTooltipOpen}
                                   />
-                              </StyledTableCell>
+                              </MappingHeadCell>
                           )
                       )
                     : null
@@ -848,8 +885,7 @@ const InputsRows = ({
                     truncateValue={truncateValue}
                     tooltipOpen={tooltipOpen}
                 />
-                <StyledTableCell
-                    align="center"
+                <MappingHeadCell
                     rowSpan={
                         isRowExpanded(inputId)
                             ? Object.keys(inputItem.channels).length
@@ -895,7 +931,7 @@ const InputsRows = ({
                         tooltipOpen={tooltipOpen}
                         setTooltipOpen={setTooltipOpen}
                     />
-                </StyledTableCell>
+                </MappingHeadCell>
                 {!isRowExpanded(inputId) ? (
                     <EmptyCellsForCollapsedRow
                         outputs={outputs}
@@ -1081,9 +1117,9 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
             <Table>
                 <TableHead>
                     <TableRow>
-                        <StyledTableCell align="center" rowSpan={3} colSpan={3}>
+                        <MappingCornerCell rowSpan={3} colSpan={3}>
                             {'INPUTS \\ OUTPUTS'}
-                        </StyledTableCell>
+                        </MappingCornerCell>
                         <OutputSourceAssociation
                             outputs={sorted_outputs}
                             isExpanded={outputId => isColExpanded(outputId)}

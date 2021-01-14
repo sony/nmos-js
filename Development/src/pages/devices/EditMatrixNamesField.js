@@ -12,8 +12,8 @@ export const EditableIONameField = ({
     defaultValue,
     source,
     label,
-    personalNames,
-    setPersonalNames,
+    customNames,
+    setCustomNames,
     autoFocus,
     ioKey,
     ...props
@@ -21,8 +21,8 @@ export const EditableIONameField = ({
     const [displayRenameField, setDisplayRenameField] = useState(false);
     const [displayEditIcon, setDisplayEditIcon] = useState(true);
     const [value, setValue] = useState(() => {
-        if (get(personalNames, `${ioKey}.${source}.name`)) {
-            return get(personalNames, `${ioKey}.${source}.name`);
+        if (get(customNames, `${ioKey}.${source}.name`)) {
+            return get(customNames, `${ioKey}.${source}.name`);
         } else if (defaultValue != null) {
             return defaultValue;
         } else {
@@ -35,60 +35,58 @@ export const EditableIONameField = ({
         const timeout = setTimeout(() => {
             if (autoFocus) inputRef.current.focus();
         }, 100);
-        return () => {
-            clearTimeout(timeout);
-        };
+        return () => clearTimeout(timeout);
     }, [autoFocus]);
 
+    const getCustomName = () => {
+        return get(customNames, `${ioKey}.${source}.name`);
+    };
+
     const getName = () => {
-        return get(personalNames, `${ioKey}.${source}.name`);
+        return getCustomName() || defaultValue;
     };
 
-    const getDisplayedName = () => {
-        return getName() || defaultValue;
-    };
-
-    const removeOverrideName = () => {
+    const removeCustomName = () => {
         setDisplayRenameField(false);
         setDisplayEditIcon(true);
         setValue(defaultValue);
-        setPersonalNames(f => {
-            let newpersonalNames = { ...f };
-            if (has(newpersonalNames, `${ioKey}.${source}.name`)) {
-                set(newpersonalNames, `${ioKey}.${source}.name`, '');
+        setCustomNames(f => {
+            let newCustomNames = { ...f };
+            if (has(newCustomNames, `${ioKey}.${source}.name`)) {
+                set(newCustomNames, `${ioKey}.${source}.name`, '');
             }
-            if (isEmpty(get(newpersonalNames, `${ioKey}.${source}.channels`))) {
-                delete newpersonalNames[source];
+            if (isEmpty(get(newCustomNames, `${ioKey}.${source}.channels`))) {
+                delete newCustomNames[source];
             }
-            return newpersonalNames;
+            return newCustomNames;
         });
     };
 
-    const saveOverrideName = () => {
-        setPersonalNames(f => {
-            let newpersonalNames = { ...f };
-            if (!has(newpersonalNames, `${ioKey}`)) {
-                set(newpersonalNames, `${ioKey}`, {});
+    const saveCustomName = () => {
+        setCustomNames(f => {
+            let newCustomNames = { ...f };
+            if (!has(newCustomNames, `${ioKey}`)) {
+                set(newCustomNames, `${ioKey}`, {});
             }
             if (value === defaultValue) {
-            } else if (!has(newpersonalNames, `${ioKey}.${source}`)) {
-                set(newpersonalNames, `${ioKey}.${source}`, {
+            } else if (!has(newCustomNames, `${ioKey}.${source}`)) {
+                set(newCustomNames, `${ioKey}.${source}`, {
                     name: value,
                     channels: {},
                 });
             } else {
-                set(newpersonalNames, `${ioKey}.${source}.name`, value);
+                set(newCustomNames, `${ioKey}.${source}.name`, value);
             }
-            return newpersonalNames;
+            return newCustomNames;
         });
         setDisplayRenameField(false);
         setDisplayEditIcon(true);
     };
 
-    const cancleOverrideName = () => {
+    const cancelCustomName = () => {
         setDisplayRenameField(false);
         setDisplayEditIcon(true);
-        setValue(getDisplayedName());
+        setValue(getName());
     };
 
     return (
@@ -105,20 +103,17 @@ export const EditableIONameField = ({
                         fullWidth={true}
                         {...props}
                     />
-                    <IconButton size="small" onClick={() => saveOverrideName()}>
+                    <IconButton size="small" onClick={saveCustomName}>
                         <DoneIcon />
                     </IconButton>
-                    <IconButton
-                        size="small"
-                        onClick={() => cancleOverrideName()}
-                    >
+                    <IconButton size="small" onClick={cancelCustomName}>
                         <ClearIcon />
                     </IconButton>
                 </>
             ) : (
                 <>
                     <Typography variant="body2" display="inline">
-                        {getDisplayedName()}
+                        {getName()}
                     </Typography>
                     {displayEditIcon && (
                         <>
@@ -128,10 +123,10 @@ export const EditableIONameField = ({
                             >
                                 <CreateIcon />
                             </IconButton>
-                            {getName() && (
+                            {getCustomName() && (
                                 <IconButton
                                     size="small"
-                                    onClick={() => removeOverrideName()}
+                                    onClick={removeCustomName}
                                 >
                                     <DeleteIcon />
                                 </IconButton>
@@ -144,13 +139,13 @@ export const EditableIONameField = ({
     );
 };
 
-export const EditableChannelNameField = ({
+export const EditableChannelLabelField = ({
     defaultValue,
     source,
     channelIndex,
     label,
-    personalNames,
-    setPersonalNames,
+    customNames,
+    setCustomNames,
     autoFocus,
     ioKey,
     ...props
@@ -158,9 +153,9 @@ export const EditableChannelNameField = ({
     const [displayRenameField, setDisplayRenameField] = useState(false);
     const [displayEditIcon, setDisplayEditIcon] = useState(true);
     const [value, setValue] = useState(() => {
-        if (has(personalNames, `${ioKey}.${source}.channels.${channelIndex}`)) {
+        if (get(customNames, `${ioKey}.${source}.channels.${channelIndex}`)) {
             return get(
-                personalNames,
+                customNames,
                 `${ioKey}.${source}.channels.${channelIndex}`
             );
         } else if (defaultValue != null) {
@@ -175,74 +170,67 @@ export const EditableChannelNameField = ({
         const timeout = setTimeout(() => {
             if (autoFocus) inputRef.current.focus();
         }, 100);
-        return () => {
-            clearTimeout(timeout);
-        };
+        return () => clearTimeout(timeout);
     }, [autoFocus]);
 
-    const getPersonalChannelName = () => {
-        return get(
-            personalNames,
-            `${ioKey}.${source}.channels.${channelIndex}`
-        );
+    const getCustomChannelLabel = () => {
+        return get(customNames, `${ioKey}.${source}.channels.${channelIndex}`);
     };
 
-    const getChannelName = () => {
-        return getPersonalChannelName() || defaultValue;
+    const getChannelLabel = () => {
+        return getCustomChannelLabel() || defaultValue;
     };
 
-    const removeOverrideName = () => {
+    const removeCustomChannelLabel = () => {
         setDisplayRenameField(false);
         setDisplayEditIcon(true);
         setValue(defaultValue);
-        setPersonalNames(f => {
-            let newPersonalNames = { ...f };
+        setCustomNames(f => {
+            let newCustomNames = { ...f };
             if (
                 has(
-                    newPersonalNames,
+                    newCustomNames,
                     `${ioKey}.${source}.channels.${channelIndex}`
                 )
             ) {
-                delete newPersonalNames[ioKey][source]['channels'][
-                    channelIndex
-                ];
+                delete newCustomNames[ioKey][source]['channels'][channelIndex];
             }
             if (
-                isEmpty(get(newPersonalNames, `${ioKey}.${source}.channels`)) &&
-                get(newPersonalNames, `${ioKey}.${source}.name`) === ''
+                isEmpty(get(newCustomNames, `${ioKey}.${source}.channels`)) &&
+                get(newCustomNames, `${ioKey}.${source}.name`) === ''
             ) {
-                delete newPersonalNames[ioKey][source];
+                delete newCustomNames[ioKey][source];
             }
-            return newPersonalNames;
+            return newCustomNames;
         });
     };
 
-    const saveOverrideName = () => {
-        setPersonalNames(f => {
-            let newpersonalNames = { ...f };
+    const saveCustomChannelLabel = () => {
+        setCustomNames(f => {
+            let newCustomNames = { ...f };
             if (value !== defaultValue) {
-                if (!has(newpersonalNames, `${ioKey}.${source}`)) {
-                    set(newpersonalNames, `${ioKey}.${source}`, {
+                if (!has(newCustomNames, `${ioKey}.${source}`)) {
+                    set(newCustomNames, `${ioKey}.${source}`, {
                         name: '',
                         channels: {},
                     });
                 }
                 set(
-                    newpersonalNames,
+                    newCustomNames,
                     `${ioKey}.${source}.channels.${channelIndex}`,
                     value
                 );
             }
-            return newpersonalNames;
+            return newCustomNames;
         });
         setDisplayRenameField(false);
         setDisplayEditIcon(true);
     };
 
-    const cancleOverrideName = () => {
+    const cancelCustomChannelLabel = () => {
         setDisplayRenameField(false);
         setDisplayEditIcon(true);
-        setValue(getChannelName());
+        setValue(getChannelLabel());
     };
 
     return (
@@ -259,20 +247,17 @@ export const EditableChannelNameField = ({
                         fullWidth={true}
                         {...props}
                     />
-                    <IconButton size="small" onClick={() => saveOverrideName()}>
+                    <IconButton size="small" onClick={saveCustomChannelLabel}>
                         <DoneIcon />
                     </IconButton>
-                    <IconButton
-                        size="small"
-                        onClick={() => cancleOverrideName()}
-                    >
+                    <IconButton size="small" onClick={cancelCustomChannelLabel}>
                         <ClearIcon />
                     </IconButton>
                 </>
             ) : (
                 <>
                     <Typography variant="body2" display="inline">
-                        {getChannelName()}
+                        {getChannelLabel()}
                     </Typography>
                     {displayEditIcon && (
                         <>
@@ -282,10 +267,10 @@ export const EditableChannelNameField = ({
                             >
                                 <CreateIcon />
                             </IconButton>
-                            {getPersonalChannelName() && (
+                            {getCustomChannelLabel() && (
                                 <IconButton
                                     size="small"
-                                    onClick={() => removeOverrideName()}
+                                    onClick={removeCustomChannelLabel}
                                 >
                                     <DeleteIcon />
                                 </IconButton>

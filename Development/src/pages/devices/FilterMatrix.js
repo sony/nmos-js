@@ -1,28 +1,23 @@
 import get from 'lodash/get';
 import has from 'lodash/has';
-import {
-    getPersonalChannelName,
-    getPersonalName,
-} from './ChannelMappingMatrix';
+import { getCustomChannelLabel, getCustomName } from './ChannelMappingMatrix';
 
-const conditionGroup = (filterGroup, ...theArgs) => {
-    return theArgs.reduce((previous, current) => {
+const conditionGroup = (filterGroup, ...theArgs) =>
+    theArgs.reduce((previous, current) => {
         if (filterGroup === 'or') {
             return previous || current;
         } else {
             return previous && current;
         }
     });
-};
 
-const channelIncludes = (label, channel_label) => {
-    return label.match(RegExp(`${channel_label}`, 'i'));
-};
+const channelIncludes = (label, channel_label) =>
+    label.match(RegExp(`${channel_label}`, 'i'));
 
 const filterChannelLabel = (
     channel_label,
     item,
-    personalChannelName,
+    customChannelLabel,
     filterGroup
 ) => {
     if (filterGroup === 'or' && channel_label === undefined) {
@@ -34,7 +29,7 @@ const filterChannelLabel = (
             Object.entries(item.channels).some(
                 ([channelIndex, channelItem]) =>
                     channelIncludes(
-                        personalChannelName(channelIndex),
+                        customChannelLabel(channelIndex),
                         channel_label
                     ) || channelIncludes(channelItem.label, channel_label)
             )
@@ -127,18 +122,13 @@ const filterReordering = (reordering, item, filterGroup) => {
     }
 };
 
-const filterIOByChannels = (
-    channel_label,
-    filtered_io,
-    personalNames,
-    ioKey
-) => {
+const filterIOByChannels = (channel_label, filtered_io, customNames, ioKey) => {
     if (channel_label) {
         for (const [id, item] of Object.entries(filtered_io)) {
-            const getPersonalChannelLabel = channel_index =>
-                getPersonalChannelName(id, ioKey, channel_index, personalNames);
+            const getCustomIOChannelLabel = channel_index =>
+                getCustomChannelLabel(id, ioKey, channel_index, customNames);
             if (
-                filterChannelLabel(channel_label, item, getPersonalChannelLabel)
+                filterChannelLabel(channel_label, item, getCustomIOChannelLabel)
             ) {
                 filtered_io[id] = JSON.parse(JSON.stringify(item));
                 filtered_io[id].channels = Object.fromEntries(
@@ -149,7 +139,7 @@ const filterIOByChannels = (
                                 channel_label
                             ) ||
                             channelIncludes(
-                                getPersonalChannelLabel(channel_index),
+                                getCustomIOChannelLabel(channel_index),
                                 channel_label
                             )
                     )
@@ -159,7 +149,7 @@ const filterIOByChannels = (
     }
 };
 
-const FilterInputs = filter => {
+const hasInputFilters = filter => {
     return (
         has(filter, 'input name') ||
         has(filter, 'input id') ||
@@ -169,7 +159,7 @@ const FilterInputs = filter => {
     );
 };
 
-const FilterOutputs = filter => {
+const hasOutputFilters = filter => {
     return (
         has(filter, 'output name') ||
         has(filter, 'output id') ||
@@ -178,9 +168,9 @@ const FilterOutputs = filter => {
     );
 };
 
-export const getFilteredInputs = (filter, io, filter_group, personalNames) => {
+export const getFilteredInputs = (filter, io, filter_group, customNames) => {
     let filter_inputs = get(io, 'inputs');
-    if (filter && FilterInputs(filter)) {
+    if (filter && hasInputFilters(filter)) {
         let input_id_filter = get(filter, 'input id');
         let input_label = get(filter, 'input name');
         let block_size = get(filter, 'block size');
@@ -194,7 +184,7 @@ export const getFilteredInputs = (filter, io, filter_group, personalNames) => {
                     filterLabel(
                         input_label,
                         input_item.properties.name,
-                        getPersonalName(input_id, 'inputs', personalNames),
+                        getCustomName(input_id, 'inputs', customNames),
                         filter_group
                     ),
                     filterBlockSize(block_size, input_item, filter_group),
@@ -203,11 +193,11 @@ export const getFilteredInputs = (filter, io, filter_group, personalNames) => {
                         input_channel_label,
                         input_item,
                         channel_index =>
-                            getPersonalChannelName(
+                            getCustomChannelLabel(
                                 input_id,
                                 'inputs',
                                 channel_index,
-                                personalNames
+                                customNames
                             ),
                         filter_group
                     )
@@ -217,16 +207,16 @@ export const getFilteredInputs = (filter, io, filter_group, personalNames) => {
         filterIOByChannels(
             input_channel_label,
             filter_inputs,
-            personalNames,
+            customNames,
             'inputs'
         );
     }
     return filter_inputs;
 };
 
-export const getFilteredOutputs = (filter, io, filter_group, personalNames) => {
+export const getFilteredOutputs = (filter, io, filter_group, customNames) => {
     let filter_outputs = get(io, 'outputs');
-    if (filter && FilterOutputs(filter)) {
+    if (filter && hasOutputFilters(filter)) {
         let output_id_filter = get(filter, 'output id');
         let output_label = get(filter, 'output name');
         let routable_inputs = get(filter, 'routable inputs');
@@ -239,7 +229,7 @@ export const getFilteredOutputs = (filter, io, filter_group, personalNames) => {
                     filterLabel(
                         output_label,
                         output_item.properties.name,
-                        getPersonalName(output_id, 'outputs', personalNames),
+                        getCustomName(output_id, 'outputs', customNames),
                         filter_group
                     ),
                     filterRoutableInputs(
@@ -247,18 +237,17 @@ export const getFilteredOutputs = (filter, io, filter_group, personalNames) => {
                         output_item,
                         filter_group,
                         io,
-                        inputId =>
-                            getPersonalName(inputId, 'inputs', personalNames)
+                        inputId => getCustomName(inputId, 'inputs', customNames)
                     ),
                     filterChannelLabel(
                         output_channel_label,
                         output_item,
                         channel_index =>
-                            getPersonalChannelName(
+                            getCustomChannelLabel(
                                 output_id,
                                 'outputs',
                                 channel_index,
-                                personalNames
+                                customNames
                             ),
                         filter_group
                     )
@@ -268,7 +257,7 @@ export const getFilteredOutputs = (filter, io, filter_group, personalNames) => {
         filterIOByChannels(
             output_channel_label,
             filter_outputs,
-            personalNames,
+            customNames,
             'outputs'
         );
     }

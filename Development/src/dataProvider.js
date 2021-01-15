@@ -8,12 +8,8 @@ import {
     UPDATE,
     fetchUtils,
 } from 'react-admin';
-import get from 'lodash/get';
-import set from 'lodash/set';
-import has from 'lodash/has';
-import isEmpty from 'lodash/isEmpty';
+import { assign, get, has, isEmpty, set } from 'lodash';
 import { JsonPointer } from 'json-ptr';
-import assign from 'lodash/assign';
 import diff from 'deep-diff';
 import {
     DNSSD_API,

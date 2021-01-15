@@ -18,8 +18,7 @@ import {
     ReferenceManyField,
     SingleFieldList,
 } from 'react-admin';
-import get from 'lodash/get';
-import set from 'lodash/set';
+import { get, set } from 'lodash';
 import LinkChipField from '../../components/LinkChipField';
 import MappingButton from '../../components/MappingButton';
 import CollapseButton from '../../components/CollapseButton';

@@ -1,5 +1,4 @@
-import get from 'lodash/get';
-import has from 'lodash/has';
+import { get, has } from 'lodash';
 import { getCustomChannelLabel, getCustomName } from './ChannelMappingMatrix';
 
 const conditionGroup = (filterGroup, ...theArgs) =>

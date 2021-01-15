@@ -1,6 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
-import get from 'lodash/get';
-import set from 'lodash/set';
+import { cloneDeep, get, set } from 'lodash';
 import dataProvider from '../dataProvider';
 
 // keys for parameters to be copied directly from sender to receiver

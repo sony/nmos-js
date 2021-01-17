@@ -19,7 +19,6 @@ export const EditableIONameField = ({
     setDisplayEditTextField,
     ...props
 }) => {
-    const [displayEditIcon, setDisplayEditIcon] = useState(true);
     const [value, setValue] = useState(() => {
         if (get(customNames, `${deviceID}.${ioKey}.${source}.name`)) {
             return get(customNames, `${deviceID}.${ioKey}.${source}.name`);
@@ -48,7 +47,6 @@ export const EditableIONameField = ({
 
     const removeCustomName = () => {
         setDisplayEditTextField(false);
-        setDisplayEditIcon(true);
         setValue(defaultValue);
         setCustomNames(f => {
             let newCustomNames = { ...f };
@@ -88,12 +86,10 @@ export const EditableIONameField = ({
             return newCustomNames;
         });
         setDisplayEditTextField(false);
-        setDisplayEditIcon(true);
     };
 
     const cancelCustomName = () => {
         setDisplayEditTextField(false);
-        setDisplayEditIcon(true);
         setValue(getName());
     };
 
@@ -135,7 +131,7 @@ export const EditableIONameField = ({
                     <Typography variant="body2" display="inline">
                         {getName()}
                     </Typography>
-                    {displayEditIcon && (
+                    {!displayEditTextField && (
                         <>
                             <IconButton
                                 size="small"
@@ -173,7 +169,6 @@ export const EditableChannelLabelField = ({
     setDisplayEditTextField,
     ...props
 }) => {
-    const [displayEditIcon, setDisplayEditIcon] = useState(true);
     const [value, setValue] = useState(() => {
         if (
             get(
@@ -213,7 +208,6 @@ export const EditableChannelLabelField = ({
 
     const removeCustomChannelLabel = () => {
         setDisplayEditTextField(false);
-        setDisplayEditIcon(true);
         setValue(defaultValue);
         setCustomNames(f => {
             let newCustomNames = { ...f };
@@ -263,12 +257,10 @@ export const EditableChannelLabelField = ({
             return newCustomNames;
         });
         setDisplayEditTextField(false);
-        setDisplayEditIcon(true);
     };
 
     const cancelCustomChannelLabel = () => {
         setDisplayEditTextField(false);
-        setDisplayEditIcon(true);
         setValue(getChannelLabel());
     };
 
@@ -310,7 +302,7 @@ export const EditableChannelLabelField = ({
                     <Typography variant="body2" display="inline">
                         {getChannelLabel()}
                     </Typography>
-                    {displayEditIcon && (
+                    {!displayEditTextField && (
                         <>
                             <IconButton
                                 size="small"

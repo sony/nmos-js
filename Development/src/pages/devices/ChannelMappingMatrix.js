@@ -994,27 +994,40 @@ const sortByIOName = (ioObject, getCustomName) => {
 };
 
 const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
-    const [expandedCols, setExpandedCols] = useState([]);
-    const [expandedRows, setExpandedRows] = useState([]);
+    const [collapsedState, setCollapsedState] = useJSONSetting(
+        'channel mapping matrix collapse',
+        {
+            rows: [],
+            cols: [],
+        }
+    );
     const [tooltipOpen, setTooltipOpen] = useState(false);
     const handleExpandRow = inputId => {
-        const currentExpandedRows = expandedRows;
-        const isRowExpanded = currentExpandedRows.includes(inputId);
-        const newExpandedRows = isRowExpanded
-            ? currentExpandedRows.filter(id => id !== inputId)
-            : currentExpandedRows.concat(inputId);
-        setExpandedRows(newExpandedRows);
+        setCollapsedState(f => {
+            let newCollapsed = { ...f };
+            const currentExpandedRows = get(newCollapsed, 'rows');
+            const isRowExpanded = currentExpandedRows.includes(inputId);
+            const newExpandedRows = isRowExpanded
+                ? currentExpandedRows.filter(id => id !== inputId)
+                : currentExpandedRows.concat(inputId);
+            set(newCollapsed, 'rows', newExpandedRows);
+            return newCollapsed;
+        });
     };
     const handleExpandCol = outputId => {
-        const currentExpandedCols = expandedCols;
-        const isColExpanded = currentExpandedCols.includes(outputId);
-        const newExpandedCols = isColExpanded
-            ? currentExpandedCols.filter(id => id !== outputId)
-            : currentExpandedCols.concat(outputId);
-        setExpandedCols(newExpandedCols);
+        setCollapsedState(f => {
+            let newCollapsed = { ...f };
+            const currentExpandedCols = get(newCollapsed, 'cols');
+            const isColExpanded = currentExpandedCols.includes(outputId);
+            const newExpandedCols = isColExpanded
+                ? currentExpandedCols.filter(id => id !== outputId)
+                : currentExpandedCols.concat(outputId);
+            set(newCollapsed, 'cols', newExpandedCols);
+            return newCollapsed;
+        });
     };
-    const isRowExpanded = inputId => expandedRows.includes(inputId);
-    const isColExpanded = outputId => expandedCols.includes(outputId);
+    const isRowExpanded = inputId => collapsedState.rows.includes(inputId);
+    const isColExpanded = outputId => collapsedState.cols.includes(outputId);
     const isMapped = (inputId, outputId, inputChannel, outputChannel) => {
         return (
             inputId === get(mapping, `${outputId}.${outputChannel}.input`) &&

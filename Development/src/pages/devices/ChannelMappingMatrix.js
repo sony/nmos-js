@@ -1,5 +1,6 @@
 import { Fragment, useState } from 'react';
 import {
+    ClickAwayListener,
     Divider,
     IconButton,
     Table,
@@ -127,17 +128,32 @@ const InteractiveTooltip = ({
         }
     };
 
+    const handleClickAway = () => {
+        if (displayEditTextField && tooltipOpen && open) {
+            setOpen(false);
+            setTooltipOpen(false);
+            setDisplayEditTextField(false);
+        }
+    };
+
     return (
-        <Tooltip
-            open={open}
-            interactive
-            title={getTooltip(displayEditTextField, setDisplayEditTextField)}
-            placement="bottom"
-            onOpen={handleOpen}
-            onClose={handleClose}
-        >
-            <div>{display()}</div>
-        </Tooltip>
+        <ClickAwayListener onClickAway={handleClickAway}>
+            <div>
+                <Tooltip
+                    open={open}
+                    interactive
+                    title={getTooltip(
+                        displayEditTextField,
+                        setDisplayEditTextField
+                    )}
+                    placement="bottom"
+                    onOpen={handleOpen}
+                    onClose={handleClose}
+                >
+                    <div>{display()}</div>
+                </Tooltip>
+            </div>
+        </ClickAwayListener>
     );
 };
 

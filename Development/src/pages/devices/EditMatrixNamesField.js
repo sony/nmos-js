@@ -131,23 +131,16 @@ export const EditableIONameField = ({
                     <Typography variant="body2" display="inline">
                         {getName()}
                     </Typography>
-                    {!displayEditTextField && (
-                        <>
-                            <IconButton
-                                size="small"
-                                onClick={() => setDisplayEditTextField(true)}
-                            >
-                                <CreateIcon />
-                            </IconButton>
-                            {getCustomName() && (
-                                <IconButton
-                                    size="small"
-                                    onClick={removeCustomName}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
-                            )}
-                        </>
+                    <IconButton
+                        size="small"
+                        onClick={() => setDisplayEditTextField(true)}
+                    >
+                        <CreateIcon />
+                    </IconButton>
+                    {getCustomName() && (
+                        <IconButton size="small" onClick={removeCustomName}>
+                            <DeleteIcon />
+                        </IconButton>
                     )}
                 </>
             )}
@@ -302,23 +295,19 @@ export const EditableChannelLabelField = ({
                     <Typography variant="body2" display="inline">
                         {getChannelLabel()}
                     </Typography>
-                    {!displayEditTextField && (
-                        <>
-                            <IconButton
-                                size="small"
-                                onClick={() => setDisplayEditTextField(true)}
-                            >
-                                <CreateIcon />
-                            </IconButton>
-                            {getCustomChannelLabel() && (
-                                <IconButton
-                                    size="small"
-                                    onClick={removeCustomChannelLabel}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
-                            )}
-                        </>
+                    <IconButton
+                        size="small"
+                        onClick={() => setDisplayEditTextField(true)}
+                    >
+                        <CreateIcon />
+                    </IconButton>
+                    {getCustomChannelLabel() && (
+                        <IconButton
+                            size="small"
+                            onClick={removeCustomChannelLabel}
+                        >
+                            <DeleteIcon />
+                        </IconButton>
                     )}
                 </>
             )}

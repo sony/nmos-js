@@ -53,7 +53,7 @@ const DevicesShowView = props => {
         return function cleanup() {
             window.localStorage.removeItem('channel mapping matrix collapse');
         };
-    });
+    }, []);
     const theme = useTheme();
     const tabBackgroundColor =
         theme.palette.type === 'light'

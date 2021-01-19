@@ -175,14 +175,16 @@ const OutputTooltip = ({
         <Typography variant="body2">{outputId}</Typography>
         {'Name'}
         <EditableIONameField
-            customNames={customNames}
-            setCustomNames={setCustomNames}
-            source={outputId}
-            defaultValue={outputItem.properties.name}
-            ioResource={'outputs'}
-            deviceId={deviceId}
-            displayEditTextField={displayEditTextField}
-            setDisplayEditTextField={setDisplayEditTextField}
+            {...{
+                deviceId,
+                ioResource: 'outputs',
+                source: outputId,
+                defaultValue: outputItem.properties.name,
+                customNames,
+                setCustomNames,
+                displayEditTextField,
+                setDisplayEditTextField,
+            }}
         />
         {getCustomName(customNames, deviceId, 'outputs', outputId) && (
             <>
@@ -488,13 +490,13 @@ const InputParentTooltip = ({ inputItem }) => (
 );
 
 const InputParentAssociation = ({
-    isRowExpanded,
+    isInputExpanded,
     inputItem,
     truncateValue,
     tooltipOpen,
 }) => (
     <MappingHeadCell
-        rowSpan={isRowExpanded ? Object.keys(inputItem.channels).length : 1}
+        rowSpan={isInputExpanded ? Object.keys(inputItem.channels).length : 1}
     >
         {inputItem.parent.type === null ? (
             <Tooltip
@@ -522,9 +524,9 @@ const InputParentAssociation = ({
     </MappingHeadCell>
 );
 
-const EmptyCellsForCollapsedRow = ({ outputs, isColExpanded }) =>
+const MappingCellsForCollapsedInput = ({ outputs, isOutputExpanded }) =>
     outputs.map(([outputId, outputItem]) =>
-        isColExpanded(outputId) ? (
+        isOutputExpanded(outputId) ? (
             Object.entries(outputItem.channels).map(([channelIndex, _]) => (
                 <MappingCell key={channelIndex}>
                     <VerticalEllipsisButton disabled />
@@ -543,7 +545,7 @@ const InputChannelMappingCells = ({
     inputName,
     inputId,
     outputs,
-    isColExpanded,
+    isOutputExpanded,
     mappingDisabled,
     handleMap,
     isMapped,
@@ -590,7 +592,7 @@ const InputChannelMappingCells = ({
         </MappingHeadCell>
         <>
             {outputs.map(([outputId, outputItem]) =>
-                isColExpanded(outputId) ? (
+                isOutputExpanded(outputId) ? (
                     Object.entries(outputItem.channels).map(
                         ([outputChannelIndex, outputChannel]) => (
                             <MappingCell key={outputChannelIndex}>
@@ -674,7 +676,7 @@ const UnroutedRow = ({
     mappingDisabled,
     handleMap,
     isMapped,
-    isColExpanded,
+    isOutputExpanded,
     customNames,
     deviceId,
     tooltipOpen,
@@ -682,7 +684,7 @@ const UnroutedRow = ({
     <TableRow>
         <MappingHeadCell colSpan={3}>{'Unrouted'}</MappingHeadCell>
         {outputs.map(([outputId, outputItem]) =>
-            isColExpanded(outputId) ? (
+            isOutputExpanded(outputId) ? (
                 Object.entries(outputItem.channels).map(
                     ([channelIndex, channel]) => (
                         <MappingCell key={channelIndex}>
@@ -747,8 +749,8 @@ const UnroutedRow = ({
 const OutputsHeadRow = ({
     outputs,
     io,
-    isColExpanded,
-    handleExpandCol,
+    isOutputExpanded,
+    onExpandOutput,
     truncateValue,
     customNames,
     setCustomNames,
@@ -761,18 +763,18 @@ const OutputsHeadRow = ({
             {outputs.map(([outputId, outputItem]) => (
                 <MappingHeadCell
                     colSpan={
-                        isColExpanded(outputId)
+                        isOutputExpanded(outputId)
                             ? Object.keys(outputItem.channels).length
                             : 1
                     }
-                    rowSpan={isColExpanded(outputId) ? 1 : 2}
+                    rowSpan={isOutputExpanded(outputId) ? 1 : 2}
                     key={outputId}
                 >
                     <CollapseButton
-                        onClick={() => handleExpandCol(outputId)}
-                        isExpanded={isColExpanded(outputId)}
+                        onClick={() => onExpandOutput(outputId)}
+                        isExpanded={isOutputExpanded(outputId)}
                         title={
-                            isColExpanded(outputId)
+                            isOutputExpanded(outputId)
                                 ? 'Hide channels'
                                 : 'View channels'
                         }
@@ -814,7 +816,7 @@ const OutputsHeadRow = ({
         </TableRow>
         <TableRow>
             {outputs.map(([outputId, outputItem]) =>
-                isColExpanded(outputId)
+                isOutputExpanded(outputId)
                     ? Object.entries(outputItem.channels).map(
                           ([channelIndex, channel]) => (
                               <MappingHeadCell key={channelIndex}>
@@ -864,9 +866,9 @@ const OutputsHeadRow = ({
 const InputsRows = ({
     inputs,
     outputs,
-    isColExpanded,
-    isRowExpanded,
-    handleExpandRow,
+    isOutputExpanded,
+    isInputExpanded,
+    onExpandInput,
     isShow,
     handleMap,
     isMapped,
@@ -881,24 +883,24 @@ const InputsRows = ({
         <Fragment key={inputId}>
             <TableRow>
                 <InputParentAssociation
-                    isRowExpanded={isRowExpanded(inputId)}
+                    isInputExpanded={isInputExpanded(inputId)}
                     inputItem={inputItem}
                     truncateValue={truncateValue}
                     tooltipOpen={tooltipOpen}
                 />
                 <MappingHeadCell
                     rowSpan={
-                        isRowExpanded(inputId)
+                        isInputExpanded(inputId)
                             ? Object.keys(inputItem.channels).length
                             : 1
                     }
-                    colSpan={isRowExpanded(inputId) ? 1 : 2}
+                    colSpan={isInputExpanded(inputId) ? 1 : 2}
                 >
                     <CollapseButton
-                        onClick={() => handleExpandRow(inputId)}
-                        isExpanded={isRowExpanded(inputId)}
+                        onClick={() => onExpandInput(inputId)}
+                        isExpanded={isInputExpanded(inputId)}
                         title={
-                            isRowExpanded(inputId)
+                            isInputExpanded(inputId)
                                 ? 'Hide channels'
                                 : 'View channels'
                         }
@@ -936,10 +938,10 @@ const InputsRows = ({
                         </div>
                     </InteractiveTooltip>
                 </MappingHeadCell>
-                {!isRowExpanded(inputId) ? (
-                    <EmptyCellsForCollapsedRow
+                {!isInputExpanded(inputId) ? (
+                    <MappingCellsForCollapsedInput
                         outputs={outputs}
-                        isColExpanded={isColExpanded}
+                        isOutputExpanded={isOutputExpanded}
                     />
                 ) : Object.keys(inputItem.channels).length >= 1 ? (
                     <InputChannelMappingCells
@@ -948,7 +950,7 @@ const InputsRows = ({
                         inputName={inputItem.properties.name}
                         inputId={inputId}
                         outputs={outputs}
-                        isColExpanded={isColExpanded}
+                        isOutputExpanded={isOutputExpanded}
                         mappingDisabled={isShow}
                         handleMap={handleMap}
                         isMapped={isMapped}
@@ -961,7 +963,7 @@ const InputsRows = ({
                     />
                 ) : null}
             </TableRow>
-            {isRowExpanded(inputId) &&
+            {isInputExpanded(inputId) &&
                 Object.keys(inputItem.channels).length > 1 &&
                 Object.entries(inputItem.channels)
                     .slice(1)
@@ -973,7 +975,7 @@ const InputsRows = ({
                                 inputName={inputItem.properties.name}
                                 inputId={inputId}
                                 outputs={outputs}
-                                isColExpanded={isColExpanded}
+                                isOutputExpanded={isOutputExpanded}
                                 mappingDisabled={isShow}
                                 handleMap={handleMap}
                                 isMapped={isMapped}
@@ -998,40 +1000,28 @@ const sortByIOName = (ioObject, getCustomName) => {
 };
 
 const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
-    const [collapsedState, setCollapsedState] = useJSONSetting(
-        'channel mapping matrix collapse',
+    const [expanded, setExpanded] = useJSONSetting(
+        'channel mapping matrix expanded',
         {
-            rows: [],
-            cols: [],
+            inputs: [],
+            outputs: [],
         }
     );
-    const [tooltipOpen, setTooltipOpen] = useState(false);
-    const handleExpandRow = inputId => {
-        setCollapsedState(f => {
-            let newCollapsed = { ...f };
-            const currentExpandedRows = get(newCollapsed, 'rows');
-            const isRowExpanded = currentExpandedRows.includes(inputId);
-            const newExpandedRows = isRowExpanded
-                ? currentExpandedRows.filter(id => id !== inputId)
-                : currentExpandedRows.concat(inputId);
-            set(newCollapsed, 'rows', newExpandedRows);
-            return newCollapsed;
+    const isExpanded = (ioResource, id) =>
+        get(expanded, ioResource).includes(id);
+    const toggleExpanded = (ioResource, id) => {
+        setExpanded(expanded => {
+            let newExpanded = { ...expanded };
+            const expandedIoResource = get(newExpanded, ioResource);
+            const isExpanded = expandedIoResource.includes(id);
+            const newExpandedIoResource = isExpanded
+                ? expandedIoResource.filter(_ => _ !== id)
+                : expandedIoResource.concat(id);
+            set(newExpanded, ioResource, newExpandedIoResource);
+            return newExpanded;
         });
     };
-    const handleExpandCol = outputId => {
-        setCollapsedState(f => {
-            let newCollapsed = { ...f };
-            const currentExpandedCols = get(newCollapsed, 'cols');
-            const isColExpanded = currentExpandedCols.includes(outputId);
-            const newExpandedCols = isColExpanded
-                ? currentExpandedCols.filter(id => id !== outputId)
-                : currentExpandedCols.concat(outputId);
-            set(newCollapsed, 'cols', newExpandedCols);
-            return newCollapsed;
-        });
-    };
-    const isRowExpanded = inputId => collapsedState.rows.includes(inputId);
-    const isColExpanded = outputId => collapsedState.cols.includes(outputId);
+
     const isMapped = (inputId, outputId, inputChannel, outputChannel) => {
         return (
             inputId === get(mapping, `${outputId}.${outputChannel}.input`) &&
@@ -1041,14 +1031,18 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                 )
         );
     };
-    const convertChannelsArrayToObject = () => {
+
+    const convertChannelsArraysToObjects = io => {
         for (const item of Object.values(get(io, 'outputs'))) {
             set(item, 'channels', Object.assign({}, item.channels));
         }
         for (const item of Object.values(get(io, 'inputs'))) {
             set(item, 'channels', Object.assign({}, item.channels));
         }
+        return io;
     };
+
+    const [tooltipOpen, setTooltipOpen] = useState(false);
 
     const [outputsFilter, setOutputsFilter] = useJSONSetting('outputs Filter');
     const [inputsFilter, setInputsFilter] = useJSONSetting('inputs Filter');
@@ -1056,22 +1050,24 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
         'matrix settings Filter'
     );
     const [customNames, setCustomNames] = useJSONSetting(
-        'channel mapping personal names'
+        'channel mapping custom names'
     );
-    const deviceId = get(record, 'id');
-    const io = get(record, '$io');
-    convertChannelsArrayToObject();
+
     const filterGroup = get(settingsFilter, 'filter group');
     const maxLength = get(settingsFilter, 'limit label length');
     const truncateValue = value => truncateValueAtLength(value, maxLength);
-    let filteredInputs = getFilteredInputs(
+
+    const deviceId = get(record, 'id');
+    const io = convertChannelsArraysToObjects(get(record, '$io'));
+
+    const filteredInputs = getFilteredInputs(
         inputsFilter,
         filterGroup,
         customNames,
         get(io, 'inputs'),
         deviceId
     );
-    let filteredOutputs = getFilteredOutputs(
+    const filteredOutputs = getFilteredOutputs(
         outputsFilter,
         inputId => get(io, `inputs.${inputId}.properties.name`),
         filterGroup,
@@ -1140,7 +1136,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         </MappingCornerCell>
                         <OutputSourceAssociation
                             outputs={sortedOutputs}
-                            isExpanded={outputId => isColExpanded(outputId)}
+                            isExpanded={id => isExpanded('outputs', id)}
                             truncateValue={truncateValue}
                             tooltipOpen={tooltipOpen}
                         />
@@ -1148,8 +1144,8 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                     <OutputsHeadRow
                         outputs={sortedOutputs}
                         io={io}
-                        isColExpanded={outputId => isColExpanded(outputId)}
-                        handleExpandCol={handleExpandCol}
+                        isOutputExpanded={id => isExpanded('outputs', id)}
+                        onExpandOutput={id => toggleExpanded('outputs', id)}
                         truncateValue={truncateValue}
                         customNames={customNames}
                         setCustomNames={setCustomNames}
@@ -1164,7 +1160,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         mappingDisabled={isShow}
                         handleMap={handleMap}
                         isMapped={isMapped}
-                        isColExpanded={outputId => isColExpanded(outputId)}
+                        isOutputExpanded={id => isExpanded('outputs', id)}
                         customNames={customNames}
                         deviceId={deviceId}
                         tooltipOpen={tooltipOpen}
@@ -1172,9 +1168,9 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                     <InputsRows
                         inputs={sortedInputs}
                         outputs={sortedOutputs}
-                        isColExpanded={outputId => isColExpanded(outputId)}
-                        isRowExpanded={inputId => isRowExpanded(inputId)}
-                        handleExpandRow={handleExpandRow}
+                        isOutputExpanded={id => isExpanded('outputs', id)}
+                        isInputExpanded={id => isExpanded('inputs', id)}
+                        onExpandInput={id => toggleExpanded('inputs', id)}
                         isShow={isShow}
                         handleMap={handleMap}
                         isMapped={isMapped}

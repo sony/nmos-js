@@ -4,7 +4,7 @@ import CreateIcon from '@material-ui/icons/Create';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ClearIcon from '@material-ui/icons/Clear';
 import DoneIcon from '@material-ui/icons/Done';
-import { get, has, isEmpty, set } from 'lodash';
+import { get, has, isEmpty, set, unset } from 'lodash';
 
 export const EditableIONameField = ({
     defaultValue,
@@ -19,15 +19,12 @@ export const EditableIONameField = ({
     setDisplayEditTextField,
     ...props
 }) => {
-    const [value, setValue] = useState(() => {
-        if (get(customNames, `${deviceID}.${ioKey}.${source}.name`)) {
-            return get(customNames, `${deviceID}.${ioKey}.${source}.name`);
-        } else if (defaultValue != null) {
-            return defaultValue;
-        } else {
-            return '';
-        }
-    });
+    const getCustomName = () =>
+        get(customNames, `${deviceID}.${ioKey}.${source}.name`);
+
+    const getName = () => getCustomName() || defaultValue || '';
+
+    const [value, setValue] = useState(getName());
 
     const inputRef = useRef();
     useEffect(() => {
@@ -36,14 +33,6 @@ export const EditableIONameField = ({
         }, 100);
         return () => clearTimeout(timeout);
     }, [autoFocus, displayEditTextField]);
-
-    const getCustomName = () => {
-        return get(customNames, `${deviceID}.${ioKey}.${source}.name`);
-    };
-
-    const getName = () => {
-        return getCustomName() || defaultValue;
-    };
 
     const removeCustomName = () => {
         setDisplayEditTextField(false);
@@ -61,7 +50,7 @@ export const EditableIONameField = ({
                     )
                 )
             ) {
-                delete newCustomNames[deviceID][ioKey][source];
+                unset(newCustomNames, `${deviceID}.${ioKey}.${source}`);
             }
             return newCustomNames;
         });
@@ -93,56 +82,50 @@ export const EditableIONameField = ({
         setValue(getName());
     };
 
-    return (
+    return displayEditTextField ? (
         <div>
-            {displayEditTextField ? (
-                <>
-                    <TextField
-                        label={label}
-                        variant="filled"
-                        margin="dense"
-                        value={value}
-                        onChange={event => setValue(event.target.value)}
-                        inputRef={inputRef}
-                        fullWidth={true}
-                        onKeyPress={event => {
-                            if (event.key === 'Enter') {
-                                saveCustomName();
-                            }
-                        }}
-                        {...props}
-                    />
-                    <IconButton
-                        size="small"
-                        onClick={
-                            value === defaultValue
-                                ? removeCustomName
-                                : saveCustomName
-                        }
-                    >
-                        <DoneIcon />
-                    </IconButton>
-                    <IconButton size="small" onClick={cancelCustomName}>
-                        <ClearIcon />
-                    </IconButton>
-                </>
-            ) : (
-                <>
-                    <Typography variant="body2" display="inline">
-                        {getName()}
-                    </Typography>
-                    <IconButton
-                        size="small"
-                        onClick={() => setDisplayEditTextField(true)}
-                    >
-                        <CreateIcon />
-                    </IconButton>
-                    {getCustomName() && (
-                        <IconButton size="small" onClick={removeCustomName}>
-                            <DeleteIcon />
-                        </IconButton>
-                    )}
-                </>
+            <TextField
+                label={label}
+                variant="filled"
+                margin="dense"
+                value={value}
+                onChange={event => setValue(event.target.value)}
+                inputRef={inputRef}
+                fullWidth={true}
+                onKeyPress={event => {
+                    if (event.key === 'Enter') {
+                        saveCustomName();
+                    }
+                }}
+                {...props}
+            />
+            <IconButton
+                size="small"
+                onClick={
+                    value === defaultValue ? removeCustomName : saveCustomName
+                }
+            >
+                <DoneIcon />
+            </IconButton>
+            <IconButton size="small" onClick={cancelCustomName}>
+                <ClearIcon />
+            </IconButton>
+        </div>
+    ) : (
+        <div>
+            <Typography variant="body2" display="inline">
+                {getName()}
+            </Typography>
+            <IconButton
+                size="small"
+                onClick={() => setDisplayEditTextField(true)}
+            >
+                <CreateIcon />
+            </IconButton>
+            {getCustomName() && (
+                <IconButton size="small" onClick={removeCustomName}>
+                    <DeleteIcon />
+                </IconButton>
             )}
         </div>
     );
@@ -162,23 +145,15 @@ export const EditableChannelLabelField = ({
     setDisplayEditTextField,
     ...props
 }) => {
-    const [value, setValue] = useState(() => {
-        if (
-            get(
-                customNames,
-                `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`
-            )
-        ) {
-            return get(
-                customNames,
-                `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`
-            );
-        } else if (defaultValue != null) {
-            return defaultValue;
-        } else {
-            return '';
-        }
-    });
+    const getCustomChannelLabel = () =>
+        get(
+            customNames,
+            `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`
+        );
+
+    const getChannelLabel = () => getCustomChannelLabel() || defaultValue || '';
+
+    const [value, setValue] = useState(getChannelLabel());
 
     const inputRef = useRef();
     useEffect(() => {
@@ -188,32 +163,15 @@ export const EditableChannelLabelField = ({
         return () => clearTimeout(timeout);
     }, [autoFocus]);
 
-    const getCustomChannelLabel = () => {
-        return get(
-            customNames,
-            `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`
-        );
-    };
-
-    const getChannelLabel = () => {
-        return getCustomChannelLabel() || defaultValue;
-    };
-
     const removeCustomChannelLabel = () => {
         setDisplayEditTextField(false);
         setValue(defaultValue);
         setCustomNames(f => {
             let newCustomNames = { ...f };
-            if (
-                has(
-                    newCustomNames,
-                    `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`
-                )
-            ) {
-                delete newCustomNames[deviceID][ioKey][source]['channels'][
-                    channelIndex
-                ];
-            }
+            unset(
+                newCustomNames,
+                `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`
+            );
             if (
                 isEmpty(
                     get(
@@ -224,7 +182,7 @@ export const EditableChannelLabelField = ({
                 get(newCustomNames, `${deviceID}.${ioKey}.${source}.name`) ===
                     ''
             ) {
-                delete newCustomNames[deviceID][ioKey][source];
+                unset(newCustomNames, `${deviceID}.${ioKey}.${source}`);
             }
             return newCustomNames;
         });
@@ -257,59 +215,52 @@ export const EditableChannelLabelField = ({
         setValue(getChannelLabel());
     };
 
-    return (
+    return displayEditTextField ? (
         <div>
-            {displayEditTextField ? (
-                <>
-                    <TextField
-                        label={label}
-                        variant="filled"
-                        margin="dense"
-                        value={value}
-                        onChange={event => setValue(event.target.value)}
-                        inputRef={inputRef}
-                        fullWidth={true}
-                        {...props}
-                        onKeyPress={event => {
-                            if (event.key === 'Enter') {
-                                saveCustomChannelLabel();
-                            }
-                        }}
-                    />
-                    <IconButton
-                        size="small"
-                        onClick={
-                            value === defaultValue
-                                ? removeCustomChannelLabel
-                                : saveCustomChannelLabel
-                        }
-                    >
-                        <DoneIcon />
-                    </IconButton>
-                    <IconButton size="small" onClick={cancelCustomChannelLabel}>
-                        <ClearIcon />
-                    </IconButton>
-                </>
-            ) : (
-                <>
-                    <Typography variant="body2" display="inline">
-                        {getChannelLabel()}
-                    </Typography>
-                    <IconButton
-                        size="small"
-                        onClick={() => setDisplayEditTextField(true)}
-                    >
-                        <CreateIcon />
-                    </IconButton>
-                    {getCustomChannelLabel() && (
-                        <IconButton
-                            size="small"
-                            onClick={removeCustomChannelLabel}
-                        >
-                            <DeleteIcon />
-                        </IconButton>
-                    )}
-                </>
+            <TextField
+                label={label}
+                variant="filled"
+                margin="dense"
+                value={value}
+                onChange={event => setValue(event.target.value)}
+                inputRef={inputRef}
+                fullWidth={true}
+                {...props}
+                onKeyPress={event => {
+                    if (event.key === 'Enter') {
+                        saveCustomChannelLabel();
+                    }
+                }}
+            />
+            <IconButton
+                size="small"
+                onClick={
+                    value === defaultValue
+                        ? removeCustomChannelLabel
+                        : saveCustomChannelLabel
+                }
+            >
+                <DoneIcon />
+            </IconButton>
+            <IconButton size="small" onClick={cancelCustomChannelLabel}>
+                <ClearIcon />
+            </IconButton>
+        </div>
+    ) : (
+        <div>
+            <Typography variant="body2" display="inline">
+                {getChannelLabel()}
+            </Typography>
+            <IconButton
+                size="small"
+                onClick={() => setDisplayEditTextField(true)}
+            >
+                <CreateIcon />
+            </IconButton>
+            {getCustomChannelLabel() && (
+                <IconButton size="small" onClick={removeCustomChannelLabel}>
+                    <DeleteIcon />
+                </IconButton>
             )}
         </div>
     );

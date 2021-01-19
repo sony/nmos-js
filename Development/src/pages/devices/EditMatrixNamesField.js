@@ -13,14 +13,14 @@ export const EditableIONameField = ({
     customNames,
     setCustomNames,
     autoFocus,
-    ioKey,
-    deviceID,
+    ioResource,
+    deviceId,
     displayEditTextField,
     setDisplayEditTextField,
     ...props
 }) => {
     const getCustomName = () =>
-        get(customNames, `${deviceID}.${ioKey}.${source}.name`);
+        get(customNames, `${deviceId}.${ioResource}.${source}.name`);
 
     const getName = () => getCustomName() || defaultValue || '';
 
@@ -39,18 +39,18 @@ export const EditableIONameField = ({
         setValue(defaultValue);
         setCustomNames(f => {
             let newCustomNames = { ...f };
-            if (has(newCustomNames, `${deviceID}.${ioKey}.${source}.name`)) {
-                set(newCustomNames, `${deviceID}.${ioKey}.${source}.name`, '');
+            if (has(newCustomNames, `${deviceId}.${ioResource}.${source}.name`)) {
+                set(newCustomNames, `${deviceId}.${ioResource}.${source}.name`, '');
             }
             if (
                 isEmpty(
                     get(
                         newCustomNames,
-                        `${deviceID}.${ioKey}.${source}.channels`
+                        `${deviceId}.${ioResource}.${source}.channels`
                     )
                 )
             ) {
-                unset(newCustomNames, `${deviceID}.${ioKey}.${source}`);
+                unset(newCustomNames, `${deviceId}.${ioResource}.${source}`);
             }
             return newCustomNames;
         });
@@ -59,19 +59,19 @@ export const EditableIONameField = ({
     const saveCustomName = () => {
         setCustomNames(f => {
             let newCustomNames = { ...f };
-            if (!has(newCustomNames, `${deviceID}`)) {
-                set(newCustomNames, `${deviceID}`, {});
+            if (!has(newCustomNames, `${deviceId}`)) {
+                set(newCustomNames, `${deviceId}`, {});
             }
-            if (!has(newCustomNames, `${deviceID}.${ioKey}`)) {
-                set(newCustomNames, `${deviceID}.${ioKey}`, {});
+            if (!has(newCustomNames, `${deviceId}.${ioResource}`)) {
+                set(newCustomNames, `${deviceId}.${ioResource}`, {});
             }
-            if (!has(newCustomNames, `${deviceID}.${ioKey}.${source}`)) {
-                set(newCustomNames, `${deviceID}.${ioKey}.${source}`, {
+            if (!has(newCustomNames, `${deviceId}.${ioResource}.${source}`)) {
+                set(newCustomNames, `${deviceId}.${ioResource}.${source}`, {
                     name: value,
                     channels: {},
                 });
             }
-            set(newCustomNames, `${deviceID}.${ioKey}.${source}.name`, value);
+            set(newCustomNames, `${deviceId}.${ioResource}.${source}.name`, value);
             return newCustomNames;
         });
         setDisplayEditTextField(false);
@@ -139,8 +139,8 @@ export const EditableChannelLabelField = ({
     customNames,
     setCustomNames,
     autoFocus,
-    ioKey,
-    deviceID,
+    ioResource,
+    deviceId,
     displayEditTextField,
     setDisplayEditTextField,
     ...props
@@ -148,7 +148,7 @@ export const EditableChannelLabelField = ({
     const getCustomChannelLabel = () =>
         get(
             customNames,
-            `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`
+            `${deviceId}.${ioResource}.${source}.channels.${channelIndex}`
         );
 
     const getChannelLabel = () => getCustomChannelLabel() || defaultValue || '';
@@ -170,19 +170,19 @@ export const EditableChannelLabelField = ({
             let newCustomNames = { ...f };
             unset(
                 newCustomNames,
-                `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`
+                `${deviceId}.${ioResource}.${source}.channels.${channelIndex}`
             );
             if (
                 isEmpty(
                     get(
                         newCustomNames,
-                        `${deviceID}.${ioKey}.${source}.channels`
+                        `${deviceId}.${ioResource}.${source}.channels`
                     )
                 ) &&
-                get(newCustomNames, `${deviceID}.${ioKey}.${source}.name`) ===
+                get(newCustomNames, `${deviceId}.${ioResource}.${source}.name`) ===
                     ''
             ) {
-                unset(newCustomNames, `${deviceID}.${ioKey}.${source}`);
+                unset(newCustomNames, `${deviceId}.${ioResource}.${source}`);
             }
             return newCustomNames;
         });
@@ -191,18 +191,18 @@ export const EditableChannelLabelField = ({
     const saveCustomChannelLabel = () => {
         setCustomNames(f => {
             let newCustomNames = { ...f };
-            if (!has(newCustomNames, `${deviceID}.${ioKey}`)) {
-                set(newCustomNames, `${deviceID}.${ioKey}`, {});
+            if (!has(newCustomNames, `${deviceId}.${ioResource}`)) {
+                set(newCustomNames, `${deviceId}.${ioResource}`, {});
             }
-            if (!has(newCustomNames, `${deviceID}.${ioKey}.${source}`)) {
-                set(newCustomNames, `${deviceID}.${ioKey}.${source}`, {
+            if (!has(newCustomNames, `${deviceId}.${ioResource}.${source}`)) {
+                set(newCustomNames, `${deviceId}.${ioResource}.${source}`, {
                     name: '',
                     channels: {},
                 });
             }
             set(
                 newCustomNames,
-                `${deviceID}.${ioKey}.${source}.channels.${channelIndex}`,
+                `${deviceId}.${ioResource}.${source}.channels.${channelIndex}`,
                 value
             );
             return newCustomNames;

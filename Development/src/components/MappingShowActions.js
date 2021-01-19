@@ -13,7 +13,7 @@ export default function MappingShowActions({ basePath, id, resource }) {
     if (record) {
         const tab = window.location.href.split('/').pop();
         if (tab === 'active_map' && record.$channelmappingAPI) {
-            json_href = concatUrl(record.$channelmappingAPI, `/map/active`);
+            json_href = concatUrl(record.$channelmappingAPI, '/map/active');
         } else {
             json_href = resourceUrl(resource, `/${id}`);
         }

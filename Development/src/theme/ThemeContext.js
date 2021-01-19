@@ -43,7 +43,7 @@ export const AppThemeProvider = ({ children }) => {
     );
 
     const toggleTheme = () => {
-        const mode = themeState.mode === 'light' ? `dark` : `light`;
+        const mode = themeState.mode === 'light' ? 'dark' : 'light';
         window.localStorage.setItem('theme', mode);
         setThemeState({ mode: mode });
     };

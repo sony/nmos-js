@@ -144,11 +144,11 @@ const filterIOByChannels = (
         for (const [id, item] of Object.entries(filteredIo)) {
             const getCustomIOChannelLabel = channelIndex =>
                 getCustomChannelLabel(
-                    id,
-                    ioResource,
-                    channelIndex,
                     customNames,
-                    deviceId
+                    deviceId,
+                    ioResource,
+                    id,
+                    channelIndex
                 );
             if (
                 filterChannelLabel(
@@ -217,7 +217,7 @@ export const getFilteredInputs = (
                     filterName(
                         inputNameReg,
                         inputItem.properties.name,
-                        getCustomName(inputId, 'inputs', customNames, deviceId),
+                        getCustomName(customNames, deviceId, 'inputs', inputId),
                         filterGroup
                     ),
                     filterBlockSize(blockSizeReg, inputItem, filterGroup),
@@ -227,11 +227,11 @@ export const getFilteredInputs = (
                         inputItem,
                         channelIndex =>
                             getCustomChannelLabel(
-                                inputId,
-                                'inputs',
-                                channelIndex,
                                 customNames,
-                                deviceId
+                                deviceId,
+                                'inputs',
+                                inputId,
+                                channelIndex
                             ),
                         filterGroup
                     )
@@ -272,10 +272,10 @@ export const getFilteredOutputs = (
                         outputNameReg,
                         outputItem.properties.name,
                         getCustomName(
-                            outputId,
-                            'outputs',
                             customNames,
-                            deviceId
+                            deviceId,
+                            'outputs',
+                            outputId
                         ),
                         filterGroup
                     ),
@@ -286,10 +286,10 @@ export const getFilteredOutputs = (
                         getInputAPIName,
                         inputId =>
                             getCustomName(
-                                inputId,
-                                'inputs',
                                 customNames,
-                                deviceId
+                                deviceId,
+                                'inputs',
+                                inputId
                             )
                     ),
                     filterChannelLabel(
@@ -297,11 +297,11 @@ export const getFilteredOutputs = (
                         outputItem,
                         channelIndex =>
                             getCustomChannelLabel(
-                                outputId,
-                                'outputs',
-                                channelIndex,
                                 customNames,
-                                deviceId
+                                deviceId,
+                                'outputs',
+                                outputId,
+                                channelIndex
                             ),
                         filterGroup
                     )

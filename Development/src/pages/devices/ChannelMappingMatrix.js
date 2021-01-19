@@ -72,19 +72,22 @@ const MappingCornerCell = withStyles(theme => ({
     },
 }))(TableHeadCell);
 
+// de-emphasize these icons
+const faded = { opacity: 0.3 };
+
 // Midline Horizontal Ellipsis for when columns have been collapsed
 const HorizontalEllipsisButton = props => (
-    <IconButton size="small" children={'\u22ef'} {...props} />
+    <IconButton size="small" style={faded} children={'\u22ef'} {...props} />
 );
 
 // Vertical Ellipsis for when rows have been collapsed
 const VerticalEllipsisButton = props => (
-    <IconButton size="small" disabled children={'\u22ee'} {...props} />
+    <IconButton size="small" style={faded} children={'\u22ee'} {...props} />
 );
 
 // Down Right Diagonal Ellipsis for when both rows and columnns have been collapsed
 const DiagonalEllipsisButton = props => (
-    <IconButton size="small" disabled children={'\u22f1'} {...props} />
+    <IconButton size="small" style={faded} children={'\u22f1'} {...props} />
 );
 
 const TooltipChipField = props => (
@@ -671,7 +674,7 @@ const InputChannelMappingCells = ({
                                                     outputChannelIndex
                                                 )
                                             }
-                                            isMapped={isMapped(
+                                            checked={isMapped(
                                                 inputId,
                                                 outputId,
                                                 inputChannelIndex,
@@ -743,7 +746,7 @@ const UnroutedRow = ({
                                                 channelIndex
                                             )
                                         }
-                                        isMapped={isMapped(
+                                        checked={isMapped(
                                             null,
                                             outputId,
                                             null,

@@ -110,8 +110,8 @@ const TooltipDivider = withStyles({
 })(Divider);
 
 const InteractiveTooltip = ({
+    children,
     getTooltip,
-    display,
     tooltipOpen,
     setTooltipOpen,
 }) => {
@@ -153,7 +153,7 @@ const InteractiveTooltip = ({
                     onOpen={handleOpen}
                     onClose={handleClose}
                 >
-                    <div>{display()}</div>
+                    <div>{children}</div>
                 </Tooltip>
             </div>
         </ClickAwayListener>
@@ -606,17 +606,15 @@ const InputChannelMappingCells = ({
                         setDisplayEditTextField
                     )
                 }
-                display={() =>
-                    truncateValue(
-                        getCustomChannelLabel(
-                            inputId,
-                            'inputs',
-                            inputChannelIndex,
-                            customNames,
-                            deviceId
-                        ) || inputChannel.label
-                    )
-                }
+                children={truncateValue(
+                    getCustomChannelLabel(
+                        inputId,
+                        'inputs',
+                        inputChannelIndex,
+                        customNames,
+                        deviceId
+                    ) || inputChannel.label
+                )}
                 tooltipOpen={tooltipOpen}
                 setTooltipOpen={setTooltipOpen}
             />
@@ -816,16 +814,14 @@ const OutputsHeadRow = ({
                                 setDisplayEditTextField
                             )
                         }
-                        display={() =>
-                            truncateValue(
-                                getCustomName(
-                                    outputId,
-                                    'outputs',
-                                    customNames,
-                                    deviceId
-                                ) || outputItem.properties.name
-                            )
-                        }
+                        children={truncateValue(
+                            getCustomName(
+                                outputId,
+                                'outputs',
+                                customNames,
+                                deviceId
+                            ) || outputItem.properties.name
+                        )}
                         tooltipOpen={tooltipOpen}
                         setTooltipOpen={setTooltipOpen}
                     />
@@ -855,17 +851,15 @@ const OutputsHeadRow = ({
                                               setDisplayEditTextField
                                           )
                                       }
-                                      display={() =>
-                                          truncateValue(
-                                              getCustomChannelLabel(
-                                                  outputId,
-                                                  'outputs',
-                                                  channelIndex,
-                                                  customNames,
-                                                  deviceId
-                                              ) || channel.label
-                                          )
-                                      }
+                                      children={truncateValue(
+                                          getCustomChannelLabel(
+                                              outputId,
+                                              'outputs',
+                                              channelIndex,
+                                              customNames,
+                                              deviceId
+                                          ) || channel.label
+                                      )}
                                       tooltipOpen={tooltipOpen}
                                       setTooltipOpen={setTooltipOpen}
                                   />
@@ -936,16 +930,14 @@ const InputsRows = ({
                                 setDisplayEditTextField
                             )
                         }
-                        display={() =>
-                            truncateValue(
-                                getCustomName(
-                                    inputId,
-                                    'inputs',
-                                    customNames,
-                                    deviceId
-                                ) || inputItem.properties.name
-                            )
-                        }
+                        children={truncateValue(
+                            getCustomName(
+                                inputId,
+                                'inputs',
+                                customNames,
+                                deviceId
+                            ) || inputItem.properties.name
+                        )}
                         tooltipOpen={tooltipOpen}
                         setTooltipOpen={setTooltipOpen}
                     />

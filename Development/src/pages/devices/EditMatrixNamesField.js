@@ -14,21 +14,18 @@ const unsetCleanly = (object, path) => {
     } while (!isEmpty(pathArray) && isEmpty(get(object, pathArray)));
 };
 
-export const EditableIONameField = ({
+export const CustomNameField = ({
     defaultValue,
     source,
     label,
     customNames,
     setCustomNames,
     autoFocus,
-    ioResource,
-    deviceId,
     displayEditTextField,
     setDisplayEditTextField,
     ...props
 }) => {
-    const namePath = `${deviceId}.${ioResource}.${source}.name`;
-    const getCustomName = () => get(customNames, namePath);
+    const getCustomName = () => get(customNames, source);
     const getName = () => getCustomName() || defaultValue || '';
     const [value, setValue] = useState(getName());
 
@@ -45,7 +42,7 @@ export const EditableIONameField = ({
         setValue(defaultValue);
         setCustomNames(customNames => {
             let newCustomNames = { ...customNames };
-            unsetCleanly(newCustomNames, namePath);
+            unsetCleanly(newCustomNames, source);
             return newCustomNames;
         });
     };
@@ -53,8 +50,9 @@ export const EditableIONameField = ({
     const saveCustomName = () => {
         setCustomNames(customNames => {
             let newCustomNames = { ...customNames };
-            // use setWith rather than set to avoid creating arrays if source is a number
-            setWith(newCustomNames, namePath, value, Object);
+            // use setWith rather than set to avoid creating arrays if any
+            // source path component is a number
+            setWith(newCustomNames, source, value, Object);
             return newCustomNames;
         });
         setDisplayEditTextField(false);
@@ -114,105 +112,27 @@ export const EditableIONameField = ({
     );
 };
 
+export const EditableIONameField = ({
+    deviceId,
+    ioResource,
+    source,
+    ...props
+}) => (
+    <CustomNameField
+        source={`${deviceId}.${ioResource}.${source}.name`}
+        {...props}
+    />
+);
+
 export const EditableChannelLabelField = ({
-    defaultValue,
+    deviceId,
+    ioResource,
     source,
     channelIndex,
-    label,
-    customNames,
-    setCustomNames,
-    autoFocus,
-    ioResource,
-    deviceId,
-    displayEditTextField,
-    setDisplayEditTextField,
     ...props
-}) => {
-    const channelPath = `${deviceId}.${ioResource}.${source}.channels.${channelIndex}`;
-    const getCustomChannelLabel = () => get(customNames, channelPath);
-    const getChannelLabel = () => getCustomChannelLabel() || defaultValue || '';
-    const [value, setValue] = useState(getChannelLabel());
-
-    const inputRef = useRef();
-    useEffect(() => {
-        const timeout = setTimeout(() => {
-            if (autoFocus) inputRef.current.focus();
-        }, 100);
-        return () => clearTimeout(timeout);
-    }, [autoFocus]);
-
-    const removeCustomChannelLabel = () => {
-        setDisplayEditTextField(false);
-        setValue(defaultValue);
-        setCustomNames(customNames => {
-            let newCustomNames = { ...customNames };
-            unsetCleanly(newCustomNames, channelPath);
-            return newCustomNames;
-        });
-    };
-
-    const saveCustomChannelLabel = () => {
-        setCustomNames(customNames => {
-            let newCustomNames = { ...customNames };
-            // use setWith rather than set to avoid creating arrays if source is a number
-            setWith(newCustomNames, channelPath, value, Object);
-            return newCustomNames;
-        });
-        setDisplayEditTextField(false);
-    };
-
-    const cancelCustomChannelLabel = () => {
-        setDisplayEditTextField(false);
-        setValue(getChannelLabel());
-    };
-
-    return displayEditTextField ? (
-        <div>
-            <TextField
-                label={label}
-                variant="filled"
-                margin="dense"
-                value={value}
-                onChange={event => setValue(event.target.value)}
-                inputRef={inputRef}
-                fullWidth={true}
-                {...props}
-                onKeyPress={event => {
-                    if (event.key === 'Enter') {
-                        saveCustomChannelLabel();
-                    }
-                }}
-            />
-            <IconButton
-                size="small"
-                onClick={
-                    value === defaultValue
-                        ? removeCustomChannelLabel
-                        : saveCustomChannelLabel
-                }
-            >
-                <DoneIcon />
-            </IconButton>
-            <IconButton size="small" onClick={cancelCustomChannelLabel}>
-                <ClearIcon />
-            </IconButton>
-        </div>
-    ) : (
-        <div>
-            <Typography variant="body2" display="inline">
-                {getChannelLabel()}
-            </Typography>
-            <IconButton
-                size="small"
-                onClick={() => setDisplayEditTextField(true)}
-            >
-                <CreateIcon />
-            </IconButton>
-            {getCustomChannelLabel() && (
-                <IconButton size="small" onClick={removeCustomChannelLabel}>
-                    <DeleteIcon />
-                </IconButton>
-            )}
-        </div>
-    );
-};
+}) => (
+    <CustomNameField
+        source={`${deviceId}.${ioResource}.${source}.channels.${channelIndex}`}
+        {...props}
+    />
+);

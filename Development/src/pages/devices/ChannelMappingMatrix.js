@@ -153,7 +153,7 @@ const InteractiveTooltip = ({
                     onOpen={handleOpen}
                     onClose={handleClose}
                 >
-                    <div>{children}</div>
+                    {children}
                 </Tooltip>
             </div>
         </ClickAwayListener>
@@ -606,18 +606,21 @@ const InputChannelMappingCells = ({
                         setDisplayEditTextField
                     )
                 }
-                children={truncateValue(
-                    getCustomChannelLabel(
-                        inputId,
-                        'inputs',
-                        inputChannelIndex,
-                        customNames,
-                        deviceId
-                    ) || inputChannel.label
-                )}
                 tooltipOpen={tooltipOpen}
                 setTooltipOpen={setTooltipOpen}
-            />
+            >
+                <div>
+                    {truncateValue(
+                        getCustomChannelLabel(
+                            inputId,
+                            'inputs',
+                            inputChannelIndex,
+                            customNames,
+                            deviceId
+                        ) || inputChannel.label
+                    )}
+                </div>
+            </InteractiveTooltip>
         </MappingHeadCell>
         <>
             {outputs.map(([outputId, outputItem]) =>
@@ -814,17 +817,20 @@ const OutputsHeadRow = ({
                                 setDisplayEditTextField
                             )
                         }
-                        children={truncateValue(
-                            getCustomName(
-                                outputId,
-                                'outputs',
-                                customNames,
-                                deviceId
-                            ) || outputItem.properties.name
-                        )}
                         tooltipOpen={tooltipOpen}
                         setTooltipOpen={setTooltipOpen}
-                    />
+                    >
+                        <div>
+                            {truncateValue(
+                                getCustomName(
+                                    outputId,
+                                    'outputs',
+                                    customNames,
+                                    deviceId
+                                ) || outputItem.properties.name
+                            )}
+                        </div>
+                    </InteractiveTooltip>
                 </MappingHeadCell>
             ))}
         </TableRow>
@@ -851,18 +857,21 @@ const OutputsHeadRow = ({
                                               setDisplayEditTextField
                                           )
                                       }
-                                      children={truncateValue(
-                                          getCustomChannelLabel(
-                                              outputId,
-                                              'outputs',
-                                              channelIndex,
-                                              customNames,
-                                              deviceId
-                                          ) || channel.label
-                                      )}
                                       tooltipOpen={tooltipOpen}
                                       setTooltipOpen={setTooltipOpen}
-                                  />
+                                  >
+                                      <div>
+                                          {truncateValue(
+                                              getCustomChannelLabel(
+                                                  outputId,
+                                                  'outputs',
+                                                  channelIndex,
+                                                  customNames,
+                                                  deviceId
+                                              ) || channel.label
+                                          )}
+                                      </div>
+                                  </InteractiveTooltip>
                               </MappingHeadCell>
                           )
                       )
@@ -930,17 +939,20 @@ const InputsRows = ({
                                 setDisplayEditTextField
                             )
                         }
-                        children={truncateValue(
-                            getCustomName(
-                                inputId,
-                                'inputs',
-                                customNames,
-                                deviceId
-                            ) || inputItem.properties.name
-                        )}
                         tooltipOpen={tooltipOpen}
                         setTooltipOpen={setTooltipOpen}
-                    />
+                    >
+                        <div>
+                            {truncateValue(
+                                getCustomName(
+                                    inputId,
+                                    'inputs',
+                                    customNames,
+                                    deviceId
+                                ) || inputItem.properties.name
+                            )}
+                        </div>
+                    </InteractiveTooltip>
                 </MappingHeadCell>
                 {!isRowExpanded(inputId) ? (
                     <EmptyCellsForCollapsedRow

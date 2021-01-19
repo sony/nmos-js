@@ -27,11 +27,9 @@ export const EditableIONameField = ({
     setDisplayEditTextField,
     ...props
 }) => {
-    const getCustomName = () =>
-        get(customNames, `${deviceId}.${ioResource}.${source}.name`);
-
+    const namePath = `${deviceId}.${ioResource}.${source}.name`;
+    const getCustomName = () => get(customNames, namePath);
     const getName = () => getCustomName() || defaultValue || '';
-
     const [value, setValue] = useState(getName());
 
     const inputRef = useRef();
@@ -47,10 +45,7 @@ export const EditableIONameField = ({
         setValue(defaultValue);
         setCustomNames(customNames => {
             let newCustomNames = { ...customNames };
-            unsetCleanly(
-                newCustomNames,
-                `${deviceId}.${ioResource}.${source}.name`
-            );
+            unsetCleanly(newCustomNames, namePath);
             return newCustomNames;
         });
     };
@@ -59,12 +54,7 @@ export const EditableIONameField = ({
         setCustomNames(customNames => {
             let newCustomNames = { ...customNames };
             // use setWith rather than set to avoid creating arrays if source is a number
-            setWith(
-                newCustomNames,
-                `${deviceId}.${ioResource}.${source}.name`,
-                value,
-                Object
-            );
+            setWith(newCustomNames, namePath, value, Object);
             return newCustomNames;
         });
         setDisplayEditTextField(false);
@@ -138,14 +128,9 @@ export const EditableChannelLabelField = ({
     setDisplayEditTextField,
     ...props
 }) => {
-    const getCustomChannelLabel = () =>
-        get(
-            customNames,
-            `${deviceId}.${ioResource}.${source}.channels.${channelIndex}`
-        );
-
+    const channelPath = `${deviceId}.${ioResource}.${source}.channels.${channelIndex}`;
+    const getCustomChannelLabel = () => get(customNames, channelPath);
     const getChannelLabel = () => getCustomChannelLabel() || defaultValue || '';
-
     const [value, setValue] = useState(getChannelLabel());
 
     const inputRef = useRef();
@@ -161,10 +146,7 @@ export const EditableChannelLabelField = ({
         setValue(defaultValue);
         setCustomNames(customNames => {
             let newCustomNames = { ...customNames };
-            unsetCleanly(
-                newCustomNames,
-                `${deviceId}.${ioResource}.${source}.channels.${channelIndex}`
-            );
+            unsetCleanly(newCustomNames, channelPath);
             return newCustomNames;
         });
     };
@@ -173,12 +155,7 @@ export const EditableChannelLabelField = ({
         setCustomNames(customNames => {
             let newCustomNames = { ...customNames };
             // use setWith rather than set to avoid creating arrays if source is a number
-            setWith(
-                newCustomNames,
-                `${deviceId}.${ioResource}.${source}.channels.${channelIndex}`,
-                value,
-                Object
-            );
+            setWith(newCustomNames, channelPath, value, Object);
             return newCustomNames;
         });
         setDisplayEditTextField(false);

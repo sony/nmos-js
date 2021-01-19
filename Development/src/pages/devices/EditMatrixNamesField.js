@@ -61,7 +61,7 @@ export const EditableIONameField = ({
                     )
                 )
             ) {
-                delete newCustomNames[deviceID][source];
+                delete newCustomNames[deviceID][ioKey][source];
             }
             return newCustomNames;
         });
@@ -224,7 +224,7 @@ export const EditableChannelLabelField = ({
                 get(newCustomNames, `${deviceID}.${ioKey}.${source}.name`) ===
                     ''
             ) {
-                delete newCustomNames[ioKey][source];
+                delete newCustomNames[deviceID][ioKey][source];
             }
             return newCustomNames;
         });

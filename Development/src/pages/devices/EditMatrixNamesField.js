@@ -4,7 +4,15 @@ import CreateIcon from '@material-ui/icons/Create';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ClearIcon from '@material-ui/icons/Clear';
 import DoneIcon from '@material-ui/icons/Done';
-import { get, has, isEmpty, set, unset } from 'lodash';
+import { get, isEmpty, setWith, toPath, unset } from 'lodash';
+
+const unsetCleanly = (object, path) => {
+    const pathArray = toPath(path);
+    do {
+        unset(object, pathArray);
+        pathArray.pop();
+    } while (!isEmpty(pathArray) && isEmpty(get(object, pathArray)));
+};
 
 export const EditableIONameField = ({
     defaultValue,
@@ -37,41 +45,26 @@ export const EditableIONameField = ({
     const removeCustomName = () => {
         setDisplayEditTextField(false);
         setValue(defaultValue);
-        setCustomNames(f => {
-            let newCustomNames = { ...f };
-            if (has(newCustomNames, `${deviceId}.${ioResource}.${source}.name`)) {
-                set(newCustomNames, `${deviceId}.${ioResource}.${source}.name`, '');
-            }
-            if (
-                isEmpty(
-                    get(
-                        newCustomNames,
-                        `${deviceId}.${ioResource}.${source}.channels`
-                    )
-                )
-            ) {
-                unset(newCustomNames, `${deviceId}.${ioResource}.${source}`);
-            }
+        setCustomNames(customNames => {
+            let newCustomNames = { ...customNames };
+            unsetCleanly(
+                newCustomNames,
+                `${deviceId}.${ioResource}.${source}.name`
+            );
             return newCustomNames;
         });
     };
 
     const saveCustomName = () => {
-        setCustomNames(f => {
-            let newCustomNames = { ...f };
-            if (!has(newCustomNames, `${deviceId}`)) {
-                set(newCustomNames, `${deviceId}`, {});
-            }
-            if (!has(newCustomNames, `${deviceId}.${ioResource}`)) {
-                set(newCustomNames, `${deviceId}.${ioResource}`, {});
-            }
-            if (!has(newCustomNames, `${deviceId}.${ioResource}.${source}`)) {
-                set(newCustomNames, `${deviceId}.${ioResource}.${source}`, {
-                    name: value,
-                    channels: {},
-                });
-            }
-            set(newCustomNames, `${deviceId}.${ioResource}.${source}.name`, value);
+        setCustomNames(customNames => {
+            let newCustomNames = { ...customNames };
+            // use setWith rather than set to avoid creating arrays if source is a number
+            setWith(
+                newCustomNames,
+                `${deviceId}.${ioResource}.${source}.name`,
+                value,
+                Object
+            );
             return newCustomNames;
         });
         setDisplayEditTextField(false);
@@ -166,44 +159,25 @@ export const EditableChannelLabelField = ({
     const removeCustomChannelLabel = () => {
         setDisplayEditTextField(false);
         setValue(defaultValue);
-        setCustomNames(f => {
-            let newCustomNames = { ...f };
-            unset(
+        setCustomNames(customNames => {
+            let newCustomNames = { ...customNames };
+            unsetCleanly(
                 newCustomNames,
                 `${deviceId}.${ioResource}.${source}.channels.${channelIndex}`
             );
-            if (
-                isEmpty(
-                    get(
-                        newCustomNames,
-                        `${deviceId}.${ioResource}.${source}.channels`
-                    )
-                ) &&
-                get(newCustomNames, `${deviceId}.${ioResource}.${source}.name`) ===
-                    ''
-            ) {
-                unset(newCustomNames, `${deviceId}.${ioResource}.${source}`);
-            }
             return newCustomNames;
         });
     };
 
     const saveCustomChannelLabel = () => {
-        setCustomNames(f => {
-            let newCustomNames = { ...f };
-            if (!has(newCustomNames, `${deviceId}.${ioResource}`)) {
-                set(newCustomNames, `${deviceId}.${ioResource}`, {});
-            }
-            if (!has(newCustomNames, `${deviceId}.${ioResource}.${source}`)) {
-                set(newCustomNames, `${deviceId}.${ioResource}.${source}`, {
-                    name: '',
-                    channels: {},
-                });
-            }
-            set(
+        setCustomNames(customNames => {
+            let newCustomNames = { ...customNames };
+            // use setWith rather than set to avoid creating arrays if source is a number
+            setWith(
                 newCustomNames,
                 `${deviceId}.${ioResource}.${source}.channels.${channelIndex}`,
-                value
+                value,
+                Object
             );
             return newCustomNames;
         });

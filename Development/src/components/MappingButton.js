@@ -10,9 +10,19 @@ const styles = {
     checked: {},
 };
 
-const MappingButton = ({ checked, ...props }) => (
+// filter out our classes to avoid the Material-UI console warning
+const MappingButton = ({
+    checked,
+    classes: {
+        checked: checkedClass,
+        unchecked: uncheckedClass,
+        ...inheritedClasses
+    },
+    ...props
+}) => (
     <IconButton
-        className={checked ? props.classes.checked : props.classes.unchecked}
+        className={checked ? checkedClass : uncheckedClass}
+        classes={inheritedClasses}
         {...props}
     >
         {checked ? <CheckCircleOutlineIcon /> : <RadioButtonUncheckedIcon />}

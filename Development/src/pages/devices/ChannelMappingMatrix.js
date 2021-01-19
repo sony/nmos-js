@@ -559,15 +559,17 @@ const InputChannelMappingCells = ({
             <InteractiveTooltip
                 getTooltip={(displayEditTextField, setDisplayEditTextField) => (
                     <ChannelTooltip
-                        deviceId={deviceId}
-                        ioResource="inputs"
-                        id={inputId}
-                        channelIndex={inputChannelIndex}
-                        channelLabel={inputChannel.label}
-                        customNames={customNames}
-                        setCustomNames={setCustomNames}
-                        displayEditTextField={displayEditTextField}
-                        setDisplayEditTextField={setDisplayEditTextField}
+                        {...{
+                            deviceId,
+                            ioResource: 'inputs',
+                            id: inputId,
+                            channelIndex: inputChannelIndex,
+                            channelLabel: inputChannel.label,
+                            customNames,
+                            setCustomNames,
+                            displayEditTextField,
+                            setDisplayEditTextField,
+                        }}
                     />
                 )}
                 tooltipOpen={tooltipOpen}
@@ -781,16 +783,16 @@ const OutputsHeadRow = ({
                             setDisplayEditTextField
                         ) => (
                             <OutputTooltip
-                                outputId={outputId}
-                                outputItem={outputItem}
-                                io={io}
-                                customNames={customNames}
-                                setCustomNames={setCustomNames}
-                                deviceId={deviceId}
-                                displayEditTextField={displayEditTextField}
-                                setDisplayEditTextField={
-                                    setDisplayEditTextField
-                                }
+                                {...{
+                                    deviceId,
+                                    outputId,
+                                    outputItem,
+                                    io,
+                                    customNames,
+                                    setCustomNames,
+                                    displayEditTextField,
+                                    setDisplayEditTextField,
+                                }}
                             />
                         )}
                         tooltipOpen={tooltipOpen}
@@ -822,19 +824,17 @@ const OutputsHeadRow = ({
                                           setDisplayEditTextField
                                       ) => (
                                           <ChannelTooltip
-                                              deviceId={deviceId}
-                                              ioResource="outputs"
-                                              id={outputId}
-                                              channelIndex={channelIndex}
-                                              channelLabel={channel.label}
-                                              customNames={customNames}
-                                              setCustomNames={setCustomNames}
-                                              displayEditTextField={
-                                                  displayEditTextField
-                                              }
-                                              setDisplayEditTextField={
-                                                  setDisplayEditTextField
-                                              }
+                                              {...{
+                                                  deviceId,
+                                                  ioResource: 'outputs',
+                                                  id: outputId,
+                                                  channelIndex,
+                                                  channelLabel: channel.label,
+                                                  customNames,
+                                                  setCustomNames,
+                                                  displayEditTextField,
+                                                  setDisplayEditTextField,
+                                              }}
                                           />
                                       )}
                                       tooltipOpen={tooltipOpen}
@@ -910,15 +910,15 @@ const InputsRows = ({
                             setDisplayEditTextField
                         ) => (
                             <InputTooltip
-                                inputId={inputId}
-                                inputItem={inputItem}
-                                customNames={customNames}
-                                setCustomNames={setCustomNames}
-                                deviceId={deviceId}
-                                displayEditTextField={displayEditTextField}
-                                setDisplayEditTextField={
-                                    setDisplayEditTextField
-                                }
+                                {...{
+                                    deviceId,
+                                    inputId,
+                                    inputItem,
+                                    customNames,
+                                    setCustomNames,
+                                    displayEditTextField,
+                                    setDisplayEditTextField,
+                                }}
                             />
                         )}
                         tooltipOpen={tooltipOpen}

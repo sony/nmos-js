@@ -51,7 +51,7 @@ const DevicesShowView = props => {
 
     useEffect(() => {
         return function cleanup() {
-            window.localStorage.removeItem('channel mapping matrix expanded');
+            window.localStorage.removeItem('Channel Mapping Expanded');
         };
     }, []);
     const theme = useTheme();

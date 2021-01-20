@@ -18,10 +18,6 @@ import get from 'lodash/get';
 
 import ClearIcon from '@material-ui/icons/Clear';
 import FilterListIcon from '@material-ui/icons/FilterList';
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormControl from '@material-ui/core/FormControl';
 
 import labelize from './labelize';
 
@@ -31,13 +27,14 @@ const StyledTableCell = withStyles({
     },
 })(TableCell);
 
-export const GroupFilter = ({
+export const FilterMode = ({
     defaultValue,
     source,
     label,
     filter,
     setFilter,
     autoFocus,
+    ...props
 }) => {
     const [value, setValue] = useState(() => {
         if (filter[source] != null) {
@@ -71,30 +68,19 @@ export const GroupFilter = ({
         };
     }, [value, setFilter, source]);
     return (
-        <div style={{ display: 'flex' }}>
-            <FormControl component="fieldset">
-                <Typography>{label}</Typography>
-                <RadioGroup
-                    row
-                    name={source}
-                    value={value}
-                    onChange={event => setValue(event.target.value)}
-                >
-                    <FormControlLabel
-                        value="and"
-                        control={<Radio size="small" />}
-                        label="And"
-                        inputRef={inputRef}
-                    />
-                    <FormControlLabel
-                        value="or"
-                        control={<Radio size="small" />}
-                        label="Or"
-                        inputRef={inputRef}
-                    />
-                </RadioGroup>
-            </FormControl>
-        </div>
+        <TextField
+            label={label}
+            variant="filled"
+            margin="dense"
+            value={value}
+            onChange={event => setValue(event.target.value)}
+            inputRef={inputRef}
+            select
+            {...props}
+        >
+            <MenuItem value="and">Match All</MenuItem>
+            <MenuItem value="or">Match Any</MenuItem>
+        </TextField>
     );
 };
 

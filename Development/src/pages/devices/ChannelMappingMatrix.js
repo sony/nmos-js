@@ -25,7 +25,7 @@ import MappingButton from '../../components/MappingButton';
 import CollapseButton from '../../components/CollapseButton';
 import FilterPanel, {
     BooleanFilter,
-    GroupFilter,
+    FilterMode,
     NumberFilter,
     StringFilter,
 } from '../../components/FilterPanel';
@@ -1000,13 +1000,10 @@ const sortByIOName = (ioObject, getCustomName) => {
 };
 
 const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
-    const [expanded, setExpanded] = useJSONSetting(
-        'channel mapping matrix expanded',
-        {
-            inputs: [],
-            outputs: [],
-        }
-    );
+    const [expanded, setExpanded] = useJSONSetting('Channel Mapping Expanded', {
+        inputs: [],
+        outputs: [],
+    });
     const isExpanded = (ioResource, id) =>
         get(expanded, ioResource).includes(id);
     const toggleExpanded = (ioResource, id) => {
@@ -1044,17 +1041,17 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
 
     const [tooltipOpen, setTooltipOpen] = useState(false);
 
-    const [outputsFilter, setOutputsFilter] = useJSONSetting('outputs Filter');
-    const [inputsFilter, setInputsFilter] = useJSONSetting('inputs Filter');
+    const [outputsFilter, setOutputsFilter] = useJSONSetting('Outputs Filter');
+    const [inputsFilter, setInputsFilter] = useJSONSetting('Inputs Filter');
     const [settingsFilter, setSettingsFilter] = useJSONSetting(
-        'matrix settings Filter'
+        'Channel Mapping Settings'
     );
     const [customNames, setCustomNames] = useJSONSetting(
-        'channel mapping custom names'
+        'Channel Mapping Custom Names'
     );
 
-    const filterGroup = get(settingsFilter, 'filter group');
-    const maxLength = get(settingsFilter, 'limit label length');
+    const filterMode = get(settingsFilter, 'filter mode');
+    const maxLength = get(settingsFilter, 'label length');
     const truncateValue = value => truncateValueAtLength(value, maxLength);
 
     const deviceId = get(record, 'id');
@@ -1062,7 +1059,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
 
     const filteredInputs = getFilteredInputs(
         inputsFilter,
-        filterGroup,
+        filterMode,
         customNames,
         get(io, 'inputs'),
         deviceId
@@ -1070,7 +1067,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
     const filteredOutputs = getFilteredOutputs(
         outputsFilter,
         inputId => get(io, `inputs.${inputId}.properties.name`),
-        filterGroup,
+        filterMode,
         customNames,
         get(io, 'outputs'),
         deviceId
@@ -1119,14 +1116,14 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                 filterButtonLabel={'settings'}
             >
                 <NumberFilter
-                    source="limit label length"
+                    source="label length"
                     InputProps={{
                         inputProps: {
                             min: 1,
                         },
                     }}
                 />
-                <GroupFilter source="filter group" />
+                <FilterMode source="filter mode" />
             </FilterPanel>
             <Table>
                 <TableHead>

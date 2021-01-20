@@ -48,13 +48,13 @@ const filterName = (nameReg, apiName, name) =>
 
 const filterId = (idReg, itemId) => !idReg || RegExp(idReg, 'i').test(itemId);
 
-const filterBlockSize = (blockSizeReg, item) =>
-    blockSizeReg === undefined ||
-    isNaN(blockSizeReg) ||
-    item.caps.block_size === blockSizeReg;
+const filterBlockSize = (blockSizeVal, item) =>
+    blockSizeVal === undefined ||
+    isNaN(blockSizeVal) ||
+    item.caps.block_size === blockSizeVal;
 
-const filterReordering = (reorderingReg, item) =>
-    reorderingReg === undefined || item.caps.reordering === reorderingReg;
+const filterReordering = (reorderingVal, item) =>
+    reorderingVal === undefined || item.caps.reordering === reorderingVal;
 
 const filterIOByChannels = (
     channelLabelReg,
@@ -117,8 +117,8 @@ export const getFilteredInputs = (filter, customNames, inputs, deviceId) => {
     if (filter && hasInputFilters(filter)) {
         let inputIdReg = get(filter, 'input id');
         let inputNameReg = get(filter, 'input name');
-        let blockSizeReg = get(filter, 'block size');
-        let reorderingReg = get(filter, 'reordering');
+        let blockSizeVal = get(filter, 'block size');
+        let reorderingVal = get(filter, 'reordering');
         let inputChannelLabelReg = get(filter, 'input channel label');
         filteredInputs = Object.fromEntries(
             Object.entries(filteredInputs).filter(
@@ -129,8 +129,8 @@ export const getFilteredInputs = (filter, customNames, inputs, deviceId) => {
                         inputItem.properties.name,
                         getCustomName(customNames, deviceId, 'inputs', inputId)
                     ) &&
-                    filterBlockSize(blockSizeReg, inputItem) &&
-                    filterReordering(reorderingReg, inputItem) &&
+                    filterBlockSize(blockSizeVal, inputItem) &&
+                    filterReordering(reorderingVal, inputItem) &&
                     filterChannelLabel(
                         inputChannelLabelReg,
                         inputItem,

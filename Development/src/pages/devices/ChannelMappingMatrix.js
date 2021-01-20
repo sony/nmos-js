@@ -25,7 +25,6 @@ import MappingButton from '../../components/MappingButton';
 import CollapseButton from '../../components/CollapseButton';
 import FilterPanel, {
     BooleanFilter,
-    FilterMode,
     NumberFilter,
     StringFilter,
 } from '../../components/FilterPanel';
@@ -1050,7 +1049,6 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
         'Channel Mapping Custom Names'
     );
 
-    const filterMode = get(settingsFilter, 'filter mode');
     const maxLength = get(settingsFilter, 'label length');
     const truncateValue = value => truncateValueAtLength(value, maxLength);
 
@@ -1059,7 +1057,6 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
 
     const filteredInputs = getFilteredInputs(
         inputsFilter,
-        filterMode,
         customNames,
         get(io, 'inputs'),
         deviceId
@@ -1067,7 +1064,6 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
     const filteredOutputs = getFilteredOutputs(
         outputsFilter,
         inputId => get(io, `inputs.${inputId}.properties.name`),
-        filterMode,
         customNames,
         get(io, 'outputs'),
         deviceId
@@ -1123,7 +1119,6 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         },
                     }}
                 />
-                <FilterMode source="filter mode" />
             </FilterPanel>
             <Table>
                 <TableHead>

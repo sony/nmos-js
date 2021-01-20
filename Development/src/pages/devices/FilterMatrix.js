@@ -1,40 +1,21 @@
-import { get, has } from 'lodash';
+import { cloneDeep, get, has } from 'lodash';
 import { getCustomChannelLabel, getCustomName } from './ChannelMappingMatrix';
 
-const conditionGroup = (filterMode, ...theArgs) =>
-    theArgs.reduce((previous, current) => {
-        if (filterMode === 'or') {
-            return previous || current;
-        } else {
-            return previous && current;
-        }
-    });
-
 const channelIncludes = (label, channelLabelReg) => {
-    return label.match(RegExp(`${channelLabelReg}`, 'i'));
+    return label.match(RegExp(channelLabelReg, 'i'));
 };
 
-const filterChannelLabel = (
-    channelLabelReg,
-    item,
-    customChannelLabel,
-    filterMode
-) => {
-    if (filterMode === 'or' && channelLabelReg === undefined) {
-        return false;
-    } else {
-        return (
-            channelLabelReg === undefined ||
-            channelLabelReg === '' ||
-            Object.entries(item.channels).some(
-                ([channelIndex, channelItem]) =>
-                    channelIncludes(
-                        customChannelLabel(channelIndex),
-                        channelLabelReg
-                    ) || channelIncludes(channelItem.label, channelLabelReg)
-            )
-        );
-    }
+const filterChannelLabel = (channelLabelReg, item, customChannelLabel) => {
+    return (
+        !channelLabelReg ||
+        Object.entries(item.channels).some(
+            ([channelIndex, channelItem]) =>
+                channelIncludes(
+                    customChannelLabel(channelIndex),
+                    channelLabelReg
+                ) || channelIncludes(channelItem.label, channelLabelReg)
+        )
+    );
 };
 
 const routableInputsIncludes = (
@@ -45,13 +26,13 @@ const routableInputsIncludes = (
 ) => {
     return (
         (inputId === null &&
-            'Unrouted'.match(RegExp(`${routableInputsReg}`, 'i'))) ||
+            'Unrouted'.match(RegExp(routableInputsReg, 'i'))) ||
         (inputId != null &&
             (String(getInputAPIName(inputId)).match(
-                RegExp(`${routableInputsReg}`, 'i')
+                RegExp(routableInputsReg, 'i')
             ) ||
                 String(getInputName(inputId)).match(
-                    RegExp(`${routableInputsReg}`, 'i')
+                    RegExp(routableInputsReg, 'i')
                 )))
     );
 };
@@ -59,78 +40,49 @@ const routableInputsIncludes = (
 const filterRoutableInputs = (
     routableInputsReg,
     item,
-    filterMode,
     getInputAPIName,
     getInputName
 ) => {
-    if (
-        filterMode === 'or' &&
-        (routableInputsReg === undefined || routableInputsReg === '')
-    ) {
-        return false;
-    } else {
-        return (
-            routableInputsReg === undefined ||
-            routableInputsReg === '' ||
-            (item.caps.routable_inputs !== null &&
-                item.caps.routable_inputs.some(inputId =>
-                    routableInputsIncludes(
-                        inputId,
-                        routableInputsReg,
-                        getInputAPIName,
-                        getInputName
-                    )
-                )) ||
-            (item.caps.routable_inputs === null &&
-                'No Constraints'.match(RegExp(`${routableInputsReg}`, 'i')))
-        );
-    }
+    return (
+        !routableInputsReg ||
+        (item.caps.routable_inputs !== null &&
+            item.caps.routable_inputs.some(inputId =>
+                routableInputsIncludes(
+                    inputId,
+                    routableInputsReg,
+                    getInputAPIName,
+                    getInputName
+                )
+            )) ||
+        (item.caps.routable_inputs === null &&
+            'No Constraints'.match(RegExp(routableInputsReg, 'i')))
+    );
 };
 
-const filterName = (nameReg, apiName, name, filterMode) => {
-    if (filterMode === 'or' && nameReg === undefined) {
-        return false;
-    } else {
-        return (
-            nameReg === undefined ||
-            apiName.match(RegExp(`${nameReg}`, 'i')) ||
-            name.match(RegExp(`${nameReg}`, 'i'))
-        );
-    }
+const filterName = (nameReg, apiName, name) => {
+    return (
+        !nameReg ||
+        apiName.match(RegExp(nameReg, 'i')) ||
+        name.match(RegExp(nameReg, 'i'))
+    );
 };
 
-const filterId = (idReg, itemId, filterMode) => {
-    if (filterMode === 'or' && idReg === undefined) {
-        return false;
-    } else {
-        return idReg === undefined || itemId.match(RegExp(`${idReg}`, 'i'));
-    }
+const filterId = (idReg, itemId) => {
+    return !idReg || itemId.match(RegExp(idReg, 'i'));
 };
 
-const filterBlockSize = (blockSizeReg, item, filterMode) => {
-    if (
-        filterMode === 'or' &&
-        (blockSizeReg === undefined || isNaN(blockSizeReg))
-    ) {
-        return false;
-    } else {
-        return (
-            blockSizeReg === undefined ||
-            isNaN(blockSizeReg) ||
-            item.caps.block_size === blockSizeReg
-        );
-    }
+const filterBlockSize = (blockSizeReg, item) => {
+    return (
+        blockSizeReg === undefined ||
+        isNaN(blockSizeReg) ||
+        item.caps.block_size === blockSizeReg
+    );
 };
 
-const filterReordering = (reorderingReg, item, filterMode) => {
-    if (filterMode === 'or' && reorderingReg === undefined) {
-        return false;
-    } else {
-        return (
-            reorderingReg === undefined ||
-            item.caps.reordering === reorderingReg
-        );
-    }
+const filterReordering = (reorderingReg, item) => {
+    return (
+        reorderingReg === undefined || item.caps.reordering === reorderingReg
+    );
 };
 
 const filterIOByChannels = (
@@ -157,7 +109,7 @@ const filterIOByChannels = (
                     getCustomIOChannelLabel
                 )
             ) {
-                filteredIo[id] = JSON.parse(JSON.stringify(item));
+                filteredIo[id] = cloneDeep(item);
                 filteredIo[id].channels = Object.fromEntries(
                     Object.entries(filteredIo[id].channels).filter(
                         ([channelIndex, channelItem]) =>
@@ -195,13 +147,7 @@ const hasOutputFilters = filter => {
     );
 };
 
-export const getFilteredInputs = (
-    filter,
-    filterMode,
-    customNames,
-    inputs,
-    deviceId
-) => {
+export const getFilteredInputs = (filter, customNames, inputs, deviceId) => {
     let filteredInputs = inputs;
     if (filter && hasInputFilters(filter)) {
         let inputIdReg = get(filter, 'input id');
@@ -210,18 +156,16 @@ export const getFilteredInputs = (
         let reorderingReg = get(filter, 'reordering');
         let inputChannelLabelReg = get(filter, 'input channel label');
         filteredInputs = Object.fromEntries(
-            Object.entries(filteredInputs).filter(([inputId, inputItem]) =>
-                conditionGroup(
-                    filterMode,
-                    filterId(inputIdReg, inputId, filterMode),
+            Object.entries(filteredInputs).filter(
+                ([inputId, inputItem]) =>
+                    filterId(inputIdReg, inputId) &&
                     filterName(
                         inputNameReg,
                         inputItem.properties.name,
-                        getCustomName(customNames, deviceId, 'inputs', inputId),
-                        filterMode
-                    ),
-                    filterBlockSize(blockSizeReg, inputItem, filterMode),
-                    filterReordering(reorderingReg, inputItem, filterMode),
+                        getCustomName(customNames, deviceId, 'inputs', inputId)
+                    ) &&
+                    filterBlockSize(blockSizeReg, inputItem) &&
+                    filterReordering(reorderingReg, inputItem) &&
                     filterChannelLabel(
                         inputChannelLabelReg,
                         inputItem,
@@ -232,10 +176,8 @@ export const getFilteredInputs = (
                                 'inputs',
                                 inputId,
                                 channelIndex
-                            ),
-                        filterMode
+                            )
                     )
-                )
             )
         );
         filterIOByChannels(
@@ -252,7 +194,6 @@ export const getFilteredInputs = (
 export const getFilteredOutputs = (
     filter,
     getInputAPIName,
-    filterMode,
     customNames,
     outputs,
     deviceId
@@ -264,10 +205,9 @@ export const getFilteredOutputs = (
         let routableInputsReg = get(filter, 'routable inputs');
         let outputChannelLabelReg = get(filter, 'output channel label');
         filteredOutputs = Object.fromEntries(
-            Object.entries(filteredOutputs).filter(([outputId, outputItem]) =>
-                conditionGroup(
-                    filterMode,
-                    filterId(outputIdReg, outputId, filterMode),
+            Object.entries(filteredOutputs).filter(
+                ([outputId, outputItem]) =>
+                    filterId(outputIdReg, outputId) &&
                     filterName(
                         outputNameReg,
                         outputItem.properties.name,
@@ -276,13 +216,11 @@ export const getFilteredOutputs = (
                             deviceId,
                             'outputs',
                             outputId
-                        ),
-                        filterMode
-                    ),
+                        )
+                    ) &&
                     filterRoutableInputs(
                         routableInputsReg,
                         outputItem,
-                        filterMode,
                         getInputAPIName,
                         inputId =>
                             getCustomName(
@@ -291,7 +229,7 @@ export const getFilteredOutputs = (
                                 'inputs',
                                 inputId
                             )
-                    ),
+                    ) &&
                     filterChannelLabel(
                         outputChannelLabelReg,
                         outputItem,
@@ -302,10 +240,8 @@ export const getFilteredOutputs = (
                                 'outputs',
                                 outputId,
                                 channelIndex
-                            ),
-                        filterMode
+                            )
                     )
-                )
             )
         );
         filterIOByChannels(

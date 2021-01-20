@@ -27,10 +27,8 @@ const routableInputsIncludes = (
     return (
         (inputId === null && RegExp(routableInputsReg, 'i').test('Unrouted')) ||
         (inputId != null &&
-            RegExp(routableInputsReg, 'i').test(
-                String(getInputAPIName(inputId))
-            )) ||
-        RegExp(routableInputsReg, 'i').test(String(getInputName(inputId)))
+            RegExp(routableInputsReg, 'i').test(getInputAPIName(inputId))) ||
+        RegExp(routableInputsReg, 'i').test(getInputName(inputId))
     );
 };
 

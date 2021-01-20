@@ -1,84 +1,62 @@
 import { cloneDeep, get, has } from 'lodash';
 import { getCustomChannelLabel, getCustomName } from './ChannelMappingMatrix';
 
-const channelIncludes = (label, channelLabelReg) => {
-    return RegExp(channelLabelReg, 'i').test(label);
-};
+const channelIncludes = (label, channelLabelReg) =>
+    RegExp(channelLabelReg, 'i').test(label);
 
-const filterChannelLabel = (channelLabelReg, item, customChannelLabel) => {
-    return (
-        !channelLabelReg ||
-        Object.entries(item.channels).some(
-            ([channelIndex, channelItem]) =>
-                channelIncludes(
-                    customChannelLabel(channelIndex),
-                    channelLabelReg
-                ) || channelIncludes(channelItem.label, channelLabelReg)
-        )
+const filterChannelLabel = (channelLabelReg, item, customChannelLabel) =>
+    !channelLabelReg ||
+    Object.entries(item.channels).some(
+        ([channelIndex, channelItem]) =>
+            channelIncludes(
+                customChannelLabel(channelIndex),
+                channelLabelReg
+            ) || channelIncludes(channelItem.label, channelLabelReg)
     );
-};
 
 const routableInputsIncludes = (
     inputId,
     routableInputsReg,
     getInputAPIName,
     getInputName
-) => {
-    return (
-        (inputId === null && RegExp(routableInputsReg, 'i').test('Unrouted')) ||
-        (inputId != null &&
-            RegExp(routableInputsReg, 'i').test(getInputAPIName(inputId))) ||
-        RegExp(routableInputsReg, 'i').test(getInputName(inputId))
-    );
-};
+) =>
+    inputId === null
+        ? RegExp(routableInputsReg, 'i').test('Unrouted')
+        : RegExp(routableInputsReg, 'i').test(getInputAPIName(inputId)) ||
+          RegExp(routableInputsReg, 'i').test(getInputName(inputId));
 
 const filterRoutableInputs = (
     routableInputsReg,
     item,
     getInputAPIName,
     getInputName
-) => {
-    return (
-        !routableInputsReg ||
-        (item.caps.routable_inputs !== null &&
-            item.caps.routable_inputs.some(inputId =>
-                routableInputsIncludes(
-                    inputId,
-                    routableInputsReg,
-                    getInputAPIName,
-                    getInputName
-                )
-            )) ||
-        (item.caps.routable_inputs === null &&
-            RegExp(routableInputsReg, 'i').test('No Constraints'))
-    );
-};
+) =>
+    !routableInputsReg ||
+    (item.caps.routable_inputs
+        ? item.caps.routable_inputs.some(inputId =>
+              routableInputsIncludes(
+                  inputId,
+                  routableInputsReg,
+                  getInputAPIName,
+                  getInputName
+              )
+          )
+        : RegExp(routableInputsReg, 'i').test('No Constraints'));
 
-const filterName = (nameReg, apiName, name) => {
-    return (
-        !nameReg ||
-        RegExp(nameReg, 'i').test(apiName) ||
-        RegExp(nameReg, 'i').test(name)
-    );
-};
+const filterName = (nameReg, apiName, name) =>
+    !nameReg ||
+    RegExp(nameReg, 'i').test(apiName) ||
+    RegExp(nameReg, 'i').test(name);
 
-const filterId = (idReg, itemId) => {
-    return !idReg || RegExp(idReg, 'i').test(itemId);
-};
+const filterId = (idReg, itemId) => !idReg || RegExp(idReg, 'i').test(itemId);
 
-const filterBlockSize = (blockSizeReg, item) => {
-    return (
-        blockSizeReg === undefined ||
-        isNaN(blockSizeReg) ||
-        item.caps.block_size === blockSizeReg
-    );
-};
+const filterBlockSize = (blockSizeReg, item) =>
+    blockSizeReg === undefined ||
+    isNaN(blockSizeReg) ||
+    item.caps.block_size === blockSizeReg;
 
-const filterReordering = (reorderingReg, item) => {
-    return (
-        reorderingReg === undefined || item.caps.reordering === reorderingReg
-    );
-};
+const filterReordering = (reorderingReg, item) =>
+    reorderingReg === undefined || item.caps.reordering === reorderingReg;
 
 const filterIOByChannels = (
     channelLabelReg,
@@ -123,24 +101,18 @@ const filterIOByChannels = (
     }
 };
 
-const hasInputFilters = filter => {
-    return (
-        has(filter, 'input name') ||
-        has(filter, 'input id') ||
-        has(filter, 'block size') ||
-        has(filter, 'reordering') ||
-        has(filter, 'input channel label')
-    );
-};
+const hasInputFilters = filter =>
+    has(filter, 'input name') ||
+    has(filter, 'input id') ||
+    has(filter, 'block size') ||
+    has(filter, 'reordering') ||
+    has(filter, 'input channel label');
 
-const hasOutputFilters = filter => {
-    return (
-        has(filter, 'output name') ||
-        has(filter, 'output id') ||
-        has(filter, 'routable inputs') ||
-        has(filter, 'output channel label')
-    );
-};
+const hasOutputFilters = filter =>
+    has(filter, 'output name') ||
+    has(filter, 'output id') ||
+    has(filter, 'routable inputs') ||
+    has(filter, 'output channel label');
 
 export const getFilteredInputs = (filter, customNames, inputs, deviceId) => {
     let filteredInputs = inputs;

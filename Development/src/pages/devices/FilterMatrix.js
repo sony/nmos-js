@@ -2,7 +2,7 @@ import { cloneDeep, get, has } from 'lodash';
 import { getCustomChannelLabel, getCustomName } from './ChannelMappingMatrix';
 
 const channelIncludes = (label, channelLabelReg) => {
-    return label.match(RegExp(channelLabelReg, 'i'));
+    return RegExp(channelLabelReg, 'i').test(label);
 };
 
 const filterChannelLabel = (channelLabelReg, item, customChannelLabel) => {
@@ -25,15 +25,12 @@ const routableInputsIncludes = (
     getInputName
 ) => {
     return (
-        (inputId === null &&
-            'Unrouted'.match(RegExp(routableInputsReg, 'i'))) ||
+        (inputId === null && RegExp(routableInputsReg, 'i').test('Unrouted')) ||
         (inputId != null &&
-            (String(getInputAPIName(inputId)).match(
-                RegExp(routableInputsReg, 'i')
-            ) ||
-                String(getInputName(inputId)).match(
-                    RegExp(routableInputsReg, 'i')
-                )))
+            RegExp(routableInputsReg, 'i').test(
+                String(getInputAPIName(inputId))
+            )) ||
+        RegExp(routableInputsReg, 'i').test(String(getInputName(inputId)))
     );
 };
 
@@ -55,20 +52,20 @@ const filterRoutableInputs = (
                 )
             )) ||
         (item.caps.routable_inputs === null &&
-            'No Constraints'.match(RegExp(routableInputsReg, 'i')))
+            RegExp(routableInputsReg, 'i').test('No Constraints'))
     );
 };
 
 const filterName = (nameReg, apiName, name) => {
     return (
         !nameReg ||
-        apiName.match(RegExp(nameReg, 'i')) ||
-        name.match(RegExp(nameReg, 'i'))
+        RegExp(nameReg, 'i').test(apiName) ||
+        RegExp(nameReg, 'i').test(name)
     );
 };
 
 const filterId = (idReg, itemId) => {
-    return !idReg || itemId.match(RegExp(idReg, 'i'));
+    return !idReg || RegExp(idReg, 'i').test(itemId);
 };
 
 const filterBlockSize = (blockSizeReg, item) => {

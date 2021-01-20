@@ -8,10 +8,8 @@ const filterChannelLabel = (channelLabelReg, item, customChannelLabel) =>
     !channelLabelReg ||
     Object.entries(item.channels).some(
         ([channelIndex, channelItem]) =>
-            channelIncludes(
-                customChannelLabel(channelIndex),
-                channelLabelReg
-            ) || channelIncludes(channelItem.label, channelLabelReg)
+            channelIncludes(channelItem.label, channelLabelReg) ||
+            channelIncludes(customChannelLabel(channelIndex), channelLabelReg)
     );
 
 const routableInputsIncludes = (

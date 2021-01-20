@@ -60,7 +60,7 @@ const encodeBasicKeyValueFilter = (key, value) => {
     if (Array.isArray(value)) {
         // hmm, in basic query syntax, multiple values are not supported
         console.warn('Basic query - unsupported filter type:', 'Array');
-    } else if (typeof value == 'string') {
+    } else if (typeof value === 'string') {
         // ignore empty strings
         if (value.length > 0) {
             return key + '=' + encodeURIComponent(value);

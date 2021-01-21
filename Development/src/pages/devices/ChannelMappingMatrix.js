@@ -118,52 +118,43 @@ const TooltipDivider = withStyles({
 
 const InteractiveTooltip = ({
     children,
-    getTooltip,
-    tooltipOpen,
-    setTooltipOpen,
+    content,
+    title,
+    tooltipModal,
+    setTooltipModal,
 }) => {
-    const [displayEditTextField, setDisplayEditTextField] = useState(false);
     const [open, setOpen] = useState(false);
-    const handleClose = () => {
-        if (open && !displayEditTextField) {
-            setOpen(false);
-            setTooltipOpen(false);
-        }
-    };
 
     const handleOpen = () => {
-        if (!tooltipOpen) {
-            setOpen(true);
-            setTooltipOpen(true);
-        }
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+        setTooltipModal(false);
     };
 
     const handleClickAway = () => {
-        if (displayEditTextField && tooltipOpen && open) {
-            setOpen(false);
-            setTooltipOpen(false);
-            setDisplayEditTextField(false);
-        }
+        setOpen(false);
+        setTooltipModal(false);
     };
 
     return (
-        <ClickAwayListener onClickAway={handleClickAway}>
-            <div>
-                <Tooltip
-                    open={open}
-                    interactive
-                    title={getTooltip(
-                        displayEditTextField,
-                        setDisplayEditTextField
-                    )}
-                    placement="bottom"
-                    onOpen={handleOpen}
-                    onClose={handleClose}
-                >
-                    {children}
-                </Tooltip>
-            </div>
-        </ClickAwayListener>
+        <Tooltip
+            open={open}
+            disableHoverListener={tooltipModal}
+            interactive
+            title={
+                <ClickAwayListener onClickAway={handleClickAway}>
+                    <div>{content || title}</div>
+                </ClickAwayListener>
+            }
+            placement="bottom"
+            onOpen={handleOpen}
+            onClose={handleClose}
+        >
+            {children}
+        </Tooltip>
     );
 };
 
@@ -171,8 +162,7 @@ const OutputTooltip = ({
     outputId,
     outputItem,
     getInputAPIName,
-    displayEditTextField,
-    setDisplayEditTextField,
+    setTooltipModal,
 }) => {
     const { getCustomName } = useCustomNamesContext();
     const source = `outputs.${outputId}.name`;
@@ -185,8 +175,9 @@ const OutputTooltip = ({
                 {...{
                     source,
                     defaultValue: outputItem.properties.name,
-                    displayEditTextField,
-                    setDisplayEditTextField,
+                    autoFocus: true,
+                    onEditStarted: () => setTooltipModal(true),
+                    onEditStopped: () => setTooltipModal(false),
                 }}
             />
             {getCustomName(source) && (
@@ -219,12 +210,7 @@ const OutputTooltip = ({
     );
 };
 
-const InputTooltip = ({
-    inputId,
-    inputItem,
-    displayEditTextField,
-    setDisplayEditTextField,
-}) => {
+const InputTooltip = ({ inputId, inputItem, setTooltipModal }) => {
     const { getCustomName } = useCustomNamesContext();
     const source = `inputs.${inputId}.name`;
     return (
@@ -236,8 +222,9 @@ const InputTooltip = ({
                 {...{
                     source,
                     defaultValue: inputItem.properties.name,
-                    displayEditTextField,
-                    setDisplayEditTextField,
+                    autoFocus: true,
+                    onEditStarted: () => setTooltipModal(true),
+                    onEditStopped: () => setTooltipModal(false),
                 }}
             />
             {getCustomName(source) && (
@@ -274,8 +261,7 @@ const ChannelTooltip = ({
     id,
     channelIndex,
     channelLabel,
-    displayEditTextField,
-    setDisplayEditTextField,
+    setTooltipModal,
 }) => {
     const { getCustomName } = useCustomNamesContext();
     const source = `${ioResource}.${id}.channels.${channelIndex}`;
@@ -286,8 +272,9 @@ const ChannelTooltip = ({
                 {...{
                     source,
                     defaultValue: channelLabel,
-                    displayEditTextField,
-                    setDisplayEditTextField,
+                    autoFocus: true,
+                    onEditStarted: () => setTooltipModal(true),
+                    onEditStopped: () => setTooltipModal(false),
                 }}
             />
             {getCustomName(source) && (
@@ -397,7 +384,7 @@ const OutputSourceAssociation = ({
     outputs,
     isExpanded,
     truncateValue,
-    tooltipOpen,
+    tooltipModal,
 }) =>
     outputs.map(([outputId, outputItem]) => (
         <MappingHeadCell
@@ -410,11 +397,10 @@ const OutputSourceAssociation = ({
         >
             {get(outputItem, 'source_id') ? (
                 <Tooltip
-                    disableHoverListener={tooltipOpen}
+                    disableHoverListener={tooltipModal}
                     interactive
-                    title={<OutputSourceTooltip outputItem={outputItem} />}
+                    title={<OutputSourceTooltip {...{ outputItem }} />}
                     placement="bottom"
-                    link="true"
                 >
                     <div>
                         <ReferenceField
@@ -431,7 +417,7 @@ const OutputSourceAssociation = ({
                 </Tooltip>
             ) : (
                 <Tooltip
-                    disableHoverListener={tooltipOpen}
+                    disableHoverListener={tooltipModal}
                     title={
                         <Typography variant="body2">{'No Source'}</Typography>
                     }
@@ -468,14 +454,14 @@ const InputParentAssociation = ({
     isInputExpanded,
     inputItem,
     truncateValue,
-    tooltipOpen,
+    tooltipModal,
 }) => (
     <MappingHeadCell
         rowSpan={isInputExpanded ? Object.keys(inputItem.channels).length : 1}
     >
         {inputItem.parent.type === null ? (
             <Tooltip
-                disableHoverListener={tooltipOpen}
+                disableHoverListener={tooltipModal}
                 title={<Typography variant="body2">{'No Parent'}</Typography>}
                 placement="bottom"
             >
@@ -483,7 +469,7 @@ const InputParentAssociation = ({
             </Tooltip>
         ) : (
             <Tooltip
-                disableHoverListener={tooltipOpen}
+                disableHoverListener={tooltipModal}
                 interactive
                 title={<InputParentTooltip inputItem={inputItem} />}
                 placement="bottom"
@@ -525,31 +511,27 @@ const InputChannelMappingCells = ({
     handleMap,
     isMapped,
     truncateValue,
-    tooltipOpen,
-    setTooltipOpen,
+    tooltipModal,
+    setTooltipModal,
 }) => {
     const { getCustomName } = useCustomNamesContext();
     return (
         <>
             <MappingHeadCell key={inputChannelIndex}>
                 <InteractiveTooltip
-                    getTooltip={(
-                        displayEditTextField,
-                        setDisplayEditTextField
-                    ) => (
+                    content={
                         <ChannelTooltip
                             {...{
                                 ioResource: 'inputs',
                                 id: inputId,
                                 channelIndex: inputChannelIndex,
                                 channelLabel: inputChannel.label,
-                                displayEditTextField,
-                                setDisplayEditTextField,
+                                setTooltipModal,
                             }}
                         />
-                    )}
-                    tooltipOpen={tooltipOpen}
-                    setTooltipOpen={setTooltipOpen}
+                    }
+                    tooltipModal={tooltipModal}
+                    setTooltipModal={setTooltipModal}
                 >
                     <div>
                         {truncateValue(
@@ -567,7 +549,7 @@ const InputChannelMappingCells = ({
                             ([outputChannelIndex, outputChannel]) => (
                                 <MappingCell key={outputChannelIndex}>
                                     <Tooltip
-                                        disableHoverListener={tooltipOpen}
+                                        disableHoverListener={tooltipModal}
                                         title={
                                             <MappedCellTooltip
                                                 outputName={
@@ -635,7 +617,7 @@ const UnroutedRow = ({
     handleMap,
     isMapped,
     isOutputExpanded,
-    tooltipOpen,
+    tooltipModal,
 }) => {
     const { getCustomName } = useCustomNamesContext();
     return (
@@ -647,7 +629,7 @@ const UnroutedRow = ({
                         ([channelIndex, channel]) => (
                             <MappingCell key={channelIndex}>
                                 <Tooltip
-                                    disableHoverListener={tooltipOpen}
+                                    disableHoverListener={tooltipModal}
                                     title={
                                         <MappedCellTooltip
                                             outputName={
@@ -704,8 +686,8 @@ const OutputsHeadRow = ({
     isOutputExpanded,
     onExpandOutput,
     truncateValue,
-    tooltipOpen,
-    setTooltipOpen,
+    tooltipModal,
+    setTooltipModal,
 }) => {
     const { getCustomName } = useCustomNamesContext();
     return (
@@ -731,22 +713,18 @@ const OutputsHeadRow = ({
                             }
                         />
                         <InteractiveTooltip
-                            getTooltip={(
-                                displayEditTextField,
-                                setDisplayEditTextField
-                            ) => (
+                            content={
                                 <OutputTooltip
                                     {...{
                                         outputId,
                                         outputItem,
                                         getInputAPIName,
-                                        displayEditTextField,
-                                        setDisplayEditTextField,
+                                        setTooltipModal,
                                     }}
                                 />
-                            )}
-                            tooltipOpen={tooltipOpen}
-                            setTooltipOpen={setTooltipOpen}
+                            }
+                            tooltipModal={tooltipModal}
+                            setTooltipModal={setTooltipModal}
                         >
                             <div>
                                 {truncateValue(
@@ -765,10 +743,7 @@ const OutputsHeadRow = ({
                               ([channelIndex, channel]) => (
                                   <MappingHeadCell key={channelIndex}>
                                       <InteractiveTooltip
-                                          getTooltip={(
-                                              displayEditTextField,
-                                              setDisplayEditTextField
-                                          ) => (
+                                          content={
                                               <ChannelTooltip
                                                   {...{
                                                       ioResource: 'outputs',
@@ -776,13 +751,12 @@ const OutputsHeadRow = ({
                                                       channelIndex,
                                                       channelLabel:
                                                           channel.label,
-                                                      displayEditTextField,
-                                                      setDisplayEditTextField,
+                                                      setTooltipModal,
                                                   }}
                                               />
-                                          )}
-                                          tooltipOpen={tooltipOpen}
-                                          setTooltipOpen={setTooltipOpen}
+                                          }
+                                          tooltipModal={tooltipModal}
+                                          setTooltipModal={setTooltipModal}
                                       >
                                           <div>
                                               {truncateValue(
@@ -812,8 +786,8 @@ const InputsRows = ({
     handleMap,
     isMapped,
     truncateValue,
-    tooltipOpen,
-    setTooltipOpen,
+    tooltipModal,
+    setTooltipModal,
 }) => {
     const { getCustomName } = useCustomNamesContext();
     return inputs.map(([inputId, inputItem]) => (
@@ -823,7 +797,7 @@ const InputsRows = ({
                     isInputExpanded={isInputExpanded(inputId)}
                     inputItem={inputItem}
                     truncateValue={truncateValue}
-                    tooltipOpen={tooltipOpen}
+                    tooltipModal={tooltipModal}
                 />
                 <MappingHeadCell
                     rowSpan={
@@ -844,21 +818,17 @@ const InputsRows = ({
                         direction="horizontal"
                     />
                     <InteractiveTooltip
-                        getTooltip={(
-                            displayEditTextField,
-                            setDisplayEditTextField
-                        ) => (
+                        content={
                             <InputTooltip
                                 {...{
                                     inputId,
                                     inputItem,
-                                    displayEditTextField,
-                                    setDisplayEditTextField,
+                                    setTooltipModal,
                                 }}
                             />
-                        )}
-                        tooltipOpen={tooltipOpen}
-                        setTooltipOpen={setTooltipOpen}
+                        }
+                        tooltipModal={tooltipModal}
+                        setTooltipModal={setTooltipModal}
                     >
                         <div>
                             {truncateValue(
@@ -885,8 +855,8 @@ const InputsRows = ({
                         handleMap={handleMap}
                         isMapped={isMapped}
                         truncateValue={truncateValue}
-                        tooltipOpen={tooltipOpen}
-                        setTooltipOpen={setTooltipOpen}
+                        tooltipModal={tooltipModal}
+                        setTooltipModal={setTooltipModal}
                     />
                 ) : null}
             </TableRow>
@@ -907,8 +877,8 @@ const InputsRows = ({
                                 handleMap={handleMap}
                                 isMapped={isMapped}
                                 truncateValue={truncateValue}
-                                tooltipOpen={tooltipOpen}
-                                setTooltipOpen={setTooltipOpen}
+                                tooltipModal={tooltipModal}
+                                setTooltipModal={setTooltipModal}
                             />
                         </TableRow>
                     ))}
@@ -964,7 +934,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
         return io;
     };
 
-    const [tooltipOpen, setTooltipOpen] = useState(false);
+    const [tooltipModal, setTooltipModal] = useState(false);
 
     const [outputsFilter, setOutputsFilter] = useJSONSetting('Outputs Filter');
     const [inputsFilter, setInputsFilter] = useJSONSetting('Inputs Filter');
@@ -1080,7 +1050,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                             outputs={sortedOutputs}
                             isExpanded={id => isExpanded('outputs', id)}
                             truncateValue={truncateValue}
-                            tooltipOpen={tooltipOpen}
+                            tooltipModal={tooltipModal}
                         />
                     </TableRow>
                     <OutputsHeadRow
@@ -1089,8 +1059,8 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         isOutputExpanded={id => isExpanded('outputs', id)}
                         onExpandOutput={id => toggleExpanded('outputs', id)}
                         truncateValue={truncateValue}
-                        tooltipOpen={tooltipOpen}
-                        setTooltipOpen={setTooltipOpen}
+                        tooltipModal={tooltipModal}
+                        setTooltipModal={setTooltipModal}
                     />
                 </TableHead>
                 <TableBody>
@@ -1100,7 +1070,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         handleMap={handleMap}
                         isMapped={isMapped}
                         isOutputExpanded={id => isExpanded('outputs', id)}
-                        tooltipOpen={tooltipOpen}
+                        tooltipModal={tooltipModal}
                     />
                     <InputsRows
                         inputs={sortedInputs}
@@ -1112,8 +1082,8 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         handleMap={handleMap}
                         isMapped={isMapped}
                         truncateValue={truncateValue}
-                        tooltipOpen={tooltipOpen}
-                        setTooltipOpen={setTooltipOpen}
+                        tooltipModal={tooltipModal}
+                        setTooltipModal={setTooltipModal}
                     />
                 </TableBody>
             </Table>

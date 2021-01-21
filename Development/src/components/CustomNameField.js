@@ -11,8 +11,8 @@ export const CustomNameField = ({
     source,
     label,
     autoFocus,
-    displayEditTextField,
-    setDisplayEditTextField,
+    onEditStarted,
+    onEditStopped,
     ...props
 }) => {
     const {
@@ -20,6 +20,7 @@ export const CustomNameField = ({
         setCustomName,
         unsetCustomName,
     } = useCustomNamesContext();
+    const [editing, setEditing] = useState(false);
     const [value, setValue] = useState(
         getCustomName(source) || defaultValue || ''
     );
@@ -27,28 +28,36 @@ export const CustomNameField = ({
     const inputRef = useRef();
     useEffect(() => {
         const timeout = setTimeout(() => {
-            if (displayEditTextField) inputRef.current.focus();
+            if (autoFocus && editing) inputRef.current.focus();
         }, 100);
         return () => clearTimeout(timeout);
-    }, [autoFocus, displayEditTextField]);
+    }, [autoFocus, editing]);
+
+    const handleEdit = () => {
+        setEditing(true);
+        onEditStarted();
+    };
 
     const removeCustomName = () => {
-        setDisplayEditTextField(false);
         setValue(defaultValue);
         unsetCustomName(source);
+        setEditing(false);
+        onEditStopped();
     };
 
     const saveCustomName = () => {
         setCustomName(source, value);
-        setDisplayEditTextField(false);
+        setEditing(false);
+        onEditStopped();
     };
 
     const cancelCustomName = () => {
-        setDisplayEditTextField(false);
         setValue(getCustomName(source) || defaultValue || '');
+        setEditing(false);
+        onEditStopped();
     };
 
-    return displayEditTextField ? (
+    return editing ? (
         <div>
             <TextField
                 label={label}
@@ -82,10 +91,7 @@ export const CustomNameField = ({
             <Typography variant="body2" display="inline">
                 {value}
             </Typography>
-            <IconButton
-                size="small"
-                onClick={() => setDisplayEditTextField(true)}
-            >
+            <IconButton size="small" onClick={handleEdit}>
                 <CreateIcon />
             </IconButton>
             {getCustomName(source) && (

@@ -118,7 +118,7 @@ const TooltipDivider = withStyles({
 
 const InteractiveTooltipContext = createContext();
 
-const InteractiveTooltip = ({ children, content, title }) => {
+const InteractiveTooltip = ({ title, ...props }) => {
     const { tooltipModal, setTooltipModal } = useContext(
         InteractiveTooltipContext
     );
@@ -146,15 +146,13 @@ const InteractiveTooltip = ({ children, content, title }) => {
             interactive
             title={
                 <ClickAwayListener onClickAway={handleClickAway}>
-                    <div>{content || title}</div>
+                    <div>{title}</div>
                 </ClickAwayListener>
             }
-            placement="bottom"
             onOpen={handleOpen}
             onClose={handleClose}
-        >
-            {children}
-        </Tooltip>
+            {...props}
+        />
     );
 };
 
@@ -500,7 +498,7 @@ const InputChannelMappingCells = ({
         <>
             <MappingHeadCell key={inputChannelIndex}>
                 <InteractiveTooltip
-                    content={
+                    title={
                         <ChannelTooltip
                             {...{
                                 ioResource: 'inputs',
@@ -510,6 +508,7 @@ const InputChannelMappingCells = ({
                             }}
                         />
                     }
+                    placement="bottom"
                 >
                     <div>
                         {truncateValue(
@@ -686,7 +685,7 @@ const OutputsHeadRow = ({
                             }
                         />
                         <InteractiveTooltip
-                            content={
+                            title={
                                 <OutputTooltip
                                     {...{
                                         outputId,
@@ -695,6 +694,7 @@ const OutputsHeadRow = ({
                                     }}
                                 />
                             }
+                            placement="bottom"
                         >
                             <div>
                                 {truncateValue(
@@ -713,7 +713,7 @@ const OutputsHeadRow = ({
                               ([channelIndex, channel]) => (
                                   <MappingHeadCell key={channelIndex}>
                                       <InteractiveTooltip
-                                          content={
+                                          title={
                                               <ChannelTooltip
                                                   {...{
                                                       ioResource: 'outputs',
@@ -724,6 +724,7 @@ const OutputsHeadRow = ({
                                                   }}
                                               />
                                           }
+                                          placement="bottom"
                                       >
                                           <div>
                                               {truncateValue(
@@ -782,7 +783,7 @@ const InputsRows = ({
                         direction="horizontal"
                     />
                     <InteractiveTooltip
-                        content={
+                        title={
                             <InputTooltip
                                 {...{
                                     inputId,
@@ -790,6 +791,7 @@ const InputsRows = ({
                                 }}
                             />
                         }
+                        placement="bottom"
                     >
                         <div>
                             {truncateValue(

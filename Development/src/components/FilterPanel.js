@@ -27,6 +27,63 @@ const StyledTableCell = withStyles({
     },
 })(TableCell);
 
+export const FilterMode = ({
+    defaultValue,
+    source,
+    label,
+    filter,
+    setFilter,
+    autoFocus,
+    ...props
+}) => {
+    const [value, setValue] = useState(() => {
+        if (filter[source] != null) {
+            return filter[source];
+        } else if (defaultValue != null) {
+            return defaultValue;
+        } else {
+            return 'and';
+        }
+    });
+    if (!label) label = labelize(source);
+
+    const inputRef = useRef();
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (autoFocus) inputRef.current.focus();
+        }, 100);
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [autoFocus]);
+
+    useEffect(() => {
+        setFilter(f => ({ ...f, [source]: value }));
+        return function cleanup() {
+            setFilter(f => {
+                let newFilter = { ...f };
+                delete newFilter[source];
+                return newFilter;
+            });
+        };
+    }, [value, setFilter, source]);
+    return (
+        <TextField
+            label={label}
+            variant="filled"
+            margin="dense"
+            value={value}
+            onChange={event => setValue(event.target.value)}
+            inputRef={inputRef}
+            select
+            {...props}
+        >
+            <MenuItem value="and">Match All</MenuItem>
+            <MenuItem value="or">Match Any</MenuItem>
+        </TextField>
+    );
+};
+
 export const BooleanFilter = ({
     defaultValue,
     source,
@@ -273,6 +330,11 @@ export const RateFilter = ({
                     setValue(v => ({ ...v, numerator: event.target.value }))
                 }
                 inputRef={inputRef}
+                InputProps={{
+                    inputProps: {
+                        min: 0,
+                    },
+                }}
                 {...props}
             />
             <TextField
@@ -284,13 +346,24 @@ export const RateFilter = ({
                 onChange={event =>
                     setValue(v => ({ ...v, denominator: event.target.value }))
                 }
+                InputProps={{
+                    inputProps: {
+                        min: 1,
+                    },
+                }}
                 {...props}
             />
         </>
     );
 };
 
-const FilterPanel = ({ children, defaultFilter, filter, setFilter }) => {
+const FilterPanel = ({
+    children,
+    defaultFilter,
+    filter,
+    setFilter,
+    filterButtonLabel = 'Add filter',
+}) => {
     const cloneFilter = (child, autoFocus = false) =>
         React.cloneElement(child, {
             defaultValue: get(defaultFilter, get(child, 'props.source')),
@@ -368,7 +441,7 @@ const FilterPanel = ({ children, defaultFilter, filter, setFilter }) => {
                 }}
                 startIcon={<FilterListIcon />}
             >
-                Add Filter
+                {filterButtonLabel}
             </Button>
             <Menu
                 open={open}

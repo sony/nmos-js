@@ -49,6 +49,11 @@ const DevicesShowView = props => {
         }
     }, [record]);
 
+    useEffect(() => {
+        return function cleanup() {
+            window.localStorage.removeItem('Channel Mapping Expanded');
+        };
+    }, []);
     const theme = useTheme();
     const tabBackgroundColor =
         theme.palette.type === 'light'
@@ -174,14 +179,14 @@ const ShowSummaryTab = ({ record, ...props }) => {
 };
 
 const ShowActiveMapTab = ({ deviceData, ...props }) => {
-    if (!get(deviceData, `$active.map`)) return <Loading />;
+    if (!get(deviceData, '$active.map')) return <Loading />;
     return (
         <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
                 <ChannelMappingMatrix
                     record={deviceData}
                     isShow={true}
-                    mapping={get(deviceData, `$active.map`)}
+                    mapping={get(deviceData, '$active.map')}
                 />
             </SimpleShowLayout>
         </ShowView>

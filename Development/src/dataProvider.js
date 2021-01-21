@@ -8,12 +8,8 @@ import {
     UPDATE,
     fetchUtils,
 } from 'react-admin';
-import get from 'lodash/get';
-import set from 'lodash/set';
-import has from 'lodash/has';
-import isEmpty from 'lodash/isEmpty';
+import { assign, get, has, isEmpty, set } from 'lodash';
 import { JsonPointer } from 'json-ptr';
-import assign from 'lodash/assign';
 import diff from 'deep-diff';
 import {
     DNSSD_API,
@@ -64,7 +60,7 @@ const encodeBasicKeyValueFilter = (key, value) => {
     if (Array.isArray(value)) {
         // hmm, in basic query syntax, multiple values are not supported
         console.warn('Basic query - unsupported filter type:', 'Array');
-    } else if (typeof value == 'string') {
+    } else if (typeof value === 'string') {
         // ignore empty strings
         if (value.length > 0) {
             return key + '=' + encodeURIComponent(value);

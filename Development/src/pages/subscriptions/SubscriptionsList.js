@@ -47,7 +47,14 @@ const SubscriptionsList = props => {
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="resource_path" />
                         <BooleanFilter source="persist" />
-                        <NumberFilter source="max_update_rate_ms" />
+                        <NumberFilter
+                            source="max_update_rate_ms"
+                            InputProps={{
+                                inputProps: {
+                                    min: 0,
+                                },
+                            }}
+                        />
                         <StringFilter source="id" />
                     </FilterPanel>
                     <Table>

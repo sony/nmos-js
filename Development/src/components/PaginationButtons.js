@@ -6,8 +6,7 @@ import {
     LastPage,
 } from '@material-ui/icons';
 import { Button } from '@material-ui/core';
-import includes from 'lodash/includes';
-import keys from 'lodash/keys';
+import { includes, keys } from 'lodash';
 
 const components = {
     prev: ChevronLeft,

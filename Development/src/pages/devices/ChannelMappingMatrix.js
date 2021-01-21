@@ -97,6 +97,28 @@ const DiagonalEllipsisButton = props => (
     <IconButton size="small" style={faded} children={'\u22f1'} {...props} />
 );
 
+const CustomNameFieldWithInputProps = ({
+    classes: { input: inputClass, ...inheritedClasses },
+    ...props
+}) => {
+    return (
+        <CustomNameField
+            {...props}
+            InputProps={{
+                className: inputClass,
+            }}
+            classes={inheritedClasses}
+        />
+    );
+};
+
+// the input text was black in 'light' theme before adding this
+const TooltipCustomNameField = withStyles({
+    input: {
+        color: 'currentColor',
+    },
+})(CustomNameFieldWithInputProps);
+
 const TooltipChipField = props => (
     <div
         style={{
@@ -181,7 +203,7 @@ const OutputTooltip = ({ outputId, outputItem, getInputAPIName }) => {
             {'ID'}
             <Typography variant="body2">{outputId}</Typography>
             {'Name'}
-            <CustomNameField
+            <TooltipCustomNameField
                 {...{
                     source,
                     defaultValue: outputItem.properties.name,
@@ -231,7 +253,7 @@ const InputTooltip = ({ inputId, inputItem }) => {
             {'ID'}
             <Typography variant="body2">{inputId}</Typography>
             {'Name'}
-            <CustomNameField
+            <TooltipCustomNameField
                 {...{
                     source,
                     defaultValue: inputItem.properties.name,
@@ -276,7 +298,7 @@ const ChannelTooltip = ({ ioResource, id, channelIndex, channelLabel }) => {
     return (
         <>
             {'Label'}
-            <CustomNameField
+            <TooltipCustomNameField
                 {...{
                     source,
                     defaultValue: channelLabel,

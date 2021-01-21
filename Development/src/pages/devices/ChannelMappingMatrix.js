@@ -904,8 +904,8 @@ const InputsRows = ({
     ));
 };
 
-const sortByIOName = (ioObject, getCustomName) => {
-    return Object.entries(ioObject).sort((ioItem1, ioItem2) => {
+const sortedByIOName = (ioEntries, getCustomName) => {
+    return ioEntries.sort((ioItem1, ioItem2) => {
         let name1 = getCustomName(ioItem1[0]) || ioItem1[1].properties.name;
         let name2 = getCustomName(ioItem2[0]) || ioItem2[1].properties.name;
         return name1.localeCompare(name2);
@@ -993,24 +993,32 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
     const getInputAPIName = inputId =>
         get(io, `inputs.${inputId}.properties.name`);
 
-    const filteredInputs = getFilteredInputs(
-        inputsFilter,
-        get(io, 'inputs'),
-        getCustomName
+    const filteredInputs = Object.entries(
+        getFilteredInputs(inputsFilter, get(io, 'inputs'), getCustomName)
     );
-    const filteredOutputs = getFilteredOutputs(
-        outputsFilter,
-        get(io, 'outputs'),
-        getInputAPIName,
-        getCustomName
+    const filteredOutputs = Object.entries(
+        getFilteredOutputs(
+            outputsFilter,
+            get(io, 'outputs'),
+            getInputAPIName,
+            getCustomName
+        )
     );
 
-    const sortedOutputs = sortByIOName(filteredOutputs, outputId =>
-        getCustomName(`outputs.${outputId}.name`)
-    );
-    const sortedInputs = sortByIOName(filteredInputs, inputId =>
-        getCustomName(`inputs.${inputId}.name`)
-    );
+    const sorted = get(settingsFilter, 'auto sort');
+
+    const renderedOutputs =
+        sorted === undefined || sorted
+            ? sortedByIOName(filteredOutputs, outputId =>
+                  getCustomName(`outputs.${outputId}.name`)
+              )
+            : filteredOutputs;
+    const renderedInputs =
+        sorted === undefined || sorted
+            ? sortedByIOName(filteredInputs, inputId =>
+                  getCustomName(`inputs.${inputId}.name`)
+              )
+            : filteredInputs;
 
     return (
         <CustomNamesContextProvider
@@ -1057,6 +1065,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         },
                     }}
                 />
+                <BooleanFilter source="auto sort" />
             </FilterPanel>
             <InteractiveTooltipContext.Provider
                 value={{ tooltipModal, setTooltipModal }}
@@ -1068,13 +1077,13 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                                 {'INPUTS \\ OUTPUTS'}
                             </MappingCornerCell>
                             <OutputSourceAssociation
-                                outputs={sortedOutputs}
+                                outputs={renderedOutputs}
                                 isExpanded={id => isExpanded('outputs', id)}
                                 truncateValue={truncateValue}
                             />
                         </TableRow>
                         <OutputsHeadRow
-                            outputs={sortedOutputs}
+                            outputs={renderedOutputs}
                             getInputAPIName={getInputAPIName}
                             isOutputExpanded={id => isExpanded('outputs', id)}
                             onExpandOutput={id => toggleExpanded('outputs', id)}
@@ -1083,15 +1092,15 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                     </TableHead>
                     <TableBody>
                         <UnroutedRow
-                            outputs={sortedOutputs}
+                            outputs={renderedOutputs}
                             mappingDisabled={isShow}
                             handleMap={handleMap}
                             isMapped={isMapped}
                             isOutputExpanded={id => isExpanded('outputs', id)}
                         />
                         <InputsRows
-                            inputs={sortedInputs}
-                            outputs={sortedOutputs}
+                            inputs={renderedInputs}
+                            outputs={renderedOutputs}
                             isOutputExpanded={id => isExpanded('outputs', id)}
                             isInputExpanded={id => isExpanded('inputs', id)}
                             onExpandInput={id => toggleExpanded('inputs', id)}

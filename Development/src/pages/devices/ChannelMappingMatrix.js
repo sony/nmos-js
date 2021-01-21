@@ -156,6 +156,20 @@ const InteractiveTooltip = ({ title, ...props }) => {
     );
 };
 
+const popperPropsOffset = (skidding, distance) => ({
+    popperOptions: {
+        modifiers: {
+            offset: {
+                offset: `${skidding}, ${distance}`,
+            },
+            flip: {
+                enabled: false,
+            },
+        },
+    },
+});
+const popperPropsNearer = popperPropsOffset(0, -10);
+
 const OutputTooltip = ({ outputId, outputItem, getInputAPIName }) => {
     const { setTooltipModal } = useContext(InteractiveTooltipContext);
 
@@ -387,7 +401,9 @@ const OutputSourceAssociation = ({ outputs, isExpanded, truncateValue }) =>
             {get(outputItem, 'source_id') ? (
                 <InteractiveTooltip
                     title={<OutputSourceTooltip {...{ outputItem }} />}
-                    placement="bottom"
+                    placement="top"
+                    arrow
+                    PopperProps={popperPropsNearer}
                 >
                     <div>
                         <ReferenceField
@@ -407,7 +423,9 @@ const OutputSourceAssociation = ({ outputs, isExpanded, truncateValue }) =>
                     title={
                         <Typography variant="body2">{'No Source'}</Typography>
                     }
-                    placement="bottom"
+                    placement="top"
+                    arrow
+                    PopperProps={popperPropsNearer}
                 >
                     <div>{truncateValue('No Source')}</div>
                 </InteractiveTooltip>
@@ -447,14 +465,18 @@ const InputParentAssociation = ({
         {inputItem.parent.type === null ? (
             <InteractiveTooltip
                 title={<Typography variant="body2">{'No Parent'}</Typography>}
-                placement="bottom"
+                placement="left"
+                arrow
+                PopperProps={popperPropsNearer}
             >
                 <div>{truncateValue('No Parent')}</div>
             </InteractiveTooltip>
         ) : (
             <InteractiveTooltip
                 title={<InputParentTooltip inputItem={inputItem} />}
-                placement="bottom"
+                placement="left"
+                arrow
+                PopperProps={popperPropsNearer}
             >
                 <div>
                     <InputParentReferenceField record={inputItem} link="show">
@@ -508,7 +530,9 @@ const InputChannelMappingCells = ({
                             }}
                         />
                     }
-                    placement="bottom"
+                    placement="left"
+                    arrow
+                    PopperProps={popperPropsNearer}
                 >
                     <div>
                         {truncateValue(
@@ -551,7 +575,9 @@ const InputChannelMappingCells = ({
                                                 }
                                             />
                                         }
-                                        placement="bottom"
+                                        placement="bottom-start"
+                                        arrow
+                                        PopperProps={popperPropsOffset(40, -10)}
                                     >
                                         <div>
                                             <MappingButton
@@ -619,7 +645,12 @@ const UnroutedRow = ({
                                             inputName="Unrouted"
                                         />
                                     }
-                                    placement="bottom"
+                                    placement="bottom-start"
+                                    arrow
+                                    PopperProps={popperPropsOffset(
+                                        '75%',
+                                        '-25%'
+                                    )}
                                 >
                                     <div>
                                         <MappingButton
@@ -675,15 +706,6 @@ const OutputsHeadRow = ({
                         rowSpan={isOutputExpanded(outputId) ? 1 : 2}
                         key={outputId}
                     >
-                        <CollapseButton
-                            onClick={() => onExpandOutput(outputId)}
-                            isExpanded={isOutputExpanded(outputId)}
-                            title={
-                                isOutputExpanded(outputId)
-                                    ? 'Hide channels'
-                                    : 'View channels'
-                            }
-                        />
                         <InteractiveTooltip
                             title={
                                 <OutputTooltip
@@ -694,7 +716,9 @@ const OutputsHeadRow = ({
                                     }}
                                 />
                             }
-                            placement="bottom"
+                            placement="top"
+                            arrow
+                            PopperProps={popperPropsNearer}
                         >
                             <div>
                                 {truncateValue(
@@ -703,6 +727,15 @@ const OutputsHeadRow = ({
                                 )}
                             </div>
                         </InteractiveTooltip>
+                        <CollapseButton
+                            onClick={() => onExpandOutput(outputId)}
+                            isExpanded={isOutputExpanded(outputId)}
+                            title={
+                                isOutputExpanded(outputId)
+                                    ? 'Hide channels'
+                                    : 'View channels'
+                            }
+                        />
                     </MappingHeadCell>
                 ))}
             </TableRow>
@@ -724,7 +757,9 @@ const OutputsHeadRow = ({
                                                   }}
                                               />
                                           }
-                                          placement="bottom"
+                                          placement="top"
+                                          arrow
+                                          PopperProps={popperPropsNearer}
                                       >
                                           <div>
                                               {truncateValue(
@@ -772,6 +807,26 @@ const InputsRows = ({
                     }
                     colSpan={isInputExpanded(inputId) ? 1 : 2}
                 >
+                    <InteractiveTooltip
+                        title={
+                            <InputTooltip
+                                {...{
+                                    inputId,
+                                    inputItem,
+                                }}
+                            />
+                        }
+                        placement="left"
+                        arrow
+                        PopperProps={popperPropsNearer}
+                    >
+                        <div>
+                            {truncateValue(
+                                getCustomName(`inputs.${inputId}.name`) ||
+                                    inputItem.properties.name
+                            )}
+                        </div>
+                    </InteractiveTooltip>
                     <CollapseButton
                         onClick={() => onExpandInput(inputId)}
                         isExpanded={isInputExpanded(inputId)}
@@ -782,24 +837,6 @@ const InputsRows = ({
                         }
                         direction="horizontal"
                     />
-                    <InteractiveTooltip
-                        title={
-                            <InputTooltip
-                                {...{
-                                    inputId,
-                                    inputItem,
-                                }}
-                            />
-                        }
-                        placement="bottom"
-                    >
-                        <div>
-                            {truncateValue(
-                                getCustomName(`inputs.${inputId}.name`) ||
-                                    inputItem.properties.name
-                            )}
-                        </div>
-                    </InteractiveTooltip>
                 </MappingHeadCell>
                 {!isInputExpanded(inputId) ? (
                     <MappingCellsForCollapsedInput

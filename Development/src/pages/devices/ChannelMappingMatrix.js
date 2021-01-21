@@ -1,4 +1,4 @@
-import { Fragment, createContext, useContext, useState } from 'react';
+import { Fragment, useState } from 'react';
 import {
     ClickAwayListener,
     Divider,
@@ -28,12 +28,12 @@ import FilterPanel, {
     NumberFilter,
     StringFilter,
 } from '../../components/FilterPanel';
-import { CustomNameField } from './EditMatrixNamesField';
+import CustomNameField from '../../components/CustomNameField';
+import CustomNamesContextProvider from '../../components/CustomNamesContextProvider';
+import useCustomNamesContext from '../../components/useCustomNamesContext';
 import { useJSONSetting } from '../../settings';
 import labelize from '../../components/labelize';
 import { getFilteredInputs, getFilteredOutputs } from './FilterMatrix';
-
-export const CustomNamesContext = createContext();
 
 // lodash extension to remove empty objects/arrays when unsetting values
 const unsetCleanly = (object, path) => {
@@ -174,7 +174,7 @@ const OutputTooltip = ({
     displayEditTextField,
     setDisplayEditTextField,
 }) => {
-    const { getCustomName } = useContext(CustomNamesContext);
+    const { getCustomName } = useCustomNamesContext();
     const source = `outputs.${outputId}.name`;
     return (
         <>
@@ -225,7 +225,7 @@ const InputTooltip = ({
     displayEditTextField,
     setDisplayEditTextField,
 }) => {
-    const { getCustomName } = useContext(CustomNamesContext);
+    const { getCustomName } = useCustomNamesContext();
     const source = `inputs.${inputId}.name`;
     return (
         <>
@@ -277,7 +277,7 @@ const ChannelTooltip = ({
     displayEditTextField,
     setDisplayEditTextField,
 }) => {
-    const { getCustomName } = useContext(CustomNamesContext);
+    const { getCustomName } = useCustomNamesContext();
     const source = `${ioResource}.${id}.channels.${channelIndex}`;
     return (
         <>
@@ -528,7 +528,7 @@ const InputChannelMappingCells = ({
     tooltipOpen,
     setTooltipOpen,
 }) => {
-    const { getCustomName } = useContext(CustomNamesContext);
+    const { getCustomName } = useCustomNamesContext();
     return (
         <>
             <MappingHeadCell key={inputChannelIndex}>
@@ -637,7 +637,7 @@ const UnroutedRow = ({
     isOutputExpanded,
     tooltipOpen,
 }) => {
-    const { getCustomName } = useContext(CustomNamesContext);
+    const { getCustomName } = useCustomNamesContext();
     return (
         <TableRow>
             <MappingHeadCell colSpan={3}>{'Unrouted'}</MappingHeadCell>
@@ -707,7 +707,7 @@ const OutputsHeadRow = ({
     tooltipOpen,
     setTooltipOpen,
 }) => {
-    const { getCustomName } = useContext(CustomNamesContext);
+    const { getCustomName } = useCustomNamesContext();
     return (
         <>
             <TableRow>
@@ -815,7 +815,7 @@ const InputsRows = ({
     tooltipOpen,
     setTooltipOpen,
 }) => {
-    const { getCustomName } = useContext(CustomNamesContext);
+    const { getCustomName } = useCustomNamesContext();
     return inputs.map(([inputId, inputItem]) => (
         <Fragment key={inputId}>
             <TableRow>
@@ -1025,7 +1025,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
     );
 
     return (
-        <CustomNamesContext.Provider
+        <CustomNamesContextProvider
             value={{ getCustomName, setCustomName, unsetCustomName }}
         >
             <FilterPanel
@@ -1117,7 +1117,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                     />
                 </TableBody>
             </Table>
-        </CustomNamesContext.Provider>
+        </CustomNamesContextProvider>
     );
 };
 

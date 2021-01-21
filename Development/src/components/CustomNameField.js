@@ -1,10 +1,10 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { IconButton, TextField, Typography } from '@material-ui/core';
 import CreateIcon from '@material-ui/icons/Create';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ClearIcon from '@material-ui/icons/Clear';
 import DoneIcon from '@material-ui/icons/Done';
-import { CustomNamesContext } from './ChannelMappingMatrix';
+import { useCustomNamesContext } from './useCustomNamesContext';
 
 export const CustomNameField = ({
     defaultValue,
@@ -15,9 +15,11 @@ export const CustomNameField = ({
     setDisplayEditTextField,
     ...props
 }) => {
-    const { getCustomName, setCustomName, unsetCustomName } = useContext(
-        CustomNamesContext
-    );
+    const {
+        getCustomName,
+        setCustomName,
+        unsetCustomName,
+    } = useCustomNamesContext();
     const [value, setValue] = useState(
         getCustomName(source) || defaultValue || ''
     );
@@ -94,3 +96,5 @@ export const CustomNameField = ({
         </div>
     );
 };
+
+export default CustomNameField;

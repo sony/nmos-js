@@ -1,33 +1,26 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { IconButton, TextField, Typography } from '@material-ui/core';
 import CreateIcon from '@material-ui/icons/Create';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ClearIcon from '@material-ui/icons/Clear';
 import DoneIcon from '@material-ui/icons/Done';
-import { get, isEmpty, setWith, toPath, unset } from 'lodash';
-
-const unsetCleanly = (object, path) => {
-    const pathArray = toPath(path);
-    do {
-        unset(object, pathArray);
-        pathArray.pop();
-    } while (!isEmpty(pathArray) && isEmpty(get(object, pathArray)));
-};
+import { CustomNamesContext } from './ChannelMappingMatrix';
 
 export const CustomNameField = ({
     defaultValue,
     source,
     label,
-    customNames,
-    setCustomNames,
     autoFocus,
     displayEditTextField,
     setDisplayEditTextField,
     ...props
 }) => {
-    const getCustomName = () => get(customNames, source);
-    const getName = () => getCustomName() || defaultValue || '';
-    const [value, setValue] = useState(getName());
+    const { getCustomName, setCustomName, unsetCustomName } = useContext(
+        CustomNamesContext
+    );
+    const [value, setValue] = useState(
+        getCustomName(source) || defaultValue || ''
+    );
 
     const inputRef = useRef();
     useEffect(() => {
@@ -40,27 +33,17 @@ export const CustomNameField = ({
     const removeCustomName = () => {
         setDisplayEditTextField(false);
         setValue(defaultValue);
-        setCustomNames(customNames => {
-            let newCustomNames = { ...customNames };
-            unsetCleanly(newCustomNames, source);
-            return newCustomNames;
-        });
+        unsetCustomName(source);
     };
 
     const saveCustomName = () => {
-        setCustomNames(customNames => {
-            let newCustomNames = { ...customNames };
-            // use setWith rather than set to avoid creating arrays if any
-            // source path component is a number
-            setWith(newCustomNames, source, value, Object);
-            return newCustomNames;
-        });
+        setCustomName(source, value);
         setDisplayEditTextField(false);
     };
 
     const cancelCustomName = () => {
         setDisplayEditTextField(false);
-        setValue(getName());
+        setValue(getCustomName(source) || defaultValue || '');
     };
 
     return displayEditTextField ? (
@@ -95,7 +78,7 @@ export const CustomNameField = ({
     ) : (
         <div>
             <Typography variant="body2" display="inline">
-                {getName()}
+                {value}
             </Typography>
             <IconButton
                 size="small"
@@ -103,7 +86,7 @@ export const CustomNameField = ({
             >
                 <CreateIcon />
             </IconButton>
-            {getCustomName() && (
+            {getCustomName(source) && (
                 <IconButton size="small" onClick={removeCustomName}>
                     <DeleteIcon />
                 </IconButton>
@@ -111,28 +94,3 @@ export const CustomNameField = ({
         </div>
     );
 };
-
-export const EditableIONameField = ({
-    deviceId,
-    ioResource,
-    source,
-    ...props
-}) => (
-    <CustomNameField
-        source={`${deviceId}.${ioResource}.${source}.name`}
-        {...props}
-    />
-);
-
-export const EditableChannelLabelField = ({
-    deviceId,
-    ioResource,
-    source,
-    channelIndex,
-    ...props
-}) => (
-    <CustomNameField
-        source={`${deviceId}.${ioResource}.${source}.channels.${channelIndex}`}
-        {...props}
-    />
-);

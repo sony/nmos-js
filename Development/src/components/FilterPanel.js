@@ -27,6 +27,8 @@ const StyledTableCell = withStyles({
     },
 })(TableCell);
 
+export const AllFilters = ({ label = 'All' }) => <Fragment />;
+
 export const FilterMode = ({
     defaultValue,
     source,
@@ -363,6 +365,7 @@ const FilterPanel = ({
     filter,
     setFilter,
     filterButtonLabel = 'Add filter',
+    allFilters = true,
 }) => {
     const cloneFilter = (child, autoFocus = false) =>
         React.cloneElement(child, {
@@ -391,13 +394,50 @@ const FilterPanel = ({
         setAnchorEl(null);
     };
 
+    const isFilter = child =>
+        child &&
+        child.type !== MenuItem &&
+        child.type !== Divider &&
+        child.type !== AllFilters;
+
     const addFilter = (child, autoFocus = false) => {
         handleClose();
-        setDisplayedFilters(f => ({
-            ...f,
-            [get(child, 'props.source')]: cloneFilter(child, autoFocus),
-        }));
+        if (isFilter(child)) {
+            setDisplayedFilters(f => ({
+                ...f,
+                [get(child, 'props.source')]: cloneFilter(child, autoFocus),
+            }));
+        }
     };
+
+    const addMenuItem = child =>
+        child &&
+        (child.type === MenuItem ? (
+            React.cloneElement(child, {
+                onClick: () => {
+                    handleClose();
+                    const inheritedOnClick = get(child, 'props.onClick');
+                    if (inheritedOnClick) {
+                        inheritedOnClick();
+                    }
+                },
+            })
+        ) : child.type === Divider ? (
+            child
+        ) : child.type === AllFilters ? (
+            <MenuItem
+                onClick={() =>
+                    React.Children.map(children, child => addFilter(child))
+                }
+            >
+                {get(child, 'props.label') || 'All'}
+            </MenuItem>
+        ) : (
+            <MenuItem onClick={() => addFilter(child, true)}>
+                {get(child, 'props.label') ||
+                    labelize(get(child, 'props.source'))}
+            </MenuItem>
+        ));
 
     const removeFilter = key => {
         setDisplayedFilters(f => {
@@ -457,28 +497,9 @@ const FilterPanel = ({
                 }}
                 keepMounted
             >
-                {React.Children.map(children, child => {
-                    if (child) {
-                        return (
-                            <MenuItem onClick={() => addFilter(child, true)}>
-                                {get(child, 'props.label') ||
-                                    labelize(get(child, 'props.source'))}
-                            </MenuItem>
-                        );
-                    }
-                })}
-                <Divider />
-                <MenuItem
-                    onClick={() => {
-                        React.Children.map(children, child => {
-                            if (child) {
-                                addFilter(child);
-                            }
-                        });
-                    }}
-                >
-                    All
-                </MenuItem>
+                {React.Children.map(children, addMenuItem)}
+                {allFilters && <Divider />}
+                {allFilters && addMenuItem(<AllFilters />)}
             </Menu>
         </div>
     );

@@ -3,6 +3,7 @@ import {
     ClickAwayListener,
     Divider,
     IconButton,
+    MenuItem,
     Table,
     TableBody,
     TableCell,
@@ -985,6 +986,13 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
             return newCustomNames;
         });
 
+    const unsetCustomNames = () =>
+        setCustomNames(customNames => {
+            let newCustomNames = { ...customNames };
+            unsetCleanly(newCustomNames, deviceId);
+            return newCustomNames;
+        });
+
     const maxLength = get(settingsFilter, 'label length');
     const truncateValue = value => truncateValueAtLength(value, maxLength);
 
@@ -1056,6 +1064,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                 filter={settingsFilter}
                 setFilter={setSettingsFilter}
                 filterButtonLabel={'settings'}
+                allFilters={false}
             >
                 <NumberFilter
                     source="label length"
@@ -1066,6 +1075,10 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                     }}
                 />
                 <BooleanFilter source="auto sort" />
+                <Divider />
+                <MenuItem onClick={unsetCustomNames}>
+                    Clear Custom Names
+                </MenuItem>
             </FilterPanel>
             <InteractiveTooltipContext.Provider
                 value={{ tooltipModal, setTooltipModal }}

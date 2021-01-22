@@ -31,6 +31,7 @@ import MapObject from '../../components/ObjectField';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
+import labelize from '../../components/labelize';
 import { ContentCopyIcon } from '../../icons';
 import SenderTransportParamsCardsGrid from './SenderTransportParams';
 import { queryVersion } from '../../settings';
@@ -82,17 +83,16 @@ const SendersShowView = props => {
                             component={Link}
                             to={`${props.basePath}/${props.id}/show/`}
                         />
-                        {['active', 'staged', 'transportfile'].map(label => (
+                        {['active', 'staged', 'transportfile'].map(key => (
                             <Tab
-                                key={label}
-                                value={`${props.match.url}/${label}`}
+                                key={key}
+                                label={labelize(key)}
+                                value={`${props.match.url}/${key}`}
                                 component={Link}
-                                to={`${props.basePath}/${props.id}/show/${label}`}
+                                to={`${props.basePath}/${props.id}/show/${key}`}
                                 disabled={
-                                    !get(record, `$${label}`) ||
-                                    !useConnectionAPI
+                                    !get(record, `$${key}`) || !useConnectionAPI
                                 }
-                                label={label}
                             />
                         ))}
                     </Tabs>

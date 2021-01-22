@@ -24,6 +24,7 @@ import MapObject from '../../components/ObjectField';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
 import TransportFileViewer from '../../components/TransportFileViewer';
+import labelize from '../../components/labelize';
 import ConnectionManagementTab from './ConnectionManagementTab';
 import ReceiverConstraintSetCardsGrid from './ReceiverConstraintSets';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
@@ -89,16 +90,15 @@ const ReceiversShowView = props => {
                             component={Link}
                             to={`${props.basePath}/${props.id}/show/`}
                         />
-                        {['active', 'staged'].map(label => (
+                        {['active', 'staged'].map(key => (
                             <Tab
-                                key={label}
-                                label={label}
-                                value={`${props.match.url}/${label}`}
+                                key={key}
+                                label={labelize(key)}
+                                value={`${props.match.url}/${key}`}
                                 component={Link}
-                                to={`${props.basePath}/${props.id}/show/${label}`}
+                                to={`${props.basePath}/${props.id}/show/${key}`}
                                 disabled={
-                                    !get(record, `$${label}`) ||
-                                    !useConnectionAPI
+                                    !get(record, `$${key}`) || !useConnectionAPI
                                 }
                             />
                         ))}

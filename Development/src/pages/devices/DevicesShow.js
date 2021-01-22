@@ -25,6 +25,7 @@ import MapObject from '../../components/ObjectField';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
+import labelize from '../../components/labelize';
 import { queryVersion } from '../../settings';
 import MappingShowActions from '../../components/MappingShowActions';
 import ChannelMappingMatrix from './ChannelMappingMatrix';
@@ -79,16 +80,16 @@ const DevicesShowView = props => {
                             component={Link}
                             to={`${props.basePath}/${props.id}/show/`}
                         />
-                        {['active_map'].map(label => (
+                        {['active_map'].map(key => (
                             <Tab
-                                key={label}
-                                value={`${props.match.url}/${label}`}
+                                key={key}
+                                label={labelize(key)}
+                                value={`${props.match.url}/${key}`}
                                 component={Link}
-                                to={`${props.basePath}/${props.id}/show/${label}`}
+                                to={`${props.basePath}/${props.id}/show/${key}`}
                                 disabled={
                                     !get(record, '$io') || !useChannelMappingAPI
                                 }
-                                label={label.replace('_', ' ')}
                             />
                         ))}
                     </Tabs>
@@ -100,7 +101,7 @@ const DevicesShowView = props => {
                 <ShowSummaryTab record={record} {...props} />
             </Route>
             <Route exact path={`${props.basePath}/${props.id}/show/active_map`}>
-                <ShowActiveMapTab deviceData={record} {...props} />
+                <ShowActiveMapTab record={record} {...props} />
             </Route>
         </>
     );
@@ -178,15 +179,15 @@ const ShowSummaryTab = ({ record, ...props }) => {
     );
 };
 
-const ShowActiveMapTab = ({ deviceData, ...props }) => {
-    if (!get(deviceData, '$active.map')) return <Loading />;
+const ShowActiveMapTab = ({ record, ...props }) => {
+    if (!get(record, '$active.map')) return <Loading />;
     return (
         <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
                 <ChannelMappingMatrix
-                    record={deviceData}
+                    record={record}
                     isShow={true}
-                    mapping={get(deviceData, '$active.map')}
+                    mapping={get(record, '$active.map')}
                 />
             </SimpleShowLayout>
         </ShowView>

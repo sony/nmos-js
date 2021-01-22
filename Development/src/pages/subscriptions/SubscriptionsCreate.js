@@ -6,6 +6,7 @@ import {
     NumberInput,
     SelectInput,
     SimpleForm,
+    Toolbar,
     TopToolbar,
 } from 'react-admin';
 import ObjectInput from '../../components/ObjectInput';
@@ -20,7 +21,10 @@ const SubscriptionsCreateActions = ({ basePath, data, resource }) => (
 
 const SubscriptionsCreate = props => (
     <Create actions={<SubscriptionsCreateActions />} {...props}>
-        <SimpleForm redirect="show">
+        <SimpleForm
+            toolbar={<Toolbar alwaysEnableSaveButton />}
+            redirect="show"
+        >
             <SelectInput
                 source="resource_path"
                 label="Resource Path"
@@ -41,7 +45,7 @@ const SubscriptionsCreate = props => (
                 label="Max Update Rate (ms)"
                 initialValue={100}
             />
-            <ObjectInput source="params" />
+            <ObjectInput source="params" initialValue={{}} />
             <BooleanInput source="persist" initialValue={true} />
         </SimpleForm>
     </Create>

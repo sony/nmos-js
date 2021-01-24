@@ -14,6 +14,7 @@ import {
     Typography,
     withStyles,
 } from '@material-ui/core';
+import { Autocomplete } from '@material-ui/lab';
 import get from 'lodash/get';
 
 import ClearIcon from '@material-ui/icons/Clear';
@@ -76,6 +77,7 @@ export const FilterMode = ({
             margin="dense"
             value={value}
             onChange={event => setValue(event.target.value)}
+            onFocus={event => event.target.select()}
             inputRef={inputRef}
             select
             {...props}
@@ -205,6 +207,7 @@ export const NumberFilter = ({
             margin="dense"
             value={value}
             onChange={event => setValue(event.target.value)}
+            onFocus={event => event.target.select()}
             inputRef={inputRef}
             {...props}
         />
@@ -258,6 +261,7 @@ export const StringFilter = ({
             margin="dense"
             value={value}
             onChange={event => setValue(event.target.value)}
+            onFocus={event => event.target.select()}
             inputRef={inputRef}
             {...props}
         />
@@ -331,6 +335,7 @@ export const RateFilter = ({
                 onChange={event =>
                     setValue(v => ({ ...v, numerator: event.target.value }))
                 }
+                onFocus={event => event.target.select()}
                 inputRef={inputRef}
                 InputProps={{
                     inputProps: {
@@ -348,6 +353,7 @@ export const RateFilter = ({
                 onChange={event =>
                     setValue(v => ({ ...v, denominator: event.target.value }))
                 }
+                onFocus={event => event.target.select()}
                 InputProps={{
                     inputProps: {
                         min: 1,
@@ -356,6 +362,72 @@ export const RateFilter = ({
                 {...props}
             />
         </>
+    );
+};
+
+const StyledAutocomplete = withStyles({
+    input: {
+        width: '100% !important',
+    },
+})(Autocomplete);
+
+export const AutocompleteFilter = ({
+    defaultValue,
+    source,
+    label,
+    filter,
+    setFilter,
+    autoFocus,
+    ...props
+}) => {
+    const [value, setValue] = useState(() => {
+        if (filter[source] != null) {
+            return filter[source];
+        } else if (defaultValue != null) {
+            return defaultValue;
+        } else {
+            return '';
+        }
+    });
+    if (!label) label = labelize(source);
+
+    const inputRef = useRef();
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (autoFocus) inputRef.current.focus();
+        }, 100);
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [autoFocus]);
+
+    useEffect(() => {
+        setFilter(f => ({ ...f, [source]: value }));
+        return function cleanup() {
+            setFilter(f => {
+                let newFilter = { ...f };
+                delete newFilter[source];
+                return newFilter;
+            });
+        };
+    }, [value, setFilter, source]);
+    return (
+        <StyledAutocomplete
+            value={value}
+            onInputChange={(event, value) => setValue(value)}
+            renderInput={params => (
+                <TextField
+                    {...params}
+                    label={label}
+                    variant="filled"
+                    margin="dense"
+                    onFocus={event => event.target.select()}
+                    inputRef={inputRef}
+                />
+            )}
+            disableClearable
+            {...props}
+        />
     );
 };
 

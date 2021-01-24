@@ -9,7 +9,11 @@ import {
     TableRow,
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
-import FilterPanel, { StringFilter } from '../../components/FilterPanel';
+import { get, groupBy, map } from 'lodash';
+import FilterPanel, {
+    AutocompleteFilter,
+    StringFilter,
+} from '../../components/FilterPanel';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
@@ -45,6 +49,13 @@ const DevicesList = props => {
                         )}
                         <StringFilter source="type" />
                         <StringFilter source="id" />
+                        <AutocompleteFilter
+                            label="Control Types"
+                            source="controls.type"
+                            freeSolo
+                            options={controlTypes}
+                            renderOption={renderControlType}
+                        />
                     </FilterPanel>
                     <Table>
                         <TableHead>
@@ -57,6 +68,7 @@ const DevicesList = props => {
                                     Label
                                 </TableCell>
                                 <TableCell>Type</TableCell>
+                                <TableCell>Control Types</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -73,6 +85,20 @@ const DevicesList = props => {
                                         />
                                     </TableCell>
                                     <TableCell>{item.type}</TableCell>
+                                    {queryVersion() >= 'v1.1' && (
+                                        <TableCell>
+                                            {map(
+                                                groupBy(
+                                                    item.controls,
+                                                    control =>
+                                                        unversionedControlType(
+                                                            control.type
+                                                        )
+                                                ),
+                                                controlGroupLabel
+                                            ).join(', ')}
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -87,6 +113,73 @@ const DevicesList = props => {
             </Card>
         </>
     );
+};
+
+// see Device Control Types in the NMOS Parameter Registers
+const CONTROL_TYPE_INFO = {
+    // IS-05
+    'urn:x-nmos:control:sr-ctrl': {
+        label: 'Connection API',
+        versions: ['v1.1', 'v1.0'],
+    },
+    // IS-07
+    'urn:x-nmos:control:events': {
+        label: 'Events API',
+        versions: ['v1.0'],
+    },
+    // IS-08
+    'urn:x-nmos:control:cm-ctrl': {
+        label: 'Channel Mapping API',
+        versions: ['v1.0'],
+    },
+    // Manifest Base
+    'urn:x-nmos:control:manifest-base': {
+        label: 'Manifest Base',
+        versions: ['v1.0'],
+    },
+};
+
+const controlTypes = [].concat.apply(
+    [],
+    map(CONTROL_TYPE_INFO, (info, unversionedType) =>
+        map(
+            info.versions,
+            version => unversionedType + (version ? '/' + version : '')
+        )
+    )
+);
+
+const unversionedControlType = controlType => controlType.split('/')[0];
+const controlTypeVersion = controlType => controlType.split('/')[1];
+
+const renderControlType = (controlType, state) => {
+    const unversioned = unversionedControlType(controlType);
+    const version = controlTypeVersion(controlType);
+    const info = get(CONTROL_TYPE_INFO, unversioned);
+    if (info) {
+        return info.label + (version ? ' ' + version : '');
+    } else {
+        return unversioned + (version ? '/' + version : '');
+    }
+};
+
+const controlGroupLabel = (controlGroup, unversioned) => {
+    const versions = controlGroup
+        .map(_ => controlTypeVersion(_.type))
+        .join(', ');
+    const info = get(CONTROL_TYPE_INFO, unversioned);
+    if (info) {
+        return (
+            info.label +
+            (versions ? ' ' + versions : '') +
+            ' (' +
+            unversioned +
+            (versions ? '/' + versions : '') +
+            ')'
+        );
+    } else {
+        return unversioned + (versions ? '/' + versions : '');
+    }
 };
 
 export default DevicesList;

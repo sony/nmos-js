@@ -65,6 +65,7 @@ export const CustomNameField = ({
                 margin="dense"
                 value={value}
                 onChange={event => setValue(event.target.value)}
+                onFocus={event => event.target.select()}
                 inputRef={inputRef}
                 fullWidth={true}
                 onKeyPress={event => {

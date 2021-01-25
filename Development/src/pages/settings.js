@@ -67,6 +67,8 @@ const pagingLimits = [
     },
 ];
 
+const selectOnFocus = event => event.target.select();
+
 const Settings = () => {
     const classes = useStyles();
     const [values, setValues] = React.useState({
@@ -121,7 +123,7 @@ const Settings = () => {
                     />
                 </CardContent>
             </Card>
-            <Card align="center" title="Change Query">
+            <Card align="center" title="Change Settings">
                 <CardHeader title="Settings" />
                 <CardContent>
                     <form
@@ -138,6 +140,7 @@ const Settings = () => {
                                     variant="filled"
                                     value={values.queryAPI}
                                     onChange={handleInputChange('queryAPI')}
+                                    onFocus={selectOnFocus}
                                     className={classes.textField}
                                 />
                             </ListItem>
@@ -148,6 +151,7 @@ const Settings = () => {
                                     variant="filled"
                                     value={values.loggingAPI}
                                     onChange={handleInputChange('loggingAPI')}
+                                    onFocus={selectOnFocus}
                                     className={classes.textField}
                                 />
                             </ListItem>
@@ -158,7 +162,20 @@ const Settings = () => {
                                     variant="filled"
                                     value={values.dnssdAPI}
                                     onChange={handleInputChange('dnssdAPI')}
+                                    onFocus={selectOnFocus}
                                     className={classes.textField}
+                                />
+                            </ListItem>
+                            <ListItem className={classes.listItem}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={values.rql}
+                                            onChange={handleSwitchChange('rql')}
+                                            color="primary"
+                                        />
+                                    }
+                                    label="RQL"
                                 />
                             </ListItem>
                             <ListItem className={classes.listItem}>
@@ -182,18 +199,6 @@ const Settings = () => {
                                         </MenuItem>
                                     ))}
                                 </TextField>
-                            </ListItem>
-                            <ListItem className={classes.listItem}>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={values.rql}
-                                            onChange={handleSwitchChange('rql')}
-                                            color="primary"
-                                        />
-                                    }
-                                    label="RQL"
-                                />
                             </ListItem>
                             <ListItem className={classes.listItem}>
                                 <Button

@@ -6,13 +6,19 @@ import get from 'lodash/get';
 import { Typography } from '@material-ui/core';
 dayjs.extend(utc);
 
+const InlineTypography = props => (
+    <Typography style={{ display: 'inline' }} {...props} />
+);
+
 const TAIField = ({ record, source, mode }) => (
-    <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-        <Typography variant="body2">{get(record, source)}&emsp;</Typography>
+    <div>
+        <InlineTypography variant="body2">
+            {get(record, source)}
+        </InlineTypography>
         {get(record, source) != null && (
-            <Typography variant="body2" color="textSecondary">
-                ({TAIConversion(record, source, mode)})
-            </Typography>
+            <InlineTypography variant="body2" color="textSecondary">
+                &ensp;({TAIConversion(record, source, mode)})
+            </InlineTypography>
         )}
     </div>
 );

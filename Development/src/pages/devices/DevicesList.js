@@ -7,6 +7,7 @@ import {
     TableCell,
     TableHead,
     TableRow,
+    Typography,
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
 import { get, groupBy, map } from 'lodash';
@@ -96,7 +97,7 @@ const DevicesList = props => {
                                                         )
                                                 ),
                                                 controlGroupLabel
-                                            ).join(', ')}
+                                            )}
                                         </TableCell>
                                     )}
                                 </TableRow>
@@ -163,6 +164,10 @@ const renderControlType = (controlType, state) => {
     }
 };
 
+const InlineTypography = props => (
+    <Typography style={{ display: 'inline' }} {...props} />
+);
+
 const controlGroupLabel = (controlGroup, unversioned) => {
     const versions = [
         ...new Set(controlGroup.map(_ => controlTypeVersion(_.type))),
@@ -170,15 +175,21 @@ const controlGroupLabel = (controlGroup, unversioned) => {
     const info = get(CONTROL_TYPE_INFO, unversioned);
     if (info) {
         return (
-            info.label +
-            (versions ? ' ' + versions : '') +
-            ' (' +
-            unversioned +
-            (versions ? '/' + versions : '') +
-            ')'
+            <div key={unversioned}>
+                <InlineTypography variant="body2">
+                    {info.label + (versions ? ' ' + versions : '')}
+                </InlineTypography>
+                <InlineTypography variant="body2" color="textSecondary">
+                    &ensp;({unversioned + (versions ? '/' + versions : '')})
+                </InlineTypography>
+            </div>
         );
     } else {
-        return unversioned + (versions ? '/' + versions : '');
+        return (
+            <Typography key={unversioned} variant="body2">
+                {unversioned + (versions ? '/' + versions : '')}
+            </Typography>
+        );
     }
 };
 

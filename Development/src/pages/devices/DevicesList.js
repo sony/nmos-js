@@ -164,9 +164,9 @@ const renderControlType = (controlType, state) => {
 };
 
 const controlGroupLabel = (controlGroup, unversioned) => {
-    const versions = controlGroup
-        .map(_ => controlTypeVersion(_.type))
-        .join(', ');
+    const versions = [
+        ...new Set(controlGroup.map(_ => controlTypeVersion(_.type))),
+    ].join(', ');
     const info = get(CONTROL_TYPE_INFO, unversioned);
     if (info) {
         return (

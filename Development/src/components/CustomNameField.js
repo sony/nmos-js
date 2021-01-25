@@ -46,7 +46,11 @@ export const CustomNameField = ({
     };
 
     const saveCustomName = () => {
-        setCustomName(source, value);
+        if (value !== defaultValue) {
+            setCustomName(source, value);
+        } else {
+            unsetCustomName(source);
+        }
         setEditing(false);
         onEditStopped();
     };
@@ -75,12 +79,7 @@ export const CustomNameField = ({
                 }}
                 {...props}
             />
-            <IconButton
-                size="small"
-                onClick={
-                    value === defaultValue ? removeCustomName : saveCustomName
-                }
-            >
+            <IconButton size="small" onClick={saveCustomName}>
                 <DoneIcon />
             </IconButton>
             <IconButton size="small" onClick={cancelCustomName}>

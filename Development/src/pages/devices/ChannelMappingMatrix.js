@@ -203,6 +203,7 @@ const OutputTooltip = ({ outputId, outputItem, getInputAPIName }) => {
         <>
             {'ID'}
             <Typography variant="body2">{outputId}</Typography>
+            <TooltipDivider />
             {'Name'}
             <TooltipCustomNameField
                 {...{
@@ -253,6 +254,7 @@ const InputTooltip = ({ inputId, inputItem }) => {
         <>
             {'ID'}
             <Typography variant="body2">{inputId}</Typography>
+            <TooltipDivider />
             {'Name'}
             <TooltipCustomNameField
                 {...{
@@ -298,6 +300,8 @@ const ChannelTooltip = ({ ioResource, id, channelIndex, channelLabel }) => {
     const source = `${ioResource}.${id}.channels.${channelIndex}`;
     return (
         <>
+            {'Channel ' + channelIndex}
+            <TooltipDivider />
             {'Label'}
             <TooltipCustomNameField
                 {...{
@@ -320,22 +324,26 @@ const ChannelTooltip = ({ ioResource, id, channelIndex, channelLabel }) => {
 
 const MappedCellTooltip = ({
     outputName,
+    outputChannelIndex,
     outputChannelLabel,
     inputName,
+    inputChannelIndex,
     inputChannelLabel,
 }) => (
     <>
         {'Input'}
         <Typography variant="body2">
             {inputName}
-            {inputChannelLabel ? ' - ' : ''}
+            {inputChannelLabel && ' - '}
             {inputChannelLabel}
+            {inputChannelIndex && ` (Channel ${inputChannelIndex})`}
         </Typography>
         {'Output'}
         <Typography variant="body2">
             {outputName}
-            {outputChannelLabel ? ' - ' : ''}
+            {outputChannelLabel && ' - '}
             {outputChannelLabel}
+            {outputChannelIndex && ` (Channel ${outputChannelIndex})`}
         </Typography>
     </>
 );
@@ -581,6 +589,9 @@ const InputChannelMappingCells = ({
                                                     ) ||
                                                     outputItem.properties.name
                                                 }
+                                                outputChannelIndex={
+                                                    outputChannelIndex
+                                                }
                                                 outputChannelLabel={
                                                     getCustomName(
                                                         `outputs.${outputId}.channels.${outputChannelIndex}`
@@ -590,6 +601,9 @@ const InputChannelMappingCells = ({
                                                     getCustomName(
                                                         `inputs.${inputId}.name`
                                                     ) || inputName
+                                                }
+                                                inputChannelIndex={
+                                                    inputChannelIndex
                                                 }
                                                 inputChannelLabel={
                                                     getCustomName(
@@ -650,8 +664,8 @@ const UnroutedRow = ({
             {outputs.map(([outputId, outputItem]) =>
                 isOutputExpanded(outputId) ? (
                     Object.entries(outputItem.channels).map(
-                        ([channelIndex, channel]) => (
-                            <MappingCell key={channelIndex}>
+                        ([outputChannelIndex, outputChannel]) => (
+                            <MappingCell key={outputChannelIndex}>
                                 <InteractiveTooltip
                                     title={
                                         <MappedCellTooltip
@@ -660,10 +674,13 @@ const UnroutedRow = ({
                                                     `outputs.${outputId}.name`
                                                 ) || outputItem.properties.name
                                             }
+                                            outputChannelIndex={
+                                                outputChannelIndex
+                                            }
                                             outputChannelLabel={
                                                 getCustomName(
-                                                    `outputs.${outputId}.channels.${channelIndex}`
-                                                ) || channel.label
+                                                    `outputs.${outputId}.channels.${outputChannelIndex}`
+                                                ) || outputChannel.label
                                             }
                                             inputName="Unrouted"
                                         />
@@ -683,14 +700,14 @@ const UnroutedRow = ({
                                                     null,
                                                     outputId,
                                                     null,
-                                                    channelIndex
+                                                    outputChannelIndex
                                                 )
                                             }
                                             checked={isMapped(
                                                 null,
                                                 outputId,
                                                 null,
-                                                channelIndex
+                                                outputChannelIndex
                                             )}
                                         />
                                     </div>

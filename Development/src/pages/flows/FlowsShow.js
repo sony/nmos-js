@@ -16,10 +16,7 @@ import {
 } from 'react-admin';
 import LinkChipField from '../../components/LinkChipField';
 import MapObject from '../../components/ObjectField';
-import {
-    FORMATS,
-    renderParameterLabel,
-} from '../../components/ParameterRegisters';
+import { FORMATS, ParameterField } from '../../components/ParameterRegisters';
 import RateField from '../../components/RateField';
 import ResourceShowActions from '../../components/ResourceShowActions';
 import ResourceTitle from '../../components/ResourceTitle';
@@ -60,10 +57,7 @@ const FlowsShowView = props => {
                 {queryVersion() >= 'v1.1' && (
                     <RateField label="Grain Rate" source="grain_rate" />
                 )}
-                <FunctionField
-                    source="format"
-                    render={renderParameterLabel(FORMATS)}
-                />
+                <ParameterField source="format" register={FORMATS} />
                 {queryVersion() >= 'v1.1' && (
                     <TextField label="Media Type" source="media_type" />
                 )}

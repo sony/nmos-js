@@ -17,9 +17,9 @@ import FilterPanel, {
 } from '../../components/FilterPanel';
 import {
     FORMATS,
+    ParameterField,
     TRANSPORTS,
     parameterAutocompleteProps,
-    parameterLabel,
 } from '../../components/ParameterRegisters';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
@@ -99,12 +99,18 @@ const ReceiversList = props => {
                                         />
                                     </TableCell>
                                     <TableCell>
-                                        {parameterLabel(FORMATS)(item.format)}
+                                        <ParameterField
+                                            register={FORMATS}
+                                            record={item}
+                                            source="format"
+                                        />
                                     </TableCell>
                                     <TableCell>
-                                        {parameterLabel(TRANSPORTS)(
-                                            item.transport
-                                        )}
+                                        <ParameterField
+                                            register={TRANSPORTS}
+                                            record={item}
+                                            source="transport"
+                                        />
                                     </TableCell>
                                     {queryVersion() >= 'v1.2' && (
                                         <TableCell>

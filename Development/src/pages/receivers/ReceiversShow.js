@@ -23,8 +23,8 @@ import JSONViewer from '../../components/JSONViewer';
 import MapObject from '../../components/ObjectField';
 import {
     FORMATS,
+    ParameterField,
     TRANSPORTS,
-    renderParameterLabel,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
@@ -154,10 +154,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     }
                 />
                 <hr />
-                <FunctionField
-                    source="transport"
-                    render={renderParameterLabel(TRANSPORTS)}
-                />
+                <ParameterField source="transport" register={TRANSPORTS} />
                 {queryVersion() >= 'v1.2' && (
                     <ItemArrayField
                         label="Interface Bindings"
@@ -190,10 +187,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                         source="caps.version"
                     />
                 )}
-                <FunctionField
-                    source="format"
-                    render={renderParameterLabel(FORMATS)}
-                />
+                <ParameterField source="format" register={FORMATS} />
                 {queryVersion() >= 'v1.2' && (
                     <BooleanField label="Active" source="subscription.active" />
                 )}
@@ -251,10 +245,10 @@ const ShowActiveTab = ({ record, ...props }) => {
                     label="Activation Time"
                     source="$active.activation.activation_time"
                 />
-                <FunctionField
+                <ParameterField
                     label="Transport Type"
                     source="$transporttype"
-                    render={renderParameterLabel(TRANSPORTS)}
+                    register={TRANSPORTS}
                 />
                 <ArrayField
                     label="Transport Parameters"
@@ -299,10 +293,10 @@ const ShowStagedTab = ({ record, ...props }) => {
                     label="Activation Time"
                     source="$staged.activation.activation_time"
                 />
-                <FunctionField
+                <ParameterField
                     label="Transport Type"
                     source="$transporttype"
-                    render={renderParameterLabel(TRANSPORTS)}
+                    register={TRANSPORTS}
                 />
                 <ArrayField
                     label="Transport Parameters"

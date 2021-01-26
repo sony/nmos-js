@@ -16,8 +16,8 @@ import FilterPanel, {
 } from '../../components/FilterPanel';
 import {
     FORMATS,
+    ParameterField,
     parameterAutocompleteProps,
-    parameterLabel,
 } from '../../components/ParameterRegisters';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
@@ -96,7 +96,11 @@ const SourcesList = props => {
                                         />
                                     </TableCell>
                                     <TableCell>
-                                        {parameterLabel(FORMATS)(item.format)}
+                                        <ParameterField
+                                            register={FORMATS}
+                                            record={item}
+                                            source="format"
+                                        />
                                     </TableCell>
                                     {queryVersion() >= 'v1.3' && (
                                         <TableCell>{item.event_type}</TableCell>

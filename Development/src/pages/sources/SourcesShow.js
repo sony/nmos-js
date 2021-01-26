@@ -18,10 +18,7 @@ import {
 } from 'react-admin';
 import LinkChipField from '../../components/LinkChipField';
 import MapObject from '../../components/ObjectField';
-import {
-    FORMATS,
-    renderParameterLabel,
-} from '../../components/ParameterRegisters';
+import { FORMATS, ParameterField } from '../../components/ParameterRegisters';
 import RateField from '../../components/RateField';
 import RawButton from '../../components/RawButton';
 import ResourceTitle from '../../components/ResourceTitle';
@@ -72,10 +69,7 @@ const SourcesShowView = props => {
                 {queryVersion() >= 'v1.1' && (
                     <TextField label="Clock Name" source="clock_name" />
                 )}
-                <FunctionField
-                    source="format"
-                    render={renderParameterLabel(FORMATS)}
-                />
+                <ParameterField source="format" register={FORMATS} />
                 {queryVersion() >= 'v1.1' &&
                     record.format === 'urn:x-nmos:format:audio' && (
                         <ArrayField source="channels">

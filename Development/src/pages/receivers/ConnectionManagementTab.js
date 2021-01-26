@@ -10,7 +10,6 @@ import {
     TableRow,
 } from '@material-ui/core';
 import {
-    FunctionField,
     Loading,
     ReferenceField,
     TextField,
@@ -28,10 +27,9 @@ import FilterPanel, {
 } from '../../components/FilterPanel';
 import {
     FORMATS,
+    ParameterField,
     TRANSPORTS,
     parameterAutocompleteProps,
-    parameterLabel,
-    renderParameterLabel,
 } from '../../components/ParameterRegisters';
 import ActiveField from '../../components/ActiveField';
 import LinkChipField from '../../components/LinkChipField';
@@ -187,9 +185,11 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                         </Link>
                                     </TableCell>
                                     <TableCell>
-                                        {parameterLabel(TRANSPORTS)(
-                                            item.transport
-                                        )}
+                                        <ParameterField
+                                            record={item}
+                                            register={TRANSPORTS}
+                                            source="transport"
+                                        />
                                     </TableCell>
                                     {queryVersion() >= 'v1.2' && (
                                         <TableCell>
@@ -220,11 +220,9 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                             reference="flows"
                                             link={false}
                                         >
-                                            <FunctionField
+                                            <ParameterField
                                                 source="format"
-                                                render={renderParameterLabel(
-                                                    FORMATS
-                                                )}
+                                                register={FORMATS}
                                             />
                                         </ReferenceField>
                                     </TableCell>

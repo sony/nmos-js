@@ -16,9 +16,9 @@ import FilterPanel, {
     StringFilter,
 } from '../../components/FilterPanel';
 import {
+    ParameterField,
     TRANSPORTS,
     parameterAutocompleteProps,
-    parameterLabel,
 } from '../../components/ParameterRegisters';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
@@ -93,9 +93,11 @@ const SendersList = props => {
                                         />
                                     </TableCell>
                                     <TableCell>
-                                        {parameterLabel(TRANSPORTS)(
-                                            item.transport
-                                        )}
+                                        <ParameterField
+                                            register={TRANSPORTS}
+                                            record={item}
+                                            source="transport"
+                                        />
                                     </TableCell>
                                     {queryVersion() >= 'v1.2' && (
                                         <TableCell>

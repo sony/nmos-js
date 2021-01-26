@@ -29,8 +29,8 @@ import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
 import MapObject from '../../components/ObjectField';
 import {
+    ParameterField,
     TRANSPORTS,
-    renderParameterLabel,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
@@ -140,10 +140,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     }
                 />
                 <hr />
-                <FunctionField
-                    source="transport"
-                    render={renderParameterLabel(TRANSPORTS)}
-                />
+                <ParameterField source="transport" register={TRANSPORTS} />
                 <UrlField
                     style={{ fontSize: '14px' }}
                     label="Manifest Address"
@@ -220,10 +217,10 @@ const ShowActiveTab = ({ record, ...props }) => {
                     label="Activation Time"
                     source="$active.activation.activation_time"
                 />
-                <FunctionField
+                <ParameterField
                     label="Transport Type"
                     source="$transporttype"
-                    render={renderParameterLabel(TRANSPORTS)}
+                    register={TRANSPORTS}
                 />
                 <ArrayField
                     label="Transport Parameters"
@@ -267,10 +264,10 @@ const ShowStagedTab = ({ record, ...props }) => {
                     label="Activation Time"
                     source="$staged.activation.activation_time"
                 />
-                <FunctionField
+                <ParameterField
                     label="Transport Type"
                     source="$transporttype"
-                    render={renderParameterLabel(TRANSPORTS)}
+                    register={TRANSPORTS}
                 />
                 <ArrayField
                     label="Transport Parameters"

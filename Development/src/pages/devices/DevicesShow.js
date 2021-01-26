@@ -25,7 +25,7 @@ import MapObject from '../../components/ObjectField';
 import {
     CONTROL_TYPES,
     DEVICE_TYPES,
-    renderParameterLabel,
+    ParameterField,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
@@ -131,17 +131,14 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     />
                 )}
                 <hr />
-                <FunctionField
-                    source="type"
-                    render={renderParameterLabel(DEVICE_TYPES)}
-                />
+                <ParameterField source="type" register={DEVICE_TYPES} />
                 {queryVersion() >= 'v1.1' && (
                     <ArrayField source="controls">
                         <Datagrid>
                             <UrlField source="href" label="Address" />
-                            <FunctionField
+                            <ParameterField
                                 source="type"
-                                render={renderParameterLabel(CONTROL_TYPES)}
+                                register={CONTROL_TYPES}
                             />
                             {queryVersion() >= 'v1.3' && (
                                 <BooleanField source="authorization" />

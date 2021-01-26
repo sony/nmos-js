@@ -9,7 +9,7 @@ import {
     TableRow,
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
-import { map } from 'lodash';
+import { groupBy, map, uniqBy } from 'lodash';
 import FilterPanel, {
     AutocompleteFilter,
     StringFilter,
@@ -17,9 +17,10 @@ import FilterPanel, {
 import {
     CONTROL_TYPES,
     DEVICE_TYPES,
+    ParameterField,
     parameterAutocompleteProps,
-    parameterLabel,
-    parametersLabel,
+    parameterVersion,
+    unversionedParameter,
 } from '../../components/ParameterRegisters';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
@@ -93,14 +94,24 @@ const DevicesList = props => {
                                         />
                                     </TableCell>
                                     <TableCell>
-                                        {parameterLabel(DEVICE_TYPES)(
-                                            item.type
-                                        )}
+                                        <ParameterField
+                                            register={DEVICE_TYPES}
+                                            record={item}
+                                            source="type"
+                                        />
                                     </TableCell>
                                     {queryVersion() >= 'v1.1' && (
                                         <TableCell>
-                                            {parametersLabel(CONTROL_TYPES)(
-                                                map(item.controls, 'type')
+                                            {map(
+                                                groupedControlTypes(item),
+                                                (_, index) => (
+                                                    <ParameterField
+                                                        key={index}
+                                                        register={CONTROL_TYPES}
+                                                        record={{ _ }}
+                                                        source="_"
+                                                    />
+                                                )
                                             )}
                                         </TableCell>
                                     )}
@@ -119,5 +130,17 @@ const DevicesList = props => {
         </>
     );
 };
+
+// there's no doubt something more elegant than this dance, but for now it escapes me
+const groupedControlTypes = record =>
+    map(
+        groupBy(record.controls, control => unversionedParameter(control.type)),
+        (controls, unversioned) =>
+            unversioned +
+            '/' +
+            map(uniqBy(controls, 'type'), control =>
+                parameterVersion(control.type)
+            ).join(', ')
+    );
 
 export default DevicesList;

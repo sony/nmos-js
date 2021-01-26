@@ -10,15 +10,16 @@ import {
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
 import ActiveField from '../../components/ActiveField';
-import { get } from 'lodash';
 import FilterPanel, {
     AutocompleteFilter,
     BooleanFilter,
     StringFilter,
 } from '../../components/FilterPanel';
 import {
-    FORMAT_INFO,
-    TRANSPORT_INFO,
+    FORMATS,
+    ParameterField,
+    TRANSPORTS,
+    parameterAutocompleteProps,
 } from '../../components/ParameterRegisters';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
@@ -53,15 +54,11 @@ const ReceiversList = props => {
                         <StringFilter source="description" />
                         <AutocompleteFilter
                             source="format"
-                            freeSolo
-                            options={formats}
-                            renderOption={renderFormat}
+                            {...parameterAutocompleteProps(FORMATS)}
                         />
                         <AutocompleteFilter
                             source="transport"
-                            freeSolo
-                            options={transports}
-                            renderOption={renderTransport}
+                            {...parameterAutocompleteProps(TRANSPORTS)}
                         />
                         {queryVersion() >= 'v1.2' && (
                             <BooleanFilter
@@ -101,8 +98,20 @@ const ReceiversList = props => {
                                             label={item.label}
                                         />
                                     </TableCell>
-                                    <TableCell>{item.format}</TableCell>
-                                    <TableCell>{item.transport}</TableCell>
+                                    <TableCell>
+                                        <ParameterField
+                                            register={FORMATS}
+                                            record={item}
+                                            source="format"
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <ParameterField
+                                            register={TRANSPORTS}
+                                            record={item}
+                                            source="transport"
+                                        />
+                                    </TableCell>
                                     {queryVersion() >= 'v1.2' && (
                                         <TableCell>
                                             <ActiveField
@@ -125,28 +134,6 @@ const ReceiversList = props => {
             </Card>
         </>
     );
-};
-
-const formats = Object.keys(FORMAT_INFO);
-
-const renderFormat = (format, state) => {
-    const info = get(FORMAT_INFO, format);
-    if (info) {
-        return info.label;
-    } else {
-        return format;
-    }
-};
-
-const transports = Object.keys(TRANSPORT_INFO);
-
-const renderTransport = (transport, state) => {
-    const info = get(TRANSPORT_INFO, transport);
-    if (info) {
-        return info.label;
-    } else {
-        return transport;
-    }
 };
 
 export default ReceiversList;

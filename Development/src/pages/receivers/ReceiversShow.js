@@ -21,6 +21,11 @@ import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
 import MapObject from '../../components/ObjectField';
+import {
+    FORMATS,
+    ParameterField,
+    TRANSPORTS,
+} from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
 import TransportFileViewer from '../../components/TransportFileViewer';
@@ -149,7 +154,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     }
                 />
                 <hr />
-                <TextField source="transport" />
+                <ParameterField source="transport" register={TRANSPORTS} />
                 {queryVersion() >= 'v1.2' && (
                     <ItemArrayField
                         label="Interface Bindings"
@@ -182,7 +187,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                         source="caps.version"
                     />
                 )}
-                <TextField source="format" />
+                <ParameterField source="format" register={FORMATS} />
                 {queryVersion() >= 'v1.2' && (
                     <BooleanField label="Active" source="subscription.active" />
                 )}
@@ -240,7 +245,11 @@ const ShowActiveTab = ({ record, ...props }) => {
                     label="Activation Time"
                     source="$active.activation.activation_time"
                 />
-                <TextField label="Transport Type" source="$transporttype" />
+                <ParameterField
+                    label="Transport Type"
+                    source="$transporttype"
+                    register={TRANSPORTS}
+                />
                 <ArrayField
                     label="Transport Parameters"
                     source="$active.transport_params"
@@ -284,7 +293,11 @@ const ShowStagedTab = ({ record, ...props }) => {
                     label="Activation Time"
                     source="$staged.activation.activation_time"
                 />
-                <TextField label="Transport Type" source="$transporttype" />
+                <ParameterField
+                    label="Transport Type"
+                    source="$transporttype"
+                    register={TRANSPORTS}
+                />
                 <ArrayField
                     label="Transport Parameters"
                     source="$staged.transport_params"

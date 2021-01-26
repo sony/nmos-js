@@ -7,17 +7,20 @@ import {
     TableCell,
     TableHead,
     TableRow,
-    Typography,
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
-import { get, groupBy, map } from 'lodash';
+import { groupBy, map, uniqBy } from 'lodash';
 import FilterPanel, {
     AutocompleteFilter,
     StringFilter,
 } from '../../components/FilterPanel';
 import {
-    CONTROL_TYPE_INFO,
-    DEVICE_TYPE_INFO,
+    CONTROL_TYPES,
+    DEVICE_TYPES,
+    ParameterField,
+    parameterAutocompleteProps,
+    parameterVersion,
+    unversionedParameter,
 } from '../../components/ParameterRegisters';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
@@ -54,16 +57,12 @@ const DevicesList = props => {
                         )}
                         <AutocompleteFilter
                             source="type"
-                            freeSolo
-                            options={deviceTypes}
-                            renderOption={renderDeviceType}
+                            {...parameterAutocompleteProps(DEVICE_TYPES)}
                         />
                         <AutocompleteFilter
                             label="Control Types"
                             source="controls.type"
-                            freeSolo
-                            options={controlTypes}
-                            renderOption={renderControlType}
+                            {...parameterAutocompleteProps(CONTROL_TYPES)}
                         />
                         <StringFilter source="id" />
                     </FilterPanel>
@@ -94,18 +93,25 @@ const DevicesList = props => {
                                             label={item.label}
                                         />
                                     </TableCell>
-                                    <TableCell>{item.type}</TableCell>
+                                    <TableCell>
+                                        <ParameterField
+                                            register={DEVICE_TYPES}
+                                            record={item}
+                                            source="type"
+                                        />
+                                    </TableCell>
                                     {queryVersion() >= 'v1.1' && (
                                         <TableCell>
                                             {map(
-                                                groupBy(
-                                                    item.controls,
-                                                    control =>
-                                                        unversionedControlType(
-                                                            control.type
-                                                        )
-                                                ),
-                                                controlGroupLabel
+                                                groupedControlTypes(item),
+                                                (_, index) => (
+                                                    <ParameterField
+                                                        key={index}
+                                                        register={CONTROL_TYPES}
+                                                        record={{ _ }}
+                                                        source="_"
+                                                    />
+                                                )
                                             )}
                                         </TableCell>
                                     )}
@@ -125,68 +131,16 @@ const DevicesList = props => {
     );
 };
 
-const deviceTypes = Object.keys(DEVICE_TYPE_INFO);
-
-const renderDeviceType = (deviceType, state) => {
-    const info = get(DEVICE_TYPE_INFO, deviceType);
-    if (info) {
-        return info.label;
-    } else {
-        return deviceType;
-    }
-};
-
-const controlTypes = [].concat.apply(
-    [],
-    map(CONTROL_TYPE_INFO, (info, unversionedType) =>
-        map(
-            info.versions,
-            version => unversionedType + (version ? '/' + version : '')
-        )
-    )
-);
-
-const unversionedControlType = controlType => controlType.split('/')[0];
-const controlTypeVersion = controlType => controlType.split('/')[1];
-
-const renderControlType = (controlType, state) => {
-    const unversioned = unversionedControlType(controlType);
-    const version = controlTypeVersion(controlType);
-    const info = get(CONTROL_TYPE_INFO, unversioned);
-    if (info) {
-        return info.label + (version ? ' ' + version : '');
-    } else {
-        return unversioned + (version ? '/' + version : '');
-    }
-};
-
-const InlineTypography = props => (
-    <Typography style={{ display: 'inline' }} {...props} />
-);
-
-const controlGroupLabel = (controlGroup, unversioned) => {
-    const versions = [
-        ...new Set(controlGroup.map(_ => controlTypeVersion(_.type))),
-    ].join(', ');
-    const info = get(CONTROL_TYPE_INFO, unversioned);
-    if (info) {
-        return (
-            <div key={unversioned}>
-                <InlineTypography variant="body2">
-                    {unversioned + (versions ? '/' + versions : '')}
-                </InlineTypography>
-                <InlineTypography variant="body2" color="textSecondary">
-                    &ensp;({info.label + (versions ? ' ' + versions : '')})
-                </InlineTypography>
-            </div>
-        );
-    } else {
-        return (
-            <Typography key={unversioned} variant="body2">
-                {unversioned + (versions ? '/' + versions : '')}
-            </Typography>
-        );
-    }
-};
+// there's no doubt something more elegant than this dance, but for now it escapes me
+const groupedControlTypes = record =>
+    map(
+        groupBy(record.controls, control => unversionedParameter(control.type)),
+        (controls, unversioned) =>
+            unversioned +
+            '/' +
+            map(uniqBy(controls, 'type'), control =>
+                parameterVersion(control.type)
+            ).join(', ')
+    );
 
 export default DevicesList;

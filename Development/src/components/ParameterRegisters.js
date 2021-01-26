@@ -1,4 +1,5 @@
-import { Typography } from '@material-ui/core';
+import { forwardRef } from 'react';
+import { Tooltip, Typography } from '@material-ui/core';
 import { get, groupBy, map, uniq } from 'lodash';
 
 // const SOME_PARAMETER_REGISTER = {
@@ -56,12 +57,15 @@ const parameterLabelWithVersion = register => (unversioned, version) => {
     if (info) {
         return (
             <div key={unversioned}>
-                <InlineTypography variant="body2">
-                    {unversioned + (version ? '/' + version : '')}
-                </InlineTypography>
-                <InlineTypography variant="body2" color="textSecondary">
-                    &ensp;({info.label + (version ? ' ' + version : '')})
-                </InlineTypography>
+                <Tooltip
+                    title={info.label + (version ? ' ' + version : '')}
+                    placement="right"
+                    arrow
+                >
+                    <InlineTypography variant="body2">
+                        {unversioned + (version ? '/' + version : '')}
+                    </InlineTypography>
+                </Tooltip>
             </div>
         );
     } else {
@@ -73,9 +77,9 @@ const parameterLabelWithVersion = register => (unversioned, version) => {
     }
 };
 
-const InlineTypography = props => (
-    <Typography style={{ display: 'inline' }} {...props} />
-);
+const InlineTypography = forwardRef((props, ref) => (
+    <Typography style={{ display: 'inline' }} {...props} ref={ref} />
+));
 
 // Device Types in the NMOS Parameter Registers
 // see https://github.com/AMWA-TV/nmos-parameter-registers/tree/master/device-types

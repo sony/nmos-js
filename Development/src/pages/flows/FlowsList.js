@@ -9,13 +9,16 @@ import {
     TableRow,
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
-import { get } from 'lodash';
 import FilterPanel, {
     AutocompleteFilter,
     RateFilter,
     StringFilter,
 } from '../../components/FilterPanel';
-import { FORMAT_INFO } from '../../components/ParameterRegisters';
+import {
+    FORMATS,
+    parameterAutocompleteProps,
+    parameterLabel,
+} from '../../components/ParameterRegisters';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
@@ -52,9 +55,7 @@ const FlowsList = props => {
                         )}
                         <AutocompleteFilter
                             source="format"
-                            freeSolo
-                            options={formats}
-                            renderOption={renderFormat}
+                            {...parameterAutocompleteProps(FORMATS)}
                         />
                         {queryVersion() >= 'v1.1' && (
                             <StringFilter source="media_type" />
@@ -103,7 +104,9 @@ const FlowsList = props => {
                                             label={item.label}
                                         />
                                     </TableCell>
-                                    <TableCell>{item.format}</TableCell>
+                                    <TableCell>
+                                        {parameterLabel(FORMATS)(item.format)}
+                                    </TableCell>
                                     {queryVersion() >= 'v1.1' && (
                                         <TableCell>{item.media_type}</TableCell>
                                     )}
@@ -124,17 +127,6 @@ const FlowsList = props => {
             </Card>
         </>
     );
-};
-
-const formats = Object.keys(FORMAT_INFO);
-
-const renderFormat = (format, state) => {
-    const info = get(FORMAT_INFO, format);
-    if (info) {
-        return info.label;
-    } else {
-        return format;
-    }
 };
 
 const eventTypes = ['boolean', 'string', 'number'];

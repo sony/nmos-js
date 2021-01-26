@@ -10,6 +10,7 @@ import {
     TableRow,
 } from '@material-ui/core';
 import {
+    FunctionField,
     Loading,
     ReferenceField,
     TextField,
@@ -26,8 +27,11 @@ import FilterPanel, {
     StringFilter,
 } from '../../components/FilterPanel';
 import {
-    FORMAT_INFO,
-    TRANSPORT_INFO,
+    FORMATS,
+    TRANSPORTS,
+    parameterAutocompleteProps,
+    parameterLabel,
+    renderParameterLabel,
 } from '../../components/ParameterRegisters';
 import ActiveField from '../../components/ActiveField';
 import LinkChipField from '../../components/LinkChipField';
@@ -95,9 +99,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                         />
                         <AutocompleteFilter
                             source="transport"
-                            freeSolo
-                            options={transports}
-                            renderOption={renderTransport}
+                            {...parameterAutocompleteProps(TRANSPORTS)}
                             label="Sender Transport"
                         />
                         {queryVersion() >= 'v1.2' && (
@@ -109,9 +111,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                         <StringFilter source="id" label="Sender ID" />
                         <AutocompleteFilter
                             source="$flow.format"
-                            freeSolo
-                            options={formats}
-                            renderOption={renderFormat}
+                            {...parameterAutocompleteProps(FORMATS)}
                         />
                         {queryVersion() >= 'v1.1' && (
                             <RateFilter source="$flow.grain_rate" />
@@ -186,7 +186,11 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                             <LinkChipField record={item} />
                                         </Link>
                                     </TableCell>
-                                    <TableCell>{item.transport}</TableCell>
+                                    <TableCell>
+                                        {parameterLabel(TRANSPORTS)(
+                                            item.transport
+                                        )}
+                                    </TableCell>
                                     {queryVersion() >= 'v1.2' && (
                                         <TableCell>
                                             <ActiveField
@@ -216,7 +220,12 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                             reference="flows"
                                             link={false}
                                         >
-                                            <TextField source="format" />
+                                            <FunctionField
+                                                source="format"
+                                                render={renderParameterLabel(
+                                                    FORMATS
+                                                )}
+                                            />
                                         </ReferenceField>
                                     </TableCell>
                                     {queryVersion() >= 'v1.1' && (
@@ -266,28 +275,6 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
             </Card>
         </>
     );
-};
-
-const formats = Object.keys(FORMAT_INFO);
-
-const renderFormat = (format, state) => {
-    const info = get(FORMAT_INFO, format);
-    if (info) {
-        return info.label;
-    } else {
-        return format;
-    }
-};
-
-const transports = Object.keys(TRANSPORT_INFO);
-
-const renderTransport = (transport, state) => {
-    const info = get(TRANSPORT_INFO, transport);
-    if (info) {
-        return info.label;
-    } else {
-        return transport;
-    }
 };
 
 const eventTypes = ['boolean', 'string', 'number'];

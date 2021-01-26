@@ -22,6 +22,11 @@ import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
 import LinkChipField from '../../components/LinkChipField';
 import MapObject from '../../components/ObjectField';
+import {
+    CONTROL_TYPES,
+    DEVICE_TYPES,
+    renderParameterLabel,
+} from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
@@ -126,12 +131,18 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     />
                 )}
                 <hr />
-                <TextField source="type" />
+                <FunctionField
+                    source="type"
+                    render={renderParameterLabel(DEVICE_TYPES)}
+                />
                 {queryVersion() >= 'v1.1' && (
                     <ArrayField source="controls">
                         <Datagrid>
                             <UrlField source="href" label="Address" />
-                            <TextField source="type" />
+                            <FunctionField
+                                source="type"
+                                render={renderParameterLabel(CONTROL_TYPES)}
+                            />
                             {queryVersion() >= 'v1.3' && (
                                 <BooleanField source="authorization" />
                             )}

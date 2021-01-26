@@ -10,13 +10,16 @@ import {
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
 import ActiveField from '../../components/ActiveField';
-import { get } from 'lodash';
 import FilterPanel, {
     AutocompleteFilter,
     BooleanFilter,
     StringFilter,
 } from '../../components/FilterPanel';
-import { TRANSPORT_INFO } from '../../components/ParameterRegisters';
+import {
+    TRANSPORTS,
+    parameterAutocompleteProps,
+    parameterLabel,
+} from '../../components/ParameterRegisters';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
@@ -50,9 +53,7 @@ const SendersList = props => {
                         <StringFilter source="description" />
                         <AutocompleteFilter
                             source="transport"
-                            freeSolo
-                            options={transports}
-                            renderOption={renderTransport}
+                            {...parameterAutocompleteProps(TRANSPORTS)}
                         />
                         {queryVersion() >= 'v1.2' && (
                             <BooleanFilter
@@ -91,7 +92,11 @@ const SendersList = props => {
                                             label={item.label}
                                         />
                                     </TableCell>
-                                    <TableCell>{item.transport}</TableCell>
+                                    <TableCell>
+                                        {parameterLabel(TRANSPORTS)(
+                                            item.transport
+                                        )}
+                                    </TableCell>
                                     {queryVersion() >= 'v1.2' && (
                                         <TableCell>
                                             <ActiveField
@@ -114,17 +119,6 @@ const SendersList = props => {
             </Card>
         </>
     );
-};
-
-const transports = Object.keys(TRANSPORT_INFO);
-
-const renderTransport = (transport, state) => {
-    const info = get(TRANSPORT_INFO, transport);
-    if (info) {
-        return info.label;
-    } else {
-        return transport;
-    }
 };
 
 export default SendersList;

@@ -28,6 +28,10 @@ import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
 import JSONViewer from '../../components/JSONViewer';
 import MapObject from '../../components/ObjectField';
+import {
+    TRANSPORTS,
+    renderParameterLabel,
+} from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
@@ -136,7 +140,10 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     }
                 />
                 <hr />
-                <TextField source="transport" />
+                <FunctionField
+                    source="transport"
+                    render={renderParameterLabel(TRANSPORTS)}
+                />
                 <UrlField
                     style={{ fontSize: '14px' }}
                     label="Manifest Address"
@@ -213,7 +220,11 @@ const ShowActiveTab = ({ record, ...props }) => {
                     label="Activation Time"
                     source="$active.activation.activation_time"
                 />
-                <TextField label="Transport Type" source="$transporttype" />
+                <FunctionField
+                    label="Transport Type"
+                    source="$transporttype"
+                    render={renderParameterLabel(TRANSPORTS)}
+                />
                 <ArrayField
                     label="Transport Parameters"
                     source="$active.transport_params"
@@ -256,7 +267,11 @@ const ShowStagedTab = ({ record, ...props }) => {
                     label="Activation Time"
                     source="$staged.activation.activation_time"
                 />
-                <TextField label="Transport Type" source="$transporttype" />
+                <FunctionField
+                    label="Transport Type"
+                    source="$transporttype"
+                    render={renderParameterLabel(TRANSPORTS)}
+                />
                 <ArrayField
                     label="Transport Parameters"
                     source="$staged.transport_params"

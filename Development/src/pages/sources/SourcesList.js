@@ -9,10 +9,13 @@ import {
     TableRow,
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
+import { get } from 'lodash';
 import FilterPanel, {
+    AutocompleteFilter,
     RateFilter,
     StringFilter,
 } from '../../components/FilterPanel';
+import { FORMAT_INFO } from '../../components/ParameterRegisters';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
@@ -47,9 +50,18 @@ const SourcesList = props => {
                         {queryVersion() >= 'v1.1' && (
                             <RateFilter source="grain_rate" />
                         )}
-                        <StringFilter source="format" />
+                        <AutocompleteFilter
+                            source="format"
+                            freeSolo
+                            options={formats}
+                            renderOption={renderFormat}
+                        />
                         {queryVersion() >= 'v1.3' && (
-                            <StringFilter source="event_type" />
+                            <AutocompleteFilter
+                                source="event_type"
+                                freeSolo
+                                options={eventTypes}
+                            />
                         )}
                         <StringFilter source="id" />
                     </FilterPanel>
@@ -101,5 +113,18 @@ const SourcesList = props => {
         </>
     );
 };
+
+const formats = Object.keys(FORMAT_INFO);
+
+const renderFormat = (format, state) => {
+    const info = get(FORMAT_INFO, format);
+    if (info) {
+        return info.label;
+    } else {
+        return format;
+    }
+};
+
+const eventTypes = ['boolean', 'string', 'number'];
 
 export default SourcesList;

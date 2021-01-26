@@ -10,13 +10,19 @@ import {
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
 import ActiveField from '../../components/ActiveField';
-import PaginationButtons from '../../components/PaginationButtons';
-import ListActions from '../../components/ListActions';
-import useGetList from '../../components/useGetList';
+import { get } from 'lodash';
 import FilterPanel, {
+    AutocompleteFilter,
     BooleanFilter,
     StringFilter,
 } from '../../components/FilterPanel';
+import {
+    FORMAT_INFO,
+    TRANSPORT_INFO,
+} from '../../components/ParameterRegisters';
+import PaginationButtons from '../../components/PaginationButtons';
+import ListActions from '../../components/ListActions';
+import useGetList from '../../components/useGetList';
 import { queryVersion, useJSONSetting } from '../../settings';
 
 const ReceiversList = props => {
@@ -45,8 +51,18 @@ const ReceiversList = props => {
                     <FilterPanel filter={filter} setFilter={setFilter}>
                         <StringFilter source="label" />
                         <StringFilter source="description" />
-                        <StringFilter source="format" />
-                        <StringFilter source="transport" />
+                        <AutocompleteFilter
+                            source="format"
+                            freeSolo
+                            options={formats}
+                            renderOption={renderFormat}
+                        />
+                        <AutocompleteFilter
+                            source="transport"
+                            freeSolo
+                            options={transports}
+                            renderOption={renderTransport}
+                        />
                         {queryVersion() >= 'v1.2' && (
                             <BooleanFilter
                                 source="subscription.active"
@@ -109,6 +125,28 @@ const ReceiversList = props => {
             </Card>
         </>
     );
+};
+
+const formats = Object.keys(FORMAT_INFO);
+
+const renderFormat = (format, state) => {
+    const info = get(FORMAT_INFO, format);
+    if (info) {
+        return info.label;
+    } else {
+        return format;
+    }
+};
+
+const transports = Object.keys(TRANSPORT_INFO);
+
+const renderTransport = (transport, state) => {
+    const info = get(TRANSPORT_INFO, transport);
+    if (info) {
+        return info.label;
+    } else {
+        return transport;
+    }
 };
 
 export default ReceiversList;

@@ -12,6 +12,7 @@ import { BooleanField, Loading, ShowButton, Title } from 'react-admin';
 import get from 'lodash/get';
 import DeleteButton from '../../components/DeleteButton';
 import FilterPanel, {
+    AutocompleteFilter,
     BooleanFilter,
     NumberFilter,
     StringFilter,
@@ -45,7 +46,11 @@ const SubscriptionsList = props => {
                 <Title title={'Subscriptions'} />
                 <CardContent>
                     <FilterPanel filter={filter} setFilter={setFilter}>
-                        <StringFilter source="resource_path" />
+                        <AutocompleteFilter
+                            source="resource_path"
+                            freeSolo
+                            options={resourcePaths}
+                        />
                         <BooleanFilter source="persist" />
                         <NumberFilter
                             source="max_update_rate_ms"
@@ -117,5 +122,14 @@ const SubscriptionsList = props => {
         </>
     );
 };
+
+const resourcePaths = [
+    '/nodes',
+    '/devices',
+    '/sources',
+    '/flows',
+    '/senders',
+    '/receivers',
+];
 
 export default SubscriptionsList;

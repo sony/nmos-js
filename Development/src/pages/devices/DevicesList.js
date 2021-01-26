@@ -15,6 +15,10 @@ import FilterPanel, {
     AutocompleteFilter,
     StringFilter,
 } from '../../components/FilterPanel';
+import {
+    CONTROL_TYPE_INFO,
+    DEVICE_TYPE_INFO,
+} from '../../components/ParameterRegisters';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
@@ -48,8 +52,12 @@ const DevicesList = props => {
                         {queryVersion() >= 'v1.1' && (
                             <StringFilter source="description" />
                         )}
-                        <StringFilter source="type" />
-                        <StringFilter source="id" />
+                        <AutocompleteFilter
+                            source="type"
+                            freeSolo
+                            options={deviceTypes}
+                            renderOption={renderDeviceType}
+                        />
                         <AutocompleteFilter
                             label="Control Types"
                             source="controls.type"
@@ -57,6 +65,7 @@ const DevicesList = props => {
                             options={controlTypes}
                             renderOption={renderControlType}
                         />
+                        <StringFilter source="id" />
                     </FilterPanel>
                     <Table>
                         <TableHead>
@@ -116,28 +125,15 @@ const DevicesList = props => {
     );
 };
 
-// see Device Control Types in the NMOS Parameter Registers
-const CONTROL_TYPE_INFO = {
-    // IS-05
-    'urn:x-nmos:control:sr-ctrl': {
-        label: 'Connection API',
-        versions: ['v1.1', 'v1.0'],
-    },
-    // IS-07
-    'urn:x-nmos:control:events': {
-        label: 'Events API',
-        versions: ['v1.0'],
-    },
-    // IS-08
-    'urn:x-nmos:control:cm-ctrl': {
-        label: 'Channel Mapping API',
-        versions: ['v1.0'],
-    },
-    // Manifest Base
-    'urn:x-nmos:control:manifest-base': {
-        label: 'Manifest Base',
-        versions: ['v1.0'],
-    },
+const deviceTypes = Object.keys(DEVICE_TYPE_INFO);
+
+const renderDeviceType = (deviceType, state) => {
+    const info = get(DEVICE_TYPE_INFO, deviceType);
+    if (info) {
+        return info.label;
+    } else {
+        return deviceType;
+    }
 };
 
 const controlTypes = [].concat.apply(
@@ -177,10 +173,10 @@ const controlGroupLabel = (controlGroup, unversioned) => {
         return (
             <div key={unversioned}>
                 <InlineTypography variant="body2">
-                    {info.label + (versions ? ' ' + versions : '')}
+                    {unversioned + (versions ? '/' + versions : '')}
                 </InlineTypography>
                 <InlineTypography variant="body2" color="textSecondary">
-                    &ensp;({unversioned + (versions ? '/' + versions : '')})
+                    &ensp;({info.label + (versions ? ' ' + versions : '')})
                 </InlineTypography>
             </div>
         );

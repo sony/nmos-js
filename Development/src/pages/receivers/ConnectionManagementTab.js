@@ -19,11 +19,16 @@ import {
 import get from 'lodash/get';
 import useGetList from '../../components/useGetList';
 import FilterPanel, {
+    AutocompleteFilter,
     BooleanFilter,
     ConstFilter,
     RateFilter,
     StringFilter,
 } from '../../components/FilterPanel';
+import {
+    FORMAT_INFO,
+    TRANSPORT_INFO,
+} from '../../components/ParameterRegisters';
 import ActiveField from '../../components/ActiveField';
 import LinkChipField from '../../components/LinkChipField';
 import PaginationButtons from '../../components/PaginationButtons';
@@ -88,8 +93,11 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             source="description"
                             label="Sender Description"
                         />
-                        <StringFilter
+                        <AutocompleteFilter
                             source="transport"
+                            freeSolo
+                            options={transports}
+                            renderOption={renderTransport}
                             label="Sender Transport"
                         />
                         {queryVersion() >= 'v1.2' && (
@@ -99,7 +107,12 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             />
                         )}
                         <StringFilter source="id" label="Sender ID" />
-                        <StringFilter source="$flow.format" />
+                        <AutocompleteFilter
+                            source="$flow.format"
+                            freeSolo
+                            options={formats}
+                            renderOption={renderFormat}
+                        />
                         {queryVersion() >= 'v1.1' && (
                             <RateFilter source="$flow.grain_rate" />
                         )}
@@ -110,7 +123,11 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                             <StringFilter source="$flow.media_type" />
                         )}
                         {queryVersion() >= 'v1.3' && (
-                            <StringFilter source="$flow.event_type" />
+                            <AutocompleteFilter
+                                source="$flow.event_type"
+                                freeSolo
+                                options={eventTypes}
+                            />
                         )}
                         {apiUseRql(QUERY_API) && (
                             <ConstFilter
@@ -250,5 +267,29 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
         </>
     );
 };
+
+const formats = Object.keys(FORMAT_INFO);
+
+const renderFormat = (format, state) => {
+    const info = get(FORMAT_INFO, format);
+    if (info) {
+        return info.label;
+    } else {
+        return format;
+    }
+};
+
+const transports = Object.keys(TRANSPORT_INFO);
+
+const renderTransport = (transport, state) => {
+    const info = get(TRANSPORT_INFO, transport);
+    if (info) {
+        return info.label;
+    } else {
+        return transport;
+    }
+};
+
+const eventTypes = ['boolean', 'string', 'number'];
 
 export default ConnectionManagementTab;

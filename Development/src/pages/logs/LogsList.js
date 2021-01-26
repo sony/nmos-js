@@ -10,6 +10,7 @@ import {
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
 import FilterPanel, {
+    AutocompleteFilter,
     NumberFilter,
     StringFilter,
 } from '../../components/FilterPanel';
@@ -46,7 +47,11 @@ const LogsList = props => {
                         <NumberFilter source="level" />
                         <StringFilter source="message" />
                         <StringFilter source="request_uri" />
-                        <StringFilter source="http_method" />
+                        <AutocompleteFilter
+                            source="http_method"
+                            freeSolo
+                            options={httpMethods}
+                        />
                     </FilterPanel>
                     <Table>
                         <TableHead>
@@ -96,5 +101,7 @@ const LogsList = props => {
         </>
     );
 };
+
+const httpMethods = ['GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT'];
 
 export default LogsList;

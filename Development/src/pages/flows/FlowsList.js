@@ -9,10 +9,13 @@ import {
     TableRow,
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
+import { get } from 'lodash';
 import FilterPanel, {
+    AutocompleteFilter,
     RateFilter,
     StringFilter,
 } from '../../components/FilterPanel';
+import { FORMAT_INFO } from '../../components/ParameterRegisters';
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
@@ -45,31 +48,28 @@ const FlowsList = props => {
                         <StringFilter source="label" />
                         <StringFilter source="description" />
                         {queryVersion() >= 'v1.1' && (
-                            <RateFilter
-                                source="grain_rate"
-                                label="Grain Rate"
-                            />
+                            <RateFilter source="grain_rate" />
                         )}
-                        <StringFilter source="format" />
+                        <AutocompleteFilter
+                            source="format"
+                            freeSolo
+                            options={formats}
+                            renderOption={renderFormat}
+                        />
                         {queryVersion() >= 'v1.1' && (
-                            <StringFilter
-                                source="media_type"
-                                label="Media Type"
-                            />
+                            <StringFilter source="media_type" />
                         )}
                         {queryVersion() >= 'v1.1' && (
-                            <RateFilter
-                                source="sample_rate"
-                                label="Sample Rate"
-                            />
+                            <RateFilter source="sample_rate" />
                         )}
                         {queryVersion() >= 'v1.3' && (
-                            <StringFilter
+                            <AutocompleteFilter
                                 source="event_type"
-                                label="Event Type"
+                                freeSolo
+                                options={eventTypes}
                             />
                         )}
-                        <StringFilter source="id" label="ID" />
+                        <StringFilter source="id" />
                     </FilterPanel>
                     <Table>
                         <TableHead>
@@ -125,5 +125,18 @@ const FlowsList = props => {
         </>
     );
 };
+
+const formats = Object.keys(FORMAT_INFO);
+
+const renderFormat = (format, state) => {
+    const info = get(FORMAT_INFO, format);
+    if (info) {
+        return info.label;
+    } else {
+        return format;
+    }
+};
+
+const eventTypes = ['boolean', 'string', 'number'];
 
 export default FlowsList;

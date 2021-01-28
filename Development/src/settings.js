@@ -50,7 +50,7 @@ export const setApiUrl = (api, url) => {
         console.error(`Configuration does not allow ${api} to be changed`);
         return;
     }
-    if (url) {
+    if (url && url !== defaultUrl(api)) {
         window.localStorage.setItem(api, url);
     } else {
         window.localStorage.removeItem(api);

@@ -1,25 +1,22 @@
-import React, { forwardRef } from 'react';
+import { Tooltip } from '@material-ui/core';
+import HintTypography from './HintTypography';
 import tai from 't-a-i';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import get from 'lodash/get';
-import { Tooltip, Typography } from '@material-ui/core';
 dayjs.extend(utc);
-
-const InlineTypography = forwardRef((props, ref) => (
-    <Typography style={{ display: 'inline' }} {...props} ref={ref} />
-));
 
 const TAIField = ({ record, source, mode }) => (
     <div key={source}>
         <Tooltip
+            interactive
             title={TAIConversion(record, source, mode)}
             placement="right"
             arrow
         >
-            <InlineTypography variant="body2">
+            <HintTypography variant="body2">
                 {get(record, source)}
-            </InlineTypography>
+            </HintTypography>
         </Tooltip>
     </div>
 );

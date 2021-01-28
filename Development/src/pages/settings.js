@@ -15,14 +15,17 @@ import {
 import sealion from '../assets/sea-lion.png';
 import {
     DNSSD_API,
+    FRIENDLY_PARAMETERS,
     LOGGING_API,
     QUERY_API,
     apiPagingLimit,
     apiUrl,
     apiUseRql,
+    getJSONSetting,
     setApiPagingLimit,
     setApiUrl,
     setApiUseRql,
+    setJSONSetting,
 } from '../settings';
 
 const useStyles = makeStyles(theme => ({
@@ -69,6 +72,7 @@ const Settings = () => {
         dnssdAPI: apiUrl(DNSSD_API),
         pagingLimit: apiPagingLimit(QUERY_API),
         rql: apiUseRql(QUERY_API),
+        friendlyParams: getJSONSetting(FRIENDLY_PARAMETERS, false),
     });
 
     const handleTextChange = name => event => {
@@ -85,6 +89,7 @@ const Settings = () => {
         setApiUrl(DNSSD_API, values.dnssdAPI);
         setApiPagingLimit(QUERY_API, values.pagingLimit);
         setApiUseRql(QUERY_API, values.rql);
+        setJSONSetting(FRIENDLY_PARAMETERS, values.friendlyParams);
     }, [values]);
 
     return (
@@ -168,6 +173,20 @@ const Settings = () => {
                                     </MenuItem>
                                 ))}
                             </TextField>
+                        </ListItem>
+                        <ListItem className={classes.listItem}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={values.friendlyParams}
+                                        onChange={handleBooleanChange(
+                                            'friendlyParams'
+                                        )}
+                                        color="primary"
+                                    />
+                                }
+                                label="Friendly Names"
+                            />
                         </ListItem>
                     </List>
                 </CardContent>

@@ -8,6 +8,8 @@ export const DNSSD_API = 'DNS-SD API';
 const USE_RQL = 'RQL';
 const PAGING_LIMIT = 'Paging Limit';
 
+export const FRIENDLY_PARAMETERS = 'Friendly Parameters';
+
 export const concatUrl = (url, path) => {
     return (
         url + (url.endsWith('/') && path.startsWith('/') ? path.slice(1) : path)

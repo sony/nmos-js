@@ -1,7 +1,7 @@
-import { forwardRef } from 'react';
-import { Tooltip, Typography, withStyles } from '@material-ui/core';
+import { Tooltip, Typography } from '@material-ui/core';
 import { get, map } from 'lodash';
-import { useJSONSetting } from '../settings';
+import HintTypography from './HintTypography';
+import { FRIENDLY_PARAMETERS, useJSONSetting } from '../settings';
 
 // const SOME_PARAMETER_REGISTER = {
 //    'urn:x-vendor:foo:bar': {
@@ -37,7 +37,7 @@ export const parameterAutocompleteProps = register => ({
 });
 
 export const ParameterField = ({ register, record, source }) => {
-    const [friendlyFirst] = useJSONSetting('Friendly Parameters', false);
+    const [friendlyFirst] = useJSONSetting(FRIENDLY_PARAMETERS, false);
     const param = get(record, source);
     const unversioned = unversionedParameter(param);
     const version = parameterVersion(param);
@@ -52,9 +52,9 @@ export const ParameterField = ({ register, record, source }) => {
                     placement="right"
                     arrow
                 >
-                    <TooltipHintTypography variant="body2">
+                    <HintTypography variant="body2">
                         {friendlyFirst ? friendly : unfriendly}
-                    </TooltipHintTypography>
+                    </HintTypography>
                 </Tooltip>
             </div>
         );
@@ -70,20 +70,6 @@ export const ParameterField = ({ register, record, source }) => {
 ParameterField.defaultProps = {
     addLabel: true,
 };
-
-const InlineTypography = forwardRef(({ style, ...props }, ref) => (
-    <Typography style={{ display: 'inline', ...style }} {...props} ref={ref} />
-));
-
-const tooltipHintStyle = theme => ({
-    textDecorationLine: 'underline',
-    textDecorationStyle: 'dotted',
-    textDecorationColor: theme.palette.type === 'dark' ? '#696969' : '#c8c8c8',
-});
-
-const TooltipHintTypography = withStyles(theme => ({
-    root: tooltipHintStyle(theme),
-}))(InlineTypography);
 
 // Device Types in the NMOS Parameter Registers
 // see https://github.com/AMWA-TV/nmos-parameter-registers/tree/master/device-types

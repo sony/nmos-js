@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
-import { isEqual } from 'lodash';
+import { get, isEqual } from 'lodash';
+import CONFIG from './config.json';
 
 export const LOGGING_API = 'Logging API';
 export const QUERY_API = 'Query API';
 export const DNSSD_API = 'DNS-SD API';
 
-const USE_RQL = 'RQL';
-const PAGING_LIMIT = 'Paging Limit';
+export const USE_RQL = 'RQL';
+export const PAGING_LIMIT = 'Paging Limit';
 
 export const FRIENDLY_PARAMETERS = 'Friendly Parameters';
+
+export const disabledSetting = name => get(CONFIG, `${name}.disabled`);
+export const hiddenSetting = name => get(CONFIG, `${name}.hidden`);
 
 export const concatUrl = (url, path) => {
     return (
@@ -17,6 +21,10 @@ export const concatUrl = (url, path) => {
 };
 
 const defaultUrl = api => {
+    const configUrl = get(CONFIG, `${api}.value`);
+    if (configUrl) {
+        return configUrl;
+    }
     let baseUrl = window.location.protocol + '//' + window.location.host;
     switch (api) {
         case LOGGING_API:
@@ -31,9 +39,17 @@ const defaultUrl = api => {
     }
 };
 
-export const apiUrl = api =>
-    window.localStorage.getItem(api) || defaultUrl(api);
+export const apiUrl = api => {
+    if (disabledSetting(api)) {
+        return defaultUrl(api);
+    }
+    return window.localStorage.getItem(api) || defaultUrl(api);
+};
 export const setApiUrl = (api, url) => {
+    if (disabledSetting(api)) {
+        console.error(`Configuration does not allow ${api} to be changed`);
+        return;
+    }
     if (url) {
         window.localStorage.setItem(api, url);
     } else {
@@ -69,6 +85,13 @@ export const setApiUseRql = (api, rql) => {
 };
 
 export const getJSONSetting = (name, defaultValue = {}) => {
+    const configValue = get(CONFIG, `${name}.value`);
+    if (configValue !== undefined) {
+        defaultValue = configValue;
+    }
+    if (disabledSetting(name)) {
+        return defaultValue;
+    }
     try {
         const stored = window.localStorage.getItem(name);
         // treat empty string same as null (not found)
@@ -80,6 +103,10 @@ export const getJSONSetting = (name, defaultValue = {}) => {
 };
 
 export const setJSONSetting = (name, value) => {
+    if (disabledSetting(name)) {
+        console.error(`Configuration does not allow ${name} to be changed`);
+        return;
+    }
     // note that e.g. NaN becomes null
     const stored = JSON.stringify(value);
     window.localStorage.setItem(name, stored);
@@ -92,7 +119,9 @@ export const unsetJSONSetting = name => {
 export const useJSONSetting = (name, defaultValue = {}) => {
     const [setting, setSetting] = useState(getJSONSetting(name, defaultValue));
     useEffect(() => {
-        if (!isEqual(setting, defaultValue)) {
+        const configValue = get(CONFIG, `${name}.value`);
+        const hasConfigValue = configValue !== undefined;
+        if (!isEqual(setting, hasConfigValue ? configValue : defaultValue)) {
             setJSONSetting(name, setting);
         } else {
             unsetJSONSetting(name);

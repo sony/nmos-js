@@ -1,7 +1,9 @@
 import React from 'react';
-import { Admin, Resource } from 'react-admin';
+import { Admin, Layout, Resource } from 'react-admin';
 import { useTheme } from '@material-ui/styles';
 
+import AdminMenu from './pages/menu';
+import AppBar from './pages/appbar';
 import Dashboard from './pages/settings';
 import { NodesList, NodesShow } from './pages/nodes';
 import { DevicesList, DevicesShow } from './pages/devices';
@@ -17,10 +19,15 @@ import {
 } from './pages/subscriptions';
 import { QueryAPIsList, QueryAPIsShow } from './pages/queryapis';
 import dataProvider from './dataProvider';
-import Layout from './LayoutComponent';
+
+const AdminAppBar = props => <AppBar {...props} userMenu={false} />;
+
+const AdminLayout = props => (
+    <Layout {...props} menu={AdminMenu} appBar={AdminAppBar} />
+);
 
 const App = () => (
-    <Admin layout={Layout} dataProvider={dataProvider} theme={useTheme()}>
+    <Admin layout={AdminLayout} dataProvider={dataProvider} theme={useTheme()}>
         <Resource name="Settings" list={Dashboard} />
         <Resource
             name="queryapis"

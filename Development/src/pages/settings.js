@@ -17,11 +17,15 @@ import {
     DNSSD_API,
     FRIENDLY_PARAMETERS,
     LOGGING_API,
+    PAGING_LIMIT,
     QUERY_API,
+    USE_RQL,
     apiPagingLimit,
     apiUrl,
     apiUseRql,
+    disabledSetting,
     getJSONSetting,
+    hiddenSetting,
     setApiPagingLimit,
     setApiUrl,
     setApiUseRql,
@@ -67,12 +71,12 @@ const selectOnFocus = event => event.target.select();
 const Settings = () => {
     const classes = useStyles();
     const [values, setValues] = useState({
-        queryAPI: apiUrl(QUERY_API),
-        loggingAPI: apiUrl(LOGGING_API),
-        dnssdAPI: apiUrl(DNSSD_API),
-        pagingLimit: apiPagingLimit(QUERY_API),
-        rql: apiUseRql(QUERY_API),
-        friendlyParams: getJSONSetting(FRIENDLY_PARAMETERS, false),
+        [QUERY_API]: apiUrl(QUERY_API),
+        [LOGGING_API]: apiUrl(LOGGING_API),
+        [DNSSD_API]: apiUrl(DNSSD_API),
+        [PAGING_LIMIT]: apiPagingLimit(QUERY_API),
+        [USE_RQL]: apiUseRql(QUERY_API),
+        [FRIENDLY_PARAMETERS]: getJSONSetting(FRIENDLY_PARAMETERS, false),
     });
 
     const handleTextChange = name => event => {
@@ -83,13 +87,17 @@ const Settings = () => {
         setValues({ ...values, [name]: event.target.checked });
     };
 
+    const isEffective = name => !hiddenSetting(name) && !disabledSetting(name);
     useEffect(() => {
-        setApiUrl(QUERY_API, values.queryAPI);
-        setApiUrl(LOGGING_API, values.loggingAPI);
-        setApiUrl(DNSSD_API, values.dnssdAPI);
-        setApiPagingLimit(QUERY_API, values.pagingLimit);
-        setApiUseRql(QUERY_API, values.rql);
-        setJSONSetting(FRIENDLY_PARAMETERS, values.friendlyParams);
+        if (isEffective(QUERY_API)) setApiUrl(QUERY_API, values[QUERY_API]);
+        if (isEffective(LOGGING_API))
+            setApiUrl(LOGGING_API, values[LOGGING_API]);
+        if (isEffective(DNSSD_API)) setApiUrl(DNSSD_API, values[DNSSD_API]);
+        if (isEffective(PAGING_LIMIT))
+            setApiPagingLimit(QUERY_API, values[PAGING_LIMIT]);
+        if (isEffective(USE_RQL)) setApiUseRql(QUERY_API, values[USE_RQL]);
+        if (isEffective(FRIENDLY_PARAMETERS))
+            setJSONSetting(FRIENDLY_PARAMETERS, values[FRIENDLY_PARAMETERS]);
     }, [values]);
 
     return (
@@ -112,82 +120,106 @@ const Settings = () => {
                         alt="sea-lion logo"
                     />
                     <List>
-                        <ListItem className={classes.listItem}>
-                            <TextField
-                                label="Query API"
-                                variant="filled"
-                                value={values.queryAPI}
-                                onChange={handleTextChange('queryAPI')}
-                                onFocus={selectOnFocus}
-                                className={classes.textField}
-                            />
-                        </ListItem>
-                        <ListItem className={classes.listItem}>
-                            <TextField
-                                label="Logging API"
-                                variant="filled"
-                                value={values.loggingAPI}
-                                onChange={handleTextChange('loggingAPI')}
-                                onFocus={selectOnFocus}
-                                className={classes.textField}
-                            />
-                        </ListItem>
-                        <ListItem className={classes.listItem}>
-                            <TextField
-                                label="DNS-SD API"
-                                variant="filled"
-                                value={values.dnssdAPI}
-                                onChange={handleTextChange('dnssdAPI')}
-                                onFocus={selectOnFocus}
-                                className={classes.textField}
-                            />
-                        </ListItem>
-                        <ListItem className={classes.listItem}>
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={values.rql}
-                                        onChange={handleBooleanChange('rql')}
-                                        color="primary"
-                                    />
-                                }
-                                label="RQL"
-                            />
-                        </ListItem>
-                        <ListItem className={classes.listItem}>
-                            <TextField
-                                select
-                                label="Paging Limit"
-                                variant="filled"
-                                className={classes.textField}
-                                value={values.pagingLimit}
-                                onChange={handleTextChange('pagingLimit')}
-                                margin="normal"
-                            >
-                                {pagingLimits.map(option => (
-                                    <MenuItem
-                                        key={option.value}
-                                        value={option.value}
-                                    >
-                                        {option.label}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
-                        </ListItem>
-                        <ListItem className={classes.listItem}>
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={values.friendlyParams}
-                                        onChange={handleBooleanChange(
-                                            'friendlyParams'
-                                        )}
-                                        color="primary"
-                                    />
-                                }
-                                label="Friendly Names"
-                            />
-                        </ListItem>
+                        {!hiddenSetting(QUERY_API) && (
+                            <ListItem className={classes.listItem}>
+                                <TextField
+                                    label="Query API"
+                                    variant="filled"
+                                    value={values[QUERY_API]}
+                                    onChange={handleTextChange(QUERY_API)}
+                                    onFocus={selectOnFocus}
+                                    className={classes.textField}
+                                    disabled={disabledSetting(QUERY_API)}
+                                />
+                            </ListItem>
+                        )}
+                        {!hiddenSetting(LOGGING_API) && (
+                            <ListItem className={classes.listItem}>
+                                <TextField
+                                    label="Logging API"
+                                    variant="filled"
+                                    value={values[LOGGING_API]}
+                                    onChange={handleTextChange(LOGGING_API)}
+                                    onFocus={selectOnFocus}
+                                    className={classes.textField}
+                                    disabled={disabledSetting(LOGGING_API)}
+                                />
+                            </ListItem>
+                        )}
+                        {!hiddenSetting(DNSSD_API) && (
+                            <ListItem className={classes.listItem}>
+                                <TextField
+                                    label="DNS-SD API"
+                                    variant="filled"
+                                    value={values[DNSSD_API]}
+                                    onChange={handleTextChange(DNSSD_API)}
+                                    onFocus={selectOnFocus}
+                                    className={classes.textField}
+                                    disabled={disabledSetting(DNSSD_API)}
+                                />
+                            </ListItem>
+                        )}
+                        {!hiddenSetting(USE_RQL) && (
+                            <ListItem className={classes.listItem}>
+                                <FormControlLabel
+                                    label="RQL"
+                                    control={
+                                        <Switch
+                                            checked={values[USE_RQL]}
+                                            onChange={handleBooleanChange(
+                                                USE_RQL
+                                            )}
+                                            color="primary"
+                                        />
+                                    }
+                                    disabled={disabledSetting(USE_RQL)}
+                                />
+                            </ListItem>
+                        )}
+                        {!hiddenSetting(PAGING_LIMIT) && (
+                            <ListItem className={classes.listItem}>
+                                <TextField
+                                    select
+                                    label="Paging Limit"
+                                    variant="filled"
+                                    className={classes.textField}
+                                    value={values[PAGING_LIMIT]}
+                                    onChange={handleTextChange(PAGING_LIMIT)}
+                                    margin="normal"
+                                    disabled={disabledSetting(PAGING_LIMIT)}
+                                >
+                                    {pagingLimits.map(option => (
+                                        <MenuItem
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </MenuItem>
+                                    ))}
+                                </TextField>
+                            </ListItem>
+                        )}
+                        {!hiddenSetting(FRIENDLY_PARAMETERS) && (
+                            <ListItem className={classes.listItem}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={
+                                                values[FRIENDLY_PARAMETERS]
+                                            }
+                                            onChange={handleBooleanChange(
+                                                FRIENDLY_PARAMETERS
+                                            )}
+                                            color="primary"
+                                            disabled={disabledSetting(
+                                                FRIENDLY_PARAMETERS
+                                            )}
+                                        />
+                                    }
+                                    label="Friendly Names"
+                                />
+                            </ListItem>
+                        )}
                     </List>
                 </CardContent>
             </Card>

@@ -1,0 +1,30 @@
+{
+    "Query API": {
+    },
+    "DNS-SD API": {
+    },
+    "Logging API": {
+    },
+    "RQL": {
+        "value": true,
+        "disabled": true
+    },
+    "Paging Limit": {
+    },
+    "Friendly Parameters": {
+        "value": true
+    },
+    "Connect Filter": {
+        "value": {
+            "$constraint_sets_active": null
+        }
+    },
+    "refresh time": {
+        "value": 4
+    },
+    "theme": {
+        "value": {
+            "type": "light"
+        }
+    }
+}

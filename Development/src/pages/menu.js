@@ -56,7 +56,7 @@ const NavLinkMenuItem = ({ to, icon, label = labelize(to), ...props }) => {
     );
 };
 
-const NestedList = () => {
+const CustomMenu = () => {
     const [open, setOpen] = useState(false);
     return (
         <MenuList>
@@ -98,4 +98,4 @@ const NestedList = () => {
     );
 };
 
-export default NestedList;
+export default CustomMenu;

@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { cloneElement, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { AppBar, useRefresh, useVersion } from 'react-admin';
+import { AppBar, UserMenu, useRefresh, useVersion } from 'react-admin';
 import {
     Button,
     ClickAwayListener,
@@ -20,6 +20,7 @@ import Brightness7Icon from '@material-ui/icons/Brightness7';
 import Brightness4Icon from '@material-ui/icons/Brightness4';
 import { ThemeContext } from '../theme/ThemeContext';
 import { useTheme } from '@material-ui/styles';
+import { disabledSetting, hiddenSetting, useJSONSetting } from '../settings';
 
 const useStyles = makeStyles({
     title: {
@@ -77,8 +78,9 @@ const RefreshSelector = () => {
     const [open, setOpen] = useState(false);
     const [percentage, setPercentage] = useState(0);
     const anchorRef = useRef(null);
-    const [intervalsIndex, setIntervalsIndex] = React.useState(
-        window.localStorage.getItem('refresh time') || 4
+    const [intervalsIndex, setIntervalsIndex] = useJSONSetting(
+        'refresh time',
+        4
     );
     const refresh = useRefresh();
     const version = useVersion();
@@ -119,7 +121,6 @@ const RefreshSelector = () => {
         setIntervalsIndex(index);
         setOpen(false);
         setPercentage(0);
-        window.localStorage.setItem('refresh time', index);
     };
     const handleToggle = () => {
         setOpen(prevOpen => !prevOpen);
@@ -141,7 +142,7 @@ const RefreshSelector = () => {
                         size="small"
                         style={{ textTransform: 'none' }}
                         onClick={handleToggle}
-                        disabled={disable}
+                        disabled={disable || disabledSetting('refresh time')}
                     >
                         <ArrowDropDownIcon size="small" />
                         {intervals[intervalsIndex][0]}
@@ -156,7 +157,7 @@ const RefreshSelector = () => {
                     color="inherit"
                     size="small"
                     onClick={handleToggle}
-                    disabled={disable}
+                    disabled={disable || disabledSetting('refresh time')}
                     ref={anchorRef}
                 >
                     <ArrowDropDownIcon size="small" />
@@ -206,7 +207,7 @@ const RefreshSelector = () => {
     );
 };
 
-const CustomAppBar = ({ ...props }) => {
+const CustomAppBar = ({ userMenu = true, logout, ...props }) => {
     const classes = useStyles();
     const theme = useTheme();
     let toggleThemeIcon;
@@ -216,7 +217,19 @@ const CustomAppBar = ({ ...props }) => {
         toggleThemeIcon = <Brightness4Icon />;
     }
     return (
-        <AppBar userMenu={<RefreshSelector />} {...props}>
+        <AppBar
+            {...props}
+            userMenu={
+                <>
+                    <RefreshSelector />
+                    {typeof userMenu === 'boolean'
+                        ? userMenu === true
+                            ? cloneElement(<UserMenu />, { logout })
+                            : null
+                        : cloneElement(userMenu, { logout })}
+                </>
+            }
+        >
             <Typography
                 variant="h6"
                 color="inherit"
@@ -224,13 +237,19 @@ const CustomAppBar = ({ ...props }) => {
                 id="react-admin-title"
             />
             <span className={classes.spacer} />
-            <ThemeContext.Consumer>
-                {({ toggleTheme }) => (
-                    <IconButton color="inherit" onClick={toggleTheme}>
-                        {toggleThemeIcon}
-                    </IconButton>
-                )}
-            </ThemeContext.Consumer>
+            {!hiddenSetting('theme') && (
+                <ThemeContext.Consumer>
+                    {({ toggleTheme }) => (
+                        <IconButton
+                            color="inherit"
+                            onClick={toggleTheme}
+                            disabled={disabledSetting('theme')}
+                        >
+                            {toggleThemeIcon}
+                        </IconButton>
+                    )}
+                </ThemeContext.Consumer>
+            )}
         </AppBar>
     );
 };

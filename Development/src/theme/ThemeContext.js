@@ -2,6 +2,7 @@ import React from 'react';
 import { ThemeProvider } from '@material-ui/styles';
 import { createMuiTheme, responsiveFontSizes } from '@material-ui/core/styles';
 import { blue, lightBlue } from '@material-ui/core/colors';
+import { disabledSetting, useJSONSetting } from '../settings';
 
 export const ThemeContext = React.createContext({
     theme: 'light',
@@ -9,8 +10,8 @@ export const ThemeContext = React.createContext({
 });
 
 export const AppThemeProvider = ({ children }) => {
-    const [themeState, setThemeState] = React.useState({
-        mode: window.localStorage.getItem('theme') || 'light',
+    const [themeState, setThemeState] = useJSONSetting('theme', {
+        type: 'light',
     });
 
     const theme = responsiveFontSizes(
@@ -18,7 +19,7 @@ export const AppThemeProvider = ({ children }) => {
             palette: {
                 primary: lightBlue,
                 secondary: blue,
-                type: themeState.mode,
+                type: themeState.type,
             },
             sidebar: {
                 width: 240,
@@ -43,17 +44,15 @@ export const AppThemeProvider = ({ children }) => {
     );
 
     const toggleTheme = () => {
-        const mode = themeState.mode === 'light' ? 'dark' : 'light';
-        window.localStorage.setItem('theme', mode);
-        setThemeState({ mode: mode });
+        if (disabledSetting('theme')) return;
+        const toggledType = themeState.type === 'light' ? 'dark' : 'light';
+        setThemeState({ type: toggledType });
     };
 
     return (
-        <ThemeContext.Provider
-            value={{ theme: themeState.mode, toggleTheme: toggleTheme }}
-        >
+        <ThemeContext.Provider value={{ theme: themeState.type, toggleTheme }}>
             <ThemeProvider theme={theme}>
-                {React.cloneElement(children, { theme: theme })}
+                {React.cloneElement(children, { theme })}
             </ThemeProvider>
         </ThemeContext.Provider>
     );

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isEqual } from 'lodash';
 
 export const LOGGING_API = 'Logging API';
 export const QUERY_API = 'Query API';
@@ -46,43 +47,53 @@ export const queryVersion = () => apiVersion(QUERY_API);
 // single value, not per-API, right now
 // default to 10 rather than leaving undefined and letting the API use its default,
 // in order to simplify pagination with client-side filtered results
-export const apiPagingLimit = api =>
-    parseInt(window.localStorage.getItem(PAGING_LIMIT), 10) || 10;
+export const apiPagingLimit = api => getJSONSetting(PAGING_LIMIT, 10);
 export const setApiPagingLimit = (api, pagingLimit) => {
     if (typeof pagingLimit === 'number') {
-        window.localStorage.setItem(PAGING_LIMIT, pagingLimit);
+        setJSONSetting(PAGING_LIMIT, pagingLimit);
     } else {
-        window.localStorage.removeItem(PAGING_LIMIT);
+        unsetJSONSetting(PAGING_LIMIT);
     }
 };
 
 // single value, not per-API, right now
-export const apiUseRql = api =>
-    window.localStorage.getItem(USE_RQL) !== 'false';
+export const apiUseRql = api => getJSONSetting(USE_RQL, true);
 export const setApiUseRql = (api, rql) => {
     if (typeof rql === 'boolean') {
-        window.localStorage.setItem(USE_RQL, rql);
+        setJSONSetting(USE_RQL, rql);
     } else {
-        window.localStorage.removeItem(USE_RQL);
+        unsetJSONSetting(USE_RQL);
     }
 };
 
+export const getJSONSetting = (name, defaultValue = {}) => {
+    try {
+        const stored = window.localStorage.getItem(name);
+        // treat empty string same as null (not found)
+        return stored ? JSON.parse(stored) : defaultValue;
+    } catch (e) {
+        // treat parse error same as not found
+        return defaultValue;
+    }
+};
+
+export const setJSONSetting = (name, value) => {
+    // note that e.g. NaN becomes null
+    const stored = JSON.stringify(value);
+    window.localStorage.setItem(name, stored);
+};
+
+export const unsetJSONSetting = name => {
+    window.localStorage.removeItem(name);
+};
+
 export const useJSONSetting = (name, defaultValue = {}) => {
-    const [setting, setSetting] = useState(() => {
-        try {
-            const stored = window.localStorage.getItem(name);
-            return JSON.parse(stored) || defaultValue;
-        } catch (e) {
-            return defaultValue;
-        }
-    });
+    const [setting, setSetting] = useState(getJSONSetting(name, defaultValue));
     useEffect(() => {
-        // note that e.g. NaN becomes null
-        const stored = JSON.stringify(setting);
-        if (stored !== JSON.stringify(defaultValue)) {
-            window.localStorage.setItem(name, stored);
+        if (!isEqual(setting, defaultValue)) {
+            setJSONSetting(name, setting);
         } else {
-            window.localStorage.removeItem(name);
+            unsetJSONSetting(name);
         }
     }, [name, setting, defaultValue]);
 

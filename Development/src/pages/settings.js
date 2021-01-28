@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    Button,
     Card,
     CardContent,
     CardHeader,
@@ -8,12 +7,10 @@ import {
     List,
     ListItem,
     MenuItem,
-    Snackbar,
     Switch,
     TextField,
     makeStyles,
 } from '@material-ui/core';
-import SaveIcon from '@material-ui/icons/Save';
 
 import sealion from '../assets/sea-lion.png';
 import {
@@ -29,11 +26,6 @@ import {
 } from '../settings';
 
 const useStyles = makeStyles(theme => ({
-    container: {
-        justifyContent: 'center',
-        display: 'flex',
-        flexWrap: 'wrap',
-    },
     listItem: {
         justifyContent: 'center',
     },
@@ -71,7 +63,7 @@ const selectOnFocus = event => event.target.select();
 
 const Settings = () => {
     const classes = useStyles();
-    const [values, setValues] = React.useState({
+    const [values, setValues] = useState({
         queryAPI: apiUrl(QUERY_API),
         loggingAPI: apiUrl(LOGGING_API),
         dnssdAPI: apiUrl(DNSSD_API),
@@ -79,34 +71,27 @@ const Settings = () => {
         rql: apiUseRql(QUERY_API),
     });
 
-    const handleInputChange = name => event => {
+    const handleTextChange = name => event => {
         setValues({ ...values, [name]: event.target.value });
     };
-    const handleSwitchChange = name => () => {
-        setValues({ ...values, [name]: !values[name] });
+
+    const handleBooleanChange = name => event => {
+        setValues({ ...values, [name]: event.target.checked });
     };
 
-    const [open, setOpen] = React.useState(false);
-    const handleClose = () => {
-        setOpen(false);
-    };
-
-    const handleSave = () => {
+    useEffect(() => {
         setApiUrl(QUERY_API, values.queryAPI);
         setApiUrl(LOGGING_API, values.loggingAPI);
         setApiUrl(DNSSD_API, values.dnssdAPI);
-        if (values.pagingLimit) {
-            setApiPagingLimit(QUERY_API, values.pagingLimit);
-        }
+        setApiPagingLimit(QUERY_API, values.pagingLimit);
         setApiUseRql(QUERY_API, values.rql);
-        setOpen(true);
-    };
+    }, [values]);
 
     return (
         <div style={{ paddingTop: '24px' }}>
             <Card>
                 <CardHeader
-                    title="Welcome to the nmos&#8209;js Client"
+                    title="nmos&#8209;js Settings"
                     titleTypographyProps={{ variant: 'h2', align: 'center' }}
                 />
                 <CardContent align="center">
@@ -121,103 +106,70 @@ const Settings = () => {
                         }}
                         alt="sea-lion logo"
                     />
-                </CardContent>
-            </Card>
-            <Card align="center" title="Change Settings">
-                <CardHeader title="Settings" />
-                <CardContent>
-                    <form
-                        className={classes.container}
-                        noValidate
-                        autoComplete="off"
-                        title=""
-                    >
-                        <List>
-                            <ListItem>
-                                <TextField
-                                    id="standard-queryAPI"
-                                    label="Query API"
-                                    variant="filled"
-                                    value={values.queryAPI}
-                                    onChange={handleInputChange('queryAPI')}
-                                    onFocus={selectOnFocus}
-                                    className={classes.textField}
-                                />
-                            </ListItem>
-                            <ListItem>
-                                <TextField
-                                    id="standard-loggingAPI"
-                                    label="Logging API"
-                                    variant="filled"
-                                    value={values.loggingAPI}
-                                    onChange={handleInputChange('loggingAPI')}
-                                    onFocus={selectOnFocus}
-                                    className={classes.textField}
-                                />
-                            </ListItem>
-                            <ListItem>
-                                <TextField
-                                    id="standard-dnssdAPI"
-                                    label="DNS-SD API"
-                                    variant="filled"
-                                    value={values.dnssdAPI}
-                                    onChange={handleInputChange('dnssdAPI')}
-                                    onFocus={selectOnFocus}
-                                    className={classes.textField}
-                                />
-                            </ListItem>
-                            <ListItem className={classes.listItem}>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={values.rql}
-                                            onChange={handleSwitchChange('rql')}
-                                            color="primary"
-                                        />
-                                    }
-                                    label="RQL"
-                                />
-                            </ListItem>
-                            <ListItem className={classes.listItem}>
-                                <TextField
-                                    id="standard-paging"
-                                    select
-                                    label="Paging Limit"
-                                    variant="filled"
-                                    placeholder=""
-                                    className={classes.textField}
-                                    value={values.pagingLimit}
-                                    onChange={handleInputChange('pagingLimit')}
-                                    margin="normal"
-                                >
-                                    {pagingLimits.map(option => (
-                                        <MenuItem
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </MenuItem>
-                                    ))}
-                                </TextField>
-                            </ListItem>
-                            <ListItem className={classes.listItem}>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={handleSave}
-                                    startIcon={<SaveIcon />}
-                                >
-                                    Save
-                                </Button>
-                            </ListItem>
-                        </List>
-                        <Snackbar
-                            open={open}
-                            onClose={handleClose}
-                            autoHideDuration={3000}
-                            message={<span>Saved</span>}
-                        />
-                    </form>
+                    <List>
+                        <ListItem className={classes.listItem}>
+                            <TextField
+                                label="Query API"
+                                variant="filled"
+                                value={values.queryAPI}
+                                onChange={handleTextChange('queryAPI')}
+                                onFocus={selectOnFocus}
+                                className={classes.textField}
+                            />
+                        </ListItem>
+                        <ListItem className={classes.listItem}>
+                            <TextField
+                                label="Logging API"
+                                variant="filled"
+                                value={values.loggingAPI}
+                                onChange={handleTextChange('loggingAPI')}
+                                onFocus={selectOnFocus}
+                                className={classes.textField}
+                            />
+                        </ListItem>
+                        <ListItem className={classes.listItem}>
+                            <TextField
+                                label="DNS-SD API"
+                                variant="filled"
+                                value={values.dnssdAPI}
+                                onChange={handleTextChange('dnssdAPI')}
+                                onFocus={selectOnFocus}
+                                className={classes.textField}
+                            />
+                        </ListItem>
+                        <ListItem className={classes.listItem}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={values.rql}
+                                        onChange={handleBooleanChange('rql')}
+                                        color="primary"
+                                    />
+                                }
+                                label="RQL"
+                            />
+                        </ListItem>
+                        <ListItem className={classes.listItem}>
+                            <TextField
+                                select
+                                label="Paging Limit"
+                                variant="filled"
+                                className={classes.textField}
+                                value={values.pagingLimit}
+                                onChange={handleTextChange('pagingLimit')}
+                                margin="normal"
+                            >
+                                {pagingLimits.map(option => (
+                                    <MenuItem
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </ListItem>
+                    </List>
                 </CardContent>
             </Card>
         </div>

@@ -1,7 +1,6 @@
 import React from 'react';
 import {
     ArrayField,
-    Datagrid,
     FunctionField,
     ReferenceArrayField,
     ReferenceField,
@@ -21,6 +20,7 @@ import RateField from '../../components/RateField';
 import ResourceShowActions from '../../components/ResourceShowActions';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
+import UnsortableDatagrid from '../../components/UnsortableDatagrid';
 import { queryVersion } from '../../settings';
 
 export const FlowsShow = props => {
@@ -83,7 +83,7 @@ const FlowsShowView = props => {
                 {queryVersion() >= 'v1.1' &&
                     record.format === 'urn:x-nmos:format:video' && (
                         <ArrayField source="components">
-                            <Datagrid>
+                            <UnsortableDatagrid>
                                 <TextField source="name" />
                                 <TextField source="height" />
                                 <TextField source="width" />
@@ -91,7 +91,7 @@ const FlowsShowView = props => {
                                     label="Bit Depth"
                                     source="bit_depth"
                                 />
-                            </Datagrid>
+                            </UnsortableDatagrid>
                         </ArrayField>
                     )}
                 {queryVersion() >= 'v1.1' &&

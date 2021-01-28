@@ -1,7 +1,6 @@
 import React from 'react';
 import {
     ArrayField,
-    Datagrid,
     FunctionField,
     ListButton,
     ReferenceArrayField,
@@ -23,6 +22,7 @@ import RateField from '../../components/RateField';
 import RawButton from '../../components/RawButton';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
+import UnsortableDatagrid from '../../components/UnsortableDatagrid';
 import { queryVersion } from '../../settings';
 
 const SourcesShowActions = ({ basePath, data, resource }) => (
@@ -73,10 +73,10 @@ const SourcesShowView = props => {
                 {queryVersion() >= 'v1.1' &&
                     record.format === 'urn:x-nmos:format:audio' && (
                         <ArrayField source="channels">
-                            <Datagrid>
+                            <UnsortableDatagrid>
                                 <TextField source="label" />
                                 <TextField source="symbol" />
-                            </Datagrid>
+                            </UnsortableDatagrid>
                         </ArrayField>
                     )}
                 {queryVersion() >= 'v1.3' &&

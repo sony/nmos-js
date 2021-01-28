@@ -2,7 +2,6 @@ import { Fragment, useEffect, useState } from 'react';
 import {
     ArrayField,
     BooleanField,
-    Datagrid,
     FunctionField,
     Loading,
     ReferenceArrayField,
@@ -29,6 +28,7 @@ import {
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
+import UnsortableDatagrid from '../../components/UnsortableDatagrid';
 import UrlField from '../../components/URLField';
 import labelize from '../../components/labelize';
 import { queryVersion } from '../../settings';
@@ -134,7 +134,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 <ParameterField source="type" register={DEVICE_TYPES} />
                 {queryVersion() >= 'v1.1' && (
                     <ArrayField source="controls">
-                        <Datagrid>
+                        <UnsortableDatagrid>
                             <UrlField source="href" label="Address" />
                             <ParameterField
                                 source="type"
@@ -143,7 +143,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                             {queryVersion() >= 'v1.3' && (
                                 <BooleanField source="authorization" />
                             )}
-                        </Datagrid>
+                        </UnsortableDatagrid>
                     </ArrayField>
                 )}
                 <ReferenceField

@@ -2,7 +2,6 @@ import React from 'react';
 import {
     ArrayField,
     BooleanField,
-    Datagrid,
     FunctionField,
     ReferenceManyField,
     ShowContextProvider,
@@ -19,6 +18,7 @@ import MapObject from '../../components/ObjectField';
 import ResourceShowActions from '../../components/ResourceShowActions';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
+import UnsortableDatagrid from '../../components/UnsortableDatagrid';
 import UrlField from '../../components/URLField';
 import { queryVersion } from '../../settings';
 
@@ -68,7 +68,7 @@ const NodesShowView = props => {
                 )}
                 {queryVersion() >= 'v1.1' && (
                     <ArrayField label="API Endpoints" source="api.endpoints">
-                        <Datagrid>
+                        <UnsortableDatagrid>
                             <TextField source="host" />
                             <TextField source="port" />
                             <TextField source="protocol" />
@@ -91,29 +91,29 @@ const NodesShowView = props => {
                                     </a>
                                 )}
                             />
-                        </Datagrid>
+                        </UnsortableDatagrid>
                     </ArrayField>
                 )}
                 {queryVersion() >= 'v1.1' && (
                     <ArrayField source="clocks">
-                        <Datagrid>
+                        <UnsortableDatagrid>
                             <TextField source="name" />
                             <TextField label="Ref Type" source="ref_type" />
-                        </Datagrid>
+                        </UnsortableDatagrid>
                     </ArrayField>
                 )}
                 <ArrayField source="services">
-                    <Datagrid>
+                    <UnsortableDatagrid>
                         <UrlField source="href" label="Address" />
                         <TextField source="type" />
                         {queryVersion() >= 'v1.3' && (
                             <BooleanField source="authorization" />
                         )}
-                    </Datagrid>
+                    </UnsortableDatagrid>
                 </ArrayField>
                 {queryVersion() >= 'v1.2' && (
                     <ArrayField source="interfaces">
-                        <Datagrid>
+                        <UnsortableDatagrid>
                             <TextField source="name" />
                             <TextField
                                 source="chassis_id"
@@ -132,7 +132,7 @@ const NodesShowView = props => {
                                     label="Remote Port ID"
                                 />
                             )}
-                        </Datagrid>
+                        </UnsortableDatagrid>
                     </ArrayField>
                 )}
                 <hr />

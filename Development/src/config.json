@@ -1,4 +1,16 @@
 {
+    "title": "nmos-js",
+    "about": "An NMOS Client",
+    "palette": {
+        "primary": {
+            "main": "rgb(45,117,199)",
+            "contrastText": "#fff"
+        },
+        "secondary": {
+            "main": "rgb(0,47,103)",
+            "contrastText": "#fff"
+        }
+    },
     "Query API": {
     },
     "DNS-SD API": {

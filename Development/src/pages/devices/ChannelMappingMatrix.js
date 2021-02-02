@@ -135,7 +135,7 @@ const TooltipDivider = withStyles({
     root: {
         marginTop: 4,
         marginBottom: 4,
-        backgroundColor: 'rgb(192, 192, 192)',
+        backgroundColor: 'rgba(255, 255, 255, 0.12)',
     },
 })(Divider);
 

@@ -1,7 +1,8 @@
 import React from 'react';
 import { ThemeProvider } from '@material-ui/styles';
 import { createMuiTheme, responsiveFontSizes } from '@material-ui/core/styles';
-import { blue, lightBlue } from '@material-ui/core/colors';
+import { get } from 'lodash';
+import CONFIG from '../config.json';
 import { disabledSetting, useJSONSetting } from '../settings';
 
 export const ThemeContext = React.createContext({
@@ -10,6 +11,16 @@ export const ThemeContext = React.createContext({
 });
 
 export const AppThemeProvider = ({ children }) => {
+    const themePalette = get(CONFIG, 'palette', {
+        primary: {
+            main: 'rgb(45,117,199)',
+            contrastText: '#fff',
+        },
+        secondary: {
+            main: 'rgb(0,47,103)',
+            contrastText: '#fff',
+        },
+    });
     const [themeState, setThemeState] = useJSONSetting('theme', {
         type: 'light',
     });
@@ -17,8 +28,7 @@ export const AppThemeProvider = ({ children }) => {
     const theme = responsiveFontSizes(
         createMuiTheme({
             palette: {
-                primary: lightBlue,
-                secondary: blue,
+                ...themePalette,
                 type: themeState.type,
             },
             sidebar: {
@@ -57,3 +67,5 @@ export const AppThemeProvider = ({ children }) => {
         </ThemeContext.Provider>
     );
 };
+
+export default ThemeContext;

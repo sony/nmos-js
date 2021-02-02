@@ -15,12 +15,14 @@ import {
     useRecordContext,
     useShowController,
 } from 'react-admin';
+import get from 'lodash/get';
 import LinkChipField from '../../components/LinkChipField';
 import MapObject from '../../components/ObjectField';
 import { FORMATS, ParameterField } from '../../components/ParameterRegisters';
 import RateField from '../../components/RateField';
 import RawButton from '../../components/RawButton';
 import ResourceTitle from '../../components/ResourceTitle';
+import SanitizedDivider from '../../components/SanitizedDivider';
 import TAIField from '../../components/TAIField';
 import UnsortableDatagrid from '../../components/UnsortableDatagrid';
 import { queryVersion } from '../../settings';
@@ -62,7 +64,7 @@ const SourcesShowView = props => {
                             : null
                     }
                 />
-                <hr />
+                <SanitizedDivider />
                 {queryVersion() >= 'v1.1' && (
                     <RateField label="Grain Rate" source="grain_rate" />
                 )}
@@ -71,7 +73,7 @@ const SourcesShowView = props => {
                 )}
                 <ParameterField source="format" register={FORMATS} />
                 {queryVersion() >= 'v1.1' &&
-                    record.format === 'urn:x-nmos:format:audio' && (
+                    get(record, 'format') === 'urn:x-nmos:format:audio' && (
                         <ArrayField source="channels">
                             <UnsortableDatagrid>
                                 <TextField source="label" />
@@ -80,10 +82,10 @@ const SourcesShowView = props => {
                         </ArrayField>
                     )}
                 {queryVersion() >= 'v1.3' &&
-                    record.format === 'urn:x-nmos:format:data' && (
+                    get(record, 'format') === 'urn:x-nmos:format:data' && (
                         <TextField label="Event Type" source="event_type" />
                     )}
-                <hr />
+                <SanitizedDivider />
                 <ReferenceArrayField
                     allowEmpty={true}
                     clickable="true"
@@ -104,7 +106,7 @@ const SourcesShowView = props => {
                 >
                     <LinkChipField />
                 </ReferenceField>
-                <hr />
+                <SanitizedDivider />
                 <ReferenceManyField
                     label="Flows"
                     reference="flows"

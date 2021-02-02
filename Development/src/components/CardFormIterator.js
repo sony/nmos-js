@@ -95,3 +95,5 @@ CardFormIterator.propTypes = {
     source: PropTypes.string,
     resource: PropTypes.string,
 };
+
+export default CardFormIterator;

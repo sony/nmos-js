@@ -14,6 +14,7 @@ import get from 'lodash/get';
 import ItemArrayField from '../../components/ItemArrayField';
 import ResourceShowActions from '../../components/ResourceShowActions';
 import ResourceTitle from '../../components/ResourceTitle';
+import SanitizedDivider from '../../components/SanitizedDivider';
 import ConnectButton from './ConnectButton';
 
 export const QueryAPIsShow = props => {
@@ -36,11 +37,11 @@ const QueryAPIsShowView = props => {
             >
                 <SimpleShowLayout>
                     <TextField source="name" />
-                    <hr />
+                    <SanitizedDivider />
                     <TextField label="Host Target" source="host_target" />
                     <ItemArrayField source="addresses" />
                     <TextField source="port" />
-                    <hr />
+                    <SanitizedDivider />
                     <TextField label="API Protocol" source="txt.api_proto" />
                     <TextField label="API Versions" source="txt.api_ver" />
                     <FunctionField

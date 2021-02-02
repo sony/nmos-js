@@ -1,8 +1,7 @@
 {
   "short_name": "nmos-js",
-  "name": "nmos-js client",
   "start_url": "./index.html",
   "display": "standalone",
-  "theme_color": "#2196f3",
+  "theme_color": "rgb(0,47,103)",
   "background_color": "#ffffff"
 }

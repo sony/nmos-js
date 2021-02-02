@@ -4,7 +4,7 @@ import CreateIcon from '@material-ui/icons/Create';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ClearIcon from '@material-ui/icons/Clear';
 import DoneIcon from '@material-ui/icons/Done';
-import { useCustomNamesContext } from './useCustomNamesContext';
+import useCustomNamesContext from './useCustomNamesContext';
 
 export const CustomNameField = ({
     defaultValue,

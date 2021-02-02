@@ -8,9 +8,11 @@ import {
     useRecordContext,
     useShowController,
 } from 'react-admin';
+import get from 'lodash/get';
 import MapObject from '../../components/ObjectField';
 import ResourceShowActions from '../../components/ResourceShowActions';
 import ResourceTitle from '../../components/ResourceTitle';
+import SanitizedDivider from '../../components/SanitizedDivider';
 
 export const LogsShow = props => {
     const controllerProps = useShowController(props);
@@ -25,7 +27,7 @@ const LogsShowView = props => {
     const { record } = useRecordContext();
     return (
         <ShowView
-            title={<ResourceTitle recordLabel={record.timestamp} />}
+            title={<ResourceTitle recordLabel={get(record, 'timestamp')} />}
             actions={<ResourceShowActions />}
             {...props}
         >
@@ -46,14 +48,14 @@ const LogsShowView = props => {
                 />
                 <TextField source="http_method" label="HTTP Method" />
                 <TextField source="request_uri" label="Request URI" />
-                <hr />
+                <SanitizedDivider />
                 <TextField source="source_location.file" label="Source File" />
                 <TextField source="source_location.line" label="Source Line" />
                 <TextField
                     source="source_location.function"
                     label="Source Function"
                 />
-                <hr />
+                <SanitizedDivider />
                 <TextField source="thread_id" label="Thread ID" />
                 <TextField source="id" label="ID" />
             </SimpleShowLayout>

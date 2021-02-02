@@ -18,7 +18,7 @@ function MapObject(record, source) {
         arr.push({ key: key, value: get(record, source)[key] });
     });
     return (
-        <Table>
+        <Table size="small">
             <TableHead>
                 <TableRow>
                     <TableCell> Name </TableCell>

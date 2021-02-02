@@ -15,6 +15,7 @@ import DeleteButton from '../../components/DeleteButton';
 import MapObject from '../../components/ObjectField';
 import ResourceShowActions from '../../components/ResourceShowActions';
 import ResourceTitle from '../../components/ResourceTitle';
+import SanitizedDivider from '../../components/SanitizedDivider';
 import UrlField from '../../components/URLField';
 import { queryVersion } from '../../settings';
 
@@ -52,7 +53,7 @@ const SubscriptionsShowView = props => {
                                 : null
                         }
                     />
-                    <hr />
+                    <SanitizedDivider />
                     <BooleanField source="persist" />
                     <BooleanField source="secure" />
                     {queryVersion() >= 'v1.3' && (

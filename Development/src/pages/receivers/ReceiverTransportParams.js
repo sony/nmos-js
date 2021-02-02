@@ -1,5 +1,7 @@
 import React from 'react';
-import { Card, CardContent, Divider, Grid } from '@material-ui/core';
+import { Card, CardContent, Grid } from '@material-ui/core';
+import CheckIcon from '@material-ui/icons/Check';
+import ClearIcon from '@material-ui/icons/Clear';
 import {
     ArrayInput,
     BooleanField,
@@ -10,17 +12,10 @@ import {
     TextField,
     TextInput,
 } from 'react-admin';
-import get from 'lodash/get';
-import has from 'lodash/has';
-import { CardFormIterator } from '../../components/CardFormIterator';
-import CheckIcon from '@material-ui/icons/Check';
-import ClearIcon from '@material-ui/icons/Clear';
-import sanitizeRestProps from '../../components/sanitizeRestProps';
-
-// Passing react-admin props causes console spam
-const SanitizedDivider = ({ ...rest }) => (
-    <Divider {...sanitizeRestProps(rest)} />
-);
+import { get, has } from 'lodash';
+import CardFormIterator from '../../components/CardFormIterator';
+import SanitizedDivider from '../../components/SanitizedDivider';
+import labelize from '../../components/labelize';
 
 const MQTTReceiver = ({ data }) => (
     <Grid container spacing={2}>
@@ -78,15 +73,13 @@ const MQTTReceiverLeg = ({ data }) => {
                         />
                     )}
                     {params_ext.length !== 0 && <SanitizedDivider />}
-                    {params_ext.map(value => {
-                        return (
-                            <TextField
-                                record={data}
-                                source={value}
-                                key={value}
-                            />
-                        );
-                    })}
+                    {params_ext.map(param => (
+                        <TextField
+                            source={param}
+                            label={labelize(param)}
+                            key={param}
+                        />
+                    ))}
                 </SimpleShowLayout>
             </CardContent>
         </Card>
@@ -139,11 +132,13 @@ const MQTTReceiverEdit = ({ record }) => {
                     />
                 )}
                 {params_ext.length !== 0 && <SanitizedDivider />}
-                {params_ext.map(value => {
-                    return (
-                        <TextInput record={record} source={value} key={value} />
-                    );
-                })}
+                {params_ext.map(param => (
+                    <TextInput
+                        source={param}
+                        label={labelize(param)}
+                        key={param}
+                    />
+                ))}
             </CardFormIterator>
         </ArrayInput>
     );
@@ -232,15 +227,13 @@ const RTPReceiverLeg = ({ data }) => {
                         />
                     )}
                     {params_ext.length !== 0 && <SanitizedDivider />}
-                    {params_ext.map(value => {
-                        return (
-                            <TextField
-                                record={data}
-                                source={value}
-                                key={value}
-                            />
-                        );
-                    })}
+                    {params_ext.map(param => (
+                        <TextField
+                            source={param}
+                            label={labelize(param)}
+                            key={param}
+                        />
+                    ))}
                 </SimpleShowLayout>
             </CardContent>
         </Card>
@@ -317,11 +310,13 @@ const RTPReceiverEdit = ({ record }) => {
                     />
                 )}
                 {params_ext.length !== 0 && <SanitizedDivider />}
-                {params_ext.map(value => {
-                    return (
-                        <TextInput record={record} source={value} key={value} />
-                    );
-                })}
+                {params_ext.map(param => (
+                    <TextInput
+                        source={param}
+                        label={labelize(param)}
+                        key={param}
+                    />
+                ))}
             </CardFormIterator>
         </ArrayInput>
     );
@@ -368,15 +363,13 @@ const WebSocketReceiverLeg = ({ data }) => {
                         />
                     )}
                     {params_ext.length !== 0 && <SanitizedDivider />}
-                    {params_ext.map(value => {
-                        return (
-                            <TextField
-                                record={data}
-                                source={value}
-                                key={value}
-                            />
-                        );
-                    })}
+                    {params_ext.map(param => (
+                        <TextField
+                            source={param}
+                            label={labelize(param)}
+                            key={param}
+                        />
+                    ))}
                 </SimpleShowLayout>
             </CardContent>
         </Card>
@@ -411,11 +404,13 @@ const WebSocketReceiverEdit = ({ record }) => {
                     <TextInput source="connection_uri" label="Connection URI" />
                 )}
                 {params_ext.length !== 0 && <SanitizedDivider />}
-                {params_ext.map(value => {
-                    return (
-                        <TextInput record={record} source={value} key={value} />
-                    );
-                })}
+                {params_ext.map(param => (
+                    <TextInput
+                        source={param}
+                        label={labelize(param)}
+                        key={param}
+                    />
+                ))}
             </CardFormIterator>
         </ArrayInput>
     );

@@ -1,16 +1,11 @@
 import React from 'react';
-import { Card, CardContent, Divider, Grid } from '@material-ui/core';
+import { Card, CardContent, Grid } from '@material-ui/core';
 import { SelectField, SimpleShowLayout, TextField } from 'react-admin';
 import has from 'lodash/has';
 import ConstraintField from '../../components/ConstraintField';
+import SanitizedDivider from '../../components/SanitizedDivider';
 import CheckIcon from '@material-ui/icons/Check';
 import ClearIcon from '@material-ui/icons/Clear';
-import sanitizeRestProps from '../../components/sanitizeRestProps';
-
-// Passing react-admin props causes console spam
-const SanitizedDivider = ({ ...rest }) => (
-    <Divider {...sanitizeRestProps(rest)} />
-);
 
 const ReceiverConstraintSets = ({ data }) => {
     return (

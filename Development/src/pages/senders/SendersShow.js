@@ -1,13 +1,6 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import { Link, Route } from 'react-router-dom';
-import {
-    Button as MaterialButton,
-    Paper,
-    Snackbar,
-    Tab,
-    Tabs,
-    Typography,
-} from '@material-ui/core';
+import { IconButton, Paper, Tab, Tabs, Typography } from '@material-ui/core';
 import {
     ArrayField,
     BooleanField,
@@ -17,6 +10,7 @@ import {
     ShowView,
     SimpleShowLayout,
     TextField,
+    useNotify,
     useRecordContext,
     useShowController,
 } from 'react-admin';
@@ -26,13 +20,13 @@ import { useTheme } from '@material-ui/styles';
 import LinkChipField from '../../components/LinkChipField';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
-import JSONViewer from '../../components/JSONViewer';
 import MapObject from '../../components/ObjectField';
 import {
     ParameterField,
     TRANSPORTS,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
+import SanitizedDivider from '../../components/SanitizedDivider';
 import TAIField from '../../components/TAIField';
 import UrlField from '../../components/URLField';
 import labelize from '../../components/labelize';
@@ -139,7 +133,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                             : null
                     }
                 />
-                <hr />
+                <SanitizedDivider />
                 <ParameterField source="transport" register={TRANSPORTS} />
                 <UrlField
                     style={{ fontSize: '14px' }}
@@ -155,7 +149,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 {queryVersion() >= 'v1.2' && (
                     <BooleanField label="Active" source="subscription.active" />
                 )}
-                <hr />
+                <SanitizedDivider />
                 <ReferenceField
                     label="Flow"
                     source="flow_id"
@@ -172,16 +166,17 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 >
                     <LinkChipField />
                 </ReferenceField>
-                {queryVersion() >= 'v1.2' && record.subscription.receiver_id && (
-                    <ReferenceField
-                        label="Receiver"
-                        source="subscription.receiver_id"
-                        reference="receivers"
-                        link="show"
-                    >
-                        <LinkChipField />
-                    </ReferenceField>
-                )}
+                {queryVersion() >= 'v1.2' &&
+                    get(record, 'subscription.receiver_id') && (
+                        <ReferenceField
+                            label="Receiver"
+                            source="subscription.receiver_id"
+                            reference="receivers"
+                            link="show"
+                        >
+                            <LinkChipField />
+                        </ReferenceField>
+                    )}
             </SimpleShowLayout>
         </ShowView>
     );
@@ -228,7 +223,6 @@ const ShowActiveTab = ({ record, ...props }) => {
                 >
                     <SenderTransportParamsCardsGrid record={record} />
                 </ArrayField>
-                <JSONViewer endpoint="$active" />
             </SimpleShowLayout>
         </ShowView>
     );
@@ -275,22 +269,19 @@ const ShowStagedTab = ({ record, ...props }) => {
                 >
                     <SenderTransportParamsCardsGrid record={record} />
                 </ArrayField>
-                <JSONViewer endpoint="$staged" />
             </SimpleShowLayout>
         </ShowView>
     );
 };
 
 const ShowTransportFileTab = ({ record }) => {
-    const [open, setOpen] = React.useState(false);
-    const handleClick = () => {
-        copy(get(record, `$transportfile`)).then(() => {
-            setOpen(true);
+    const notify = useNotify();
+    const handleCopy = () => {
+        copy(get(record, '$transportfile')).then(() => {
+            notify('Transport file copied');
         });
     };
-    const handleClose = () => {
-        setOpen(false);
-    };
+
     return (
         <ShowView
             record={record}
@@ -299,23 +290,16 @@ const ShowTransportFileTab = ({ record }) => {
         >
             <SimpleShowLayout>
                 <>
+                    <IconButton
+                        onClick={handleCopy}
+                        style={{ float: 'right' }}
+                        title="Copy"
+                    >
+                        <ContentCopyIcon fontSize="small" />
+                    </IconButton>
                     <pre style={{ fontFamily: 'inherit' }}>
                         <Typography>{get(record, '$transportfile')}</Typography>
                     </pre>
-                    <MaterialButton
-                        variant="contained"
-                        color="primary"
-                        onClick={handleClick}
-                        startIcon={<ContentCopyIcon />}
-                    >
-                        Copy
-                    </MaterialButton>
-                    <Snackbar
-                        open={open}
-                        onClose={handleClose}
-                        autoHideDuration={3000}
-                        message={<span>Transport File Copied</span>}
-                    />
                 </>
             </SimpleShowLayout>
         </ShowView>

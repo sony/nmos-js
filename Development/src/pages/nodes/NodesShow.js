@@ -18,6 +18,7 @@ import MapObject from '../../components/ObjectField';
 import ResourceShowActions from '../../components/ResourceShowActions';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
+import SanitizedDivider from '../../components/SanitizedDivider';
 import UnsortableDatagrid from '../../components/UnsortableDatagrid';
 import UrlField from '../../components/URLField';
 import { queryVersion } from '../../settings';
@@ -57,7 +58,7 @@ const NodesShowView = props => {
                         }
                     />
                 )}
-                <hr />
+                <SanitizedDivider />
                 <UrlField source="href" label="Address" />
                 <TextField source="hostname" />
                 {queryVersion() >= 'v1.1' && (
@@ -83,10 +84,8 @@ const NodesShowView = props => {
                                         rel="noopener noreferrer"
                                     >
                                         <LinkIcon
-                                            style={{
-                                                color: '#2196f3',
-                                                preserveAspectRatio: 'xMidYMin',
-                                            }}
+                                            color="primary"
+                                            fontSize="small"
                                         />
                                     </a>
                                 )}
@@ -135,7 +134,7 @@ const NodesShowView = props => {
                         </UnsortableDatagrid>
                     </ArrayField>
                 )}
-                <hr />
+                <SanitizedDivider />
                 <ReferenceManyField
                     label="Devices"
                     reference="devices"

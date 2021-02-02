@@ -18,7 +18,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import Brightness7Icon from '@material-ui/icons/Brightness7';
 import Brightness4Icon from '@material-ui/icons/Brightness4';
-import { ThemeContext } from '../theme/ThemeContext';
+import ThemeContext from '../theme/ThemeContext';
 import { useTheme } from '@material-ui/styles';
 import { disabledSetting, hiddenSetting, useJSONSetting } from '../settings';
 

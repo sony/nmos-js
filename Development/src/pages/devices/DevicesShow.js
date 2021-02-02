@@ -27,6 +27,7 @@ import {
     ParameterField,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
+import SanitizedDivider from '../../components/SanitizedDivider';
 import TAIField from '../../components/TAIField';
 import UnsortableDatagrid from '../../components/UnsortableDatagrid';
 import UrlField from '../../components/URLField';
@@ -130,7 +131,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                         }
                     />
                 )}
-                <hr />
+                <SanitizedDivider />
                 <ParameterField source="type" register={DEVICE_TYPES} />
                 {queryVersion() >= 'v1.1' && (
                     <ArrayField source="controls">

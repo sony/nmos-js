@@ -1,10 +1,11 @@
 import React from 'react';
 import { Admin, Layout, Resource } from 'react-admin';
 import { useTheme } from '@material-ui/styles';
-
+import { get } from 'lodash';
+import CONFIG from './config.json';
 import AdminMenu from './pages/menu';
 import AppBar from './pages/appbar';
-import Dashboard from './pages/settings';
+import About from './pages/about';
 import { NodesList, NodesShow } from './pages/nodes';
 import { DevicesList, DevicesShow } from './pages/devices';
 import { SourcesList, SourcesShow } from './pages/sources';
@@ -18,6 +19,7 @@ import {
     SubscriptionsShow,
 } from './pages/subscriptions';
 import { QueryAPIsList, QueryAPIsShow } from './pages/queryapis';
+import Settings from './pages/settings';
 import dataProvider from './dataProvider';
 
 const AdminAppBar = props => <AppBar {...props} userMenu={false} />;
@@ -27,15 +29,14 @@ const AdminLayout = props => (
 );
 
 const App = () => (
-    <Admin layout={AdminLayout} dataProvider={dataProvider} theme={useTheme()}>
-        <Resource name="Settings" list={Dashboard} />
-        <Resource
-            name="queryapis"
-            label="Query APIs"
-            options={{ label: 'Query APIs' }}
-            list={QueryAPIsList}
-            show={QueryAPIsShow}
-        />
+    <Admin
+        title={get(CONFIG, 'title', 'nmos-js')}
+        dashboard={About}
+        layout={AdminLayout}
+        dataProvider={dataProvider}
+        theme={useTheme()}
+    >
+        <Resource name="Settings" list={Settings} />
         <Resource name="nodes" list={NodesList} show={NodesShow} />
         <Resource name="devices" list={DevicesList} show={DevicesShow} />
         <Resource name="sources" list={SourcesList} show={SourcesShow} />
@@ -59,6 +60,12 @@ const App = () => (
             create={SubscriptionsCreate}
         />
         <Resource name="logs" list={LogsList} show={LogsShow} />
+        <Resource
+            name="queryapis"
+            options={{ label: 'Query APIs' }}
+            list={QueryAPIsList}
+            show={QueryAPIsShow}
+        />
     </Admin>
 );
 

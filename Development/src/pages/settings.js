@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import {
     Card,
     CardContent,
-    CardHeader,
+    FormControl,
     FormControlLabel,
+    FormHelperText,
     List,
     ListItem,
     MenuItem,
@@ -11,8 +12,7 @@ import {
     TextField,
     makeStyles,
 } from '@material-ui/core';
-
-import sealion from '../assets/sea-lion.png';
+import { Title } from 'react-admin';
 import {
     DNSSD_API,
     FRIENDLY_PARAMETERS,
@@ -37,9 +37,7 @@ const useStyles = makeStyles(theme => ({
         justifyContent: 'center',
     },
     textField: {
-        marginLeft: theme.spacing(1),
-        marginRight: theme.spacing(1),
-        width: 350,
+        width: 450,
     },
 }));
 
@@ -103,22 +101,8 @@ const Settings = () => {
     return (
         <div style={{ paddingTop: '24px' }}>
             <Card>
-                <CardHeader
-                    title="nmos&#8209;js Settings"
-                    titleTypographyProps={{ variant: 'h2', align: 'center' }}
-                />
+                <Title title={'Settings'} />
                 <CardContent align="center">
-                    <img
-                        id="sealion"
-                        src={sealion}
-                        style={{
-                            border: '1px solid lightgray',
-                            borderRadius: '50%',
-                            padding: '4px',
-                            width: '20%',
-                        }}
-                        alt="sea-lion logo"
-                    />
                     <List>
                         {!hiddenSetting(QUERY_API) && (
                             <ListItem className={classes.listItem}>
@@ -130,6 +114,7 @@ const Settings = () => {
                                     onFocus={selectOnFocus}
                                     className={classes.textField}
                                     disabled={disabledSetting(QUERY_API)}
+                                    helperText="Used to show the registered Nodes and their sub-resources"
                                 />
                             </ListItem>
                         )}
@@ -143,6 +128,7 @@ const Settings = () => {
                                     onFocus={selectOnFocus}
                                     className={classes.textField}
                                     disabled={disabledSetting(LOGGING_API)}
+                                    helperText="Used to show registry Logs"
                                 />
                             </ListItem>
                         )}
@@ -156,24 +142,33 @@ const Settings = () => {
                                     onFocus={selectOnFocus}
                                     className={classes.textField}
                                     disabled={disabledSetting(DNSSD_API)}
+                                    helperText="Used to show alternative Query APIs"
                                 />
                             </ListItem>
                         )}
                         {!hiddenSetting(USE_RQL) && (
                             <ListItem className={classes.listItem}>
-                                <FormControlLabel
-                                    label="RQL"
-                                    control={
-                                        <Switch
-                                            checked={values[USE_RQL]}
-                                            onChange={handleBooleanChange(
-                                                USE_RQL
-                                            )}
-                                            color="primary"
-                                        />
-                                    }
+                                <FormControl
+                                    variant="filled"
                                     disabled={disabledSetting(USE_RQL)}
-                                />
+                                >
+                                    <FormControlLabel
+                                        label="RQL"
+                                        control={
+                                            <Switch
+                                                checked={values[USE_RQL]}
+                                                onChange={handleBooleanChange(
+                                                    USE_RQL
+                                                )}
+                                                color="primary"
+                                            />
+                                        }
+                                    />
+                                    <FormHelperText variant="filled">
+                                        Use Resource Query Language rather than
+                                        basic query syntax
+                                    </FormHelperText>
+                                </FormControl>
                             </ListItem>
                         )}
                         {!hiddenSetting(PAGING_LIMIT) && (
@@ -187,6 +182,7 @@ const Settings = () => {
                                     onChange={handleTextChange(PAGING_LIMIT)}
                                     margin="normal"
                                     disabled={disabledSetting(PAGING_LIMIT)}
+                                    helperText="Applied to paginated API requests for list views"
                                 >
                                     {pagingLimits.map(option => (
                                         <MenuItem
@@ -201,23 +197,31 @@ const Settings = () => {
                         )}
                         {!hiddenSetting(FRIENDLY_PARAMETERS) && (
                             <ListItem className={classes.listItem}>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={
-                                                values[FRIENDLY_PARAMETERS]
-                                            }
-                                            onChange={handleBooleanChange(
-                                                FRIENDLY_PARAMETERS
-                                            )}
-                                            color="primary"
-                                            disabled={disabledSetting(
-                                                FRIENDLY_PARAMETERS
-                                            )}
-                                        />
-                                    }
-                                    label="Friendly Names"
-                                />
+                                <FormControl
+                                    variant="filled"
+                                    disabled={disabledSetting(
+                                        FRIENDLY_PARAMETERS
+                                    )}
+                                >
+                                    <FormControlLabel
+                                        control={
+                                            <Switch
+                                                checked={
+                                                    values[FRIENDLY_PARAMETERS]
+                                                }
+                                                onChange={handleBooleanChange(
+                                                    FRIENDLY_PARAMETERS
+                                                )}
+                                                color="primary"
+                                            />
+                                        }
+                                        label="Friendly Names"
+                                    />
+                                    <FormHelperText>
+                                        Show friendly names rather than API
+                                        parameter values
+                                    </FormHelperText>
+                                </FormControl>
                             </ListItem>
                         )}
                     </List>

@@ -19,7 +19,6 @@ import { useTheme } from '@material-ui/styles';
 import LinkChipField from '../../components/LinkChipField';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
-import JSONViewer from '../../components/JSONViewer';
 import MapObject from '../../components/ObjectField';
 import {
     FORMATS,
@@ -27,6 +26,7 @@ import {
     TRANSPORTS,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
+import SanitizedDivider from '../../components/SanitizedDivider';
 import TAIField from '../../components/TAIField';
 import TransportFileViewer from '../../components/TransportFileViewer';
 import labelize from '../../components/labelize';
@@ -153,7 +153,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                             : null
                     }
                 />
-                <hr />
+                <SanitizedDivider />
                 <ParameterField source="transport" register={TRANSPORTS} />
                 {queryVersion() >= 'v1.2' && (
                     <ItemArrayField
@@ -161,19 +161,19 @@ const ShowSummaryTab = ({ record, ...props }) => {
                         source="interface_bindings"
                     />
                 )}
-                {record.caps.media_types && (
+                {get(record, 'caps.media_types') && (
                     <ItemArrayField
                         label="Media Types Capability"
                         source="caps.media_types"
                     />
                 )}
-                {record.caps.event_types && (
+                {get(record, 'caps.event_types') && (
                     <ItemArrayField
                         label="Event Types Capability"
                         source="caps.event_types"
                     />
                 )}
-                {record.caps.constraint_sets && (
+                {get(record, 'caps.constraint_sets') && (
                     <ArrayField
                         label="Constraint Sets"
                         source="caps.constraint_sets"
@@ -181,7 +181,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                         <ReceiverConstraintSetCardsGrid record={record} />
                     </ArrayField>
                 )}
-                {record.caps.version && (
+                {get(record, 'caps.version') && (
                     <TAIField
                         label="Capabilities Version"
                         source="caps.version"
@@ -191,17 +191,18 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 {queryVersion() >= 'v1.2' && (
                     <BooleanField label="Active" source="subscription.active" />
                 )}
-                {queryVersion() >= 'v1.2' && record.subscription.sender_id && (
-                    <ReferenceField
-                        label="Sender"
-                        source="subscription.sender_id"
-                        reference="senders"
-                        link="show"
-                    >
-                        <LinkChipField />
-                    </ReferenceField>
-                )}
-                <hr />
+                {queryVersion() >= 'v1.2' &&
+                    get(record, 'subscription.sender_id') && (
+                        <ReferenceField
+                            label="Sender"
+                            source="subscription.sender_id"
+                            reference="senders"
+                            link="show"
+                        >
+                            <LinkChipField />
+                        </ReferenceField>
+                    )}
+                <SanitizedDivider />
                 <ReferenceField
                     label="Device"
                     source="device_id"
@@ -257,7 +258,6 @@ const ShowActiveTab = ({ record, ...props }) => {
                     <ReceiverTransportParamsCardsGrid record={record} />
                 </ArrayField>
                 <TransportFileViewer endpoint="$active.transport_file.data" />
-                <JSONViewer endpoint="$active" />
             </SimpleShowLayout>
         </ShowView>
     );
@@ -305,7 +305,6 @@ const ShowStagedTab = ({ record, ...props }) => {
                     <ReceiverTransportParamsCardsGrid record={record} />
                 </ArrayField>
                 <TransportFileViewer endpoint="$staged.transport_file.data" />
-                <JSONViewer endpoint="$staged" />
             </SimpleShowLayout>
         </ShowView>
     );

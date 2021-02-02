@@ -54,6 +54,7 @@ const ActiveField = ({ className, source, record = {}, resource, ...rest }) => {
 
     return (
         <Switch
+            color="primary"
             checked={checked}
             onChange={() => handleChange(record, resource)}
             className={className}

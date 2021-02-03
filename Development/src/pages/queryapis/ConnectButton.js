@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Menu, MenuItem, Snackbar } from '@material-ui/core';
+import { Button, Menu, MenuItem } from '@material-ui/core';
+import { useNotify } from 'react-admin';
 import get from 'lodash/get';
-import Button from '@material-ui/core/Button';
-import { QUERY_API, apiUrl, setApiUrl } from '../../settings';
+import { QUERY_API, apiUrl, disabledSetting, setApiUrl } from '../../settings';
 import { ConnectRegistryIcon } from '../../icons';
 
 const ConnectButton = ({ record, variant = 'contained', size }) => {
     const [anchorEl, setAnchorEl] = useState(null);
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const notify = useNotify();
 
     if (!record) {
         return null;
@@ -53,14 +53,14 @@ const ConnectButton = ({ record, variant = 'contained', size }) => {
             setAnchorEl(event.currentTarget);
         } else {
             changeQueryAPI(hosts[0]);
-            setSnackbarOpen(true);
+            notify(`Connected to: ${apiUrl(QUERY_API)}`);
         }
     };
 
     const handleMenuItemClick = option => {
         changeQueryAPI(option);
+        notify(`Connected to: ${apiUrl(QUERY_API)}`);
         setAnchorEl(null);
-        setSnackbarOpen(true);
     };
 
     return (
@@ -73,6 +73,7 @@ const ConnectButton = ({ record, variant = 'contained', size }) => {
                 size={
                     size ? size : variant === 'contained' ? 'medium' : 'small'
                 }
+                disabled={disabledSetting(QUERY_API)}
             >
                 Connect
             </Button>
@@ -101,19 +102,6 @@ const ConnectButton = ({ record, variant = 'contained', size }) => {
                     </MenuItem>
                 ))}
             </Menu>
-            <Snackbar
-                anchorOrigin={{
-                    vertical: 'top',
-                    horizontal: 'center',
-                }}
-                open={snackbarOpen}
-                onClose={() => setSnackbarOpen(false)}
-                autoHideDuration={3000}
-                ContentProps={{
-                    'aria-describedby': 'text',
-                }}
-                message={`Connected to: ${apiUrl(QUERY_API)}`}
-            />
         </>
     );
 };

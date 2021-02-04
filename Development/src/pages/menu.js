@@ -1,15 +1,15 @@
-import React from 'react';
-import { useHistory } from 'react-router-dom';
+import React, { forwardRef } from 'react';
+import { NavLink, useHistory } from 'react-router-dom';
 import {
     Divider,
-    ListItem,
     ListItemIcon,
     ListItemText,
+    MenuItem,
     MenuList,
 } from '@material-ui/core';
 import HomeIcon from '@material-ui/icons/Home';
 import SettingsIcon from '@material-ui/icons/Settings';
-import { withStyles } from '@material-ui/styles';
+import { makeStyles } from '@material-ui/styles';
 import { useRefresh } from 'react-admin';
 
 import {
@@ -26,13 +26,29 @@ import {
 
 import labelize from '../components/labelize';
 
-const StyledListItem = withStyles({
+const NavLinkRef = forwardRef((props, ref) => (
+    <NavLink innerRef={ref} {...props} />
+));
+
+const useStyles = makeStyles(theme => ({
     root: {
         paddingLeft: '24px',
+        borderLeftWidth: '3px',
+        borderLeftStyle: 'solid',
+        borderLeftColor: 'transparent',
     },
-})(ListItem);
+    active: {
+        borderLeftColor: theme.palette.primary.main,
+        color: theme.palette.primary.main,
+        '& $icon': {
+            color: theme.palette.primary.main,
+        },
+    },
+    icon: {},
+}));
 
-const NavLinkMenuItem = ({ to, icon, label = labelize(to), ...props }) => {
+const CustomMenuItem = ({ to, icon, label = labelize(to), ...props }) => {
+    const classes = useStyles();
     const history = useHistory();
     const refresh = useRefresh();
     const refreshHandler = () => {
@@ -43,39 +59,43 @@ const NavLinkMenuItem = ({ to, icon, label = labelize(to), ...props }) => {
         }
     };
     return (
-        <StyledListItem button onClick={refreshHandler} {...props}>
-            <ListItemIcon>{icon}</ListItemIcon>
+        <MenuItem
+            onClick={refreshHandler}
+            component={NavLinkRef}
+            to={to}
+            className={classes.root}
+            activeClassName={classes.active}
+            {...props}
+        >
+            <ListItemIcon className={classes.icon}>{icon}</ListItemIcon>
             <ListItemText
                 primary={label}
                 primaryTypographyProps={{ noWrap: true }}
             />
-        </StyledListItem>
+        </MenuItem>
     );
 };
 
 const CustomMenu = () => {
     return (
         <MenuList>
-            <NavLinkMenuItem to={'/'} icon={<HomeIcon />} label={'Home'} />
-            <NavLinkMenuItem to={'/settings'} icon={<SettingsIcon />} />
+            <CustomMenuItem to={'/'} exact icon={<HomeIcon />} label={'Home'} />
+            <CustomMenuItem to={'/settings'} icon={<SettingsIcon />} />
             <Divider />
-            <NavLinkMenuItem to={'/nodes'} icon={<NodeIcon />} />
-            <NavLinkMenuItem to={'/devices'} icon={<DeviceIcon />} />
-            <NavLinkMenuItem to={'/sources'} icon={<SourceIcon />} />
-            <NavLinkMenuItem to={'/flows'} icon={<FlowIcon />} />
-            <NavLinkMenuItem to={'/senders'} icon={<SenderIcon />} />
-            <NavLinkMenuItem to={'/receivers'} icon={<ReceiverIcon />} />
-            <NavLinkMenuItem
-                to={'/subscriptions'}
-                icon={<SubscriptionIcon />}
-            />
+            <CustomMenuItem to={'/nodes'} icon={<NodeIcon />} />
+            <CustomMenuItem to={'/devices'} icon={<DeviceIcon />} />
+            <CustomMenuItem to={'/sources'} icon={<SourceIcon />} />
+            <CustomMenuItem to={'/flows'} icon={<FlowIcon />} />
+            <CustomMenuItem to={'/senders'} icon={<SenderIcon />} />
+            <CustomMenuItem to={'/receivers'} icon={<ReceiverIcon />} />
+            <CustomMenuItem to={'/subscriptions'} icon={<SubscriptionIcon />} />
             <Divider />
-            <NavLinkMenuItem
+            <CustomMenuItem
                 to={'/queryapis'}
                 icon={<RegistryIcon />}
                 label="Query APIs"
             />
-            <NavLinkMenuItem to={'/logs'} icon={<RegistryLogsIcon />} />
+            <CustomMenuItem to={'/logs'} icon={<RegistryLogsIcon />} />
         </MenuList>
     );
 };

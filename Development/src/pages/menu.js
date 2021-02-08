@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useEffect } from 'react';
 import { NavLink, useHistory } from 'react-router-dom';
 import {
     Divider,
@@ -10,7 +10,6 @@ import {
 import HomeIcon from '@material-ui/icons/Home';
 import SettingsIcon from '@material-ui/icons/Settings';
 import { makeStyles } from '@material-ui/styles';
-import { useRefresh } from 'react-admin';
 
 import {
     DeviceIcon,
@@ -49,18 +48,8 @@ const useStyles = makeStyles(theme => ({
 
 const CustomMenuItem = ({ to, icon, label = labelize(to), ...props }) => {
     const classes = useStyles();
-    const history = useHistory();
-    const refresh = useRefresh();
-    const refreshHandler = () => {
-        if (window.location.hash.substr(1) === to) {
-            refresh();
-        } else {
-            history.push(to);
-        }
-    };
     return (
         <MenuItem
-            onClick={refreshHandler}
             component={NavLinkRef}
             to={to}
             className={classes.root}
@@ -77,6 +66,16 @@ const CustomMenuItem = ({ to, icon, label = labelize(to), ...props }) => {
 };
 
 const CustomMenu = () => {
+    const history = useHistory();
+    useEffect(() => {
+        history.block(
+            (location, action) =>
+                !(
+                    action === 'PUSH' &&
+                    location.pathname === history.location.pathname
+                )
+        );
+    }, [history]);
     return (
         <MenuList>
             <CustomMenuItem to={'/'} exact icon={<HomeIcon />} label={'Home'} />

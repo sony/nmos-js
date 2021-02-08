@@ -3,6 +3,7 @@ import { Admin, Layout, Resource } from 'react-admin';
 import { useTheme } from '@material-ui/styles';
 import { get } from 'lodash';
 import CONFIG from './config.json';
+import { SettingsContextProvider } from './settings';
 import AdminMenu from './pages/menu';
 import AppBar from './pages/appbar';
 import About from './pages/about';
@@ -28,7 +29,7 @@ const AdminLayout = props => (
     <Layout {...props} menu={AdminMenu} appBar={AdminAppBar} />
 );
 
-const App = () => (
+const AppAdmin = () => (
     <Admin
         title={get(CONFIG, 'title', 'nmos-js')}
         dashboard={About}
@@ -67,6 +68,12 @@ const App = () => (
             show={QueryAPIsShow}
         />
     </Admin>
+);
+
+export const App = () => (
+    <SettingsContextProvider>
+        <AppAdmin />
+    </SettingsContextProvider>
 );
 
 export default App;

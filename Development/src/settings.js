@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { get, isEqual } from 'lodash';
 import CONFIG from './config.json';
 
@@ -45,6 +45,7 @@ export const apiUrl = api => {
     }
     return window.localStorage.getItem(api) || defaultUrl(api);
 };
+// deprecated, see useSettingsContext()
 export const setApiUrl = (api, url) => {
     if (disabledSetting(api)) {
         console.error(`Configuration does not allow ${api} to be changed`);
@@ -66,6 +67,7 @@ export const queryVersion = () => apiVersion(QUERY_API);
 // default to 10 rather than leaving undefined and letting the API use its default,
 // in order to simplify pagination with client-side filtered results
 export const apiPagingLimit = api => getJSONSetting(PAGING_LIMIT, 10);
+// deprecated, see useSettingsContext()
 export const setApiPagingLimit = (api, pagingLimit) => {
     if (typeof pagingLimit === 'number') {
         setJSONSetting(PAGING_LIMIT, pagingLimit);
@@ -75,8 +77,9 @@ export const setApiPagingLimit = (api, pagingLimit) => {
 };
 
 // single value, not per-API, right now
-export const apiUseRql = api => getJSONSetting(USE_RQL, true);
-export const setApiUseRql = (api, rql) => {
+export const apiUsingRql = api => getJSONSetting(USE_RQL, true);
+// deprecated, see useSettingsContext()
+export const setApiUsingRql = (api, rql) => {
     if (typeof rql === 'boolean') {
         setJSONSetting(USE_RQL, rql);
     } else {
@@ -130,3 +133,38 @@ export const useJSONSetting = (name, defaultValue = {}) => {
 
     return [setting, setSetting];
 };
+
+const useSettings = () => {
+    const [values, setValues] = useState({
+        [QUERY_API]: apiUrl(QUERY_API),
+        [LOGGING_API]: apiUrl(LOGGING_API),
+        [DNSSD_API]: apiUrl(DNSSD_API),
+        [PAGING_LIMIT]: apiPagingLimit(QUERY_API),
+        [USE_RQL]: apiUsingRql(QUERY_API),
+        [FRIENDLY_PARAMETERS]: getJSONSetting(FRIENDLY_PARAMETERS, false),
+    });
+
+    const isEffective = name => !hiddenSetting(name) && !disabledSetting(name);
+    useEffect(() => {
+        if (isEffective(QUERY_API)) setApiUrl(QUERY_API, values[QUERY_API]);
+        if (isEffective(LOGGING_API))
+            setApiUrl(LOGGING_API, values[LOGGING_API]);
+        if (isEffective(DNSSD_API)) setApiUrl(DNSSD_API, values[DNSSD_API]);
+        if (isEffective(PAGING_LIMIT))
+            setApiPagingLimit(QUERY_API, values[PAGING_LIMIT]);
+        if (isEffective(USE_RQL)) setApiUsingRql(QUERY_API, values[USE_RQL]);
+        if (isEffective(FRIENDLY_PARAMETERS))
+            setJSONSetting(FRIENDLY_PARAMETERS, values[FRIENDLY_PARAMETERS]);
+    }, [values]);
+
+    return [values, setValues];
+};
+
+const SettingsContext = createContext();
+
+export const SettingsContextProvider = props => {
+    const [values, setValues] = useSettings();
+    return <SettingsContext.Provider value={[values, setValues]} {...props} />;
+};
+
+export const useSettingsContext = () => useContext(SettingsContext);

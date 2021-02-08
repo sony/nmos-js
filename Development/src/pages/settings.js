@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
 import {
     Card,
     CardContent,
+    Divider,
     FormControl,
     FormControlLabel,
     FormHelperText,
@@ -10,7 +10,7 @@ import {
     MenuItem,
     Switch,
     TextField,
-    makeStyles,
+    withStyles,
 } from '@material-ui/core';
 import { Title } from 'react-admin';
 import {
@@ -20,26 +20,28 @@ import {
     PAGING_LIMIT,
     QUERY_API,
     USE_RQL,
-    apiPagingLimit,
-    apiUrl,
-    apiUseRql,
     disabledSetting,
-    getJSONSetting,
     hiddenSetting,
-    setApiPagingLimit,
-    setApiUrl,
-    setApiUseRql,
-    setJSONSetting,
+    useSettingsContext,
 } from '../settings';
 
-const useStyles = makeStyles(theme => ({
-    listItem: {
+const StyledListItem = withStyles(theme => ({
+    root: {
         justifyContent: 'center',
     },
-    textField: {
+}))(ListItem);
+
+const StyledTextField = withStyles(theme => ({
+    root: {
         width: 450,
     },
-}));
+}))(TextField);
+
+const StyledDivider = withStyles(theme => ({
+    root: {
+        width: 450,
+    },
+}))(Divider);
 
 const pagingLimits = [
     {
@@ -67,15 +69,7 @@ const pagingLimits = [
 const selectOnFocus = event => event.target.select();
 
 const Settings = () => {
-    const classes = useStyles();
-    const [values, setValues] = useState({
-        [QUERY_API]: apiUrl(QUERY_API),
-        [LOGGING_API]: apiUrl(LOGGING_API),
-        [DNSSD_API]: apiUrl(DNSSD_API),
-        [PAGING_LIMIT]: apiPagingLimit(QUERY_API),
-        [USE_RQL]: apiUseRql(QUERY_API),
-        [FRIENDLY_PARAMETERS]: getJSONSetting(FRIENDLY_PARAMETERS, false),
-    });
+    const [values, setValues] = useSettingsContext();
 
     const handleTextChange = name => event => {
         setValues({ ...values, [name]: event.target.value });
@@ -85,19 +79,6 @@ const Settings = () => {
         setValues({ ...values, [name]: event.target.checked });
     };
 
-    const isEffective = name => !hiddenSetting(name) && !disabledSetting(name);
-    useEffect(() => {
-        if (isEffective(QUERY_API)) setApiUrl(QUERY_API, values[QUERY_API]);
-        if (isEffective(LOGGING_API))
-            setApiUrl(LOGGING_API, values[LOGGING_API]);
-        if (isEffective(DNSSD_API)) setApiUrl(DNSSD_API, values[DNSSD_API]);
-        if (isEffective(PAGING_LIMIT))
-            setApiPagingLimit(QUERY_API, values[PAGING_LIMIT]);
-        if (isEffective(USE_RQL)) setApiUseRql(QUERY_API, values[USE_RQL]);
-        if (isEffective(FRIENDLY_PARAMETERS))
-            setJSONSetting(FRIENDLY_PARAMETERS, values[FRIENDLY_PARAMETERS]);
-    }, [values]);
-
     return (
         <div style={{ paddingTop: '24px' }}>
             <Card>
@@ -105,49 +86,46 @@ const Settings = () => {
                 <CardContent align="center">
                     <List>
                         {!hiddenSetting(QUERY_API) && (
-                            <ListItem className={classes.listItem}>
-                                <TextField
+                            <StyledListItem>
+                                <StyledTextField
                                     label="Query API"
                                     variant="filled"
                                     value={values[QUERY_API]}
                                     onChange={handleTextChange(QUERY_API)}
                                     onFocus={selectOnFocus}
-                                    className={classes.textField}
                                     disabled={disabledSetting(QUERY_API)}
                                     helperText="Used to show the registered Nodes and their sub-resources"
                                 />
-                            </ListItem>
+                            </StyledListItem>
                         )}
                         {!hiddenSetting(LOGGING_API) && (
-                            <ListItem className={classes.listItem}>
-                                <TextField
+                            <StyledListItem>
+                                <StyledTextField
                                     label="Logging API"
                                     variant="filled"
                                     value={values[LOGGING_API]}
                                     onChange={handleTextChange(LOGGING_API)}
                                     onFocus={selectOnFocus}
-                                    className={classes.textField}
                                     disabled={disabledSetting(LOGGING_API)}
                                     helperText="Used to show registry Logs"
                                 />
-                            </ListItem>
+                            </StyledListItem>
                         )}
                         {!hiddenSetting(DNSSD_API) && (
-                            <ListItem className={classes.listItem}>
-                                <TextField
+                            <StyledListItem>
+                                <StyledTextField
                                     label="DNS-SD API"
                                     variant="filled"
                                     value={values[DNSSD_API]}
                                     onChange={handleTextChange(DNSSD_API)}
                                     onFocus={selectOnFocus}
-                                    className={classes.textField}
                                     disabled={disabledSetting(DNSSD_API)}
                                     helperText="Used to show alternative Query APIs"
                                 />
-                            </ListItem>
+                            </StyledListItem>
                         )}
                         {!hiddenSetting(USE_RQL) && (
-                            <ListItem className={classes.listItem}>
+                            <StyledListItem>
                                 <FormControl
                                     variant="filled"
                                     disabled={disabledSetting(USE_RQL)}
@@ -169,15 +147,15 @@ const Settings = () => {
                                         basic query syntax
                                     </FormHelperText>
                                 </FormControl>
-                            </ListItem>
+                            </StyledListItem>
                         )}
+                        <StyledDivider />
                         {!hiddenSetting(PAGING_LIMIT) && (
-                            <ListItem className={classes.listItem}>
-                                <TextField
+                            <StyledListItem>
+                                <StyledTextField
                                     select
                                     label="Paging Limit"
                                     variant="filled"
-                                    className={classes.textField}
                                     value={values[PAGING_LIMIT]}
                                     onChange={handleTextChange(PAGING_LIMIT)}
                                     margin="normal"
@@ -192,11 +170,11 @@ const Settings = () => {
                                             {option.label}
                                         </MenuItem>
                                     ))}
-                                </TextField>
-                            </ListItem>
+                                </StyledTextField>
+                            </StyledListItem>
                         )}
                         {!hiddenSetting(FRIENDLY_PARAMETERS) && (
-                            <ListItem className={classes.listItem}>
+                            <StyledListItem>
                                 <FormControl
                                     variant="filled"
                                     disabled={disabledSetting(
@@ -222,7 +200,7 @@ const Settings = () => {
                                         parameter values
                                     </FormHelperText>
                                 </FormControl>
-                            </ListItem>
+                            </StyledListItem>
                         )}
                     </List>
                 </CardContent>

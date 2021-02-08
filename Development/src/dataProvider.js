@@ -17,7 +17,7 @@ import {
     QUERY_API,
     apiPagingLimit,
     apiUrl,
-    apiUseRql,
+    apiUsingRql,
     apiVersion,
     concatUrl,
 } from './settings';
@@ -272,7 +272,7 @@ const convertDataProviderRequestToHTTP = (
     pagingLimit
 ) => {
     const { api } = apiResource(resource);
-    const useRql = resource !== 'queryapis' && apiUseRql(api);
+    const useRql = resource !== 'queryapis' && apiUsingRql(api);
 
     // fetchJson won't add the Accept header itself if we specify any headers in options
     const headers = new Headers({ Accept: 'application/json' });
@@ -781,7 +781,7 @@ const convertHTTPResponseToDataProvider = async (
     const { headers, json } = response;
 
     const { api } = apiResource(resource);
-    const useRql = resource !== 'queryapis' && apiUseRql(api);
+    const useRql = resource !== 'queryapis' && apiUsingRql(api);
 
     switch (type) {
         case GET_ONE:

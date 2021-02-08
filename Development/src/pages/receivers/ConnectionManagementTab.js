@@ -38,7 +38,7 @@ import ResourceTitle from '../../components/ResourceTitle';
 import ConnectButtons from './ConnectButtons';
 import {
     QUERY_API,
-    apiUseRql,
+    apiUsingRql,
     queryVersion,
     useJSONSetting,
 } from '../../settings';
@@ -127,7 +127,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                 options={eventTypes}
                             />
                         )}
-                        {apiUseRql(QUERY_API) && (
+                        {apiUsingRql(QUERY_API) && (
                             <ConstFilter
                                 source="$constraint_sets_active"
                                 label="Constraint Sets"

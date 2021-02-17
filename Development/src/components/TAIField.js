@@ -38,7 +38,6 @@ const TAIConversion = (record, source, mode) => {
 
 TAIField.defaultProps = {
     addLabel: true,
-    source: String,
 };
 
 export default TAIField;

@@ -2,7 +2,6 @@ import { Fragment, useEffect, useState } from 'react';
 import {
     ArrayField,
     BooleanField,
-    FunctionField,
     Loading,
     ReferenceArrayField,
     ReferenceField,
@@ -20,7 +19,7 @@ import { Link, Route } from 'react-router-dom';
 import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
 import LinkChipField from '../../components/LinkChipField';
-import MapObject from '../../components/ObjectField';
+import ObjectField from '../../components/ObjectField';
 import {
     CONTROL_TYPES,
     DEVICE_TYPES,
@@ -121,16 +120,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 <TAIField source="version" />
                 <TextField source="label" />
                 {queryVersion() >= 'v1.1' && <TextField source="description" />}
-                {queryVersion() >= 'v1.1' && (
-                    <FunctionField
-                        label="Tags"
-                        render={record =>
-                            Object.keys(record.tags).length > 0
-                                ? MapObject(record, 'tags')
-                                : null
-                        }
-                    />
-                )}
+                {queryVersion() >= 'v1.1' && <ObjectField source="tags" />}
                 <SanitizedDivider />
                 <ParameterField source="type" register={DEVICE_TYPES} />
                 {queryVersion() >= 'v1.1' && (

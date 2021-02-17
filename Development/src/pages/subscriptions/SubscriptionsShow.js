@@ -1,7 +1,6 @@
 import React from 'react';
 import {
     BooleanField,
-    FunctionField,
     ShowContextProvider,
     ShowView,
     SimpleShowLayout,
@@ -12,7 +11,7 @@ import {
 } from 'react-admin';
 import get from 'lodash/get';
 import DeleteButton from '../../components/DeleteButton';
-import MapObject from '../../components/ObjectField';
+import ObjectField from '../../components/ObjectField';
 import ResourceShowActions from '../../components/ResourceShowActions';
 import ResourceTitle from '../../components/ResourceTitle';
 import SanitizedDivider from '../../components/SanitizedDivider';
@@ -45,14 +44,7 @@ const SubscriptionsShowView = props => {
                         source="max_update_rate_ms"
                         label="Max Update Rate (ms)"
                     />
-                    <FunctionField
-                        label="Params"
-                        render={record =>
-                            Object.keys(record.params).length > 0
-                                ? MapObject(record, 'params')
-                                : null
-                        }
-                    />
+                    <ObjectField source="params" />
                     <SanitizedDivider />
                     <BooleanField source="persist" />
                     <BooleanField source="secure" />

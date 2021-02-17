@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-    FunctionField,
     ShowContextProvider,
     ShowView,
     SimpleShowLayout,
@@ -9,7 +8,7 @@ import {
     useShowController,
 } from 'react-admin';
 import get from 'lodash/get';
-import MapObject from '../../components/ObjectField';
+import ObjectField from '../../components/ObjectField';
 import ResourceShowActions from '../../components/ResourceShowActions';
 import ResourceTitle from '../../components/ResourceTitle';
 import SanitizedDivider from '../../components/SanitizedDivider';
@@ -36,16 +35,7 @@ const LogsShowView = props => {
                 <TextField source="level" />
                 <TextField source="level_name" label="Level Name" />
                 <TextField source="message" />
-                <FunctionField
-                    label="Tags"
-                    render={record =>
-                        record.tags
-                            ? Object.keys(record.tags).length > 0
-                                ? MapObject(record, 'tags')
-                                : null
-                            : null
-                    }
-                />
+                <ObjectField source="tags" />
                 <TextField source="http_method" label="HTTP Method" />
                 <TextField source="request_uri" label="Request URI" />
                 <SanitizedDivider />

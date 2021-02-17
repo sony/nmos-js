@@ -1,7 +1,6 @@
 import React from 'react';
 import {
     ArrayField,
-    FunctionField,
     ReferenceArrayField,
     ReferenceField,
     ReferenceManyField,
@@ -15,7 +14,7 @@ import {
 } from 'react-admin';
 import get from 'lodash/get';
 import LinkChipField from '../../components/LinkChipField';
-import MapObject from '../../components/ObjectField';
+import ObjectField from '../../components/ObjectField';
 import { FORMATS, ParameterField } from '../../components/ParameterRegisters';
 import RateField from '../../components/RateField';
 import ResourceShowActions from '../../components/ResourceShowActions';
@@ -47,14 +46,7 @@ const FlowsShowView = props => {
                 <TAIField source="version" />
                 <TextField source="label" />
                 <TextField source="description" />
-                <FunctionField
-                    label="Tags"
-                    render={record =>
-                        Object.keys(record.tags).length > 0
-                            ? MapObject(record, 'tags')
-                            : null
-                    }
-                />
+                <ObjectField source="tags" />
                 <SanitizedDivider />
                 {queryVersion() >= 'v1.1' && (
                     <RateField label="Grain Rate" source="grain_rate" />

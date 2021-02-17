@@ -4,7 +4,6 @@ import { IconButton, Paper, Tab, Tabs, Typography } from '@material-ui/core';
 import {
     ArrayField,
     BooleanField,
-    FunctionField,
     ReferenceField,
     ShowContextProvider,
     ShowView,
@@ -20,7 +19,7 @@ import { useTheme } from '@material-ui/styles';
 import LinkChipField from '../../components/LinkChipField';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
-import MapObject from '../../components/ObjectField';
+import ObjectField from '../../components/ObjectField';
 import {
     ParameterField,
     TRANSPORTS,
@@ -125,14 +124,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 <TAIField source="version" />
                 <TextField source="label" />
                 <TextField source="description" />
-                <FunctionField
-                    label="Tags"
-                    render={record =>
-                        Object.keys(record.tags).length > 0
-                            ? MapObject(record, 'tags')
-                            : null
-                    }
-                />
+                <ObjectField source="tags" />
                 <SanitizedDivider />
                 <ParameterField source="transport" register={TRANSPORTS} />
                 <UrlField

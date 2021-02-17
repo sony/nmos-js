@@ -6,48 +6,35 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import get from 'lodash/get';
+import { get, isEmpty, map } from 'lodash';
 
-function MapObject(record, source) {
-    if (record == null || !get(record, source)) {
-        return;
-    }
-    const keys = Object.keys(get(record, source));
-    let arr = [];
-    keys.forEach(key => {
-        arr.push({ key: key, value: get(record, source)[key] });
-    });
-    return (
+export const ObjectField = ({ record, source }) =>
+    // no table at all for empty objects
+    !isEmpty(get(record, source)) && (
         <Table size="small">
             <TableHead>
                 <TableRow>
-                    <TableCell> Name </TableCell>
-                    <TableCell> Value(s)</TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Value(s)</TableCell>
                 </TableRow>
             </TableHead>
             <TableBody>
-                {arr.map(item => (
-                    <ObjectField key={item.key} item={item} />
+                {map(get(record, source), (value, key) => (
+                    <TableRow style={{ fontSize: '14px' }}>
+                        <TableCell>{key}</TableCell>
+                        {Array.isArray(value) ? (
+                            <TableCell>{value.join(', ')}</TableCell>
+                        ) : (
+                            <TableCell>{value}</TableCell>
+                        )}
+                    </TableRow>
                 ))}
             </TableBody>
         </Table>
     );
-}
-
-const ObjectField = ({ item = {} }) => (
-    <TableRow style={{ fontSize: '14px' }}>
-        <TableCell>{item.key}</TableCell>
-        {Array.isArray(item.value) ? (
-            <TableCell>{item.value.join(', ')}</TableCell>
-        ) : (
-            <TableCell>{item.value}</TableCell>
-        )}
-    </TableRow>
-);
 
 ObjectField.defaultProps = {
     addLabel: true,
-    map: [],
 };
 
-export default MapObject;
+export default ObjectField;

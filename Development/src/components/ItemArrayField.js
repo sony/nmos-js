@@ -4,7 +4,7 @@ import get from 'lodash/get';
 
 const ItemArrayField = ({ className, record, source }) => (
     <>
-        {get(record, source).map((item, index) => (
+        {get(record, source, []).map((item, index) => (
             <Typography variant="body2" key={index} className={className}>
                 {item}
             </Typography>

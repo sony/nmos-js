@@ -305,18 +305,6 @@ const convertDataProviderRequestToHTTP = (
                     referenceFilter[ref][refKey] = value;
                 }
             };
-            if (params.paginationURL) {
-                for (const [key, value] of Object.entries(params.filter)) {
-                    if (isReferenceFilter(key)) {
-                        addReferenceFilter(key, value);
-                    }
-                }
-                return {
-                    url: params.paginationURL,
-                    options: { headers },
-                    referenceFilter,
-                };
-            }
 
             const queryParams = [];
 
@@ -441,7 +429,13 @@ const convertDataProviderRequestToHTTP = (
 
             const query = queryParams.join('&');
 
-            if (query !== '') {
+            if (params.paginationURL) {
+                return {
+                    url: params.paginationURL,
+                    options: { headers },
+                    referenceFilter,
+                };
+            } else if (query !== '') {
                 return {
                     url: resourceUrl(resource, `?${query}`),
                     options: { headers },
@@ -933,7 +927,7 @@ const convertHTTPResponseToDataProvider = async (
                     }
                 }
             }
-            if (referenceFilter && referenceFilter.length !== 0) {
+            if (!isEmpty(referenceFilter)) {
                 let filtered = await filterResult(json, referenceFilter);
                 return {
                     url,

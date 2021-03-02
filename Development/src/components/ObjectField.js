@@ -20,7 +20,7 @@ export const ObjectField = ({ record, source }) =>
             </TableHead>
             <TableBody>
                 {map(get(record, source), (value, key) => (
-                    <TableRow style={{ fontSize: '14px' }}>
+                    <TableRow key={key} style={{ fontSize: '14px' }}>
                         <TableCell>{key}</TableCell>
                         {Array.isArray(value) ? (
                             <TableCell>{value.join(', ')}</TableCell>

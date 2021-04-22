@@ -7,6 +7,8 @@ This repository contains a client implementation of the [AMWA Networked Media Op
 
 - [AMWA IS-04 NMOS Discovery and Registration Specification](https://amwa-tv.github.io/nmos-discovery-registration)
 - [AMWA IS-05 NMOS Device Connection Management Specification](https://amwa-tv.github.io/nmos-device-connection-management)
+- [AMWA IS-08 NMOS Audio Channel Mapping Specification](https://specs.amwa.tv/is-08/) (read-only for now)
+- [AMWA BCP-004-01 NMOS Receiver Capabilities](https://specs.amwa.tv/bcp-004-01/)
 
 For more information about AMWA, NMOS and the Networked Media Incubator, please refer to http://amwa.tv/.
 
@@ -43,7 +45,8 @@ The implementation is designed to be extended. Development is ongoing, following
 
 Recent activity on the project (newest first):
 
-- Prototype implementation of BCP-004-01 Receiver Capabilities
+- Read-only support for IS-08 Audio Channel Mapping
+- Support for BCP-004-01 Receiver Capabilities
 - JT-NM Tested 03/20 badge (packaged and deployed on a Mellanox SN2010 Switch)
 - Improved and simplified connection management
 - Periodic refresh

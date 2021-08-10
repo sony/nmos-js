@@ -96,6 +96,7 @@ const ReceiversList = props => {
                                             basePath="/receivers"
                                             record={item}
                                             label={item.label}
+                                            name="label"
                                         />
                                     </TableCell>
                                     <TableCell>
@@ -117,6 +118,7 @@ const ReceiversList = props => {
                                             <ActiveField
                                                 record={item}
                                                 resource="receivers"
+                                                name="active"
                                             />
                                         </TableCell>
                                     )}

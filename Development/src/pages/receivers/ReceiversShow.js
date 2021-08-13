@@ -104,6 +104,7 @@ const ReceiversShowView = props => {
                                 disabled={
                                     !get(record, `$${key}`) || !useConnectionAPI
                                 }
+                                name={key}
                             />
                         ))}
                         <Tab

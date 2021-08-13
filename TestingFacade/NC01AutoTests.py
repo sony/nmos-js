@@ -13,10 +13,10 @@ class NC01AutoTest:
         self.NCuT_url = "http://localhost:3000/#/" # url of nmos-js instance
         self.mock_registry_url = "http://127.0.0.1:5102/" # url of mock registry from test suite
         self.multipart_question_storage = {}
-        self.driver = webdriver.Chrome() #selenium driver for browser
+        self.driver = webdriver.Firefox() #selenium driver for browser
         # Launch browser, navigate to nmos-js and update query api url to mock registry
         self.driver.get(self.NCuT_url + "Settings")
-        query_api = self.driver.find_element_by_xpath("//main/div[2]/div/div/div/ul/li[1]/div/div/input")
+        query_api = self.driver.find_element_by_name("queryapi")
         query_api.clear()
         query_api.send_keys(self.mock_registry_url + "x-nmos/query/v1.3")
         time.sleep(2)
@@ -25,16 +25,16 @@ class NC01AutoTest:
         """ Used to format answers based on device metadata """
         return label + ' (' + description + ', ' + id + ')'
 
-    def _find_resources(self, resource, keyword):
+    def _find_resources(self, resource):
         """
-        Navigate to resource page, look for labels by keyword and return list of resources
+        Navigate to resource page, and return list of resources
         resource: 'senders' 'receivers'
         """
         self.driver.find_element_by_link_text(resource).click()
         time.sleep(2)
 
         # Find all resources
-        resources = self.driver.find_elements_by_partial_link_text(keyword)
+        resources = self.driver.find_elements_by_name("label")
         resource_labels = [entry.text for entry in resources]
         resource_list = []
 
@@ -42,8 +42,8 @@ class NC01AutoTest:
         for label in resource_labels:
             self.driver.find_element_by_link_text(label).click()
             time.sleep(2)
-            resource_id = self.driver.find_element_by_xpath("//div[@class='ra-field ra-field-id']/div/div/span").text
-            resource_description = self.driver.find_element_by_xpath("//div[@class='ra-field ra-field-description']/div/div/span").text
+            resource_id = self.driver.find_element_by_name("id").text
+            resource_description = self.driver.find_element_by_name("description").text
             resource_list.append(self._format_device_metadata(label, resource_description, resource_id))
             self.driver.find_element_by_link_text(resource).click()
         
@@ -80,7 +80,7 @@ class NC01AutoTest:
         # Refresh the NCuT's view of the Registry and carefully select the Senders that are available from the following list.
         time.sleep(2)
 
-        return self._find_resources("Senders", "Test-node-1/sender")
+        return self._find_resources("Senders")
 
     def test_04(self, answers, metadata):
         """
@@ -90,7 +90,7 @@ class NC01AutoTest:
         # Refresh the NCuT's view of the Registry and carefully select the Receivers that are available from the following list.
         time.sleep(2)
         
-        return self._find_resources("Receivers", "Test-node-2/receiver")
+        return self._find_resources("Receivers")
 
     def test_05(self, answers, metadata):
         """
@@ -101,7 +101,7 @@ class NC01AutoTest:
         # Use the NCuT to browse and take note of the Senders that are available.
         # After the 'Next' button has been clicked one of those senders will be put 'offline'.
         time.sleep(2)
-        self.multipart_question_storage['test_05'] = self._find_resources("Senders", "Test-node-1/sender")
+        self.multipart_question_storage['test_05'] = self._find_resources("Senders")
         
         return "Next"
 
@@ -112,7 +112,7 @@ class NC01AutoTest:
         """
         # Please refresh your NCuT and select the sender which has been put 'offline'
         time.sleep(5)
-        sender_list = self._find_resources("Senders", "Test-node-1/sender")
+        sender_list = self._find_resources("Senders")
 
         # Hmm Assuming only a one item difference always. May need to add an if len==1 check and raise an exception if not
         offline_sender = list(set(self.multipart_question_storage['test_05']) - set(sender_list))
@@ -134,15 +134,20 @@ class NC01AutoTest:
 
         # Find all senders, keep checking until same as number of senders at start of test
         while len(sender_list) < len(self.multipart_question_storage['test_05']):
-            self.driver.refresh()
+            self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
             time.sleep(2)
-            senders = self.driver.find_elements_by_partial_link_text("Test-node-1/sender")
+            senders = self.driver.find_elements_by_name("label")
             sender_list.update([entry.text for entry in senders])
             last_sender = senders[-1].text
             time.sleep(2)
             
         # Check same sender came back
-        sender_details = self._find_resources("Senders", last_sender)
+        self.driver.find_element_by_link_text(last_sender).click()
+        time.sleep(2)
+        resource_id = self.driver.find_element_by_name("id").text
+        resource_description = self.driver.find_element_by_name("description").text
+        sender_details = self._format_device_metadata(last_sender, resource_description, resource_id)
+        
         if sender_details == self.multipart_question_storage['test_05_1']:
             return "Next"
         else:
@@ -160,7 +165,7 @@ class NC01AutoTest:
         self.driver.find_element_by_link_text('Receivers').click()
         time.sleep(2)
         # Find all receivers
-        receivers = self.driver.find_elements_by_partial_link_text("Test-node-2/receiver")
+        receivers = self.driver.find_elements_by_name("label")
         receiver_labels = [receiver.text for receiver in receivers]
         potential_answers = []
 
@@ -168,11 +173,12 @@ class NC01AutoTest:
         for receiver in receiver_labels:
             self.driver.find_element_by_link_text(receiver).click()
             time.sleep(2)
-            receiver_id = self.driver.find_element_by_xpath("//div[@class='ra-field ra-field-id']/div/div/span").text
-            receiver_description = self.driver.find_element_by_xpath("//div[@class='ra-field ra-field-description']/div/div/span").text
+            receiver_id = self.driver.find_element_by_name("id").text
+            receiver_description = self.driver.find_element_by_name("description").text
             
-            connect_button = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.XPATH, "//main/div[2]/div[1]/div[1]/div/div/div/a[4]"))) 
-            
+            connect_button = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.NAME, "connect"))) 
+            time.sleep(2)
+
             if connect_button.get_attribute("aria-disabled") == 'false':
                 potential_answers.append(self._format_device_metadata(receiver, receiver_description, receiver_id))
             self.driver.find_element_by_link_text('Receivers').click()
@@ -196,12 +202,23 @@ class NC01AutoTest:
         sender = metadata['sender']
         receiver = metadata['receiver']
 
-        # TODO
-        # Navigate to receivers connect tab
-        # Identify correct row for the sender and click activate button
-        # Wait for redirect to active page and verify correct sender listed
-        # Return Next 
-        return "Test not yet implemented"
+        self.driver.find_element_by_link_text('Receivers').click()
+        time.sleep(2)
+        self.driver.find_element_by_link_text(receiver['label']).click()
+        time.sleep(3)
+        WebDriverWait(self.driver, 20).until(EC.element_to_be_clickable((By.NAME, "connect"))).click() 
+        time.sleep(2)
+        # Find the row containing the correct sender
+        senders = self.driver.find_elements_by_name('label')
+        row = [i for i, s in enumerate(senders) if s.text == sender['label']][0]
+        activate_button = self.driver.find_elements_by_name("activate")[row]
+        activate_button.click()
+        time.sleep(3)
+        active_sender = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.NAME, "sender"))) 
+        if active_sender.text == sender['label']:
+            return "Next"
+        else:
+            return "Something went wrong"
 
     def test_08(self, answers, metadata):
         """
@@ -214,35 +231,63 @@ class NC01AutoTest:
         sender = metadata['sender']
         receiver = metadata['receiver']
 
-        # TODO
-        # Navigate to all receivers page
-        # Identify correct row for the receiver and click the active boolean switch
-        # Wait for switch to show False? 
-        # Navigate to receivers active tab to check sender is gone
-        # Return Next
-
-        return "Test not yet implemented"
+        self.driver.find_element_by_link_text('Receivers').click()
+        time.sleep(2)
+        receivers = self.driver.find_elements_by_name('label')
+        row = [i for i, r in enumerate(receivers) if r.text == receiver['label']][0]
+        deactivate_button = self.driver.find_elements_by_name("active")[row]
+        deactivate_button.click()
+        time.sleep(2)
+        if deactivate_button.get_attribute('value') == "false":
+            return "Next"
+        else:
+            return "Something went wrong"
 
     def test_09(self, answers, metadata):
         """
         Indicating the state of connections via updates received from the IS-04 Query API
         First question
         """
-        # The NCuT should be able to monitor and update the connection status of all registered Devices.
-        # Use the NCuT to identify the sender currently connected to receiver: x
+        # The NCuT should be able to monitor and update the connection status of all registered Devices. \
+        # Use the NCuT to identify the receiver that has just been activated.
 
-        receiver = metadata['receiver']
-
-        # TODO
-        # Navigate to the receivers active tab
-        # Get sender name and navigate to senders page to grab id, label, description
-        # Return sender
-        return "Test not yet implemented"
+        self.driver.find_element_by_link_text('Receivers').click()
+        self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
+        time.sleep(2)
+        active_buttons = self.driver.find_elements_by_name('active')
+        # Assuming only one active receiver
+        active_row = [i for i, b in enumerate(active_buttons) if b.get_attribute('value') == "true"][0]
+        receiver = self.driver.find_elements_by_name('label')[active_row]
+        receiver_label = receiver.text
+        receiver.click()
+        receiver_id = self.driver.find_element_by_name("id").text
+        receiver_description = self.driver.find_element_by_name("description").text
+        return self._format_device_metadata(receiver_label, receiver_description, receiver_id)
 
     def test_09_1(self, answers, metadata):
         """
         Indicating the state of connections via updates received from the IS-04 Query API
         Second question
+        """
+        # Use the NCuT to identify the sender currently connected to receiver x
+        receiver = metadata['receiver']
+        self.driver.find_element_by_link_text('Receivers').click()
+        time.sleep(2)
+        self.driver.find_element_by_link_text(receiver['label']).click()
+        time.sleep(3)
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.NAME, "active"))).click() 
+        time.sleep(2)
+        self.driver.find_element_by_name('sender').click()
+        time.sleep(2)
+        sender_label = self.driver.find_element_by_name('label').text
+        sender_id = self.driver.find_element_by_name('id').text
+        sender_description = self.driver.find_element_by_name('description').text
+        return self._format_device_metadata(sender_label, sender_description, sender_id)
+
+    def test_09_2(self, answers, metadata):
+        """
+        Indicating the state of connections via updates received from the IS-04 Query API
+        Third Question
         """
         # The connection on the following receiver will be disconnected at a random moment within the next x seconds.
         # receiver x
@@ -251,11 +296,19 @@ class NC01AutoTest:
         # This includes any latency between the connection being removed and the NCuT updating.
 
         receiver = metadata['receiver']
+        self.driver.find_element_by_link_text('Receivers').click()
+        time.sleep(2)
+        receivers = self.driver.find_elements_by_name('label')
+        active_receiver = [i for i, r in enumerate(receivers) if r.text == receiver['label']][0]
+        active_button = 'true'
 
-        # TODO
-        # Navigate to receivers page 
-        # While loop to check Active, refresh and wait until Active is No
-        # Return Next
-        return "Test not yet implemented"
-  
+        while active_button == 'true':
+            self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
+            time.sleep(3)
+            active_buttons = self.driver.find_elements_by_name('active')
+            active_button = active_buttons[active_receiver].get_attribute('value')
+            time.sleep(2)
+
+        return 'Next'
+
 tests = NC01AutoTest()

@@ -83,15 +83,15 @@ def execute_test():
     Call relevant test method and retrieve answers
     Update json and send back to test suite
     """
-    test_name = data.getName()
+    question_id = data.getQuestionID()
     test_type = data.getTest()
     answers = data.getAnswers()
     metadata = data.getMetadata()
 
-    if test_name.startswith("test_"):
-        method = getattr(tests, test_name)
+    if question_id.startswith("test_"):
+        method = getattr(tests, question_id)
         if callable(method):
-            print(" * Running " + test_name)
+            print(" * Running " + question_id)
             test_result = method(answers, metadata)
 
             # Verify answer given matches one of those sent
@@ -100,21 +100,21 @@ def execute_test():
             elif test_type == 'radio':
                 # Should be single answer matching one of the given answers
                 if test_result not in answers:
-                    print("* Invalid answer returned for ", test_name)
+                    print("* Invalid answer returned for ", question_id)
                     test_result = 'invalid answer'
             elif test_type == 'checkbox':
                 # Verify multiple answers in answers and return list
                 for answer in test_result:
                     if answer not in answers:
-                        print(" ! Invalid answer returned for ", test_name)
+                        print(" ! Invalid answer returned for ", question_id)
                         test_result = 'invalid answer'
             data.setAnswer(test_result)
 
-    elif test_name == 'pre_tests_message':
+    elif question_id == 'pre_tests_message':
         # Beginning of test set, return next to confirm starting tests
         data.setAnswer('Next')
     
-    elif test_name == 'post_tests_message':
+    elif question_id == 'post_tests_message':
         # End of test set, return next to confirm end and close webdriver window
         data.setAnswer('Next')
         tests.driver.close()

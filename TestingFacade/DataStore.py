@@ -17,11 +17,12 @@ import json
 
 class DataStore:
     """
-    Store json with test question details for use with JTNM test suite and automated tests
+    Store json with test question details for use with NMOS Controller test suite and Testing Facade
     """
 
     def __init__(self):
         self.test_type = None
+        self.question_id = None
         self.name = None
         self.description = None
         self.question = None
@@ -36,6 +37,7 @@ class DataStore:
 
     def clear(self):
         self.test_type = None
+        self.question_id = None
         self.name = None
         self.description = None
         self.question = None
@@ -54,6 +56,7 @@ class DataStore:
     def setJson(self, json_str):
         self.status = "Test"
         self.test_type = json_str["test_type"]
+        self.question_id = json_str["question_id"]
         self.name = json_str["name"]
         self.description = json_str["description"]
         self.question = json_str["question"]
@@ -63,11 +66,12 @@ class DataStore:
         self.url_for_response = json_str["url_for_response"]
         self.answer_response = json_str["answer_response"]
         self.time_answered = json_str["time_answered"]
-        self.metadata = json_str['metadata']
+        self.metadata = json_str["metadata"]
 
     def getJson(self):
         json_data = {
             "test_type": self.test_type,
+            "question_id": self.question_id,
             "name": self.name,
             "description": self.description,
             "question": self.question,
@@ -87,6 +91,9 @@ class DataStore:
 
     def getTest(self):
         return self.test_type
+    
+    def getQuestionID(self):
+        return self.question_id
     
     def getName(self):
         return self.name

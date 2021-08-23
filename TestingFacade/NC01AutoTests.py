@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 
 
 class NC01AutoTest:
@@ -13,13 +14,23 @@ class NC01AutoTest:
         self.NCuT_url = "http://localhost:3000/#/" # url of nmos-js instance
         self.mock_registry_url = "http://127.0.0.1:5102/" # url of mock registry from test suite
         self.multipart_question_storage = {}
-        self.driver = webdriver.Firefox() #selenium driver for browser
+        self.driver = webdriver.Chrome() #selenium driver for browser
         self.driver.implicitly_wait(10) # seconds to wait for elements to load
         # Launch browser, navigate to nmos-js and update query api url to mock registry
         self.driver.get(self.NCuT_url + "Settings")
+        time.sleep(1)
         query_api = self.driver.find_element_by_name("queryapi")
         query_api.clear()
+        if query_api.get_attribute('value') != '':
+            time.sleep(1)
+            query_api.send_keys(Keys.CONTROL + "a")
+            query_api.send_keys(Keys.DELETE)
         query_api.send_keys(self.mock_registry_url + "x-nmos/query/v1.3")
+        # Open menu to show link names if not already open
+        try:
+            self.driver.find_element_by_xpath('//*[@title="Open menu"]').click()
+        except:
+            pass
 
     def _format_device_metadata(self, label, description, id):
         """ Used to format answers based on device metadata """
@@ -32,6 +43,7 @@ class NC01AutoTest:
         """
         self.driver.find_element_by_link_text(resource).click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
+        time.sleep(1)
 
         # Find all resources
         resources = self.driver.find_elements_by_name("label")

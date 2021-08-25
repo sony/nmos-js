@@ -48,17 +48,8 @@ class NC01AutoTest:
         # Find all resources
         resources = self.driver.find_elements_by_name("label")
         resource_labels = [entry.text for entry in resources]
-        resource_list = []
 
-        # loop through resources and gather ids and descriptions
-        for label in resource_labels:
-            self.driver.find_element_by_link_text(label).click()
-            resource_id = self.driver.find_element_by_name("id").text
-            resource_description = self.driver.find_element_by_name("description").text
-            resource_list.append(self._format_device_metadata(label, resource_description, resource_id))
-            self.driver.find_element_by_link_text(resource).click()
-        
-        return resource_list
+        return resource_labels
 
     def test_01(self, answers, metadata):
         """
@@ -88,8 +79,10 @@ class NC01AutoTest:
         """
         # The NCuT should be able to discover all the Senders that are registered in the Registry.
         # Refresh the NCuT's view of the Registry and carefully select the Senders that are available from the following list.
+        labels = self._find_resources("Senders")
+        actual_answers = [answer['answer_id'] for answer in answers if answer['label'] in labels]
 
-        return self._find_resources("Senders")
+        return actual_answers
 
     def test_04(self, answers, metadata):
         """
@@ -97,8 +90,10 @@ class NC01AutoTest:
         """
         # The NCuT should be able to discover all the Receivers that are registered in the Registry.
         # Refresh the NCuT's view of the Registry and carefully select the Receivers that are available from the following list.
+        labels = self._find_resources("Receivers")
+        actual_answers = [answer['answer_id'] for answer in answers if answer['label'] in labels]
 
-        return self._find_resources("Receivers")
+        return actual_answers
 
     def test_05(self, answers, metadata):
         """
@@ -124,9 +119,11 @@ class NC01AutoTest:
 
         # Hmm Assuming only a one item difference always. May need to add an if len==1 check and raise an exception if not
         offline_sender = list(set(self.multipart_question_storage['test_05']) - set(sender_list))
-        self.multipart_question_storage['test_05_1'] = offline_sender
+        self.multipart_question_storage['test_05_1'] = offline_sender[0]
 
-        return offline_sender[0]
+        actual_answer = [answer['answer_id'] for answer in answers if answer['label'] == offline_sender[0]][0]
+
+        return actual_answer
 
     def test_05_2(self, answers, metadata):
         """
@@ -151,12 +148,7 @@ class NC01AutoTest:
             time.sleep(5)
             
         # Check same sender came back
-        self.driver.find_element_by_link_text(last_sender).click()
-        resource_id = self.driver.find_element_by_name("id").text
-        resource_description = self.driver.find_element_by_name("description").text
-        sender_details = self._format_device_metadata(last_sender, resource_description, resource_id)
-        
-        if sender_details == self.multipart_question_storage['test_05_1']:
+        if last_sender == self.multipart_question_storage['test_05_1']:
             return "Next"
         else:
             return "Unrecognised Sender"
@@ -173,29 +165,22 @@ class NC01AutoTest:
         self.driver.find_element_by_link_text('Receivers').click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
         
-        # Find all receivers
-        receivers = self.driver.find_elements_by_name("label")
-        receiver_labels = [receiver.text for receiver in receivers]
-        potential_answers = []
+        # Find new receivers
+        receiver_labels = [answer['label'] for answer in answers]
+        labels = []
 
         # loop through receivers and check if connection tab is disabled
         for receiver in receiver_labels:
             self.driver.find_element_by_link_text(receiver).click()
-            receiver_id = self.driver.find_element_by_name("id").text
-            receiver_description = self.driver.find_element_by_name("description").text
             
             connect_button = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.NAME, "connect"))) 
             time.sleep(3)
 
             if connect_button.get_attribute("aria-disabled") == 'false':
-                potential_answers.append(self._format_device_metadata(receiver, receiver_description, receiver_id))
+                labels.append(receiver)
             self.driver.find_element_by_link_text('Receivers').click()
 
-        # Remove the connectable receivers that aren't part of the answer set given
-        actual_answers = []
-        for answer in potential_answers:
-            if answer in answers:
-                actual_answers.append(answer)
+        actual_answers = [answer['answer_id'] for answer in answers if answer['label'] in labels]
 
         return actual_answers
 
@@ -275,11 +260,10 @@ class NC01AutoTest:
         active_row = [i for i, b in enumerate(active_buttons) if b.get_attribute('value') == "true"][0]
         receiver = self.driver.find_elements_by_name('label')[active_row]
         receiver_label = receiver.text
-        receiver.click()
-        receiver_id = self.driver.find_element_by_name("id").text
-        receiver_description = self.driver.find_element_by_name("description").text
 
-        return self._format_device_metadata(receiver_label, receiver_description, receiver_id)
+        actual_answer = [answer['answer_id'] for answer in answers if answer['label'] == receiver_label][0]
+
+        return actual_answer
 
     def test_09_1(self, answers, metadata):
         """
@@ -295,12 +279,11 @@ class NC01AutoTest:
         active.click()
 
         # Find sender from receiver's active tab
-        self.driver.find_element_by_name('sender').click()
-        sender_label = self.driver.find_element_by_name('label').text
-        sender_id = self.driver.find_element_by_name('id').text
-        sender_description = self.driver.find_element_by_name('description').text
+        sender_label = self.driver.find_element_by_name('sender').text
 
-        return self._format_device_metadata(sender_label, sender_description, sender_id)
+        actual_answer = [answer['answer_id'] for answer in answers if answer['label'] == sender_label][0]
+
+        return actual_answer
 
     def test_09_2(self, answers, metadata):
         """

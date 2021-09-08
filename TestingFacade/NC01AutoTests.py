@@ -79,8 +79,21 @@ class NC01AutoTest:
         """
         # The NCuT should be able to discover all the Senders that are registered in the Registry.
         # Refresh the NCuT's view of the Registry and carefully select the Senders that are available from the following list.
-        labels = self._find_resources("Senders")
-        actual_answers = [answer['answer_id'] for answer in answers if answer['label'] in labels]
+        self.driver.find_element_by_link_text('Senders').click()
+        self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
+        time.sleep(1)
+        actual_answers = []
+
+        for i in range(len(answers)):
+            senders = self.driver.find_elements_by_name('label')
+            sender_labels = [sender.text for sender in senders]
+            actual_answers += [answer['answer_id'] for answer in answers if answer['label'] in sender_labels]
+
+            next_button = self.driver.find_element_by_name('next')
+            if next_button.get_attribute('disabled'):
+                break
+            else:
+                next_button.click()
 
         return actual_answers
 
@@ -90,8 +103,21 @@ class NC01AutoTest:
         """
         # The NCuT should be able to discover all the Receivers that are registered in the Registry.
         # Refresh the NCuT's view of the Registry and carefully select the Receivers that are available from the following list.
-        labels = self._find_resources("Receivers")
-        actual_answers = [answer['answer_id'] for answer in answers if answer['label'] in labels]
+        self.driver.find_element_by_link_text('Receivers').click()
+        self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
+        time.sleep(1)        
+        actual_answers = []
+
+        for i in range(len(answers)):
+            receivers = self.driver.find_elements_by_name('label')
+            receiver_labels = [receiver.text for receiver in receivers]
+            actual_answers += [answer['answer_id'] for answer in answers if answer['label'] in receiver_labels]
+
+            next_button = self.driver.find_element_by_name('next')
+            if next_button.get_attribute('disabled'):
+                break
+            else:
+                next_button.click()
 
         return actual_answers
 

@@ -279,7 +279,7 @@ class NC01AutoTest:
 
         self.driver.find_element_by_link_text('Receivers').click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
-        
+        time.sleep(1)
         # Assuming only one active receiver
         # Find the row where the active button is true
         active_buttons = self.driver.find_elements_by_name('active')

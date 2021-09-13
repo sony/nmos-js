@@ -85,33 +85,23 @@ class DataStore:
         }
         return json.dumps(json_data)
 
+    def getAnswerJson(self):
+        json_data = {
+            "name": self.name,
+            "answer_response": self.answer_response,
+            "time_answered": self.time_answered
+        }
+        return json.dumps(json_data)
+
     def setAnswer(self, answer):
         self.answer_response = answer
         self.time_answered = time.time()
-
-    def getTest(self):
-        return self.test_type
     
     def getQuestionID(self):
         return self.question_id
-    
-    def getName(self):
-        return self.name
-
-    def getDescription(self):
-        return self.description
-
-    def getQuestion(self):
-        return self.question
 
     def getAnswers(self):
         return self.answers
-
-    def getTime(self):
-        return self.time_sent
-    
-    def getTimeout(self):
-        return self.timeout
 
     def getUrl(self):
         return self.url_for_response

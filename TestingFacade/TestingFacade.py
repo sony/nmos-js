@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import random
 import requests
 import json
 from threading import Thread
@@ -108,7 +107,7 @@ def execute_test():
         return
 
     # POST response back to test suite with answer_response
-    do_request('POST', data.getUrl(), json=json.loads(data.getJson()))
+    do_request('POST', data.getUrl(), json=json.loads(data.getAnswerJson()))
     return 
 
 

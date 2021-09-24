@@ -90,7 +90,9 @@ def execute_test():
         method = getattr(tests, question_id)
         if callable(method):
             print(" * Running " + question_id)
+            tests.set_up_test()
             test_result = method(answers, metadata)
+            tests.tear_down_test()
             data.setAnswer(test_result)
 
     elif question_id == 'pre_tests_message':
@@ -100,7 +102,6 @@ def execute_test():
     elif question_id == 'post_tests_message':
         # End of test set, return next to confirm end and close webdriver window
         data.setAnswer('Next')
-        tests.driver.close()
 
     else:
         # Not a recognised part of test suite

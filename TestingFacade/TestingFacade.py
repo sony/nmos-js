@@ -102,6 +102,7 @@ def execute_test():
     elif question_id == 'post_tests_message':
         # End of test set, return next to confirm end and close webdriver window
         data.setAnswer('Next')
+        print(' *** Tests Complete ***')
 
     else:
         # Not a recognised part of test suite

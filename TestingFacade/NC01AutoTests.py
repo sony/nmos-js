@@ -101,6 +101,7 @@ class NC01AutoTest:
                 break
             else:
                 next_button.click()
+                time.sleep(1)
 
         return actual_answers
 
@@ -125,6 +126,7 @@ class NC01AutoTest:
                 break
             else:
                 next_button.click()
+                time.sleep(1)
 
         return actual_answers
 
@@ -175,10 +177,11 @@ class NC01AutoTest:
         # Find all senders, keep checking until same as number of senders at start of test
         while len(sender_list) < len(self.multipart_question_storage['test_05']):
             self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
+            time.sleep(1)
             senders = self.driver.find_elements_by_name("label")
             sender_list.update([entry.text for entry in senders])
             last_sender = senders[-1].text
-            time.sleep(5)
+            time.sleep(4)
             
         # Check same sender came back
         if last_sender == self.multipart_question_storage['test_05_1']:
@@ -197,7 +200,8 @@ class NC01AutoTest:
 
         self.driver.find_element_by_link_text('Receivers').click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
-        
+        time.sleep(1)
+
         # Find new receivers
         receiver_labels = [answer['label'] for answer in answers]
         labels = []
@@ -230,6 +234,7 @@ class NC01AutoTest:
 
         self.driver.find_element_by_link_text('Receivers').click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
+        time.sleep(1)
         self.driver.find_element_by_link_text(receiver['label']).click()
 
         connect = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.NAME, "connect")))
@@ -263,6 +268,7 @@ class NC01AutoTest:
 
         self.driver.find_element_by_link_text('Receivers').click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
+        time.sleep(1)
 
         # Find the row for the given receiver and click the deactivate button
         receivers = self.driver.find_elements_by_name('label')
@@ -332,6 +338,7 @@ class NC01AutoTest:
         receiver = metadata['receiver']
         self.driver.find_element_by_link_text('Receivers').click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
+        time.sleep(1)
         
         # Find currently active receiver
         receivers = self.driver.find_elements_by_name('label')
@@ -341,9 +348,10 @@ class NC01AutoTest:
         # Periodically refresh until active button is false
         while active_button == 'true':
             self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
+            time.sleep(1)
             active_buttons = self.driver.find_elements_by_name('active')
             active_button = active_buttons[active_receiver].get_attribute('value')
-            time.sleep(5)
+            time.sleep(4)
 
         return 'Next'
 

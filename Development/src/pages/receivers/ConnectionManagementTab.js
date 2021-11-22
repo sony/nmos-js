@@ -45,8 +45,29 @@ import {
 
 const ConnectionManagementTab = ({ receiverData, basePath }) => {
     const baseFilter = useMemo(() => {
+        let transport = get(receiverData, 'transport');
+        // Transport URNs use the following construction:
+        // <URN-base>[.<subclassification>][/<version>]
+        // Ideally, for an "rtp" receiver (a base classification):
+        // - match "rtp" senders (the base classification)
+        // - match "rtp.mcast" or "rtp.ucast" senders (any subclassification)
+        // Ideally, for an "rtp.mcast" receiver (a specific subclassification):
+        // - match "rtp.mcast" senders (the same subclassification)
+        // - match "rtp" senders (the base classification), since these senders may be in multicast mode
+        // - do not match "rtp.ucast" senders (a different subclassification)
+        // This can be done with a single RQL matches() call but not using basic query syntax
+        if (apiUsingRql(QUERY_API)) {
+            const dot = transport.indexOf('.');
+            const slash = transport.indexOf('/');
+            if (dot !== -1 && (slash === -1 || dot < slash)) {
+                const base = transport.substring(0, dot);
+                // match transport subclassification or its URN-base with no subclassification
+                // ('|' separates alternatives, '$' means match end of string)
+                transport = transport + '|' + base + '$';
+            }
+        }
         return {
-            transport: get(receiverData, 'transport'),
+            transport,
             '$flow.format': get(receiverData, 'format'),
             ...(queryVersion() >= 'v1.1' && {
                 '$flow.media_type': get(receiverData, 'caps.media_types'),

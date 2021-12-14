@@ -14,15 +14,20 @@
 
 import requests
 import json
+import sys
 from threading import Thread
 from flask import Flask, request, Response
 from DataStore import data
-from NC01AutoTests import tests
+from IS0404AutoTest import IS0404tests
+from IS0503AutoTest import IS0503tests
 
+TEST_SETS = {'IS0404': IS0404tests, 
+             'IS0503': IS0503tests}
 
 app = Flask(__name__)
 
-@app.route('/x-nmos/testing-facade/<version>', methods=['POST'], strict_slashes=False)
+
+@app.route('/x-nmos/controller-tests/<version>', methods=['POST'], strict_slashes=False)
 def nc01_tests_post(version):
     # Should be json from Test Suite with questions
     json_list = ['test_type', 'name', 'description', 'question', 'answers', 'time_sent', 'url_for_response']
@@ -86,6 +91,8 @@ def execute_test():
     answers = data.getAnswers()
     metadata = data.getMetadata()
 
+    tests = TEST_SUITE
+
     if question_id.startswith("test_"):
         method = getattr(tests, question_id)
         if callable(method):
@@ -114,4 +121,9 @@ def execute_test():
 
 
 if __name__ == "__main__":
+    global TEST_SUITE
+    for i, arg in enumerate(sys.argv):
+        if arg == '--suite':
+            TEST_SUITE = TEST_SETS[sys.argv[i+1]]
+            
     app.run(host='0.0.0.0', port=5001)

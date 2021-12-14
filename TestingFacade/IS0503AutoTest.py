@@ -7,7 +7,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 
 
-class NC01AutoTest:
+class IS0503AutoTest:
     """
     Automated version of NMOS Controller test suite without Testing Façade
     """
@@ -60,137 +60,6 @@ class NC01AutoTest:
 
     def test_01(self, answers, metadata):
         """
-        Ensure NCuT uses DNS-SD to find registry
-        """
-        return "NMOS-js does not use DNS-SD to find registry"
-
-    def test_02(self, answers, metadata):
-        """
-        Ensure NCuT can access the IS-04 Query API
-        """
-        # Use the NCuT to browse the Senders and Receivers on the discovered Registry via the selected IS-04 Query API.
-        # Once you have finished browsing click the 'Next' button.
-        # Successful browsing of the Registry will be automatically logged by the test framework.
-        
-        # Browse senders and receivers
-        self.driver.find_element_by_link_text('Senders').click()
-        time.sleep(2)
-        self.driver.find_element_by_link_text('Receivers').click()
-        time.sleep(2)
-
-        return "Next"
-
-    def test_03(self, answers, metadata):
-        """
-        Query API should be able to discover all the senders that are registered in the Registry
-        """
-        # The NCuT should be able to discover all the Senders that are registered in the Registry.
-        # Refresh the NCuT's view of the Registry and carefully select the Senders that are available from the following list.
-        self.driver.find_element_by_link_text('Senders').click()
-        self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
-        time.sleep(1)
-        actual_answers = []
-
-        for i in range(len(answers)):
-            senders = self.driver.find_elements_by_name('label')
-            sender_labels = [sender.text for sender in senders]
-            actual_answers += [answer['answer_id'] for answer in answers if answer['label'] in sender_labels]
-
-            next_button = self.driver.find_element_by_name('next')
-            if next_button.get_attribute('disabled'):
-                break
-            else:
-                next_button.click()
-                time.sleep(1)
-
-        return actual_answers
-
-    def test_04(self, answers, metadata):
-        """
-        Query API should be able to discover all the receivers that are registered in the Registry
-        """
-        # The NCuT should be able to discover all the Receivers that are registered in the Registry.
-        # Refresh the NCuT's view of the Registry and carefully select the Receivers that are available from the following list.
-        self.driver.find_element_by_link_text('Receivers').click()
-        self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
-        time.sleep(1)        
-        actual_answers = []
-
-        for i in range(len(answers)):
-            receivers = self.driver.find_elements_by_name('label')
-            receiver_labels = [receiver.text for receiver in receivers]
-            actual_answers += [answer['answer_id'] for answer in answers if answer['label'] in receiver_labels]
-
-            next_button = self.driver.find_element_by_name('next')
-            if next_button.get_attribute('disabled'):
-                break
-            else:
-                next_button.click()
-                time.sleep(1)
-
-        return actual_answers
-
-    def test_05(self, answers, metadata):
-        """
-        Reference Sender is put offline then back online
-        First question
-        """
-        # The NCuT should be able to discover and dynamically update all the Senders that are registered in the Registry.
-        # Use the NCuT to browse and take note of the Senders that are available.
-        # After the 'Next' button has been clicked one of those senders will be put 'offline'.
-        
-        # Save current list of senders
-        self.multipart_question_storage['test_05'] = self._find_resources("Senders")
-        
-        return "Next"
-
-    def test_05_1(self, answers, metadata):
-        """
-        Reference Sender is put offline then back online
-        Second question
-        """
-        # Please refresh your NCuT and select the sender which has been put 'offline'
-        sender_list = self._find_resources("Senders")
-
-        # Hmm Assuming only a one item difference always. May need to add an if len==1 check and raise an exception if not
-        offline_sender = list(set(self.multipart_question_storage['test_05']) - set(sender_list))
-        self.multipart_question_storage['test_05_1'] = offline_sender[0]
-
-        actual_answer = [answer['answer_id'] for answer in answers if answer['label'] == offline_sender[0]][0]
-
-        return actual_answer
-
-    def test_05_2(self, answers, metadata):
-        """
-        Reference Sender is put offline then back online
-        Third question
-        """
-        # The sender which was put 'offline' will come back online at a random moment within the next x seconds.
-        # As soon as the NCuT detects the sender has come back online please press the 'Next' button.
-        # The button must be pressed within x seconds of the Sender being put back 'online'.
-        # This includes any latency between the Sender being put 'online' and the NCuT updating.
-
-        self.driver.find_element_by_link_text("Senders").click()
-        self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
-        sender_list = set()
-
-        # Find all senders, keep checking until same as number of senders at start of test
-        while len(sender_list) < len(self.multipart_question_storage['test_05']):
-            self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
-            time.sleep(1)
-            senders = self.driver.find_elements_by_name("label")
-            sender_list.update([entry.text for entry in senders])
-            last_sender = senders[-1].text
-            time.sleep(4)
-            
-        # Check same sender came back
-        if last_sender == self.multipart_question_storage['test_05_1']:
-            return "Next"
-        else:
-            return "Unrecognised Sender"
-
-    def test_06(self, answers, metadata):
-        """
         Identify which Receiver devices are controllable via IS-05
         """
         # Some of the discovered Receivers are controllable via IS-05, for instance, allowing Senders to be connected.
@@ -198,13 +67,8 @@ class NC01AutoTest:
         # Please refresh your NCuT and select the Receivers that have a connection API from the list below.
         # Be aware that if your NCuT only displays Receivers which have a connection API, some of the Receivers in the following list may not be visible.
 
-        self.driver.find_element_by_link_text('Receivers').click()
-        self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
-        time.sleep(1)
-
-        # Find new receivers
-        receiver_labels = [answer['label'] for answer in answers]
-        labels = []
+        receiver_labels = self._find_resources('Receivers')
+        connectable_receivers = []
 
         # loop through receivers and check if connection tab is disabled
         for receiver in receiver_labels:
@@ -214,14 +78,14 @@ class NC01AutoTest:
             time.sleep(3)
 
             if connect_button.get_attribute("aria-disabled") == 'false':
-                labels.append(receiver)
+                connectable_receivers.append(receiver)
             self.driver.find_element_by_link_text('Receivers').click()
 
-        actual_answers = [answer['answer_id'] for answer in answers if answer['label'] in labels]
+        actual_answers = [answer['answer_id'] for answer in answers if answer['label'] in connectable_receivers]
 
         return actual_answers
 
-    def test_07(self, answers, metadata):
+    def test_02(self, answers, metadata):
         """
         Instruct Receiver to subscribe to a Sender’s Flow via IS-05
         """
@@ -255,7 +119,7 @@ class NC01AutoTest:
         else:
             return "Something went wrong"
 
-    def test_08(self, answers, metadata):
+    def test_03(self, answers, metadata):
         """
         Disconnecting a Receiver from a connected Flow via IS-05
         """
@@ -282,7 +146,7 @@ class NC01AutoTest:
         else:
             return "Something went wrong"
 
-    def test_09(self, answers, metadata):
+    def test_04(self, answers, metadata):
         """
         Indicating the state of connections via updates received from the IS-04 Query API
         First question
@@ -304,7 +168,7 @@ class NC01AutoTest:
 
         return actual_answer
 
-    def test_09_1(self, answers, metadata):
+    def test_04_1(self, answers, metadata):
         """
         Indicating the state of connections via updates received from the IS-04 Query API
         Second question
@@ -324,7 +188,7 @@ class NC01AutoTest:
 
         return actual_answer
 
-    def test_09_2(self, answers, metadata):
+    def test_04_2(self, answers, metadata):
         """
         Indicating the state of connections via updates received from the IS-04 Query API
         Third Question
@@ -355,4 +219,4 @@ class NC01AutoTest:
 
         return 'Next'
 
-tests = NC01AutoTest()
+IS0503tests = IS0503AutoTest()

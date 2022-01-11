@@ -29,9 +29,8 @@ class DataStore:
         self.answers = None
         self.time_sent = None
         self.timeout = None
-        self.url_for_response = None
+        self.answer_uri = None
         self.answer_response = None
-        self.time_answered = None
         self.status = "Empty"
         self.metadata = None
 
@@ -44,9 +43,8 @@ class DataStore:
         self.answers = None
         self.time_sent = None
         self.timeout = None
-        self.url_for_response = None
+        self.answer_uri = None
         self.answer_response = None
-        self.time_answered = None
         self.status = "Empty"
         self.metadata = None
 
@@ -63,9 +61,7 @@ class DataStore:
         self.answers = json_str["answers"]
         self.time_sent = json_str["time_sent"]
         self.timeout = json_str['timeout']
-        self.url_for_response = json_str["url_for_response"]
-        self.answer_response = json_str["answer_response"]
-        self.time_answered = json_str["time_answered"]
+        self.answer_uri = json_str["answer_uri"]
         self.metadata = json_str["metadata"]
 
     def getJson(self):
@@ -78,24 +74,20 @@ class DataStore:
             "answers": self.answers,
             "time_sent": self.time_sent,
             "timeout": self.timeout,
-            "url_for_response": self.url_for_response,
-            "answer_response": self.answer_response,
-            "time_answered": self.time_answered,
+            "answer_uri": self.answer_uri,
             "metadata": self.metadata
         }
         return json.dumps(json_data)
 
     def getAnswerJson(self):
         json_data = {
-            "name": self.name,
-            "answer_response": self.answer_response,
-            "time_answered": self.time_answered
+            "question_id": self.question_id,
+            "answer_response": self.answer_response
         }
         return json.dumps(json_data)
 
     def setAnswer(self, answer):
         self.answer_response = answer
-        self.time_answered = time.time()
     
     def getQuestionID(self):
         return self.question_id
@@ -104,7 +96,7 @@ class DataStore:
         return self.answers
 
     def getUrl(self):
-        return self.url_for_response
+        return self.answer_uri
 
     def getMetadata(self):
         return self.metadata

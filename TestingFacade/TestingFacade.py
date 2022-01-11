@@ -27,10 +27,10 @@ TEST_SETS = {'IS0404': IS0404tests,
 app = Flask(__name__)
 
 
-@app.route('/x-nmos/controller-tests/<version>', methods=['POST'], strict_slashes=False)
+@app.route('/x-nmos/testingfacade/<version>', methods=['POST'], strict_slashes=False)
 def nc01_tests_post(version):
     # Should be json from Test Suite with questions
-    json_list = ['test_type', 'name', 'description', 'question', 'answers', 'time_sent', 'url_for_response']
+    json_list = ['test_type', 'name', 'description', 'question', 'answers', 'time_sent', 'answer_uri']
 
     if 'clear' in request.json and request.json['clear'] == 'True':
         # End of current tests, clear data store
@@ -45,7 +45,7 @@ def nc01_tests_post(version):
         # Run test in new thread
         thread = Thread(target=execute_test)
         thread.start()
-    return 'OK'
+    return '', 202
 
 @app.route('/controller_questions/', methods=['GET'], strict_slashes=False)
 def nc01_tests_get():
@@ -104,11 +104,11 @@ def execute_test():
 
     elif question_id == 'pre_tests_message':
         # Beginning of test set, return next to confirm starting tests
-        data.setAnswer('Next')
+        data.setAnswer(None)
     
     elif question_id == 'post_tests_message':
         # End of test set, return next to confirm end and close webdriver window
-        data.setAnswer('Next')
+        data.setAnswer(None)
         print(' *** Tests Complete ***')
 
     else:

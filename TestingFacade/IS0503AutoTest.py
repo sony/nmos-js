@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import NoSuchElementException
 
 
 class IS0503AutoTest:
@@ -12,15 +13,15 @@ class IS0503AutoTest:
     Automated version of NMOS Controller test suite without Testing Façade
     """
     def __init__(self):
-        self.NCuT_url = "http://localhost:3000/#/" # url of nmos-js instance
-        self.mock_registry_url = "http://127.0.0.1:5102/" # url of mock registry from test suite
+        self.NCuT_url = "http://localhost:3000/#/"  # url of nmos-js instance
+        self.mock_registry_url = "http://127.0.0.1:5102/"  # url of mock registry from test suite
         self.multipart_question_storage = {}
-        
-    def set_up_test(self):    
+
+    def set_up_test(self):
         options = Options()
         options.headless = True
-        self.driver = webdriver.Chrome(options=options) #selenium driver for browser
-        self.driver.implicitly_wait(10) # seconds to wait for elements to load
+        self.driver = webdriver.Chrome(options=options)  # selenium driver for browser
+        self.driver.implicitly_wait(10)  # seconds to wait for elements to load
         # Launch browser, navigate to nmos-js and update query api url to mock registry
         self.driver.get(self.NCuT_url + "Settings")
         query_api = self.driver.find_element_by_name("queryapi")
@@ -33,7 +34,7 @@ class IS0503AutoTest:
         # Open menu to show link names if not already open
         try:
             self.driver.find_element_by_xpath('//*[@title="Open menu"]').click()
-        except:
+        except NoSuchElementException:
             pass
 
     def tear_down_test(self):
@@ -62,10 +63,15 @@ class IS0503AutoTest:
         """
         Identify which Receiver devices are controllable via IS-05
         """
-        # Some of the discovered Receivers are controllable via IS-05, for instance, allowing Senders to be connected.
-        # Additional Receivers have just been registered with the Registry, a subset of which have a connection API.
-        # Please refresh your NCuT and select the Receivers that have a connection API from the list below.
-        # Be aware that if your NCuT only displays Receivers which have a connection API, some of the Receivers in the following list may not be visible.
+        # Some of the discovered Receivers are controllable via IS-05,
+        # for instance, allowing Senders to be connected.
+        # Additional Receivers have just been registered with the Registry,
+        # a subset of which have a connection API.
+        # Please refresh your NCuT and select the Receivers that have a
+        # connection API from the list below.
+        # Be aware that if your NCuT only displays Receivers which have a
+        # connection API, some of the Receivers in the following list may not
+        # be visible.
 
         receiver_labels = self._find_resources('Receivers')
         connectable_receivers = []
@@ -73,8 +79,8 @@ class IS0503AutoTest:
         # loop through receivers and check if connection tab is disabled
         for receiver in receiver_labels:
             self.driver.find_element_by_link_text(receiver).click()
-            
-            connect_button = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.NAME, "connect"))) 
+
+            connect_button = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.NAME, "connect")))
             time.sleep(3)
 
             if connect_button.get_attribute("aria-disabled") == 'false':
@@ -89,9 +95,11 @@ class IS0503AutoTest:
         """
         Instruct Receiver to subscribe to a Sender’s Flow via IS-05
         """
-        # All flows that are available in a Sender should be able to be connected to a Receiver.
-        # Use the NCuT to perform an 'immediate' activation between sender: x and receiver: y
-        # Click the 'Next' button once the connection is active.'
+        # All flows that are available in a Sender should be able to be
+        # connected to a Receiver.
+        # Use the NCuT to perform an 'immediate' activation between
+        # sender: x and receiver: y
+        # Click the 'Next' button once the connection is active.
 
         sender = metadata['sender']
         receiver = metadata['receiver']
@@ -112,7 +120,7 @@ class IS0503AutoTest:
         activate_button.click()
         time.sleep(3)
 
-        active_sender = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.NAME, "sender"))) 
+        active_sender = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.NAME, "sender")))
 
         if active_sender.text == sender['label']:
             return "Next"
@@ -123,11 +131,12 @@ class IS0503AutoTest:
         """
         Disconnecting a Receiver from a connected Flow via IS-05
         """
-        # IS-05 provides a mechanism for removing an active connection through its API.
-        # Use the NCuT to remove the connection between sender: x and receiver: y
+        # IS-05 provides a mechanism for removing an active connection
+        # through its API.
+        # Use the NCuT to remove the connection between sender: x and
+        # receiver: y
         # Click the 'Next' button once the connection has been removed.'
 
-        sender = metadata['sender']
         receiver = metadata['receiver']
 
         self.driver.find_element_by_link_text('Receivers').click()
@@ -148,10 +157,12 @@ class IS0503AutoTest:
 
     def test_04(self, answers, metadata):
         """
-        Indicating the state of connections via updates received from the IS-04 Query API
+        Indicating the state of connections via updates received from the
+        IS-04 Query API
         First question
         """
-        # The NCuT should be able to monitor and update the connection status of all registered Devices. \
+        # The NCuT should be able to monitor and update the connection status
+        # of all registered Devices.
         # Use the NCuT to identify the receiver that has just been activated.
 
         self.driver.find_element_by_link_text('Receivers').click()
@@ -170,7 +181,8 @@ class IS0503AutoTest:
 
     def test_04_1(self, answers, metadata):
         """
-        Indicating the state of connections via updates received from the IS-04 Query API
+        Indicating the state of connections via updates received from the
+        IS-04 Query API
         Second question
         """
         # Use the NCuT to identify the sender currently connected to receiver x
@@ -190,20 +202,25 @@ class IS0503AutoTest:
 
     def test_04_2(self, answers, metadata):
         """
-        Indicating the state of connections via updates received from the IS-04 Query API
+        Indicating the state of connections via updates received from the
+        IS-04 Query API
         Third Question
         """
-        # The connection on the following receiver will be disconnected at a random moment within the next x seconds.
+        # The connection on the following receiver will be disconnected
+        # at a random moment within the next x seconds.
         # receiver x
-        # As soon as the NCuT detects the connection is inactive please press the 'Next' button.
-        # The button must be pressed within x seconds of the connection being removed. 
-        # This includes any latency between the connection being removed and the NCuT updating.
+        # As soon as the NCuT detects the connection is inactive please
+        # press the 'Next' button.
+        # The button must be pressed within x seconds of the connection
+        # being removed.
+        # This includes any latency between the connection being removed
+        # and the NCuT updating.
 
         receiver = metadata['receiver']
         self.driver.find_element_by_link_text('Receivers').click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
         time.sleep(1)
-        
+
         # Find currently active receiver
         receivers = self.driver.find_elements_by_name('label')
         active_receiver = [i for i, r in enumerate(receivers) if r.text == receiver['label']][0]
@@ -218,5 +235,6 @@ class IS0503AutoTest:
             time.sleep(4)
 
         return 'Next'
+
 
 IS0503tests = IS0503AutoTest()

@@ -21,7 +21,7 @@ from DataStore import data
 from IS0404AutoTest import IS0404tests
 from IS0503AutoTest import IS0503tests
 
-TEST_SETS = {'IS0404': IS0404tests, 
+TEST_SETS = {'IS0404': IS0404tests,
              'IS0503': IS0503tests}
 
 app = Flask(__name__)
@@ -30,7 +30,8 @@ app = Flask(__name__)
 @app.route('/x-nmos/testingfacade/<version>', methods=['POST'], strict_slashes=False)
 def nc01_tests_post(version):
     # Should be json from Test Suite with questions
-    json_list = ['test_type', 'name', 'description', 'question', 'answers', 'time_sent', 'answer_uri']
+    json_list = ['test_type', 'name', 'description', 'question', 'answers',
+                 'time_sent', 'answer_uri']
 
     if 'clear' in request.json and request.json['clear'] == 'True':
         # End of current tests, clear data store
@@ -47,6 +48,7 @@ def nc01_tests_post(version):
         thread.start()
     return '', 202
 
+
 @app.route('/controller_questions/', methods=['GET'], strict_slashes=False)
 def nc01_tests_get():
     return Response(data.getJson(), mimetype='application/json')
@@ -56,7 +58,8 @@ def do_request(method, url, **kwargs):
     """Perform a basic HTTP request with appropriate error handling"""
     try:
         s = requests.Session()
-        # The only place we add headers is auto OPTIONS for CORS, which should not check Auth
+        # The only place we add headers is auto OPTIONS for CORS, which
+        # should not check Auth
         if "headers" in kwargs and kwargs["headers"] is None:
             del kwargs["headers"]
 
@@ -81,10 +84,11 @@ def do_request(method, url, **kwargs):
     except requests.exceptions.RequestException as e:
         return False, str(e)
 
+
 def execute_test():
     """
-    After test data has been sent to x-nmos/testing-facade figure out which test was sent.
-    Call relevant test method and retrieve answers
+    After test data has been sent to x-nmos/testing-facade figure out which
+    test was sent. Call relevant test method and retrieve answers.
     Update json and send back to test suite
     """
     question_id = data.getQuestionID()
@@ -103,11 +107,11 @@ def execute_test():
             data.setAnswer(test_result)
 
     elif question_id == 'pre_tests_message':
-        # Beginning of test set, return next to confirm starting tests
+        # Beginning of test set, return to confirm starting tests
         data.setAnswer(None)
-    
+
     elif question_id == 'post_tests_message':
-        # End of test set, return next to confirm end and close webdriver window
+        # End of test set, return to confirm end and close webdriver window
         data.setAnswer(None)
         print(' *** Tests Complete ***')
 
@@ -117,7 +121,7 @@ def execute_test():
 
     # POST response back to test suite with answer_response
     do_request('POST', data.getUrl(), json=json.loads(data.getAnswerJson()))
-    return 
+    return
 
 
 if __name__ == "__main__":
@@ -125,5 +129,5 @@ if __name__ == "__main__":
     for i, arg in enumerate(sys.argv):
         if arg == '--suite':
             TEST_SUITE = TEST_SETS[sys.argv[i+1]]
-            
+
     app.run(host='0.0.0.0', port=5001)

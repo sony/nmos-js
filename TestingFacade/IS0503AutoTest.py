@@ -87,7 +87,7 @@ class IS0503AutoTest:
                 connectable_receivers.append(receiver)
             self.driver.find_element_by_link_text('Receivers').click()
 
-        actual_answers = [answer['answer_id'] for answer in answers if answer['label'] in connectable_receivers]
+        actual_answers = [answer['answer_id'] for answer in answers if answer['resource']['label'] in connectable_receivers]
 
         return actual_answers
 
@@ -175,7 +175,7 @@ class IS0503AutoTest:
         receiver = self.driver.find_elements_by_name('label')[active_row]
         receiver_label = receiver.text
 
-        actual_answer = [answer['answer_id'] for answer in answers if answer['label'] == receiver_label][0]
+        actual_answer = [answer['answer_id'] for answer in answers if answer['resource']['label'] == receiver_label][0]
 
         return actual_answer
 
@@ -196,7 +196,7 @@ class IS0503AutoTest:
         # Find sender from receiver's active tab
         sender_label = self.driver.find_element_by_name('sender').text
 
-        actual_answer = [answer['answer_id'] for answer in answers if answer['label'] == sender_label][0]
+        actual_answer = [answer['answer_id'] for answer in answers if answer['resource']['label'] == sender_label][0]
 
         return actual_answer
 

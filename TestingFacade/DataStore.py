@@ -28,7 +28,6 @@ class DataStore:
         self.description = None
         self.question = None
         self.answers = None
-        self.time_sent = None
         self.timeout = None
         self.answer_uri = None
         self.answer_response = None
@@ -42,7 +41,6 @@ class DataStore:
         self.description = None
         self.question = None
         self.answers = None
-        self.time_sent = None
         self.timeout = None
         self.answer_uri = None
         self.answer_response = None
@@ -60,7 +58,6 @@ class DataStore:
         self.description = json["description"]
         self.question = json["question"]
         self.answers = json["answers"]
-        self.time_sent = json["time_sent"]
         self.timeout = json['timeout']
         self.answer_uri = json["answer_uri"]
         self.metadata = json["metadata"]
@@ -73,7 +70,6 @@ class DataStore:
             "description": self.description,
             "question": self.question,
             "answers": self.answers,
-            "time_sent": self.time_sent,
             "timeout": self.timeout,
             "answer_uri": self.answer_uri,
             "metadata": self.metadata

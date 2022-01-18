@@ -97,7 +97,7 @@ class IS0404AutoTest:
         for i in range(len(answers)):
             senders = self.driver.find_elements_by_name('label')
             sender_labels = [sender.text for sender in senders]
-            actual_answers += [answer['answer_id'] for answer in answers if answer['label'] in sender_labels]
+            actual_answers += [answer['answer_id'] for answer in answers if answer['resource']['label'] in sender_labels]
 
             next_button = self.driver.find_element_by_name('next')
             if next_button.get_attribute('disabled'):
@@ -125,7 +125,7 @@ class IS0404AutoTest:
         for i in range(len(answers)):
             receivers = self.driver.find_elements_by_name('label')
             receiver_labels = [receiver.text for receiver in receivers]
-            actual_answers += [answer['answer_id'] for answer in answers if answer['label'] in receiver_labels]
+            actual_answers += [answer['answer_id'] for answer in answers if answer['resource']['label'] in receiver_labels]
 
             next_button = self.driver.find_element_by_name('next')
             if next_button.get_attribute('disabled'):
@@ -167,7 +167,7 @@ class IS0404AutoTest:
         offline_sender = list(set(self.multipart_question_storage['test_05']) - set(sender_list))
         self.multipart_question_storage['test_05_1'] = offline_sender[0]
 
-        actual_answer = [answer['answer_id'] for answer in answers if answer['label'] == offline_sender[0]][0]
+        actual_answer = [answer['answer_id'] for answer in answers if answer['resource']['label'] == offline_sender[0]][0]
 
         return actual_answer
 

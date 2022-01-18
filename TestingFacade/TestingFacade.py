@@ -27,11 +27,10 @@ TEST_SETS = {'IS0404': IS0404tests,
 app = Flask(__name__)
 
 
-@app.route('/x-nmos/testingfacade/<version>', methods=['POST'], strict_slashes=False)
+@app.route('/x-nmos/testquestion/<version>', methods=['POST'], strict_slashes=False)
 def nc01_tests_post(version):
     # Should be json from Test Suite with questions
-    json_list = ['test_type', 'name', 'description', 'question', 'answers',
-                 'time_sent', 'answer_uri']
+    json_list = ['test_type', 'name', 'description', 'question', 'answers', 'answer_uri']
 
     if 'clear' in request.json and request.json['clear'] == 'True':
         # End of current tests, clear data store

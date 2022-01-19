@@ -125,8 +125,15 @@ def execute_test():
 
 if __name__ == "__main__":
     global TEST_SUITE
+
+    if '--suite' not in sys.argv:
+        sys.exit('You must specify a test suite with --suite')
+
     for i, arg in enumerate(sys.argv):
         if arg == '--suite':
-            TEST_SUITE = TEST_SETS[sys.argv[i+1]]
+            try:
+                TEST_SUITE = TEST_SETS[sys.argv[i+1]]
+            except Exception as e:
+                sys.exit('Invalid test suite selection ' + str(e))
 
     app.run(host='0.0.0.0', port=5001)

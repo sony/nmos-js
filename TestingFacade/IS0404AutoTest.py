@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
+import Config as CONFIG
 
 
 class IS0404AutoTest:
@@ -10,15 +11,15 @@ class IS0404AutoTest:
     Automated version of NMOS Controller test suite without Testing Façade
     """
     def __init__(self):
-        self.NCuT_url = "http://localhost:3000/#/"  # url of nmos-js instance
-        self.mock_registry_url = "http://127.0.0.1:5102/"  # url of mock registry from test suite
+        self.NCuT_url = CONFIG.NCUT_URL
+        self.mock_registry_url = CONFIG.MOCK_REGISTRY_URL
         self.multipart_question_storage = {}
 
     def set_up_test(self):
         options = Options()
-        options.headless = True
+        options.headless = CONFIG.HEADLESS
         self.driver = webdriver.Chrome(options=options)  # selenium driver for browser
-        self.driver.implicitly_wait(10)  # seconds to wait for elements to load
+        self.driver.implicitly_wait(CONFIG.WAIT_TIME)
         # Launch browser, navigate to nmos-js and update query api url to mock registry
         self.driver.get(self.NCuT_url + "Settings")
         query_api = self.driver.find_element_by_name("queryapi")

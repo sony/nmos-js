@@ -4,7 +4,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 import Config as CONFIG
 
@@ -19,9 +18,15 @@ class IS0503AutoTest:
         self.multipart_question_storage = {}
 
     def set_up_test(self):
-        options = Options()
-        options.headless = CONFIG.HEADLESS
-        self.driver = webdriver.Chrome(options=options)  # selenium driver for browser
+        # Set up webdriver
+        browser = getattr(webdriver, CONFIG.BROWSER)
+        try:
+            # Not all webdrivers support options 
+            options = getattr(webdriver, CONFIG.BROWSER + 'Options')()
+            options.headless = CONFIG.HEADLESS
+            self.driver = browser(options=options)
+        except AttributeError:
+            self.driver = browser()
         self.driver.implicitly_wait(CONFIG.WAIT_TIME)
         # Launch browser, navigate to nmos-js and update query api url to mock registry
         self.driver.get(self.NCuT_url + "Settings")

@@ -43,10 +43,6 @@ class IS0404AutoTest:
     def tear_down_test(self):
         self.driver.close()
 
-    def _format_device_metadata(self, label, description, id):
-        """ Used to format answers based on device metadata """
-        return label + ' (' + description + ', ' + id + ')'
-
     def _find_resources(self, resource):
         """
         Navigate to resource page, and return list of resources

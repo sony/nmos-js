@@ -46,25 +46,6 @@ class IS0503AutoTest:
     def tear_down_test(self):
         self.driver.close()
 
-    def _format_device_metadata(self, label, description, id):
-        """ Used to format answers based on device metadata """
-        return label + ' (' + description + ', ' + id + ')'
-
-    def _find_resources(self, resource):
-        """
-        Navigate to resource page, and return list of resources
-        resource: 'senders' 'receivers'
-        """
-        self.driver.find_element_by_link_text(resource).click()
-        self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
-        time.sleep(1)
-
-        # Find all resources
-        resources = self.driver.find_elements_by_name("label")
-        resource_labels = [entry.text for entry in resources]
-
-        return resource_labels
-
     def test_01(self, answers, metadata):
         """
         Identify which Receiver devices are controllable via IS-05
@@ -79,7 +60,12 @@ class IS0503AutoTest:
         # connection API, some of the Receivers in the following list may not
         # be visible.
 
-        receiver_labels = self._find_resources('Receivers')
+        self.driver.find_element_by_link_text('Receivers').click()
+        self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
+        time.sleep(1)
+        resources = self.driver.find_elements_by_name("label")
+        receiver_labels = [entry.text for entry in resources]
+        
         connectable_receivers = []
 
         # loop through receivers and check if connection tab is disabled

@@ -21,7 +21,7 @@ class IS0503AutoTest:
         # Set up webdriver
         browser = getattr(webdriver, CONFIG.BROWSER)
         try:
-            # Not all webdrivers support options 
+            # Not all webdrivers support options
             options = getattr(webdriver, CONFIG.BROWSER + 'Options')()
             options.headless = CONFIG.HEADLESS
             self.driver = browser(options=options)
@@ -50,8 +50,8 @@ class IS0503AutoTest:
         """
         Identify which Receiver devices are controllable via IS-05
         """
-        # A subset of the Receivers registered with the Registry are controllable via IS-05,                        
-        # for instance, allowing Senders to be connected. 
+        # A subset of the Receivers registered with the Registry are controllable via IS-05,
+        # for instance, allowing Senders to be connected.
         # Please refresh your NCuT and select the Receivers
         # that have a Connection API from the list below.
         # Be aware that if your NCuT only displays Receivers which have a Connection API,
@@ -63,7 +63,7 @@ class IS0503AutoTest:
         time.sleep(1)
         resources = self.driver.find_elements_by_name("label")
         receiver_labels = [entry.text for entry in resources]
-        
+
         connectable_receivers = []
 
         # Loop through receivers and check if connection tab is disabled

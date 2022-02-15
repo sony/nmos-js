@@ -18,7 +18,7 @@ class IS0404AutoTest:
         # Set up webdriver
         browser = getattr(webdriver, CONFIG.BROWSER)
         try:
-            # Not all webdrivers support options 
+            # Not all webdrivers support options
             options = getattr(webdriver, CONFIG.BROWSER + 'Options')()
             options.headless = CONFIG.HEADLESS
             self.driver = browser(options=options)
@@ -95,7 +95,7 @@ class IS0404AutoTest:
         # For this test the registry paging limit has been set to 2.
         # If your NCuT implements pagination, you must ensure you view
         # every available page to complete this test.
-        
+
         # Navigate to the Senders page
         self.driver.find_element_by_link_text('Senders').click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()

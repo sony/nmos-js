@@ -50,16 +50,14 @@ class IS0503AutoTest:
         """
         Identify which Receiver devices are controllable via IS-05
         """
-        # Some of the discovered Receivers are controllable via IS-05,
-        # for instance, allowing Senders to be connected.
-        # Additional Receivers have just been registered with the Registry,
-        # a subset of which have a connection API.
-        # Please refresh your NCuT and select the Receivers that have a
-        # connection API from the list below.
-        # Be aware that if your NCuT only displays Receivers which have a
-        # connection API, some of the Receivers in the following list may not
-        # be visible.
+        # A subset of the Receivers registered with the Registry are controllable via IS-05,                        
+        # for instance, allowing Senders to be connected. 
+        # Please refresh your NCuT and select the Receivers
+        # that have a Connection API from the list below.
+        # Be aware that if your NCuT only displays Receivers which have a Connection API,
+        # some of the Receivers in the following list may not be visible.
 
+        # Navigate to receivers page and find all receivers
         self.driver.find_element_by_link_text('Receivers').click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
         time.sleep(1)
@@ -68,7 +66,7 @@ class IS0503AutoTest:
         
         connectable_receivers = []
 
-        # loop through receivers and check if connection tab is disabled
+        # Loop through receivers and check if connection tab is disabled
         for receiver in receiver_labels:
             self.driver.find_element_by_link_text(receiver).click()
 
@@ -79,6 +77,7 @@ class IS0503AutoTest:
                 connectable_receivers.append(receiver)
             self.driver.find_element_by_link_text('Receivers').click()
 
+        # Get answer ids for connectable receivers to send to test suite
         actual_answers = [answer['answer_id'] for answer in answers if answer['resource']['label'] in connectable_receivers]
 
         return actual_answers
@@ -93,9 +92,11 @@ class IS0503AutoTest:
         # sender: x and receiver: y
         # Click the 'Next' button once the connection is active.
 
+        # Get sender and receiver details from metadata sent with question
         sender = metadata['sender']
         receiver = metadata['receiver']
 
+        # Navigate to the chosen receiver's connect tab
         self.driver.find_element_by_link_text('Receivers').click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
         time.sleep(1)
@@ -112,8 +113,8 @@ class IS0503AutoTest:
         activate_button.click()
         time.sleep(3)
 
+        # Check that the connected sender is showing correctly
         active_sender = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.NAME, "sender")))
-
         if active_sender.text == sender['label']:
             return "Next"
         else:
@@ -129,6 +130,7 @@ class IS0503AutoTest:
         # receiver: y
         # Click the 'Next' button once the connection has been removed.'
 
+        # Get the receiver from the metadata sent with the question
         receiver = metadata['receiver']
 
         self.driver.find_element_by_link_text('Receivers').click()
@@ -142,6 +144,7 @@ class IS0503AutoTest:
         deactivate_button.click()
         time.sleep(2)
 
+        # Check that the active switch is now false
         if deactivate_button.get_attribute('value') == "false":
             return "Next"
         else:

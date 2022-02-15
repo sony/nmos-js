@@ -76,6 +76,7 @@ class IS0404AutoTest:
 
         # Browse senders and receivers
         self.driver.find_element_by_link_text('Senders').click()
+        # Sleep to allow contents of page to load
         time.sleep(2)
         self.driver.find_element_by_link_text('Receivers').click()
         time.sleep(2)
@@ -91,22 +92,27 @@ class IS0404AutoTest:
         # registered in the Registry.
         # Refresh the NCuT's view of the Registry and carefully select
         # the Senders that are available from the following list.
+        # For this test the registry paging limit has been set to 2.
+        # If your NCuT implements pagination, you must ensure you view
+        # every available page to complete this test.
+        
+        # Navigate to the Senders page
         self.driver.find_element_by_link_text('Senders').click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
         time.sleep(1)
         actual_answers = []
 
+        # Loop through pages gathering all senders
         for i in range(len(answers)):
             senders = self.driver.find_elements_by_name('label')
+            if len(senders) == 0:
+                break
             sender_labels = [sender.text for sender in senders]
             actual_answers += [answer['answer_id'] for answer in answers if answer['resource']['label'] in sender_labels]
 
             next_button = self.driver.find_element_by_name('next')
-            if next_button.get_attribute('disabled'):
-                break
-            else:
-                next_button.click()
-                time.sleep(1)
+            next_button.click()
+            time.sleep(1)
 
         return actual_answers
 
@@ -119,22 +125,27 @@ class IS0404AutoTest:
         # registered in the Registry.
         # Refresh the NCuT's view of the Registry and carefully select
         # the Receivers that are available from the following list.
+        # For this test the registry paging limit has been set to 2.
+        # If your NCuT implements pagination, you must ensure you view
+        # every available page to complete this test.
+
+        # Navigate to Receivers page
         self.driver.find_element_by_link_text('Receivers').click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
         time.sleep(1)
         actual_answers = []
 
+        # Loop through pages gathering all receivers
         for i in range(len(answers)):
             receivers = self.driver.find_elements_by_name('label')
+            if len(receivers) == 0:
+                break
             receiver_labels = [receiver.text for receiver in receivers]
             actual_answers += [answer['answer_id'] for answer in answers if answer['resource']['label'] in receiver_labels]
 
             next_button = self.driver.find_element_by_name('next')
-            if next_button.get_attribute('disabled'):
-                break
-            else:
-                next_button.click()
-                time.sleep(1)
+            next_button.click()
+            time.sleep(1)
 
         return actual_answers
 
@@ -162,6 +173,8 @@ class IS0404AutoTest:
         """
         # Please refresh your NCuT and select the sender which has been put
         # 'offline'
+
+        # Get current list of senders
         sender_list = self._find_resources("Senders")
 
         # Assuming only a one item difference always.

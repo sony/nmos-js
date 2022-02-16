@@ -28,7 +28,7 @@ app = Flask(__name__)
 
 
 @app.route('/x-nmos/testquestion/<version>', methods=['POST'], strict_slashes=False)
-def nc01_tests_post(version):
+def controller_tests_post(version):
     # Should be json from Test Suite with questions
     json_list = ['test_type', 'name', 'description', 'question', 'answers', 'answer_uri']
 
@@ -49,7 +49,7 @@ def nc01_tests_post(version):
 
 
 @app.route('/controller_questions/', methods=['GET'], strict_slashes=False)
-def nc01_tests_get():
+def controller_tests_get():
     return Response(data.getJson(), mimetype='application/json')
 
 
@@ -90,13 +90,17 @@ def execute_test():
     test was sent. Call relevant test method and retrieve answers.
     Update json and send back to test suite
     """
+    # Get question details from data store 
     question_id = data.getQuestionID()
     answers = data.getAnswers()
     metadata = data.getMetadata()
 
+    # Load specified test suite
     tests = TEST_SUITE
 
     if question_id.startswith("test_"):
+        # Get method associated with question id, set up test browser,
+        # run method then tear down and save any answers returned to data store
         method = getattr(tests, question_id)
         if callable(method):
             print(" * Running " + question_id)
@@ -106,11 +110,11 @@ def execute_test():
             data.setAnswer(test_result)
 
     elif question_id == 'pre_tests_message':
-        # Beginning of test set, return to confirm starting tests
+        # Beginning of test set, return to confirm start
         data.setAnswer(None)
 
     elif question_id == 'post_tests_message':
-        # End of test set, return to confirm end and close webdriver window
+        # End of test set, return to confirm end
         data.setAnswer(None)
         print(' *** Tests Complete ***')
 
@@ -118,7 +122,7 @@ def execute_test():
         # Not a recognised part of test suite
         return
 
-    # POST response back to test suite with answer_response
+    # POST answer json back to test suite
     do_request('POST', data.getUrl(), json=json.loads(data.getAnswerJson()))
     return
 

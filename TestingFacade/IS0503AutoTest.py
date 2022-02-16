@@ -70,7 +70,8 @@ class IS0503AutoTest:
         for receiver in receiver_labels:
             self.driver.find_element_by_link_text(receiver).click()
 
-            connect_button = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.NAME, "connect")))
+            connect_button = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.NAME,
+                                                                                                    "connect")))
             time.sleep(3)
 
             if connect_button.get_attribute("aria-disabled") == 'false':
@@ -78,7 +79,8 @@ class IS0503AutoTest:
             self.driver.find_element_by_link_text('Receivers').click()
 
         # Get answer ids for connectable receivers to send to test suite
-        actual_answers = [answer['answer_id'] for answer in answers if answer['resource']['label'] in connectable_receivers]
+        actual_answers = [answer['answer_id'] for answer in answers if answer['resource']['label']
+                          in connectable_receivers]
 
         return actual_answers
 

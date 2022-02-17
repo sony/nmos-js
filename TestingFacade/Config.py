@@ -1,3 +1,5 @@
+# Port for Testing Facade to run on
+TESTING_FACADE_PORT = 5001
 # URL of nmos-js instance for testing
 NCUT_URL = "http://localhost:3000/#/"
 # URL of NMOS Testing Tool's mock registry

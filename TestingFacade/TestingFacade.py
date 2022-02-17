@@ -19,6 +19,7 @@ from flask import Flask, request
 from DataStore import data
 from IS0404AutoTest import IS0404tests
 from IS0503AutoTest import IS0503tests
+import Config as CONFIG
 
 TEST_SETS = {'IS0404': IS0404tests,
              'IS0503': IS0503tests}
@@ -103,4 +104,4 @@ if __name__ == "__main__":
             except Exception as e:
                 sys.exit('Invalid test suite selection ' + str(e))
 
-    app.run(host='0.0.0.0', port=5001)
+    app.run(host='0.0.0.0', port=CONFIG.TESTING_FACADE_PORT)

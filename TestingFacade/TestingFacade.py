@@ -13,10 +13,9 @@
 # limitations under the License.
 
 import requests
-import json
 import sys
 from threading import Thread
-from flask import Flask, request, Response
+from flask import Flask, request
 from DataStore import data
 from IS0404AutoTest import IS0404tests
 from IS0503AutoTest import IS0503tests
@@ -46,42 +45,6 @@ def controller_tests_post(version):
         thread = Thread(target=execute_test)
         thread.start()
     return '', 202
-
-
-@app.route('/controller_questions/', methods=['GET'], strict_slashes=False)
-def controller_tests_get():
-    return Response(data.getJson(), mimetype='application/json')
-
-
-def do_request(method, url, **kwargs):
-    """Perform a basic HTTP request with appropriate error handling"""
-    try:
-        s = requests.Session()
-        # The only place we add headers is auto OPTIONS for CORS, which
-        # should not check Auth
-        if "headers" in kwargs and kwargs["headers"] is None:
-            del kwargs["headers"]
-
-        req = requests.Request(method, url, **kwargs)
-        prepped = s.prepare_request(req)
-        settings = s.merge_environment_settings(prepped.url, {}, None, None, None)
-        response = s.send(prepped, timeout=1, **settings)
-        if prepped.url.startswith("https://"):
-            if not response.url.startswith("https://"):
-                return False, "Redirect changed protocol"
-            if response.history is not None:
-                for res in response.history:
-                    if not res.url.startswith("https://"):
-                        return False, "Redirect changed protocol"
-        return True, response
-    except requests.exceptions.Timeout:
-        return False, "Connection timeout"
-    except requests.exceptions.TooManyRedirects:
-        return False, "Too many redirects"
-    except requests.exceptions.ConnectionError as e:
-        return False, str(e)
-    except requests.exceptions.RequestException as e:
-        return False, str(e)
 
 
 def execute_test():
@@ -123,7 +86,7 @@ def execute_test():
         return
 
     # POST answer json back to test suite
-    do_request('POST', data.getUrl(), json=json.loads(data.getAnswerJson()))
+    requests.post(data.getUrl(), json=data.getAnswerJson())
     return
 
 

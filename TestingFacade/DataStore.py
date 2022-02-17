@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
-
 class DataStore:
     """
     Store json with test question details for use with NMOS Controller
@@ -31,7 +28,6 @@ class DataStore:
         self.timeout = None
         self.answer_uri = None
         self.answer_response = None
-        self.status = "Empty"
         self.metadata = None
 
     def clear(self):
@@ -44,14 +40,9 @@ class DataStore:
         self.timeout = None
         self.answer_uri = None
         self.answer_response = None
-        self.status = "Empty"
         self.metadata = None
 
-    def getStatus(self):
-        return self.status
-
     def setJson(self, json):
-        self.status = "Test"
         self.test_type = json["test_type"]
         self.question_id = json["question_id"]
         self.name = json["name"]
@@ -62,26 +53,12 @@ class DataStore:
         self.answer_uri = json["answer_uri"]
         self.metadata = json["metadata"]
 
-    def getJson(self):
-        json_data = {
-            "test_type": self.test_type,
-            "question_id": self.question_id,
-            "name": self.name,
-            "description": self.description,
-            "question": self.question,
-            "answers": self.answers,
-            "timeout": self.timeout,
-            "answer_uri": self.answer_uri,
-            "metadata": self.metadata
-        }
-        return json.dumps(json_data)
-
     def getAnswerJson(self):
         json_data = {
             "question_id": self.question_id,
             "answer_response": self.answer_response
         }
-        return json.dumps(json_data)
+        return json_data
 
     def setAnswer(self, answer):
         self.answer_response = answer

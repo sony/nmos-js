@@ -30,21 +30,21 @@ app = Flask(__name__)
 @app.route('/x-nmos/testquestion/<version>', methods=['POST'], strict_slashes=False)
 def controller_tests_post(version):
     # Should be json from Test Suite with questions
-    json_list = ['test_type', 'name', 'description', 'question', 'answers', 'answer_uri']
+    expected_entries = ['test_type', 'name', 'description', 'question', 'answers', 'answer_uri']
 
-    if 'clear' in request.json and request.json['clear'] == 'True':
+    if request.json.get('clear'):
         # End of current tests, clear data store
         dataStore.clear()
     else:
         # Should be a new question
-        for entry in json_list:
+        for entry in expected_entries:
             if entry not in request.json:
-                return False, "Missing {}".format(entry)
+                return 'Invalid JSON received', 400
         # All required entries are present so update data
         dataStore.setJson(request.json)
         # Run test in new thread
-        thread = Thread(target=execute_test)
-        thread.start()
+        executionThread = Thread(target=execute_test)
+        executionThread.start()
     return '', 202
 
 
@@ -84,7 +84,7 @@ def execute_test():
 
     else:
         # Not a recognised part of test suite
-        return
+        dataStore.setAnswer(None)
 
     # POST answer json back to test suite
     requests.post(dataStore.getUrl(), json=dataStore.getAnswerJson())

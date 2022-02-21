@@ -76,4 +76,4 @@ class DataStore:
         return self.metadata
 
 
-data = DataStore()
+dataStore = DataStore()

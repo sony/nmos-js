@@ -16,7 +16,7 @@ import requests
 import sys
 from threading import Thread
 from flask import Flask, request
-from DataStore import data
+from DataStore import dataStore
 from IS0404AutoTest import IS0404tests
 from IS0503AutoTest import IS0503tests
 import Config as CONFIG
@@ -34,14 +34,14 @@ def controller_tests_post(version):
 
     if 'clear' in request.json and request.json['clear'] == 'True':
         # End of current tests, clear data store
-        data.clear()
+        dataStore.clear()
     else:
         # Should be a new question
         for entry in json_list:
             if entry not in request.json:
                 return False, "Missing {}".format(entry)
         # All required entries are present so update data
-        data.setJson(request.json)
+        dataStore.setJson(request.json)
         # Run test in new thread
         thread = Thread(target=execute_test)
         thread.start()
@@ -54,10 +54,10 @@ def execute_test():
     test was sent. Call relevant test method and retrieve answers.
     Update json and send back to test suite
     """
-    # Get question details from data store 
-    question_id = data.getQuestionID()
-    answers = data.getAnswers()
-    metadata = data.getMetadata()
+    # Get question details from data store
+    question_id = dataStore.getQuestionID()
+    answers = dataStore.getAnswers()
+    metadata = dataStore.getMetadata()
 
     # Load specified test suite
     tests = TEST_SUITE
@@ -71,15 +71,15 @@ def execute_test():
             tests.set_up_test()
             test_result = method(answers, metadata)
             tests.tear_down_test()
-            data.setAnswer(test_result)
+            dataStore.setAnswer(test_result)
 
     elif question_id == 'pre_tests_message':
         # Beginning of test set, return to confirm start
-        data.setAnswer(None)
+        dataStore.setAnswer(None)
 
     elif question_id == 'post_tests_message':
         # End of test set, return to confirm end
-        data.setAnswer(None)
+        dataStore.setAnswer(None)
         print(' *** Tests Complete ***')
 
     else:
@@ -87,7 +87,7 @@ def execute_test():
         return
 
     # POST answer json back to test suite
-    requests.post(data.getUrl(), json=data.getAnswerJson())
+    requests.post(dataStore.getUrl(), json=dataStore.getAnswerJson())
     return
 
 

@@ -2,6 +2,9 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 import Config as CONFIG
 
 class GenericAutoTest:
@@ -16,12 +19,12 @@ class GenericAutoTest:
     def set_up_test(self):
         # Set up webdriver
         browser = getattr(webdriver, CONFIG.BROWSER)
-        try:
-            # Not all webdrivers support options
-            options = getattr(webdriver, CONFIG.BROWSER + 'Options')()
+        get_options = getattr(webdriver, CONFIG.BROWSER + 'Options', False)
+        if get_options:
+            options = get_options()   
             options.headless = CONFIG.HEADLESS
             self.driver = browser(options=options)
-        except AttributeError:
+        else:
             self.driver = browser()
         self.driver.implicitly_wait(CONFIG.WAIT_TIME)
         # Launch browser, navigate to nmos-js and update query api url to mock registry
@@ -42,17 +45,85 @@ class GenericAutoTest:
     def tear_down_test(self):
         self.driver.close()
 
-    def _find_resources(self, resource):
+    def refresh_page(self):
         """
-        Navigate to resource page, and return list of resources
-        resource: 'senders' 'receivers'
+        Click refresh button and sleep to allow loading time
         """
-        self.driver.find_element_by_link_text(resource).click()
         self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
         time.sleep(1)
 
-        # Find all resources
-        resources = self.driver.find_elements_by_name("label")
-        resource_labels = [entry.text for entry in resources]
+    def navigate_to_page(self, page):
+        """
+        Navigate to page by link text, refresh page and sleep to allow loading time
+        """
+        self.driver.find_element_by_link_text(page).click()
+        self.refresh_page()
 
-        return resource_labels
+    def find_resource_labels(self):
+        """
+        Find all resources on a page by label
+        Returns list of labels
+        """
+        resources = self.driver.find_elements_by_name("label")
+        return [entry.text for entry in resources]
+
+    def next_page(self):
+        """
+        Navigate to next page via next button and sleep to allow loading time
+        """
+        self.driver.find_element_by_name('next').click()
+        time.sleep(1)
+
+    def check_connectable(self):
+        """
+        Check if connect tab is active
+        returns True if available, False if disabled
+        """
+        connect_button = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.NAME,
+                                                                                                "connect")))
+        disabled = connect_button.get_attribute("aria-disabled")
+        return True if disabled == 'false' else False
+
+    def make_connection(self, sender):
+        """
+        Navigate to connect tab, activate connection to given sender
+        """
+        connect = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.NAME, "connect")))
+        connect.click()
+
+        # Find the row containing the correct sender and activate connection
+        senders = self.find_resource_labels()
+        row = [i for i, s in enumerate(senders) if s == sender][0]
+        activate_button = self.driver.find_elements_by_name("activate")[row]
+        activate_button.click()
+        time.sleep(2)
+
+    def remove_connection(self, receiver):
+        """
+        Deactivate a connection on a given receiver
+        """
+        receivers = self.find_resource_labels()
+        row = [i for i, r in enumerate(receivers) if r == receiver][0]
+        deactivate_button = self.driver.find_elements_by_name("active")[row]
+        if deactivate_button.get_attribute('value') == "true":
+            deactivate_button.click()
+        time.sleep(2)
+
+    def get_active_receiver(self):
+        """
+        Identify an active receiver
+        Returns string of receiver label or None
+        """
+        active_buttons = self.driver.find_elements_by_name('active')
+        active_row = [i for i, b in enumerate(active_buttons) if b.get_attribute('value') == "true"]
+        return None if not active_row else self.driver.find_elements_by_name('label')[active_row[0]].text
+    
+    def get_connected_sender(self):
+        """
+        Identify the sender a receiver is connected to
+        Returns string of sender label
+        """
+        active = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.NAME, "active")))
+        active.click()
+
+        return self.driver.find_element_by_name('sender').text

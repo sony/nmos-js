@@ -1,8 +1,4 @@
 import time
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException
-import Config as CONFIG
 from GenericAutoTest import GenericAutoTest
 
 
@@ -27,14 +23,8 @@ class IS0404AutoTest(GenericAutoTest):
         # Successful browsing of the Registry will be automatically
         # logged by the test framework.
 
-        # Browse senders and receivers
-        self.driver.find_element_by_link_text('Senders').click()
-        # Sleep to allow contents of page to load
-        time.sleep(2)
-        self.driver.find_element_by_link_text('Receivers').click()
-        time.sleep(2)
-
-        return "Next"
+        self.navigate_to_page('Senders')
+        self.navigate_to_page('Receivers')
 
     def test_03(self, answers, metadata):
         """
@@ -49,24 +39,18 @@ class IS0404AutoTest(GenericAutoTest):
         # If your NCuT implements pagination, you must ensure you view
         # every available page to complete this test.
 
-        # Navigate to the Senders page
-        self.driver.find_element_by_link_text('Senders').click()
-        self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
-        time.sleep(1)
+        self.navigate_to_page('Senders')
+        
+        # Loop through pages gathering all senders        
         actual_answers = []
 
-        # Loop through pages gathering all senders
         for i in range(len(answers)):
-            senders = self.driver.find_elements_by_name('label')
-            if len(senders) == 0:
+            senders = self.find_resource_labels()
+            if not senders:
                 break
-            sender_labels = [sender.text for sender in senders]
             actual_answers += [answer['answer_id'] for answer in answers if answer['resource']['label']
-                               in sender_labels]
-
-            next_button = self.driver.find_element_by_name('next')
-            next_button.click()
-            time.sleep(1)
+                               in senders]
+            self.next_page()
 
         return actual_answers
 
@@ -83,24 +67,18 @@ class IS0404AutoTest(GenericAutoTest):
         # If your NCuT implements pagination, you must ensure you view
         # every available page to complete this test.
 
-        # Navigate to Receivers page
-        self.driver.find_element_by_link_text('Receivers').click()
-        self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
-        time.sleep(1)
+        self.navigate_to_page('Receivers')
+        
+        # Loop through pages gathering all receivers        
         actual_answers = []
 
-        # Loop through pages gathering all receivers
         for i in range(len(answers)):
-            receivers = self.driver.find_elements_by_name('label')
-            if len(receivers) == 0:
+            receivers = self.find_resource_labels()
+            if not receivers:
                 break
-            receiver_labels = [receiver.text for receiver in receivers]
             actual_answers += [answer['answer_id'] for answer in answers if answer['resource']['label']
-                               in receiver_labels]
-
-            next_button = self.driver.find_element_by_name('next')
-            next_button.click()
-            time.sleep(1)
+                               in receivers]
+            self.next_page()
 
         return actual_answers
 
@@ -117,9 +95,8 @@ class IS0404AutoTest(GenericAutoTest):
         # will be put 'offline'.
 
         # Save current list of senders
-        self.multipart_question_storage['test_05'] = self._find_resources("Senders")
-
-        return "Next"
+        self.navigate_to_page('Senders')
+        self.multipart_question_storage['test_05'] = self.find_resource_labels()
 
     def test_05_1(self, answers, metadata):
         """
@@ -129,12 +106,11 @@ class IS0404AutoTest(GenericAutoTest):
         # Please refresh your NCuT and select the sender which has been put
         # 'offline'
 
-        # Get current list of senders
-        sender_list = self._find_resources("Senders")
-
-        # Assuming only a one item difference always.
-        # May need to add an if len==1 check and raise an exception if not
+        # Get current list of senders and compare against previously saved list
+        self.navigate_to_page('Senders')
+        sender_list = self.find_resource_labels()
         offline_sender = list(set(self.multipart_question_storage['test_05']) - set(sender_list))
+        # Save offline sender
         self.multipart_question_storage['test_05_1'] = offline_sender[0]
 
         actual_answer = [answer['answer_id'] for answer in answers
@@ -156,18 +132,16 @@ class IS0404AutoTest(GenericAutoTest):
         # This includes any latency between the Sender being put 'online'
         # and the NCuT updating.
 
-        self.driver.find_element_by_link_text("Senders").click()
-        self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
+        self.navigate_to_page('Senders')
         sender_list = set()
 
         # Find all senders, keep checking until same as number of senders at start of test
         while len(sender_list) < len(self.multipart_question_storage['test_05']):
-            self.driver.find_element_by_css_selector("[aria-label='Refresh']").click()
-            time.sleep(1)
-            senders = self.driver.find_elements_by_name("label")
-            sender_list.update([entry.text for entry in senders])
-            last_sender = senders[-1].text
             time.sleep(4)
+            self.refresh_page()
+            senders = self.find_resource_labels()
+            sender_list.update(senders)
+            last_sender = senders[-1]
 
         # Check same sender came back
         if last_sender == self.multipart_question_storage['test_05_1']:

@@ -16,6 +16,7 @@ import requests
 import sys
 from threading import Thread
 from flask import Flask, request
+from selenium.common.exceptions import NoSuchElementException
 from DataStore import dataStore
 from IS0404AutoTest import IS0404tests
 from IS0503AutoTest import IS0503tests
@@ -68,8 +69,11 @@ def execute_test():
         method = getattr(tests, question_id)
         if callable(method):
             print(" * Running " + question_id)
-            tests.set_up_test()
-            test_result = method(answers, metadata)
+            try:
+                tests.set_up_test()
+                test_result = method(answers, metadata)
+            except NoSuchElementException:
+                test_result = None
             tests.tear_down_test()
             dataStore.setAnswer(test_result)
 

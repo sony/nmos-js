@@ -37,10 +37,9 @@ class GenericAutoTest:
             query_api.send_keys(Keys.DELETE)
         query_api.send_keys(self.mock_registry_url + "x-nmos/query/v1.3")
         # Open menu to show link names if not already open
-        try:
-            self.driver.find_element_by_xpath('//*[@title="Open menu"]').click()
-        except NoSuchElementException:
-            pass
+        open_menu = self.driver.find_elements_by_xpath('//*[@title="Open menu"]')
+        if open_menu:
+            open_menu[0].click()
 
     def tear_down_test(self):
         self.driver.close()

@@ -9,4 +9,4 @@ BROWSER = 'Chrome'
 # Use browser in headless mode. Set to False to have each test run in a visible window
 HEADLESS = True
 # Time in seconds to wait for elements to load
-WAIT_TIME = 10
+WAIT_TIME = 5

@@ -22,6 +22,7 @@ import ItemArrayField from '../../components/ItemArrayField';
 import ObjectField from '../../components/ObjectField';
 import {
     ParameterField,
+    TAGS,
     TRANSPORTS,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
@@ -124,7 +125,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 <TAIField source="version" />
                 <TextField source="label" />
                 <TextField source="description" />
-                <ObjectField source="tags" />
+                <ObjectField register={TAGS} source="tags" />
                 <SanitizedDivider />
                 <ParameterField source="transport" register={TRANSPORTS} />
                 <UrlField

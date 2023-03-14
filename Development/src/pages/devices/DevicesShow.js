@@ -24,6 +24,7 @@ import {
     CONTROL_TYPES,
     DEVICE_TYPES,
     ParameterField,
+    TAGS,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
 import SanitizedDivider from '../../components/SanitizedDivider';
@@ -120,7 +121,9 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 <TAIField source="version" />
                 <TextField source="label" />
                 {queryVersion() >= 'v1.1' && <TextField source="description" />}
-                {queryVersion() >= 'v1.1' && <ObjectField source="tags" />}
+                {queryVersion() >= 'v1.1' && (
+                    <ObjectField register={TAGS} source="tags" />
+                )}
                 <SanitizedDivider />
                 <ParameterField source="type" register={DEVICE_TYPES} />
                 {queryVersion() >= 'v1.1' && (

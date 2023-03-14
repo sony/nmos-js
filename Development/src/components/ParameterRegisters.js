@@ -36,11 +36,10 @@ export const parameterAutocompleteProps = register => ({
     },
 });
 
-export const ParameterField = ({ register, record, source }) => {
+export const Parameter = ({ register, value }) => {
     const [friendlyFirst] = useJSONSetting(FRIENDLY_PARAMETERS, false);
-    const param = get(record, source);
-    const unversioned = unversionedParameter(param);
-    const version = parameterVersion(param);
+    const unversioned = unversionedParameter(value);
+    const version = parameterVersion(value);
     const unfriendly = unversioned + (version ? '/' + version : '');
     const info = get(register, unversioned);
     if (info) {
@@ -66,6 +65,10 @@ export const ParameterField = ({ register, record, source }) => {
         );
     }
 };
+
+export const ParameterField = ({ register, record, source }) => (
+    <Parameter register={register} value={get(record, source)} />
+);
 
 ParameterField.defaultProps = {
     addLabel: true,
@@ -121,6 +124,33 @@ export const FORMATS = {
     },
     'urn:x-nmos:format:mux': {
         label: 'Multiplexed',
+    },
+};
+
+// Tags in the NMOS Parameter Registers
+// see https://github.com/AMWA-TV/nmos-parameter-registers/tree/master/tags
+export const TAGS = {
+    'urn:x-nmos:tag:grouphint': {
+        label: 'Group Hint',
+        versions: ['v1.0'],
+    },
+    // Work-in-progress BCP-002-02 Distinguishing Information for NMOS Node and Device Resources
+    // See https://specs.amwa.tv/bcp-002-02/
+    'urn:x-nmos:tag:asset:facts:manufacturer': {
+        label: 'Manufacturer',
+        versions: ['v1.0'],
+    },
+    'urn:x-nmos:tag:asset:facts:product': {
+        label: 'Product',
+        versions: ['v1.0'],
+    },
+    'urn:x-nmos:tag:asset:facts:instance': {
+        label: 'Instance',
+        versions: ['v1.0'],
+    },
+    'urn:x-nmos:tag:asset:facts:application': {
+        label: 'Application',
+        versions: ['v1.0'],
     },
 };
 

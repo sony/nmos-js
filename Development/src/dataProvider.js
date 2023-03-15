@@ -238,6 +238,12 @@ const paramConstraintMap = {
         const filter = encodeRQLConstraint(constraint, 'bit_depth');
         return 'not(sub(components,not(' + filter + ')))';
     },
+    'urn:x-nmos:cap:format:profile': constraint =>
+        encodeRQLConstraint(constraint, 'profile'),
+    'urn:x-nmos:cap:format:level': constraint =>
+        encodeRQLConstraint(constraint, 'level'),
+    'urn:x-nmos:cap:format:sublevel': constraint =>
+        encodeRQLConstraint(constraint, 'sublevel'),
 
     // Audio Constraints
 
@@ -251,6 +257,11 @@ const paramConstraintMap = {
     'urn:x-nmos:cap:format:sample_depth': constraint =>
         encodeRQLConstraint(constraint, 'bit_depth'),
 
+    // Video/Audio Constraints
+
+    'urn:x-nmos:cap:format:bit_rate': constraint =>
+        encodeRQLConstraint(constraint, 'bit_rate'),
+
     // Event Constraints
 
     // hmm, IS-04 has event_type as optional in the flow, so we could fall back to querying
@@ -260,8 +271,10 @@ const paramConstraintMap = {
 
     // Transport Constraints
 
+    //TODO: urn:x-nmos:cap:transport:bit_rate
     //TODO: urn:x-nmos:cap:transport:packet_time
     //TODO: urn:x-nmos:cap:transport:max_packet_time
+    //TODO: urn:x-nmos:cap:transport:packet_transmission_mode
     //TODO: urn:x-nmos:cap:transport:st2110_21_sender_type
 };
 

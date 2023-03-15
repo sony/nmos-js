@@ -79,12 +79,9 @@ const SourcesShowView = props => {
                     )}
                 <SanitizedDivider />
                 <ReferenceArrayField
-                    allowEmpty={true}
-                    clickable="true"
                     label="Parents"
                     source="parents"
                     reference="sources"
-                    link="show"
                 >
                     <SingleFieldList linkType="show">
                         <LinkChipField />

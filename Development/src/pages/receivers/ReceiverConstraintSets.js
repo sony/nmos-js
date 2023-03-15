@@ -115,6 +115,24 @@ const ReceiverConstraintSet = ({ data }) => (
                         label="Component Depth"
                     />
                 )}
+                {has(data, 'urn:x-nmos:cap:format:profile') && (
+                    <ConstraintField
+                        source="urn:x-nmos:cap:format:profile"
+                        label="Profile"
+                    />
+                )}
+                {has(data, 'urn:x-nmos:cap:format:level') && (
+                    <ConstraintField
+                        source="urn:x-nmos:cap:format:level"
+                        label="Level"
+                    />
+                )}
+                {has(data, 'urn:x-nmos:cap:format:sublevel') && (
+                    <ConstraintField
+                        source="urn:x-nmos:cap:format:sublevel"
+                        label="Sublevel"
+                    />
+                )}
                 {
                     // Audio Constraints
                 }
@@ -137,6 +155,15 @@ const ReceiverConstraintSet = ({ data }) => (
                     />
                 )}
                 {
+                    // Video/Audio Constraints
+                }
+                {has(data, 'urn:x-nmos:cap:format:bit_rate') && (
+                    <ConstraintField
+                        source="urn:x-nmos:cap:format:bit_rate"
+                        label="Format Bit Rate"
+                    />
+                )}
+                {
                     // Event Constraints
                 }
                 {has(data, 'urn:x-nmos:cap:format:event_type') && (
@@ -148,6 +175,12 @@ const ReceiverConstraintSet = ({ data }) => (
                 {
                     // Transport Constraints
                 }
+                {has(data, 'urn:x-nmos:cap:transport:bit_rate') && (
+                    <ConstraintField
+                        source="urn:x-nmos:cap:transport:bit_rate"
+                        label="Transport Bit Rate"
+                    />
+                )}
                 {has(data, 'urn:x-nmos:cap:transport:packet_time') && (
                     <ConstraintField
                         source="urn:x-nmos:cap:transport:packet_time"
@@ -158,6 +191,15 @@ const ReceiverConstraintSet = ({ data }) => (
                     <ConstraintField
                         source="urn:x-nmos:cap:transport:max_packet_time"
                         label="Max Packet Time (ms)"
+                    />
+                )}
+                {has(
+                    data,
+                    'urn:x-nmos:cap:transport:packet_transmission_mode'
+                ) && (
+                    <ConstraintField
+                        source="urn:x-nmos:cap:transport:packet_transmission_mode"
+                        label="Packet Transmission Mode"
                     />
                 )}
                 {has(

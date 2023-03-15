@@ -13,7 +13,7 @@ import {
     useRecordContext,
     useShowController,
 } from 'react-admin';
-import get from 'lodash/get';
+import { get, has } from 'lodash';
 import copy from 'clipboard-copy';
 import { useTheme } from '@material-ui/styles';
 import LinkChipField from '../../components/LinkChipField';
@@ -142,6 +142,28 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 {queryVersion() >= 'v1.2' && (
                     <BooleanField label="Active" source="subscription.active" />
                 )}
+                {
+                    // BCP-006-01 NMOS With JPEG XS requires some additional Sender attributes
+                    // but the media type is a Flow attribute
+                    // and these attributes may also be used with other media types
+                }
+                {queryVersion() >= 'v1.3' && has(record, 'bit_rate') && (
+                    <TextField label="Bit Rate" source="bit_rate" />
+                )}
+                {queryVersion() >= 'v1.3' &&
+                    has(record, 'packet_transmission_mode') && (
+                        <TextField
+                            label="Packet Transmission Mode"
+                            source="packet_transmission_mode"
+                        />
+                    )}
+                {queryVersion() >= 'v1.3' &&
+                    has(record, 'st2110_21_sender_type') && (
+                        <TextField
+                            label="ST 2110-21 Sender Type"
+                            source="st2110_21_sender_type"
+                        />
+                    )}
                 <SanitizedDivider />
                 <ReferenceField
                     label="Flow"

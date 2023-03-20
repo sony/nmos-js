@@ -29,7 +29,9 @@ const TAIConversion = (record, source, mode) => {
         if (get(record, mode) === 'activate_scheduled_relative') {
             return dayjs(taiTimeMilliseconds).utc().format('HH:mm:ss.SSS');
         }
-        const unixTimeMilliseconds = tai.oneToMany.atomicToUnix(taiTimeMilliseconds);
+        const unixTimeMilliseconds = tai.oneToMany.atomicToUnix(
+            taiTimeMilliseconds
+        );
         return dayjs(unixTimeMilliseconds).format('YYYY-MM-DD HH:mm:ss.SSS Z');
     } catch (e) {
         return `Conversion Error - ${e}`;

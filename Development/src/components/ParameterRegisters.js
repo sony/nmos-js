@@ -134,22 +134,22 @@ export const TAGS = {
         label: 'Group Hint',
         versions: ['v1.0'],
     },
-    // Work-in-progress BCP-002-02 Distinguishing Information for NMOS Node and Device Resources
+    // Work-in-progress BCP-002-02 Asset Distinguishing Information
     // See https://specs.amwa.tv/bcp-002-02/
-    'urn:x-nmos:tag:asset:facts:manufacturer': {
+    'urn:x-nmos:tag:asset:manufacturer': {
         label: 'Manufacturer',
         versions: ['v1.0'],
     },
-    'urn:x-nmos:tag:asset:facts:product': {
-        label: 'Product',
+    'urn:x-nmos:tag:asset:product': {
+        label: 'Product Name',
         versions: ['v1.0'],
     },
-    'urn:x-nmos:tag:asset:facts:instance': {
-        label: 'Instance',
+    'urn:x-nmos:tag:asset:instance-id': {
+        label: 'Instance Identifier',
         versions: ['v1.0'],
     },
-    'urn:x-nmos:tag:asset:facts:application': {
-        label: 'Application',
+    'urn:x-nmos:tag:asset:function': {
+        label: 'Function',
         versions: ['v1.0'],
     },
 };

@@ -54,25 +54,25 @@ const NodesList = props => {
                             <Divider />
                         )}
                         {
-                            // Work-in-progress BCP-002-02 Distinguishing Information for NMOS Node and Device Resources
+                            // Work-in-progress BCP-002-02 Asset Distinguishing Information
                             // See https://specs.amwa.tv/bcp-002-02/
                         }
                         {apiUsingRql(QUERY_API) && queryVersion() >= 'v1.1' && (
                             <StringFilter
-                                source="(tags,urn%3Ax-nmos%3Atag%3Aasset%3Afacts%3Amanufacturer%2Fv1.0)"
+                                source="(tags,urn%3Ax-nmos%3Atag%3Aasset%3Amanufacturer%2Fv1.0)"
                                 label="Manufacturer"
                             />
                         )}
                         {apiUsingRql(QUERY_API) && queryVersion() >= 'v1.1' && (
                             <StringFilter
-                                source="(tags,urn%3Ax-nmos%3Atag%3Aasset%3Afacts%3Aproduct%2Fv1.0)"
-                                label="Product"
+                                source="(tags,urn%3Ax-nmos%3Atag%3Aasset%3Aproduct%2Fv1.0)"
+                                label="Product Name"
                             />
                         )}
                         {apiUsingRql(QUERY_API) && queryVersion() >= 'v1.1' && (
                             <StringFilter
-                                source="(tags,urn%3Ax-nmos%3Atag%3Aasset%3Afacts%3Ainstance%2Fv1.0)"
-                                label="Instance"
+                                source="(tags,urn%3Ax-nmos%3Atag%3Aasset%3Ainstance-id%2Fv1.0)"
+                                label="Instance Identifier"
                             />
                         )}
                         {apiUsingRql(QUERY_API) && queryVersion() >= 'v1.1' && (
@@ -110,8 +110,8 @@ const NodesList = props => {
                                     Label
                                 </TableCell>
                                 <TableCell>Manufacturer</TableCell>
-                                <TableCell>Product</TableCell>
-                                <TableCell>Instance</TableCell>
+                                <TableCell>Product Name</TableCell>
+                                <TableCell>Instance Identifier</TableCell>
                                 <TableCell>Hostname</TableCell>
                                 {queryVersion() >= 'v1.1' && (
                                     <TableCell>API Versions</TableCell>
@@ -135,21 +135,21 @@ const NodesList = props => {
                                     <TableCell>
                                         {get(
                                             item.tags,
-                                            'urn:x-nmos:tag:asset:facts:manufacturer/v1.0',
+                                            'urn:x-nmos:tag:asset:manufacturer/v1.0',
                                             []
                                         ).join(', ')}
                                     </TableCell>
                                     <TableCell>
                                         {get(
                                             item.tags,
-                                            'urn:x-nmos:tag:asset:facts:product/v1.0',
+                                            'urn:x-nmos:tag:asset:product/v1.0',
                                             []
                                         ).join(', ')}
                                     </TableCell>
                                     <TableCell>
                                         {get(
                                             item.tags,
-                                            'urn:x-nmos:tag:asset:facts:instance/v1.0',
+                                            'urn:x-nmos:tag:asset:instance-id/v1.0',
                                             []
                                         ).join(', ')}
                                     </TableCell>

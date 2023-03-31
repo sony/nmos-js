@@ -117,9 +117,9 @@ const DevicesList = props => {
                                     Label
                                 </TableCell>
                                 <TableCell>Manufacturer</TableCell>
-                                <TableCell>Product</TableCell>
-                                <TableCell>Instance</TableCell>
-                                <TableCell>Application</TableCell>
+                                <TableCell>Product Name</TableCell>
+                                <TableCell>Instance Identifier</TableCell>
+                                <TableCell>Function</TableCell>
                                 <TableCell>Type</TableCell>
                                 <TableCell>Control Types</TableCell>
                             </TableRow>
@@ -140,28 +140,28 @@ const DevicesList = props => {
                                     <TableCell>
                                         {get(
                                             item.tags,
-                                            'urn:x-nmos:tag:asset:facts:manufacturer/v1.0',
+                                            'urn:x-nmos:tag:asset:manufacturer/v1.0',
                                             []
                                         ).join(', ')}
                                     </TableCell>
                                     <TableCell>
                                         {get(
                                             item.tags,
-                                            'urn:x-nmos:tag:asset:facts:product/v1.0',
+                                            'urn:x-nmos:tag:asset:product/v1.0',
                                             []
                                         ).join(', ')}
                                     </TableCell>
                                     <TableCell>
                                         {get(
                                             item.tags,
-                                            'urn:x-nmos:tag:asset:facts:instance/v1.0',
+                                            'urn:x-nmos:tag:asset:instance-id/v1.0',
                                             []
                                         ).join(', ')}
                                     </TableCell>
                                     <TableCell>
                                         {get(
                                             item.tags,
-                                            'urn:x-nmos:tag:asset:facts:application/v1.0',
+                                            'urn:x-nmos:tag:asset:function/v1.0',
                                             []
                                         ).join(', ')}
                                     </TableCell>

@@ -65,7 +65,7 @@ const NodesList = props => {
                         )}
                         {apiUsingRql(QUERY_API) && queryVersion() >= 'v1.1' && (
                             <StringFilter
-                                source="(tags,urn%3Ax-nmos%3Atag%3Aasset%3AAproduct%2Fv1.0)"
+                                source="(tags,urn%3Ax-nmos%3Atag%3Aasset%3Aproduct%2Fv1.0)"
                                 label="Product Name"
                             />
                         )}

@@ -3,9 +3,7 @@
     "extends": [
         "react-app",
         "plugin:prettier/recommended",
-        "prettier/@typescript-eslint",
-        "prettier/babel",
-        "prettier/react"
+        "prettier"
     ],
     "plugins": [
         "@typescript-eslint",
@@ -21,16 +19,21 @@
             "jsx": true
         }
     },
-    "rules": {
-        "sort-imports": ["error", {
-            "ignoreCase": false,
-            "ignoreDeclarationSort": true,
-            "ignoreMemberSort": false,
-            "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
-        }],
-        "no-var": "warn",
-        "eol-last": ["error", "always"],
-        "no-use-before-define": "off",
-        "prettier/prettier": "error"
-    }
+  "rules": {
+    "eqeqeq": "off",
+    "no-console": "off",
+    "sort-imports": [
+      "error",
+      {
+        "ignoreCase": false,
+        "ignoreDeclarationSort": true,
+        "ignoreMemberSort": false,
+        "memberSyntaxSortOrder": [ "none", "all", "multiple", "single" ]
+      }
+    ],
+    "no-var": "warn",
+    "eol-last": [ "error", "always" ],
+    "no-use-before-define": "off",
+    "prettier/prettier": "error"
+  }
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ThemeProvider } from '@material-ui/styles';
-import { createTheme, responsiveFontSizes } from '@material-ui/core/styles';
+import { createMuiTheme, responsiveFontSizes } from '@material-ui/core/styles';
 import { get } from 'lodash';
 import CONFIG from '../config.json';
 import { disabledSetting, useJSONSetting } from '../settings';
@@ -26,7 +26,7 @@ export const AppThemeProvider = ({ children }) => {
     });
 
     const theme = responsiveFontSizes(
-        createTheme({
+        createMuiTheme({
             palette: {
                 ...themePalette,
                 type: themeState.type,

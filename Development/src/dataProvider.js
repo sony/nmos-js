@@ -706,32 +706,36 @@ const getChannelMappingEndPoints = (addresses, endpoints) => {
                     return;
                 }
                 endpoints
-                    .map(endpoint => () =>
-                        fetch(concatUrl(channelmappingAPI, `/${endpoint}`), {
-                            signal,
-                        })
-                            .then(response => {
-                                if (response.ok) {
-                                    return response.text();
+                    .map(
+                        endpoint => () =>
+                            fetch(
+                                concatUrl(channelmappingAPI, `/${endpoint}`),
+                                {
+                                    signal,
                                 }
-                            })
-                            .then(text => {
-                                try {
-                                    return JSON.parse(text);
-                                } catch (e) {
-                                    return text;
-                                }
-                            })
-                            .then(data => {
-                                endpointData.push({
-                                    [`$${
-                                        endpoint.split('/').slice(-1)[0]
-                                    }`]: data,
-                                });
-                            })
-                            .catch(error => {
-                                throw error;
-                            })
+                            )
+                                .then(response => {
+                                    if (response.ok) {
+                                        return response.text();
+                                    }
+                                })
+                                .then(text => {
+                                    try {
+                                        return JSON.parse(text);
+                                    } catch (e) {
+                                        return text;
+                                    }
+                                })
+                                .then(data => {
+                                    endpointData.push({
+                                        [`$${
+                                            endpoint.split('/').slice(-1)[0]
+                                        }`]: data,
+                                    });
+                                })
+                                .catch(error => {
+                                    throw error;
+                                })
                     )
                     .reduce(
                         (before, after) => before.then(_ => after()),
@@ -1009,16 +1013,13 @@ const dataProvider = async (type, resource, params) => {
     let recordsToGet = pagingLimit;
     let result = null;
     while (recordsToGet > 0) {
-        const {
-            url,
-            options,
-            referenceFilter,
-        } = convertDataProviderRequestToHTTP(
-            type,
-            resource,
-            params,
-            recordsToGet
-        );
+        const { url, options, referenceFilter } =
+            convertDataProviderRequestToHTTP(
+                type,
+                resource,
+                params,
+                recordsToGet
+            );
         try {
             let response = await fetchJson(url, options);
             let data = await convertHTTPResponseToDataProvider(
@@ -1039,9 +1040,8 @@ const dataProvider = async (type, resource, params) => {
             ) {
                 // unfiltered data returned a whole page of data so more results are potentially available
                 recordsToGet -= data.total;
-                params.paginationURL = (pageForward
-                    ? data.pagination.next
-                    : data.pagination.prev
+                params.paginationURL = (
+                    pageForward ? data.pagination.next : data.pagination.prev
                 ).replace(pagingLimitRegex, 'paging.limit=' + recordsToGet);
             } else {
                 recordsToGet = 0;

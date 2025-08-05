@@ -18,8 +18,8 @@ export class CardFormIterator extends Component {
         this.nextId = props.fields.length
             ? props.fields.length
             : props.defaultValue
-            ? props.defaultValue.length
-            : 0;
+              ? props.defaultValue.length
+              : 0;
 
         // We check whether we have a defaultValue (which must be an array) before checking
         // the fields prop which will always be empty for a new record.
@@ -29,14 +29,8 @@ export class CardFormIterator extends Component {
     }
 
     render() {
-        const {
-            basePath,
-            children,
-            fields,
-            record,
-            resource,
-            source,
-        } = this.props;
+        const { basePath, children, fields, record, resource, source } =
+            this.props;
         const records = get(record, source);
         return fields ? (
             <>

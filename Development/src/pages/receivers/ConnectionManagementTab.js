@@ -83,10 +83,10 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
     const [paginationURL, setPaginationURL] = useState(null);
     const { data, loaded, pagination } = useGetList({
         basePath,
-        filter: useMemo(() => ({ ...baseFilter, ...filter }), [
-            baseFilter,
-            filter,
-        ]),
+        filter: useMemo(
+            () => ({ ...baseFilter, ...filter }),
+            [baseFilter, filter]
+        ),
         paginationURL,
         resource: 'senders',
     });

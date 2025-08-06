@@ -1,6 +1,12 @@
 import React, { cloneElement, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { AppBar, UserMenu, useRefresh, useVersion } from 'react-admin';
+import {
+    AppBar,
+    UserMenu,
+    useGetIdentity,
+    useRefresh,
+    useVersion,
+} from 'react-admin';
 import {
     Button,
     ClickAwayListener,
@@ -21,6 +27,8 @@ import Brightness4Icon from '@material-ui/icons/Brightness4';
 import ThemeContext from '../theme/ThemeContext';
 import { useTheme } from '@material-ui/styles';
 import { disabledSetting, hiddenSetting, useJSONSetting } from '../settings';
+
+import LoginButton from '../LoginButton';
 
 const useStyles = makeStyles({
     title: {
@@ -207,6 +215,20 @@ const RefreshSelector = () => {
     );
 };
 
+const CustomUserMenu = props => {
+    const { identity, loading } = useGetIdentity();
+
+    if (loading) {
+        return <LoginButton disabled />;
+    }
+
+    return identity !== undefined && identity.id ? (
+        <UserMenu {...props} />
+    ) : (
+        <LoginButton />
+    );
+};
+
 const CustomAppBar = ({ userMenu = true, logout, ...props }) => {
     const classes = useStyles();
     const theme = useTheme();
@@ -224,7 +246,7 @@ const CustomAppBar = ({ userMenu = true, logout, ...props }) => {
                     <RefreshSelector />
                     {typeof userMenu === 'boolean'
                         ? userMenu === true
-                            ? cloneElement(<UserMenu />, { logout })
+                            ? cloneElement(<CustomUserMenu />, { logout })
                             : null
                         : cloneElement(userMenu, { logout })}
                 </>

@@ -87,36 +87,42 @@ const useGetList = props => {
     const notify = useNotify();
     const version = useVersion();
 
-    const { total, error, loading, loaded, pagination, url } =
-        useQueryWithStore(
-            {
-                type: 'getList',
-                resource,
-                payload: {
-                    filter: debouncedFilter,
-                    paginationURL,
-                },
+    const {
+        total,
+        error,
+        loading,
+        loaded,
+        pagination,
+        url,
+    } = useQueryWithStore(
+        {
+            type: 'getList',
+            resource,
+            payload: {
+                filter: debouncedFilter,
+                paginationURL,
             },
-            {
-                action: CRUD_GET_LIST,
-                version,
-                onFailure: error =>
-                    notify(
-                        typeof error === 'string'
-                            ? error
-                            : error.message || 'ra.notification.http_error',
-                        'warning'
-                    ),
-            },
-            state =>
-                state.admin.resources[resource]
-                    ? state.admin.resources[resource].list.ids
-                    : null,
-            state =>
-                state.admin.resources[resource]
-                    ? state.admin.resources[resource].list.total
-                    : null
-        );
+        },
+        {
+            action: CRUD_GET_LIST,
+            version,
+            onFailure: error =>
+                notify(
+                    typeof error === 'string'
+                        ? error
+                        : error.message || 'ra.notification.http_error',
+                    'warning'
+                ),
+        },
+        state =>
+            state.admin.resources[resource]
+                ? state.admin.resources[resource].list.ids
+                : null,
+        state =>
+            state.admin.resources[resource]
+                ? state.admin.resources[resource].list.total
+                : null
+    );
     const data = useSelector(
         state =>
             state.admin.resources[resource]

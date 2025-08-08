@@ -90,6 +90,7 @@ const SendersList = props => {
                                             basePath="/senders"
                                             record={item}
                                             label={item.label}
+                                            name="label"
                                         />
                                     </TableCell>
                                     <TableCell>

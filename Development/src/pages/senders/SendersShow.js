@@ -121,10 +121,10 @@ const ShowSummaryTab = ({ record, ...props }) => {
     return (
         <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
-                <TextField label="ID" source="id" />
+                <TextField label="ID" source="id" name="id" />
                 <TAIField source="version" />
-                <TextField source="label" />
-                <TextField source="description" />
+                <TextField source="label" name="label" />
+                <TextField source="description" name="description" />
                 <ObjectField register={TAGS} source="tags" />
                 <SanitizedDivider />
                 <ParameterField source="transport" register={TRANSPORTS} />

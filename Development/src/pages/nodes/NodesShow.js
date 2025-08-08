@@ -15,6 +15,7 @@ import LinkIcon from '@material-ui/icons/Link';
 import LinkChipField from '../../components/LinkChipField';
 import ItemArrayField from '../../components/ItemArrayField';
 import ObjectField from '../../components/ObjectField';
+import { TAGS } from '../../components/ParameterRegisters';
 import ResourceShowActions from '../../components/ResourceShowActions';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
@@ -48,7 +49,9 @@ const NodesShowView = props => {
                 <TAIField source="version" />
                 <TextField source="label" />
                 {queryVersion() >= 'v1.1' && <TextField source="description" />}
-                {queryVersion() >= 'v1.1' && <ObjectField source="tags" />}
+                {queryVersion() >= 'v1.1' && (
+                    <ObjectField register={TAGS} source="tags" />
+                )}
                 <SanitizedDivider />
                 <UrlField source="href" label="Address" />
                 <TextField source="hostname" />

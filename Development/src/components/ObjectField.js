@@ -7,8 +7,9 @@ import {
     TableRow,
 } from '@material-ui/core';
 import { get, isEmpty, map } from 'lodash';
+import { Parameter } from './ParameterRegisters';
 
-export const ObjectField = ({ record, source }) =>
+export const ObjectField = ({ register, record, source }) =>
     // no table at all for empty objects
     !isEmpty(get(record, source)) && (
         <Table size="small">
@@ -21,7 +22,9 @@ export const ObjectField = ({ record, source }) =>
             <TableBody>
                 {map(get(record, source), (value, key) => (
                     <TableRow key={key} style={{ fontSize: '14px' }}>
-                        <TableCell>{key}</TableCell>
+                        <TableCell>
+                            <Parameter register={register} value={key} />
+                        </TableCell>
                         {Array.isArray(value) ? (
                             <TableCell>{value.join(', ')}</TableCell>
                         ) : (

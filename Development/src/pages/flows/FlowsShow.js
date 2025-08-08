@@ -12,7 +12,7 @@ import {
     useRecordContext,
     useShowController,
 } from 'react-admin';
-import get from 'lodash/get';
+import { get, has } from 'lodash';
 import LinkChipField from '../../components/LinkChipField';
 import ObjectField from '../../components/ObjectField';
 import { FORMATS, ParameterField } from '../../components/ParameterRegisters';
@@ -95,6 +95,28 @@ const FlowsShowView = props => {
                             source="transfer_characteristic"
                         />
                     )}
+                {
+                    // BCP-006-01 NMOS With JPEG XS requires some additional Flow attributes
+                    // but these attributes may also be used with other media types
+                }
+                {queryVersion() >= 'v1.3' &&
+                    get(record, 'format') === 'urn:x-nmos:format:video' &&
+                    (get(record, 'media_type') === 'video/jxsv' ||
+                        has(record, 'profile')) && (
+                        <TextField label="Profile" source="profile" />
+                    )}
+                {queryVersion() >= 'v1.3' &&
+                    get(record, 'format') === 'urn:x-nmos:format:video' &&
+                    (get(record, 'media_type') === 'video/jxsv' ||
+                        has(record, 'level')) && (
+                        <TextField label="Level" source="level" />
+                    )}
+                {queryVersion() >= 'v1.3' &&
+                    get(record, 'format') === 'urn:x-nmos:format:video' &&
+                    (get(record, 'media_type') === 'video/jxsv' ||
+                        has(record, 'sublevel')) && (
+                        <TextField label="Sublevel" source="sublevel" />
+                    )}
                 {queryVersion() >= 'v1.1' &&
                     get(record, 'format') === 'urn:x-nmos:format:audio' && (
                         <RateField label="Sample Rate" source="sample_rate" />
@@ -105,17 +127,21 @@ const FlowsShowView = props => {
                         <TextField label="Bit Depth" source="bit_depth" />
                     )}
                 {queryVersion() >= 'v1.3' &&
+                    (get(record, 'format') === 'urn:x-nmos:format:video' ||
+                        get(record, 'format') === 'urn:x-nmos:format:audio') &&
+                    (get(record, 'media_type') === 'video/jxsv' ||
+                        has(record, 'bit_rate')) && (
+                        <TextField label="Bit Rate" source="bit_rate" />
+                    )}
+                {queryVersion() >= 'v1.3' &&
                     get(record, 'format') === 'urn:x-nmos:format:data' && (
                         <TextField label="Event Type" source="event_type" />
                     )}
                 <SanitizedDivider />
                 <ReferenceArrayField
-                    allowEmpty={true}
-                    clickable="true"
                     label="Parents"
                     source="parents"
                     reference="flows"
-                    link="show"
                 >
                     <SingleFieldList linkType="show">
                         <LinkChipField />

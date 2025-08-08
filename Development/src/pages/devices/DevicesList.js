@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
     Card,
     CardContent,
+    Divider,
     Table,
     TableBody,
     TableCell,
@@ -9,7 +10,7 @@ import {
     TableRow,
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
-import { groupBy, map, uniqBy } from 'lodash';
+import { get, groupBy, map, uniqBy } from 'lodash';
 import FilterPanel, {
     AutocompleteFilter,
     StringFilter,
@@ -25,7 +26,12 @@ import {
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
-import { queryVersion, useJSONSetting } from '../../settings';
+import {
+    QUERY_API,
+    apiUsingRql,
+    queryVersion,
+    useJSONSetting,
+} from '../../settings';
 
 const DevicesList = props => {
     const [filter, setFilter] = useJSONSetting('Devices Filter');
@@ -55,6 +61,40 @@ const DevicesList = props => {
                         {queryVersion() >= 'v1.1' && (
                             <StringFilter source="description" />
                         )}
+                        {apiUsingRql(QUERY_API) && queryVersion() >= 'v1.1' && (
+                            <Divider />
+                        )}
+                        {
+                            // Work-in-progress BCP-002-02 Asset Distinguishing Information
+                            // See https://specs.amwa.tv/bcp-002-02/
+                        }
+                        {apiUsingRql(QUERY_API) && queryVersion() >= 'v1.1' && (
+                            <StringFilter
+                                source="(tags,urn%3Ax-nmos%3Atag%3Aasset%3Amanufacturer%2Fv1.0)"
+                                label="Manufacturer"
+                            />
+                        )}
+                        {apiUsingRql(QUERY_API) && queryVersion() >= 'v1.1' && (
+                            <StringFilter
+                                source="(tags,urn%3Ax-nmos%3Atag%3Aasset%3Aproduct%2Fv1.0)"
+                                label="Product Name"
+                            />
+                        )}
+                        {apiUsingRql(QUERY_API) && queryVersion() >= 'v1.1' && (
+                            <StringFilter
+                                source="(tags,urn%3Ax-nmos%3Atag%3Aasset%3Ainstance-id%2Fv1.0)"
+                                label="Instance Identifier"
+                            />
+                        )}
+                        {apiUsingRql(QUERY_API) && queryVersion() >= 'v1.1' && (
+                            <StringFilter
+                                source="(tags,urn%3Ax-nmos%3Atag%3Aasset%3Afunction%2Fv1.0)"
+                                label="Function"
+                            />
+                        )}
+                        {apiUsingRql(QUERY_API) && queryVersion() >= 'v1.1' && (
+                            <Divider />
+                        )}
                         <AutocompleteFilter
                             source="type"
                             {...parameterAutocompleteProps(DEVICE_TYPES)}
@@ -76,6 +116,10 @@ const DevicesList = props => {
                                 >
                                     Label
                                 </TableCell>
+                                <TableCell>Manufacturer</TableCell>
+                                <TableCell>Product Name</TableCell>
+                                <TableCell>Instance Identifier</TableCell>
+                                <TableCell>Function</TableCell>
                                 <TableCell>Type</TableCell>
                                 <TableCell>Control Types</TableCell>
                             </TableRow>
@@ -92,6 +136,34 @@ const DevicesList = props => {
                                             record={item}
                                             label={item.label}
                                         />
+                                    </TableCell>
+                                    <TableCell>
+                                        {get(
+                                            item.tags,
+                                            'urn:x-nmos:tag:asset:manufacturer/v1.0',
+                                            []
+                                        ).join(', ')}
+                                    </TableCell>
+                                    <TableCell>
+                                        {get(
+                                            item.tags,
+                                            'urn:x-nmos:tag:asset:product/v1.0',
+                                            []
+                                        ).join(', ')}
+                                    </TableCell>
+                                    <TableCell>
+                                        {get(
+                                            item.tags,
+                                            'urn:x-nmos:tag:asset:instance-id/v1.0',
+                                            []
+                                        ).join(', ')}
+                                    </TableCell>
+                                    <TableCell>
+                                        {get(
+                                            item.tags,
+                                            'urn:x-nmos:tag:asset:function/v1.0',
+                                            []
+                                        ).join(', ')}
                                     </TableCell>
                                     <TableCell>
                                         <ParameterField

@@ -238,6 +238,12 @@ const paramConstraintMap = {
         const filter = encodeRQLConstraint(constraint, 'bit_depth');
         return 'not(sub(components,not(' + filter + ')))';
     },
+    'urn:x-nmos:cap:format:profile': constraint =>
+        encodeRQLConstraint(constraint, 'profile'),
+    'urn:x-nmos:cap:format:level': constraint =>
+        encodeRQLConstraint(constraint, 'level'),
+    'urn:x-nmos:cap:format:sublevel': constraint =>
+        encodeRQLConstraint(constraint, 'sublevel'),
 
     // Audio Constraints
 
@@ -251,6 +257,11 @@ const paramConstraintMap = {
     'urn:x-nmos:cap:format:sample_depth': constraint =>
         encodeRQLConstraint(constraint, 'bit_depth'),
 
+    // Video/Audio Constraints
+
+    'urn:x-nmos:cap:format:bit_rate': constraint =>
+        encodeRQLConstraint(constraint, 'bit_rate'),
+
     // Event Constraints
 
     // hmm, IS-04 has event_type as optional in the flow, so we could fall back to querying
@@ -260,8 +271,10 @@ const paramConstraintMap = {
 
     // Transport Constraints
 
+    //TODO: urn:x-nmos:cap:transport:bit_rate
     //TODO: urn:x-nmos:cap:transport:packet_time
     //TODO: urn:x-nmos:cap:transport:max_packet_time
+    //TODO: urn:x-nmos:cap:transport:packet_transmission_mode
     //TODO: urn:x-nmos:cap:transport:st2110_21_sender_type
 };
 
@@ -693,32 +706,36 @@ const getChannelMappingEndPoints = (addresses, endpoints) => {
                     return;
                 }
                 endpoints
-                    .map(endpoint => () =>
-                        fetch(concatUrl(channelmappingAPI, `/${endpoint}`), {
-                            signal,
-                        })
-                            .then(response => {
-                                if (response.ok) {
-                                    return response.text();
+                    .map(
+                        endpoint => () =>
+                            fetch(
+                                concatUrl(channelmappingAPI, `/${endpoint}`),
+                                {
+                                    signal,
                                 }
-                            })
-                            .then(text => {
-                                try {
-                                    return JSON.parse(text);
-                                } catch (e) {
-                                    return text;
-                                }
-                            })
-                            .then(data => {
-                                endpointData.push({
-                                    [`$${
-                                        endpoint.split('/').slice(-1)[0]
-                                    }`]: data,
-                                });
-                            })
-                            .catch(error => {
-                                throw error;
-                            })
+                            )
+                                .then(response => {
+                                    if (response.ok) {
+                                        return response.text();
+                                    }
+                                })
+                                .then(text => {
+                                    try {
+                                        return JSON.parse(text);
+                                    } catch (e) {
+                                        return text;
+                                    }
+                                })
+                                .then(data => {
+                                    endpointData.push({
+                                        [`$${
+                                            endpoint.split('/').slice(-1)[0]
+                                        }`]: data,
+                                    });
+                                })
+                                .catch(error => {
+                                    throw error;
+                                })
                     )
                     .reduce(
                         (before, after) => before.then(_ => after()),
@@ -996,16 +1013,13 @@ const dataProvider = async (type, resource, params) => {
     let recordsToGet = pagingLimit;
     let result = null;
     while (recordsToGet > 0) {
-        const {
-            url,
-            options,
-            referenceFilter,
-        } = convertDataProviderRequestToHTTP(
-            type,
-            resource,
-            params,
-            recordsToGet
-        );
+        const { url, options, referenceFilter } =
+            convertDataProviderRequestToHTTP(
+                type,
+                resource,
+                params,
+                recordsToGet
+            );
         try {
             let response = await fetchJson(url, options);
             let data = await convertHTTPResponseToDataProvider(
@@ -1026,9 +1040,8 @@ const dataProvider = async (type, resource, params) => {
             ) {
                 // unfiltered data returned a whole page of data so more results are potentially available
                 recordsToGet -= data.total;
-                params.paginationURL = (pageForward
-                    ? data.pagination.next
-                    : data.pagination.prev
+                params.paginationURL = (
+                    pageForward ? data.pagination.next : data.pagination.prev
                 ).replace(pagingLimitRegex, 'paging.limit=' + recordsToGet);
             } else {
                 recordsToGet = 0;

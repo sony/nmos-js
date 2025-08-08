@@ -15,11 +15,8 @@ export const CustomNameField = ({
     onEditStopped,
     ...props
 }) => {
-    const {
-        getCustomName,
-        setCustomName,
-        unsetCustomName,
-    } = useCustomNamesContext();
+    const { getCustomName, setCustomName, unsetCustomName } =
+        useCustomNamesContext();
     const [editing, setEditing] = useState(false);
     const [value, setValue] = useState(
         getCustomName(source) || defaultValue || ''

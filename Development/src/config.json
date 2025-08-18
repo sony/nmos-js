@@ -39,7 +39,7 @@
             "type": "light"
         }
     },
-    "Auth Enable": {
+    "Auth Enabled": {
         "value": false
     }
 }

@@ -300,8 +300,8 @@ const convertDataProviderRequestToHTTP = (
         headers.set('Request-Timeout', 4);
     }
 
-    // add authorization header
-    if (isAuth()) {
+    // add authorization header to Query API only
+    if (api === QUERY_API && isAuth()) {
         headers.set('Authorization', makeBearerAuthHeader().Authorization);
     }
 
@@ -808,9 +808,12 @@ const convertHTTPResponseToDataProvider = async (
     referenceFilter
 ) => {
     const { headers, json } = response;
-    const fetchOptions = isAuth() ? { headers: makeBearerAuthHeader() } : {};
-
     const { api } = apiResource(resource);
+    // add authorization header to Query API only
+    const fetchOptions =
+        api === QUERY_API && isAuth()
+            ? { headers: makeBearerAuthHeader() }
+            : {};
     const useRql = resource !== 'queryapis' && apiUsingRql(api);
 
     switch (type) {

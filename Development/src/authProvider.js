@@ -1,4 +1,4 @@
-import decodeJwt from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import CryptoJS from 'crypto-js';
 import { AUTH_API, apiUrl, authClientId } from './settings';
 
@@ -39,7 +39,7 @@ const getAuthSettings = () => {
     const client_id = authClientId();
     const server_metadata_endpoint = apiUrl(AUTH_API);
     const redirect_uri = 'http://localhost:3000/login';
-    const scope = 'query connection openid';
+    const scope = 'query connection channelmapping openid';
     return {
         client_id,
         server_metadata_endpoint,
@@ -48,14 +48,13 @@ const getAuthSettings = () => {
     };
 };
 
-// from https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
-//
-const makeid = length => {
+// base on https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
+// to create a safe unreserved character string, see https://tools.ietf.org/html/rfc3986#section-2.3
+const makeSafeUnreservedString = length => {
     let result = '';
-    //characters modified to include ALL allowed characters from https://tools.ietf.org/html/rfc7636#section-4.1
-    //var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+    // safe unreserved characters
     let characters =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
     let charactersLength = characters.length;
     for (let i = 0; i < length; i++) {
         result += characters.charAt(
@@ -79,7 +78,7 @@ const base64URL = string => {
 // and a maximum length of 128 characters
 // see https://tools.ietf.org/html/rfc7636#section-4.1
 const makeCodeVerifier = () => {
-    return makeid(128);
+    return makeSafeUnreservedString(128);
 };
 
 // creates code challenge from code verifier
@@ -90,7 +89,9 @@ const makeCodeChallenge = code_verifier => {
     });
 };
 
-const makeLoginURI = (
+// creates Authorization URI
+// see https://tools.ietf.org/html/rfc6749#section-4.1.1
+const makeAuthorizationURI = (
     auth_endpoint,
     client_id,
     redirect_uri,
@@ -357,7 +358,7 @@ const handleLoginRequest = () => {
         .then(() => makeCodeChallenge(code_verifier))
         .then(code_challange => {
             // Generate state
-            const state = makeid(32);
+            const state = makeSafeUnreservedString(32);
             sessionStorage.setItem('oauth_code_verifier', code_verifier);
             sessionStorage.setItem('oauth_state', state);
 
@@ -365,7 +366,7 @@ const handleLoginRequest = () => {
             const auth_endpoint = JSON.parse(
                 sessionStorage.getItem('metadata')
             ).authorization_endpoint;
-            const uri = makeLoginURI(
+            const uri = makeAuthorizationURI(
                 auth_endpoint,
                 client_id,
                 redirect_uri,
@@ -520,7 +521,7 @@ const authProvider = {
             } else {
                 const bearer_token = JSON.parse(token);
                 if (bearer_token.access_token) {
-                    if (isExpired(decodeJwt(bearer_token.access_token))) {
+                    if (isExpired(jwtDecode(bearer_token.access_token))) {
                         return Promise.reject({
                             redirectTo: '',
                             message: 'Please Log In',

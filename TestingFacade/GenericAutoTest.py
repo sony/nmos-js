@@ -22,7 +22,8 @@ class GenericAutoTest:
         get_options = getattr(webdriver, CONFIG.BROWSER + 'Options', False)
         if get_options:
             options = get_options()
-            options.headless = CONFIG.HEADLESS
+            if CONFIG.HEADLESS:
+                options.add_argument("--headless=new")
             self.driver = browser(options=options)
         else:
             self.driver = browser()
@@ -36,6 +37,12 @@ class GenericAutoTest:
             query_api.send_keys(Keys.CONTROL + "a")
             query_api.send_keys(Keys.DELETE)
         query_api.send_keys(self.mock_registry_url + "x-nmos/query/v1.3")
+
+        # Ensure that RQL is switched off
+        use_rql = self.driver.find_element(By.NAME, "userql")
+        if use_rql.get_attribute('checked') == "true":
+            use_rql.click()
+
         # Open menu to show link names if not already open
         open_menu = self.driver.find_elements(By.XPATH, '//*[@title="Open menu"]')
         if open_menu:
@@ -48,7 +55,8 @@ class GenericAutoTest:
         """
         Click refresh button and sleep to allow loading time
         """
-        self.driver.find_element(By.CSS_SELECTOR, "[aria-label='Refresh']").click()
+        refresh = WebDriverWait(self.driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[aria-label='Refresh']")))
+        refresh.click()
         time.sleep(1)
 
     def navigate_to_page(self, page):
@@ -87,7 +95,7 @@ class GenericAutoTest:
         """
         Navigate to connect tab, activate connection to given sender
         """
-        connect = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.NAME, "connect")))
+        connect = WebDriverWait(self.driver, 20).until(EC.element_to_be_clickable((By.NAME, "connect")))
         connect.click()
 
         # Find the row containing the correct sender and activate connection
@@ -122,7 +130,7 @@ class GenericAutoTest:
         Identify the sender a receiver is connected to
         Returns string of sender label
         """
-        active = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.NAME, "active")))
+        active = WebDriverWait(self.driver, 20).until(EC.element_to_be_clickable((By.NAME, "active")))
         active.click()
 
         return self.driver.find_element(By.NAME, "sender").text

@@ -142,6 +142,7 @@ const Settings = () => {
                                 >
                                     <FormControlLabel
                                         label="RQL"
+                                        name="userql"
                                         control={
                                             <Switch
                                                 checked={values[USE_RQL]}

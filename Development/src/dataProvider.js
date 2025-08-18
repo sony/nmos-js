@@ -11,6 +11,7 @@ import {
 import { assign, get, has, isEmpty, set } from 'lodash';
 import { JsonPointer } from 'json-ptr';
 import diff from 'deep-diff';
+import { makeBearerAuthHeader } from './authProvider';
 import {
     DNSSD_API,
     LOGGING_API,
@@ -20,6 +21,7 @@ import {
     apiUsingRql,
     apiVersion,
     concatUrl,
+    usingAuth,
 } from './settings';
 
 const apiResource = resource => {
@@ -278,6 +280,11 @@ const paramConstraintMap = {
     //TODO: urn:x-nmos:cap:transport:st2110_21_sender_type
 };
 
+const isAuth = () => {
+    const token = localStorage.getItem('token');
+    return token && usingAuth();
+};
+
 const convertDataProviderRequestToHTTP = (
     type,
     resource,
@@ -291,6 +298,11 @@ const convertDataProviderRequestToHTTP = (
     const headers = new Headers({ Accept: 'application/json' });
     if (resource === 'queryapis') {
         headers.set('Request-Timeout', 4);
+    }
+
+    // add authorization header to Query API only
+    if (api === QUERY_API && isAuth()) {
+        headers.set('Authorization', makeBearerAuthHeader().Authorization);
     }
 
     switch (type) {
@@ -619,14 +631,19 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
     let connectionAPI;
     const controller = new AbortController();
     const signal = controller.signal;
+    const fetchOptions = isAuth()
+        ? { signal, headers: makeBearerAuthHeader() }
+        : { signal };
+
     return new Promise((resolve, reject) => {
         firstOf(
             addresses.map(address => {
                 return timeout(
                     5000,
-                    fetch(concatUrl(address, `/single/${resource}/${id}`), {
-                        signal,
-                    })
+                    fetch(
+                        concatUrl(address, `/single/${resource}/${id}`),
+                        fetchOptions
+                    )
                 );
             })
         )
@@ -642,9 +659,10 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
                 }
                 Promise.all(
                     endpoints.map(endpoint =>
-                        fetch(concatUrl(connectionAPI, `/${endpoint}`), {
-                            signal,
-                        })
+                        fetch(
+                            concatUrl(connectionAPI, `/${endpoint}`),
+                            fetchOptions
+                        )
                             .then(response => {
                                 if (response.ok) {
                                     return response.text();
@@ -684,14 +702,16 @@ const getChannelMappingEndPoints = (addresses, endpoints) => {
     let channelmappingAPI;
     const controller = new AbortController();
     const signal = controller.signal;
+    const fetchOptions = isAuth()
+        ? { signal, headers: makeBearerAuthHeader() }
+        : { signal };
+
     return new Promise((resolve, reject) => {
         firstOf(
             addresses.map(address => {
                 return timeout(
                     5000,
-                    fetch(concatUrl(address, ``), {
-                        signal,
-                    })
+                    fetch(concatUrl(address, ``), fetchOptions)
                 );
             })
         )
@@ -710,9 +730,7 @@ const getChannelMappingEndPoints = (addresses, endpoints) => {
                         endpoint => () =>
                             fetch(
                                 concatUrl(channelmappingAPI, `/${endpoint}`),
-                                {
-                                    signal,
-                                }
+                                fetchOptions
                             )
                                 .then(response => {
                                     if (response.ok) {
@@ -790,8 +808,12 @@ const convertHTTPResponseToDataProvider = async (
     referenceFilter
 ) => {
     const { headers, json } = response;
-
     const { api } = apiResource(resource);
+    // add authorization header to Query API only
+    const fetchOptions =
+        api === QUERY_API && isAuth()
+            ? { headers: makeBearerAuthHeader() }
+            : {};
     const useRql = resource !== 'queryapis' && apiUsingRql(api);
 
     switch (type) {
@@ -808,7 +830,11 @@ const convertHTTPResponseToDataProvider = async (
                 let deviceJSONData;
                 if (has(resourceJSONData, 'device_id')) {
                     deviceJSONData = await fetch(
-                        resourceUrl('devices', `/${resourceJSONData.device_id}`)
+                        resourceUrl(
+                            'devices',
+                            `/${resourceJSONData.device_id}`
+                        ),
+                        fetchOptions
                     ).then(result => result.json());
                 } else {
                     return { url, data: json };
@@ -967,7 +993,10 @@ const convertHTTPResponseToDataProvider = async (
                     params.ids.map(
                         id =>
                             new Promise(resolve =>
-                                fetch(resourceUrl(resource, `?id=${id}`))
+                                fetch(
+                                    resourceUrl(resource, `?id=${id}`),
+                                    fetchOptions
+                                )
                                     .then(response => response.json())
                                     .then(json => resolve(json[0]))
                             )

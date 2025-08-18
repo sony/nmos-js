@@ -5,11 +5,15 @@ import CONFIG from './config.json';
 export const LOGGING_API = 'Logging API';
 export const QUERY_API = 'Query API';
 export const DNSSD_API = 'DNS-SD API';
+export const AUTH_API = 'Authorization API';
+export const USE_AUTH = 'Auth Enabled';
 
 export const USE_RQL = 'RQL';
 export const PAGING_LIMIT = 'Paging Limit';
 
 export const FRIENDLY_PARAMETERS = 'Friendly Parameters';
+
+export const CLIENT_ID = 'Client ID';
 
 export const disabledSetting = name => get(CONFIG, `${name}.disabled`);
 export const hiddenSetting = name => get(CONFIG, `${name}.hidden`);
@@ -33,6 +37,8 @@ const defaultUrl = api => {
             return baseUrl + '/x-nmos/query/v1.3';
         case DNSSD_API:
             return baseUrl + '/x-dns-sd/v1.1';
+        case AUTH_API:
+            return baseUrl + '/.well-known/oauth-authorization-server';
         default:
             // not expected to be used
             return '';
@@ -86,6 +92,19 @@ export const setApiUsingRql = (api, rql) => {
         unsetJSONSetting(USE_RQL);
     }
 };
+
+export const usingAuth = () => getJSONSetting(USE_AUTH, true);
+export const setUsingAuth = auth => {
+    if (typeof auth === 'boolean') {
+        setJSONSetting(USE_AUTH, auth);
+    } else {
+        unsetJSONSetting(USE_AUTH);
+    }
+};
+
+export const authClientId = () => window.localStorage.getItem(CLIENT_ID) || '';
+export const setAuthClientId = clientId =>
+    window.localStorage.setItem(CLIENT_ID, clientId);
 
 export const getJSONSetting = (name, defaultValue = {}) => {
     const configValue = get(CONFIG, `${name}.value`);
@@ -142,6 +161,8 @@ const useSettings = () => {
         [PAGING_LIMIT]: apiPagingLimit(QUERY_API),
         [USE_RQL]: apiUsingRql(QUERY_API),
         [FRIENDLY_PARAMETERS]: getJSONSetting(FRIENDLY_PARAMETERS, false),
+        [CLIENT_ID]: authClientId(),
+        [AUTH_API]: apiUrl(AUTH_API),
     });
 
     const isEffective = name => !hiddenSetting(name) && !disabledSetting(name);
@@ -155,6 +176,8 @@ const useSettings = () => {
         if (isEffective(USE_RQL)) setApiUsingRql(QUERY_API, values[USE_RQL]);
         if (isEffective(FRIENDLY_PARAMETERS))
             setJSONSetting(FRIENDLY_PARAMETERS, values[FRIENDLY_PARAMETERS]);
+        if (isEffective(CLIENT_ID)) setAuthClientId(values[CLIENT_ID]);
+        if (isEffective(AUTH_API)) setApiUrl(AUTH_API, values[AUTH_API]);
     }, [values]);
 
     return [values, setValues];
@@ -168,3 +191,24 @@ export const SettingsContextProvider = props => {
 };
 
 export const useSettingsContext = () => useContext(SettingsContext);
+
+// Authorization context for updating web interface when the "Use Auth" switch is toggled
+const useAuthSettings = () => {
+    const [useAuth, setUseAuth] = useState(usingAuth());
+
+    const isEffective = name => !hiddenSetting(name) && !disabledSetting(name);
+    useEffect(() => {
+        if (isEffective(USE_AUTH)) setUsingAuth(useAuth);
+    }, [useAuth]);
+
+    return [useAuth, setUseAuth];
+};
+
+const AuthContext = createContext();
+
+export const AuthContextProvider = props => {
+    const [useAuth, setUseAuth] = useAuthSettings();
+    return <AuthContext.Provider value={[useAuth, setUseAuth]} {...props} />;
+};
+
+export const useAuthContext = () => useContext(AuthContext);

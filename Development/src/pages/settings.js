@@ -14,14 +14,18 @@ import {
 } from '@material-ui/core';
 import { Title } from 'react-admin';
 import {
+    AUTH_API,
+    CLIENT_ID,
     DNSSD_API,
     FRIENDLY_PARAMETERS,
     LOGGING_API,
     PAGING_LIMIT,
     QUERY_API,
+    USE_AUTH,
     USE_RQL,
     disabledSetting,
     hiddenSetting,
+    useAuthContext,
     useSettingsContext,
 } from '../settings';
 
@@ -70,6 +74,7 @@ const selectOnFocus = event => event.target.select();
 
 const Settings = () => {
     const [values, setValues] = useSettingsContext();
+    const [useAuth, setUseAuth] = useAuthContext();
 
     const handleTextChange = name => event => {
         setValues({ ...values, [name]: event.target.value });
@@ -77,6 +82,10 @@ const Settings = () => {
 
     const handleBooleanChange = name => event => {
         setValues({ ...values, [name]: event.target.checked });
+    };
+
+    const handleUseAuthChange = name => event => {
+        setUseAuth(event.target.checked);
     };
 
     return (
@@ -148,6 +157,59 @@ const Settings = () => {
                                         basic query syntax
                                     </FormHelperText>
                                 </FormControl>
+                            </StyledListItem>
+                        )}
+                        <StyledDivider />
+                        {!hiddenSetting(USE_AUTH) && (
+                            <StyledListItem>
+                                <FormControl
+                                    variant="filled"
+                                    disabled={disabledSetting(USE_AUTH)}
+                                >
+                                    <FormControlLabel
+                                        label="Authorization"
+                                        control={
+                                            <Switch
+                                                checked={useAuth}
+                                                onChange={handleUseAuthChange()}
+                                                color="primary"
+                                            />
+                                        }
+                                    />
+                                    <FormHelperText variant="filled">
+                                        Use IS-10 authenticated API calls
+                                    </FormHelperText>
+                                </FormControl>
+                            </StyledListItem>
+                        )}
+                        {!hiddenSetting(CLIENT_ID) && (
+                            <StyledListItem>
+                                <StyledTextField
+                                    label="Client ID"
+                                    variant="filled"
+                                    value={values[CLIENT_ID]}
+                                    onChange={handleTextChange(CLIENT_ID)}
+                                    onFocus={selectOnFocus}
+                                    disabled={
+                                        !useAuth || disabledSetting(CLIENT_ID)
+                                    }
+                                    helperText="Used by the Authentication Server to uniquely identify this client"
+                                />
+                            </StyledListItem>
+                        )}
+                        {!hiddenSetting(AUTH_API) && (
+                            <StyledListItem>
+                                <StyledTextField
+                                    label="Authorization API"
+                                    variant="filled"
+                                    value={values[AUTH_API]}
+                                    onChange={handleTextChange(AUTH_API)}
+                                    onFocus={selectOnFocus}
+                                    disabled={
+                                        !useAuth || disabledSetting(AUTH_API)
+                                    }
+                                    helperText="Authentication Server's well known endpoint"
+                                />
                             </StyledListItem>
                         )}
                         <StyledDivider />

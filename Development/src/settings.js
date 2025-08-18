@@ -6,7 +6,7 @@ export const LOGGING_API = 'Logging API';
 export const QUERY_API = 'Query API';
 export const DNSSD_API = 'DNS-SD API';
 export const AUTH_API = 'Authorization API';
-export const USE_AUTH = 'Auth Enable';
+export const USE_AUTH = 'Auth Enabled';
 
 export const USE_RQL = 'RQL';
 export const PAGING_LIMIT = 'Paging Limit';

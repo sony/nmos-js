@@ -38,5 +38,8 @@
         "value": {
             "type": "light"
         }
+    },
+    "Auth Enable": {
+        "value": false
     }
 }

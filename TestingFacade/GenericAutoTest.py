@@ -24,6 +24,8 @@ class GenericAutoTest:
             options = get_options()
             if CONFIG.HEADLESS:
                 options.add_argument("--headless=new")
+                options.add_argument("--window-size=1920,1080");
+                options.add_argument("--start-maximized");
             self.driver = browser(options=options)
         else:
             self.driver = browser()

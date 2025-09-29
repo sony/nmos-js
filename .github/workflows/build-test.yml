@@ -14,8 +14,42 @@ jobs:
 
     - uses: actions/setup-node@v4
 
-    - run: yarn install
-
-    - run: yarn run lint-check
-    - run: yarn run build
-    - run: yarn test --passWithNoTests --coverage --watchAll=false
+    - name: install nmos-js
+      run: |
+        yarn install
+    
+    - name: unit test nmos-js
+      run: |
+        yarn run lint-check
+        yarn run build
+        yarn test --passWithNoTests --coverage --watchAll=false
+    
+    - name: install python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+    
+    - name: install Chrome
+      run: |
+        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        sudo mkdir -p /etc/apt/sources.list.d
+        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+        sudo apt-get update
+        sudo apt-get -y install google-chrome-stable
+    
+    - name: install ChromeDriver
+      run: |
+        # Using specific ChromeDriver version for Chrome I used 132
+        CHROMEDRIVER_VERSION="132.0.6834.83"
+        echo "Installing ChromeDriver version: $CHROMEDRIVER_VERSION"
+        wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$CHROMEDRIVER_VERSION/linux64/chromedriver-linux64.zip"
+        unzip chromedriver-linux64.zip
+        chmod +x chromedriver-linux64/chromedriver
+        sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+        
+    - name: install TestingFacade dependencies
+      run: |
+        cd ..
+        cd TestingFacade
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt

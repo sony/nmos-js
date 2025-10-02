@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import requests
+import signal
 import sys
 from threading import Thread
 from flask import Flask, request
@@ -22,11 +24,10 @@ from IS0404AutoTest import IS0404tests
 from IS0503AutoTest import IS0503tests
 import Config as CONFIG
 
-TEST_SETS = {'IS0404': IS0404tests,
-             'IS0503': IS0503tests}
+TEST_SETS = {'IS-04-04': IS0404tests,
+             'IS-05-03': IS0503tests}
 
 app = Flask(__name__)
-
 
 @app.route('/x-nmos/testquestion/<version>', methods=['POST'], strict_slashes=False)
 def controller_tests_post(version):
@@ -84,7 +85,6 @@ def execute_test():
     elif question_id == 'post_tests_message':
         # End of test set, return to confirm end
         dataStore.setAnswer(None)
-        print(' *** Tests Complete ***')
 
     else:
         # Not a recognised part of test suite
@@ -92,6 +92,8 @@ def execute_test():
 
     # POST answer json back to test suite
     requests.post(dataStore.getUrl(), json=dataStore.getAnswerJson())
+    if question_id == 'post_tests_message':
+        os.kill(os.getpid(), signal.SIGINT)
     return
 
 

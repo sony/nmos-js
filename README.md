@@ -39,6 +39,26 @@ The nmos-js client works as both an NMOS Registry browser, using the IS-04 Query
 When used with the nmos-cpp-registry, it also provides access to registry log messages.
 It has been successfully tested in many AMWA Networked Media Incubator workshops, and in the [JT-NM Tested](https://jt-nm.org/jt-nm_tested/) programme.
 
+### Build Status
+
+The following configurations, defined by the [build-test](.github/workflows/build-test.yml) jobs, are built and unit tested automatically via continuous integration.
+
+| Platform | Version                   | Browser                            | Test Options                                                       |
+|----------|---------------------------|------------------------------------|--------------------------------------------------------------------|
+| Linux    | Ubuntu 22.04 (GCC 11.2.0) | Chrome                             |                                                                    |
+
+The [AMWA NMOS API Testing Tool](https://github.com/AMWA-TV/nmos-testing) controller tests are automatically run against the nmos-js user interface using a fully automatated [TestingFaçade](TestingFacade\README.md).
+
+**Test Suite/Status:**
+[![IS-04-04][IS-04-04-badge]][IS-04-04-sheet]
+[![IS-05-03][IS-05-03-badge]][IS-05-03-sheet]
+
+[IS-04-04-badge]: https://raw.githubusercontent.com/sony/nmos-js/badges/IS-04-04.svg
+[IS-05-03-badge]: https://raw.githubusercontent.com/sony/nmos-js/badges/IS-05-03.svg
+
+[IS-04-04-sheet]: https://docs.google.com/spreadsheets/d/1104JkWwsOp8ql4x0qc-I7nGZqD7mCSBJ__aUIw5AFfw/edit?gid=1975955785
+[IS-05-03-sheet]: https://docs.google.com/spreadsheets/d/1104JkWwsOp8ql4x0qc-I7nGZqD7mCSBJ__aUIw5AFfw/edit?gid=946113228
+
 ### Recent Activity
 
 The implementation is designed to be extended. Development is ongoing, following the evolution of the NMOS specifications in the AMWA Networked Media Incubator.

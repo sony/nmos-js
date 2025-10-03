@@ -14,6 +14,8 @@ summary_path=$1
 shift
 host=$1
 shift
+build_prefix=$1
+shift
 
 cd `dirname $0`
 self_dir=`pwd`
@@ -42,7 +44,7 @@ function do_run_test() {
   sleep 10s
   
   cd ${testing_dir}
-  output_file=${results_dir}/${suite}.json
+  output_file=${results_dir}/${build_prefix}${suite}.json
   echo ${output_file}
   result=$(python nmos-test.py suite ${suite} --selection all "$@" --output "${output_file}" >> ${results_dir}/testoutput 2>&1; echo $?)
   if [ ! -e ${output_file} ]; then

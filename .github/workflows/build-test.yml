@@ -97,7 +97,6 @@ jobs:
         ${root_dir}/Sandbox/run_controller_tests.sh ${root_dir}/Development/ ${root_dir}/TestingFacade/ ${testing_dir} results badges $GITHUB_STEP_SUMMARY "127.0.0.1" "${{ env.GITHUB_COMMIT }}-"
 
     - name: upload to google sheets
-      if: github.event_name == 'push'
       working-directory: ${{ env.RUNNER_WORKSPACE }}
       shell: bash
       run: |
@@ -115,7 +114,6 @@ jobs:
         path: ${{ runner.workspace }}/nmos-js/nmos-testing/results
 
   make_badges:
-    if: github.event_name == 'push'
     needs: [build_and_test]
     runs-on: ubuntu-22.04
     steps:

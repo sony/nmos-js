@@ -47,7 +47,7 @@ The following configurations, defined by the [build-test](.github/workflows/buil
 |----------|---------------------------|------------------------------------|--------------------------------------------------------------------|
 | Linux    | Ubuntu 22.04 (GCC 11.2.0) | Chrome                             |                                                                    |
 
-The [AMWA NMOS API Testing Tool](https://github.com/AMWA-TV/nmos-testing) controller tests are automatically run against the nmos-js user interface using a fully automatated [TestingFaçade](TestingFacade\README.md).
+The [AMWA NMOS API Testing Tool](https://github.com/AMWA-TV/nmos-testing) controller tests are automatically run against the nmos-js user interface using a fully automated [TestingFaï¿½ade](TestingFacade\README.md).
 
 **Test Suite/Status:**
 [![IS-04-04][IS-04-04-badge]][IS-04-04-sheet]

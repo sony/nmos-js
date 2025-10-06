@@ -105,6 +105,7 @@ const ReceiversShowView = props => {
                                 disabled={
                                     !get(record, `$${key}`) || !useConnectionAPI
                                 }
+                                name={key}
                             />
                         ))}
                         <Tab
@@ -115,6 +116,7 @@ const ReceiversShowView = props => {
                             disabled={
                                 !get(record, '$staged') || !useConnectionAPI
                             }
+                            name="connect"
                         />
                     </Tabs>
                 </Paper>
@@ -141,10 +143,10 @@ const ShowSummaryTab = ({ record, ...props }) => {
     return (
         <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
-                <TextField label="ID" source="id" />
+                <TextField label="ID" source="id" name="id" />
                 <TAIField source="version" />
-                <TextField source="label" />
-                <TextField source="description" />
+                <TextField source="label" name="label" />
+                <TextField source="description" name="description" />
                 <ObjectField register={TAGS} source="tags" />
                 <SanitizedDivider />
                 <ParameterField source="transport" register={TRANSPORTS} />
@@ -182,7 +184,11 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 )}
                 <ParameterField source="format" register={FORMATS} />
                 {queryVersion() >= 'v1.2' && (
-                    <BooleanField label="Active" source="subscription.active" />
+                    <BooleanField
+                        label="Active"
+                        source="subscription.active"
+                        name="active"
+                    />
                 )}
                 {queryVersion() >= 'v1.2' &&
                     get(record, 'subscription.sender_id') && (
@@ -221,6 +227,7 @@ const ShowActiveTab = ({ record, ...props }) => {
                         source="$active.sender_id"
                         reference="senders"
                         link="show"
+                        name="sender"
                     >
                         <LinkChipField />
                     </ReferenceField>
@@ -228,6 +235,7 @@ const ShowActiveTab = ({ record, ...props }) => {
                 <BooleanField
                     label="Master Enable"
                     source="$active.master_enable"
+                    name="master_enable"
                 />
                 <TextField label="Mode" source="$active.activation.mode" />
                 <TAIField

@@ -36,7 +36,7 @@ export const PaginationButton = ({
     };
 
     return (
-        <Button onClick={() => nextPage(rel)} disabled={!enabled}>
+        <Button onClick={() => nextPage(rel)} disabled={!enabled} name={rel}>
             {getIcon(rel)}
             {label}
         </Button>

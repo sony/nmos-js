@@ -19,7 +19,7 @@
     },
     "RQL": {
         "value": true,
-        "disabled": true
+        "disabled": false
     },
     "Paging Limit": {
     },

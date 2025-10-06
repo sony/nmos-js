@@ -201,6 +201,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                                             style={{
                                                 textDecoration: 'none',
                                             }}
+                                            name="label"
                                         >
                                             <LinkChipField record={item} />
                                         </Link>

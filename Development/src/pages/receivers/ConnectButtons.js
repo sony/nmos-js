@@ -65,6 +65,7 @@ const ConnectButtons = ({ senderData, receiverData }) => {
                 onClick={event => handleConnect('active', event)}
                 color="primary"
                 startIcon={<ActivateImmediateIcon />}
+                name="activate"
             >
                 Activate
             </Button>

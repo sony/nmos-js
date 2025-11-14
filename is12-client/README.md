@@ -1,40 +1,22 @@
-# NCA Controller
+# IS-12 Device Model Browser
 
-*A prototype controller for use with NCA nodes*
-
-**By David Patyk (david.patyk@sony.com)**
+*A prototype controller for use with IS-12 capable NMOS Nodes*
 
 ## Overview
 
-Most of the code-specific documentation is available in the [README PROGRAMMERS.md](./src/README%20PROGRAMMERS.md) file
-This code was 'completed' up to the most recent specification as of `24th January 2023`. Any changes since will require
-implementation
+The program is a controller for IS-12 capable NMOS Nodes such as the [NMOS Device Control Mock](https://github.com/AMWA-TV/nmos-device-control-mock).
 
 <!-- SETUP -->
 
 ## Installation
 
-***
-Build all program dependencies with:
-
 ```bash
 yarn [install]
 ```
 
-
 ## Requirements
 
 ***
-The program is a controller for NCA nodes. As a minimum, it requires a `registry`:
-> see [NMOS Registry](https://github.com/AMWA-TV/nmos-device-control-mock/tree/main)
-
-However, to locally test the functionality of the program, it also requires `NCA-Nodes`:
-> see [NMOS Mock NCA node](https://github.com/AMWA-TV/nmos-device-control-mock/tree/main)
-
-With the current implementation method, the best way to add data from a device into the NCA network (as of now) is to
-integrate it into the `NCA-Node` program.
-
-Additionally, you will require:
 - Node.js (install with chocolaty to get all dependencies)
 - Python 3.10+
 
@@ -43,12 +25,9 @@ Additionally, you will require:
 ## Usage
 
 ***
-
-- Make a note of your registry `IP` and `Port`
-- Modify the `config.json` with your registry `IP` and `Port`.
-    - (Optionally, adding a prefix to the variables will make
-      program utilise the dev menu)
-- Run the program
+- On launch there is an edit box where the URL of the control protocol endpoint can be set. 
+- For example, `ws://127.0.0.1:7002/x-nmos/ncp/v1.0`
+- Click the `CONNECT` button to connect to the control protocol endpoint.
 
 ### Running:
 

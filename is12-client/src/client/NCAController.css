@@ -1,0 +1,266 @@
+.fixed {
+    position: fixed;
+}
+
+.page-layout-grid {
+    display: grid;
+    margin: 0;
+    grid-auto-columns: 1fr;
+    min-height: 100vh;
+    grid-column-gap: 0;
+    grid-row-gap: 4px;
+    grid-template-areas:
+            "Top Top"
+            "Left Right";
+    grid-template-columns: 0.3fr 3fr;
+    grid-template-rows: 0.3fr 2.5fr;
+}
+
+.loading {
+    position: absolute;
+    width: 60vw;
+    height: 70vh;
+    display: grid;
+    justify-content: center;
+    justify-self: center;
+    align-self: center;
+    align-content: center;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    z-index: 3;
+    transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1), height 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.smaller {
+    width: 40vw;
+    height: 20vh;
+}
+
+.error {
+    color: darkred;
+}
+
+.top-image {
+    width: 5rem;
+    height: 5rem;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+}
+
+.pad-right {
+    padding-left: 0.2rem;
+}
+
+.selection-button {
+    display: inline-flex;
+    color: white;
+    overflow: hidden;
+    height: 100px;
+    width: 100px;
+    margin-right: 5px;
+    margin-left: -18px;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    clear: none;
+    order: 0;
+    border: 2px solid #000;
+    border-radius: 80px;
+    background-color: #fff;
+    box-shadow: 1px 1px 3px 0 #000;
+    text-align: center;
+    align-items: center;
+    text-decoration: none;
+    font-size: 1rem;
+    text-transform: none;
+    background-clip: border-box;
+    object-fit: fill;
+    transition: min-width 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    width 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 50ms cubic-bezier(0, 0, 0, 1);
+    transition-delay: 200ms;
+}
+
+.selection-button:hover {
+    min-width: 180px;
+    color: black;
+    width: 16vw;
+    transition: min-width 200ms cubic-bezier(0.18, 0.89, 0.32, 1.28),
+    width 150ms cubic-bezier(0.18, 0.89, 0.32, 1.28),
+    color 100ms cubic-bezier(0, 0, 0.45, 1) 40ms;
+}
+
+.button-img {
+    width: 5rem;
+    padding-left: 6px;
+    height: fit-content;
+}
+
+
+.list {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 99%;
+    max-width: 99%;
+    min-width: auto;
+    margin: 0;
+    padding-top: 0;
+    padding-left: 0;
+    align-items: stretch;
+    list-style-type: none;
+}
+
+.data-field {
+    display: block;
+    position: absolute;
+    width: 94%;
+    height: auto;
+    padding-top: 10vh;
+    padding-bottom: 3vh;
+    margin-left: 110px;
+}
+
+
+.list-container {
+    position: static;
+    display: block;
+    overflow: hidden;
+    max-width: 98%;
+    max-height: 80vh;
+    padding-left: 0;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    border-radius: 7px;
+    object-fit: fill;
+    border: 2px solid rgba(116, 116, 116, 0.8);
+    background-color: rgba(73, 113, 159, 0.8);
+}
+
+.muiTable {
+    background-color: rgba(73, 113, 159, 0.8);
+}
+
+.heading {
+    direction: ltr;
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 1.5rem;
+    margin-bottom: 0;
+}
+
+.top-block {
+    display: flex;
+    width: 100%;
+    height: 8vh;
+    border-style: solid;
+    border-width: 0 0 4px 0;
+    border-color: rgba(96, 96, 96, 0.81);
+    background-color: rgba(36, 36, 36, 1);
+    justify-content: left;
+    justify-items: left;
+    align-content: center;
+    align-items: center;
+    padding: 10px;
+    z-index: 3;
+}
+
+.sidebar {
+    display: grid;
+    width: 1%;
+    height: 90vh;
+    padding-top: 10vh;
+    padding-right: 0;
+    justify-items: stretch;
+    align-items: stretch;
+    align-content: stretch;
+    grid-auto-columns: 1fr;
+    grid-column-gap: 0;
+    grid-row-gap: 0;
+    grid-template-columns: 1fr 0.25fr;
+    grid-template-rows: auto;
+    z-index: 3;
+}
+
+#separator-line {
+    position: relative;
+    display: flex;
+    width: 60px;
+    height: 100%;
+    margin-right: 0;
+    padding-right: 0;
+    padding-left: 0;
+    border-style: solid;
+    border-width: 1px 2px 1px 1px;
+    border-color: transparent #fff transparent transparent;
+    border-radius: 0 19px 19px 0;
+    outline: #333 none 3px;
+    background-color: rgba(92, 92, 92, 0.3);
+}
+
+/* Design for scroll-bar */
+::-webkit-scrollbar {
+    width: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: mediumpurple;
+}
+
+.button-section {
+    align-self: center;
+    justify-self: start;
+    position: fixed;
+    display: flex;
+    overflow: auto;
+    width: auto;
+    height: 65%;
+    top: inherit;
+    padding-right: 0;
+    padding-left: 14px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    grid-auto-columns: 1fr;
+    grid-column-gap: 0;
+    grid-row-gap: 20px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    text-align: left;
+    object-fit: fill;
+    object-position: 50% 50%;
+}
+
+/* SENSORS BLOCK */
+.MuiTableRow-root:has(canvas) > td {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.MuiTableCell-body {
+    max-width: 14rem;
+}
+
+.line-chart {
+    position: relative;
+    width: 100%;
+}
+
+.small-line-chart {
+    position: relative;
+    height: 8vh;
+    max-height: 80px;
+    width: 8vw;
+    top: 10px;
+}
+
+#sidebar-area {
+    grid-area: Left;
+}
+
+#data-area {
+    grid-area: Right;
+}
+
+#top-area {
+    grid-area: Top;
+}

@@ -1,0 +1,9 @@
+.basic {
+    position: relative;
+    display: grid;
+    grid-auto-columns: auto;
+    justify-content: center;
+    justify-items: center;
+    grid-template-rows: auto auto auto auto;
+    font-size: 1.5rem;
+}

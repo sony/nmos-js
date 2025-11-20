@@ -43,19 +43,3 @@ yarn start
 yarn build-and-start
 ```
 
-## Docker
-
-### Build
-
-```bash
-docker build . -t nca-control-client
-```
-
-### Run
-
-Install Docker Compose
-
-```bash
-docker-compose up -d
-```
-

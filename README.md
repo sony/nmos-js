@@ -65,6 +65,8 @@ The implementation is designed to be extended. Development is ongoing, following
 
 Recent activity on the project (newest first):
 
+- Added prototype [IS-12 Device Model browser client](is12-client/README.md).
+- Added [automated controller testing](TestingFacade/README.md) for nmos-js.
 - Read-only support for IS-08 Audio Channel Mapping
 - Support for BCP-004-01 Receiver Capabilities
 - JT-NM Tested 03/20 badge (packaged and deployed on a Mellanox SN2010 Switch)

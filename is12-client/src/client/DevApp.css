@@ -1,0 +1,40 @@
+.tree_wrap {
+    justify-self: center;
+    width: 99vw;
+    height: 90vh;
+    border: 2px outset black;
+    background-color: #333333;
+}
+
+.node__root > circle {
+    fill: rgb(164, 1, 246);
+}
+
+.node__branch > circle {
+    fill: rgb(99, 1, 246);
+}
+
+.node__leaf > circle {
+    fill: rgb(102, 150, 255);
+}
+
+.rd3t-label {
+    outline-style: groove;
+    outline-color: rgba(148, 148, 148, 0.57);
+    fill: #d9d9d9;
+}
+
+.rd3t-label > text {
+    fill: #b0aeae;
+}
+
+.node__branch > g > text > tspan {
+    text-anchor: middle;
+    alignment-baseline: central;
+    font-size: 0.8rem;
+}
+
+.rd3t-label > .rd3t-label__title {
+    fill: #62c1ce;
+    text-decoration: underline;
+}

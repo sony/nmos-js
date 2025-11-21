@@ -1,0 +1,15 @@
+{
+  "short_name": "Device Model Browser",
+  "name": "Device Model Browser",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "377x373",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

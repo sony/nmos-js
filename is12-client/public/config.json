@@ -1,0 +1,9 @@
+{
+  "comments": "PROGRAM WILL OVERWRITE DEFAULT MENU WHEN 'address' AND 'port' PROVIDED",
+  "address": "ws://43.195.121.163:7002/x-nmos/ncp/v1.0",
+  "!port": 8080,
+  "debug": true,
+  "showClassManager": false,
+  "useApp": "mainApp",
+  "NOTE": "'useApp' should be mainApp or devApp"
+}

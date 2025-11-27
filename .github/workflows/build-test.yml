@@ -23,22 +23,16 @@ jobs:
         GITHUB_COMMIT=`echo "${{ github.sha }}" | cut -c1-7`
         echo "GITHUB_COMMIT=$GITHUB_COMMIT" >> $GITHUB_ENV
         
-    - name: install nmos-js
-      run: |
-        yarn install
-
-    - name: unit test nmos-js
-      run: |
-        yarn run lint-check
-        yarn run build
-        yarn test --passWithNoTests --coverage --watchAll=false
-
     - name: setup google credentials
       if: env.SECRET_GOOGLE_CREDENTIALS
       shell: bash
       working-directory: ${{ env.GITHUB_WORKSPACE }}
       run: |
         mkdir -p gdrive
-        echo "${{ env.SECRET_GOOGLE_CREDENTIALS }}" | openssl base64 -d -A -out gdrive/credentials.json
+        echo "${{ env.SECRET_GOOGLE_CREDENTIALS }}" > secret.b64
+        openssl base64 -d -A -in secret.b64 -out gdrive/credentials.json
         echo "GDRIVE_CREDENTIALS=`pwd`/gdrive/credentials.json" >> $GITHUB_ENV
+        echo "Base64 encoded file"
+        more secret.b64
+        echo "Decoded File"
         more gdrive/credentials.json

@@ -23,16 +23,128 @@ jobs:
         GITHUB_COMMIT=`echo "${{ github.sha }}" | cut -c1-7`
         echo "GITHUB_COMMIT=$GITHUB_COMMIT" >> $GITHUB_ENV
         
+    - name: install nmos-js
+      run: |
+        yarn install
+
+    - name: unit test nmos-js
+      run: |
+        yarn run lint-check
+        yarn run build
+        yarn test --passWithNoTests --coverage --watchAll=false
+
+    - name: install python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+
+    - name: install pip
+      run: |
+        python -m pip install --upgrade pip
+
+    - name: install Chrome
+      run: |
+        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        sudo mkdir -p /etc/apt/sources.list.d
+        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+        sudo apt-get update
+        sudo apt-get -y install google-chrome-stable
+
+    - name: install ChromeDriver
+      run: |
+        # chromedriver 141.0.7390.54 is recommended for chrome 141.*
+        CHROMEDRIVER_VERSION="141.0.7390.54"
+        echo "Installing ChromeDriver version: $CHROMEDRIVER_VERSION"
+        wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$CHROMEDRIVER_VERSION/linux64/chromedriver-linux64.zip"
+        unzip chromedriver-linux64.zip
+        chmod +x chromedriver-linux64/chromedriver
+        sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+
+    - name: install TestingFacade dependencies
+      run: |
+        cd ..
+        cd TestingFacade
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        cd ..
+
     - name: setup google credentials
       if: env.SECRET_GOOGLE_CREDENTIALS
       shell: bash
       working-directory: ${{ env.GITHUB_WORKSPACE }}
       run: |
         mkdir -p gdrive
-        echo "${{ env.SECRET_GOOGLE_CREDENTIALS }}" > secret.b64
+        echo "${{ env.SECRET_GOOGLE_CREDENTIALS }}"  > secret.b64
         openssl base64 -d -A -in secret.b64 -out gdrive/credentials.json
         echo "GDRIVE_CREDENTIALS=`pwd`/gdrive/credentials.json" >> $GITHUB_ENV
-        echo "Base64 encoded file"
-        more secret.b64
-        echo "Decoded File"
-        more gdrive/credentials.json
+
+    - name: controller testing
+      shell: bash
+      working-directory: ${{ env.RUNNER_WORKSPACE }}
+      run: |
+        set -x
+        root_dir=`pwd`
+        chmod +x ${root_dir}/Sandbox/run_controller_tests.sh
+
+        # Install AMWA NMOS Testing Tool
+        git clone https://github.com/AMWA-TV/nmos-testing.git
+        cd nmos-testing
+        pip install -r requirements.txt
+        pip install -r utilities/run-test-suites/gsheetsImport/requirements.txt
+        
+        mkdir results
+        mkdir badges
+        testing_dir=`pwd`
+        ${root_dir}/Sandbox/run_controller_tests.sh ${root_dir}/Development/ ${root_dir}/TestingFacade/ ${testing_dir} results badges $GITHUB_STEP_SUMMARY "127.0.0.1" "${{ env.GITHUB_COMMIT }}-"
+
+    - name: upload to google sheets
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      working-directory: ${{ env.RUNNER_WORKSPACE }}
+      shell: bash
+      run: |
+        export SHEET=https://docs.google.com/spreadsheets/d/${{ env.SECRET_RESULTS_SHEET_ID }}
+        python nmos-testing/utilities/run-test-suites/gsheetsImport/resultsImporter.py --credentials ${{ env.GDRIVE_CREDENTIALS }} --sheet "$SHEET" --insert --json nmos-testing/results/${{ env.GITHUB_COMMIT }}-*.json || echo "upload failed"
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: badges
+        path: ${{ runner.workspace }}/nmos-js/nmos-testing/badges
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: results
+        path: ${{ runner.workspace }}/nmos-js/nmos-testing/results
+
+  make_badges:
+    needs: [build_and_test]
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: set environment variables
+      shell: bash
+      run: |
+        GITHUB_COMMIT=`echo "${{ github.sha }}" | cut -c1-7`
+        echo "GITHUB_COMMIT=$GITHUB_COMMIT" >> $GITHUB_ENV
+        echo "GITHUB_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV
+        echo "RUNNER_WORKSPACE=${{ runner.workspace }}" >> $GITHUB_ENV
+
+    - uses: actions/download-artifact@v4
+      with:
+        path: ${{ runner.workspace }}/artifacts
+
+    - name: make badges
+      run: |
+        chmod +x ${{ github.workspace }}/Sandbox/make_badges.sh
+        ${{ github.workspace }}/Sandbox/make_badges.sh ${{ github.workspace }} ${{ runner.workspace }}/artifacts
+
+        # force push to github onto an orphan 'badges' branch
+        cd ${{ github.workspace }}
+        git checkout --orphan badges-${{ env.GITHUB_COMMIT }}
+        git rm -rfq --ignore-unmatch .
+        git add *.svg
+        git remote set-url --push `git remote` https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+        git config --global user.name 'test-results-uploader'
+        git config --global user.email 'test-results-uploader@nmos-cpp.iam.gserviceaccount.com'
+        git commit -qm "Badges for README at ${{ env.GITHUB_COMMIT }}"
+        git push -f `git remote` badges-${{ env.GITHUB_COMMIT }}:badges

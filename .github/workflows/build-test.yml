@@ -52,8 +52,6 @@ jobs:
 
     - name: install ChromeDriver
       uses: nanasess/setup-chromedriver@v1
-      with:
-        chromeapp: google-chrome
 
     - name: install TestingFacade dependencies
       run: |

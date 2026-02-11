@@ -51,14 +51,9 @@ jobs:
         sudo apt-get -y install google-chrome-stable
 
     - name: install ChromeDriver
-      run: |
-        # chromedriver 141.0.7390.54 is recommended for chrome 141.*
-        CHROMEDRIVER_VERSION="141.0.7390.54"
-        echo "Installing ChromeDriver version: $CHROMEDRIVER_VERSION"
-        wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$CHROMEDRIVER_VERSION/linux64/chromedriver-linux64.zip"
-        unzip chromedriver-linux64.zip
-        chmod +x chromedriver-linux64/chromedriver
-        sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+      uses: nanasess/setup-chromedriver@v1
+      with:
+        chromeapp: google-chrome
 
     - name: install TestingFacade dependencies
       run: |

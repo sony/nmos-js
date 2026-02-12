@@ -44,14 +44,22 @@ jobs:
 
     - name: install Chrome
       run: |
-        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-        sudo mkdir -p /etc/apt/sources.list.d
-        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-        sudo apt-get update
-        sudo apt-get -y install google-chrome-stable
+        CHROME_VERSION="141.0.7390.54"
+        wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${CHROME_VERSION}/linux64/chrome-linux64.zip"
+        unzip -q chrome-linux64.zip
+        sudo mv chrome-linux64 /opt/
+        sudo ln -sf /opt/chrome-linux64/chrome /usr/bin/google-chrome
+        rm chrome-linux64.zip
 
     - name: install ChromeDriver
-      uses: nanasess/setup-chromedriver@v1
+      run: |
+        # chromedriver 141.0.7390.54 is recommended for chrome 141.*
+        CHROMEDRIVER_VERSION="141.0.7390.54"
+        echo "Installing ChromeDriver version: $CHROMEDRIVER_VERSION"
+        wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$CHROMEDRIVER_VERSION/linux64/chromedriver-linux64.zip"
+        unzip chromedriver-linux64.zip
+        chmod +x chromedriver-linux64/chromedriver
+        sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
 
     - name: install TestingFacade dependencies
       run: |

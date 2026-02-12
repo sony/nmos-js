@@ -51,7 +51,7 @@ function do_run_test() {
     echo "No output produced"
     result=2
   else
-    disabled_tests=`grep -c '"Test Disabled"' ${output_file}`
+    disabled_tests=$(($(grep -c '"Test Disabled"' ${output_file} 2>/dev/null || echo 0) + $(grep -c '"Could Not Test"' ${output_file} 2>/dev/null || echo 0)))
     if [[ $disabled_tests -gt $max_disabled_tests ]]; then
       echo "$disabled_tests tests disabled, expected max $max_disabled_tests"
       result=2

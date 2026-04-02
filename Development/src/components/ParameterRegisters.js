@@ -175,4 +175,7 @@ export const TRANSPORTS = {
     'urn:x-nmos:transport:websocket': {
         label: 'WebSocket',
     },
+    'urn:x-nmos:transport:mxl': {
+        label: 'MXL',
+    },
 };

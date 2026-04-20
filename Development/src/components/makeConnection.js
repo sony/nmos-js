@@ -26,6 +26,7 @@ const oneToOneTransportParams = {
         'connection_authorization',
         'connection_uri',
     ],
+    'urn:x-nmos:transport:mxl': ['flow_id'],
 };
 
 // create an array mapping receiver leg to sender leg
@@ -139,6 +140,8 @@ const makePatchDataWithTransportParams = (data, options) => {
             }
             break;
         case 'urn:x-nmos:transport:websocket':
+            break;
+        case 'urn:x-nmos:transport:mxl':
             break;
         default:
             break;

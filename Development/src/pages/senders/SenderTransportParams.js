@@ -513,8 +513,14 @@ const MXLSenderLeg = ({ data }) => {
         <Card elevation={3}>
             <CardContent>
                 <SimpleShowLayout record={data}>
-                    {has(data, 'flow_id') && (
-                        <TextField source="flow_id" label="Flow ID" />
+                    {has(data, 'mxl_flow_id') && (
+                        <TextField source="mxl_flow_id" label="MXL Flow ID" />
+                    )}
+                    {has(data, 'mxl_domain_id') && (
+                        <TextField
+                            source="mxl_domain_id"
+                            label="MXL Domain ID"
+                        />
                     )}
                     {params_ext.length !== 0 && <SanitizedDivider />}
                     {params_ext.map(param => (
@@ -542,9 +548,8 @@ const MXLSenderEdit = ({ record }) => {
             source="$staged.transport_params"
         >
             <CardFormIterator disableRemove disableAdd>
-                {uniqueKeys.includes('flow_id') && (
-                    <TextInput source="flow_id" label="Flow ID" />
-                )}
+                <TextInput source="mxl_flow_id" label="MXL Flow ID" />
+                <TextInput source="mxl_domain_id" label="MXL Domain ID" />
                 {params_ext.length !== 0 && <SanitizedDivider />}
                 {params_ext.map(param => (
                     <TextInput

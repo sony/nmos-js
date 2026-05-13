@@ -416,6 +416,72 @@ const WebSocketReceiverEdit = ({ record }) => {
     );
 };
 
+const MXLReceiver = ({ data }) => (
+    <Grid container spacing={2}>
+        {Object.keys(data).map(i => (
+            <Grid item sm key={i}>
+                <MXLReceiverLeg data={data[i]} />
+            </Grid>
+        ))}
+    </Grid>
+);
+
+const MXLReceiverLeg = ({ data }) => {
+    const params_ext = Object.keys(data).filter(x => x.startsWith('ext_'));
+    return (
+        <Card elevation={3}>
+            <CardContent>
+                <SimpleShowLayout record={data}>
+                    {has(data, 'mxl_domain_id') && (
+                        <TextField
+                            source="mxl_domain_id"
+                            label="MXL Domain ID"
+                        />
+                    )}
+                    {has(data, 'mxl_flow_id') && (
+                        <TextField source="mxl_flow_id" label="MXL Flow ID" />
+                    )}
+                    {params_ext.length !== 0 && <SanitizedDivider />}
+                    {params_ext.map(param => (
+                        <TextField
+                            source={param}
+                            label={labelize(param)}
+                            key={param}
+                        />
+                    ))}
+                </SimpleShowLayout>
+            </CardContent>
+        </Card>
+    );
+};
+
+const MXLReceiverEdit = ({ record }) => {
+    const data = get(record, '$staged.transport_params');
+    const uniqueKeys = Object.keys(
+        data.reduce((result, obj) => Object.assign(result, obj), {})
+    );
+    const params_ext = uniqueKeys.filter(x => x.startsWith('ext_'));
+    return (
+        <ArrayInput
+            label="Transport Parameters"
+            source="$staged.transport_params"
+        >
+            <CardFormIterator disableRemove disableAdd>
+                <TextInput source="mxl_domain_id" label="MXL Domain ID" />
+                <TextInput source="mxl_flow_id" label="MXL Flow ID" />
+                {params_ext.length !== 0 && <SanitizedDivider />}
+                {params_ext.map(param => (
+                    <TextInput
+                        source={param}
+                        label={labelize(param)}
+                        key={param}
+                    />
+                ))}
+            </CardFormIterator>
+        </ArrayInput>
+    );
+};
+
 const ReceiverTransportParamsCardsGrid = ({ ids, record }) => {
     const type = get(record, '$transporttype');
     const data = [];
@@ -430,6 +496,8 @@ const ReceiverTransportParamsCardsGrid = ({ ids, record }) => {
                 return <RTPReceiver data={data} />;
             case 'urn:x-nmos:transport:websocket':
                 return <WebSocketReceiver data={data} />;
+            case 'urn:x-nmos:transport:mxl':
+                return <MXLReceiver data={data} />;
             default:
                 return <b>Unknown Type</b>;
         }
@@ -441,6 +509,8 @@ const ReceiverTransportParamsCardsGrid = ({ ids, record }) => {
                 return <RTPReceiverEdit record={record} />;
             case 'urn:x-nmos:transport:websocket':
                 return <WebSocketReceiverEdit record={record} />;
+            case 'urn:x-nmos:transport:mxl':
+                return <MXLReceiverEdit record={record} />;
             default:
                 return <b>Unknown Type</b>;
         }

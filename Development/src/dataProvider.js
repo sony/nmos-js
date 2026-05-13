@@ -667,8 +667,10 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
                                 if (response.ok) {
                                     return response.text();
                                 }
+                                return null;
                             })
                             .then(text => {
+                                if (text === null) return null;
                                 try {
                                     return JSON.parse(text);
                                 } catch (e) {
@@ -680,8 +682,10 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
                                     [`$${endpoint.slice(0, -1)}`]: data,
                                 });
                             })
-                            .catch(error => {
-                                throw error;
+                            .catch(() => {
+                                endpointData.push({
+                                    [`$${endpoint.slice(0, -1)}`]: null,
+                                });
                             })
                     )
                 ).then(() => {

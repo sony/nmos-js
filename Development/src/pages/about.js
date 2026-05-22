@@ -8,7 +8,7 @@ import AppLogo from '../components/AppLogo';
 export const About = () => (
     <div style={{ paddingTop: '24px' }}>
         <Card>
-            <Title title={get(CONFIG, 'title', 'nmos-js')} />
+            <Title title={get(CONFIG, 'title', 'CVE NMOS')} />
             <CardContent align="center">
                 <Typography variant="h2">
                     {get(CONFIG, 'about', 'An NMOS Client')}

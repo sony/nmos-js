@@ -1,4 +1,4 @@
-import AppLogoAsset from '../assets/sea-lion.png';
+import AppLogoAsset from '../assets/LOGO_CVE_HD.png';
 
 const AppLogoStyle = {
     border: '1px solid lightgray',

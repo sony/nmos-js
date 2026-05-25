@@ -11,7 +11,7 @@ export const About = () => (
             <Title title={get(CONFIG, 'title', 'CVE NMOS')} />
             <CardContent align="center">
                 <Typography variant="h2">
-                    {get(CONFIG, 'about', 'An NMOS Client')}
+                    {get(CONFIG, 'about', 'CVE NMOS Client')}
                 </Typography>
                 <AppLogo />
                 <RepoLinks />
@@ -23,7 +23,7 @@ export const About = () => (
 export const RepoLinks = () => (
     <div>
         <Typography color="textSecondary" variant="body1" component="span">
-            Built on open-source projects
+             Based on SONY nmos-js
         </Typography>{' '}
         <Link to="https://github.com/sony/nmos-js">
             <Typography color="textSecondary" variant="body1" component="span">
@@ -31,7 +31,7 @@ export const RepoLinks = () => (
             </Typography>
         </Link>{' '}
         <Typography color="textSecondary" variant="body1" component="span">
-            and
+            and AMWA
         </Typography>{' '}
         <Link to="https://github.com/sony/nmos-cpp">
             <Typography color="textSecondary" variant="body1" component="span">

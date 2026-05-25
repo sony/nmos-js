@@ -32,11 +32,11 @@ const defaultUrl = api => {
     let baseUrl = window.location.protocol + '//' + window.location.host;
     switch (api) {
         case LOGGING_API:
-            return baseUrl + '/log/v1.0';
+            return baseUrl + ':8010/log/v1.0';
         case QUERY_API:
-            return baseUrl + '/x-nmos/query/v1.3';
+            return baseUrl + ':8010/x-nmos/query/v1.3';
         case DNSSD_API:
-            return baseUrl + '/x-dns-sd/v1.1';
+            return baseUrl + ':8010/x-dns-sd/v1.1';
         case AUTH_API:
             return baseUrl + '/.well-known/oauth-authorization-server';
         default:

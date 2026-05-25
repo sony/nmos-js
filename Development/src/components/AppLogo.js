@@ -1,4 +1,4 @@
-import AppLogoAsset from '../assets/LOGO_CVE_HD.png';
+import AppLogoAsset from '../assets/Logo_CVE_HD.png';
 
 const AppLogoStyle = {
     padding: '4px',

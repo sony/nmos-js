@@ -1,8 +1,6 @@
 import AppLogoAsset from '../assets/LOGO_CVE_HD.png';
 
 const AppLogoStyle = {
-    border: '1px solid lightgray',
-    borderRadius: '50%',
     padding: '4px',
     margin: '16px',
     maxWidth: '50%',

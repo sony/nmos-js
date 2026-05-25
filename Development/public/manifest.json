@@ -2,6 +2,6 @@
   "short_name": "nmos-js",
   "start_url": "./index.html",
   "display": "standalone",
-  "theme_color": "rgb(0,47,103)",
+  "theme_color": "rgb(2, 112, 101)",
   "background_color": "#ffffff"
 }

@@ -555,6 +555,7 @@ const convertDataProviderRequestToHTTP = (
             if (allDifferences !== undefined) {
                 for (const d of allDifferences) {
                     if (d.rhs === '') {
+                        // if the user clears a text input, set the param to null
                         if (d.lhs !== null || isMxlTransport(transportType)) {
                             differences.push({
                                 kind: d.kind,
@@ -563,13 +564,6 @@ const convertDataProviderRequestToHTTP = (
                                 rhs: null,
                             });
                         }
-                        // if the user clears a text input, set the param to null
-                        differences.push({
-                            kind: d.kind,
-                            lhs: d.lhs,
-                            path: d.path,
-                            rhs: null,
-                        });
                     } else if (typeof d.rhs === 'string') {
                         // ideally, if and only if the user enters a number without any extraneous cruft
                         // (consider e.g. '233.252.0.0'),  set the param to the number

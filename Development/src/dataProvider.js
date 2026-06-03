@@ -13,6 +13,12 @@ import { JsonPointer } from 'json-ptr';
 import diff from 'deep-diff';
 import { makeBearerAuthHeader } from './authProvider';
 import {
+    isActivatingStaged,
+    isMxlTransport,
+    mergeUnresolvedMxlAsAutoInPatch,
+    prepareMxlTransportParamsForPatch,
+} from './components/mxlTransportParams';
+import {
     DNSSD_API,
     LOGGING_API,
     QUERY_API,
@@ -522,6 +528,25 @@ const convertDataProviderRequestToHTTP = (
             }
         }
         case UPDATE: {
+            const staged = get(params, 'data.$staged');
+            const transportType =
+                get(params, 'data.$transporttype') ||
+                get(params, 'previousData.$transporttype') ||
+                get(params, 'previousData.transport');
+            const activating = isActivatingStaged(staged);
+
+            if (
+                (resource === 'senders' || resource === 'receivers') &&
+                isMxlTransport(transportType)
+            ) {
+                const preparedLegs = prepareMxlTransportParamsForPatch(staged, {
+                    activating,
+                });
+                if (Array.isArray(preparedLegs)) {
+                    set(params, 'data.$staged.transport_params', preparedLegs);
+                }
+            }
+
             let differences = [];
             let allDifferences = diff(
                 get(params, 'previousData.$staged'),
@@ -530,8 +555,7 @@ const convertDataProviderRequestToHTTP = (
             if (allDifferences !== undefined) {
                 for (const d of allDifferences) {
                     if (d.rhs === '') {
-                        // if the user clears a text input, set the param to null
-                        if (d.lhs !== null) {
+                        if (d.lhs !== null || isMxlTransport(transportType)) {
                             differences.push({
                                 kind: d.kind,
                                 lhs: d.lhs,
@@ -539,6 +563,13 @@ const convertDataProviderRequestToHTTP = (
                                 rhs: null,
                             });
                         }
+                        // if the user clears a text input, set the param to null
+                        differences.push({
+                            kind: d.kind,
+                            lhs: d.lhs,
+                            path: d.path,
+                            rhs: null,
+                        });
                     } else if (typeof d.rhs === 'string') {
                         // ideally, if and only if the user enters a number without any extraneous cruft
                         // (consider e.g. '233.252.0.0'),  set the param to the number
@@ -566,6 +597,18 @@ const convertDataProviderRequestToHTTP = (
 
             for (const d of differences) {
                 JsonPointer.set(patchData, `/${d.path.join('/')}`, d.rhs, true);
+            }
+
+            if (
+                (resource === 'senders' || resource === 'receivers') &&
+                isMxlTransport(transportType) &&
+                activating
+            ) {
+                mergeUnresolvedMxlAsAutoInPatch(
+                    patchData,
+                    get(params, 'data.$staged.transport_params'),
+                    true
+                );
             }
 
             if (has(patchData, 'transport_file')) {

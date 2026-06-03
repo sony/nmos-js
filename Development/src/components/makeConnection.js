@@ -1,5 +1,6 @@
 import { cloneDeep, get, set } from 'lodash';
 import dataProvider from '../dataProvider';
+import { resolveMxlDomainId, resolveMxlFlowId } from './mxlTransportParams';
 
 // keys for parameters to be copied directly from sender to receiver
 const oneToOneTransportParams = {
@@ -26,7 +27,6 @@ const oneToOneTransportParams = {
         'connection_authorization',
         'connection_uri',
     ],
-    'urn:x-nmos:transport:mxl': ['mxl_domain_id', 'mxl_flow_id'],
 };
 
 // create an array mapping receiver leg to sender leg
@@ -53,6 +53,7 @@ const getExtParams = transportParams => {
 
 // copy params from sender to receiver of the matching legs
 const copyTransportParams = (senderParams, params, patchParams, legMap) => {
+    if (!Array.isArray(params)) return;
     legMap.forEach((senderLeg, receiverLeg) => {
         params.forEach(param => {
             const lhs = get(senderParams[senderLeg], param);
@@ -141,8 +142,35 @@ const makePatchDataWithTransportParams = (data, options) => {
             break;
         case 'urn:x-nmos:transport:websocket':
             break;
-        case 'urn:x-nmos:transport:mxl':
+        case 'urn:x-nmos:transport:mxl': {
+            const senderConstraints = get(data.sender, '$constraints');
+            const receiverConstraints = get(data.receiver, '$constraints');
+            legMap.forEach((senderLeg, receiverLeg) => {
+                set(
+                    patchParams[receiverLeg],
+                    'mxl_domain_id',
+                    resolveMxlDomainId(
+                        get(senderParams[senderLeg], 'mxl_domain_id'),
+                        senderConstraints,
+                        receiverConstraints,
+                        senderLeg,
+                        receiverLeg
+                    )
+                );
+                set(
+                    patchParams[receiverLeg],
+                    'mxl_flow_id',
+                    resolveMxlFlowId(
+                        get(senderParams[senderLeg], 'mxl_flow_id'),
+                        senderConstraints,
+                        receiverConstraints,
+                        senderLeg,
+                        receiverLeg
+                    )
+                );
+            });
             break;
+        }
         default:
             break;
     }

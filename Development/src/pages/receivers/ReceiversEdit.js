@@ -17,6 +17,7 @@ import ConnectionEditActions from '../../components/ConnectionEditActions';
 import ConnectionEditToolbar from '../../components/ConnectionEditToolbar';
 import ResourceTitle from '../../components/ResourceTitle';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
+import { isMxlTransport } from '../../components/mxlTransportParams';
 
 const ReceiversEdit = props => {
     const theme = useTheme();
@@ -139,13 +140,19 @@ const EditStagedTab = props => (
                 }}
             </FormDataConsumer>
             <ReceiverTransportParamsCardsGrid />
-            <TextInput
-                label="Transport File"
-                source="$staged.transport_file.data"
-                fullWidth
-                multiline
-                resettable
-            />
+            <FormDataConsumer>
+                {({ formData }) =>
+                    !isMxlTransport(get(formData, '$transporttype')) && (
+                        <TextInput
+                            label="Transport File"
+                            source="$staged.transport_file.data"
+                            fullWidth
+                            multiline
+                            resettable
+                        />
+                    )
+                }
+            </FormDataConsumer>
         </SimpleForm>
     </Edit>
 );

@@ -13,10 +13,6 @@ import { JsonPointer } from 'json-ptr';
 import diff from 'deep-diff';
 import { makeBearerAuthHeader } from './authProvider';
 import {
-    isMxlTransport,
-    prepareMxlTransportParamsForPatch,
-} from './components/mxlTransportParams';
-import {
     DNSSD_API,
     LOGGING_API,
     QUERY_API,
@@ -526,21 +522,6 @@ const convertDataProviderRequestToHTTP = (
             }
         }
         case UPDATE: {
-            const staged = get(params, 'data.$staged');
-            const transportType =
-                get(params, 'data.$transporttype') ||
-                get(params, 'previousData.$transporttype') ||
-                get(params, 'previousData.transport');
-            if (
-                (resource === 'senders' || resource === 'receivers') &&
-                isMxlTransport(transportType)
-            ) {
-                const preparedLegs = prepareMxlTransportParamsForPatch(staged);
-                if (Array.isArray(preparedLegs)) {
-                    set(params, 'data.$staged.transport_params', preparedLegs);
-                }
-            }
-
             let differences = [];
             let allDifferences = diff(
                 get(params, 'previousData.$staged'),
@@ -550,7 +531,7 @@ const convertDataProviderRequestToHTTP = (
                 for (const d of allDifferences) {
                     if (d.rhs === '') {
                         // if the user clears a text input, set the param to null
-                        if (d.lhs !== null || isMxlTransport(transportType)) {
+                        if (d.lhs !== null) {
                             differences.push({
                                 kind: d.kind,
                                 lhs: d.lhs,
@@ -686,10 +667,8 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
                                 if (response.ok) {
                                     return response.text();
                                 }
-                                return null;
                             })
                             .then(text => {
-                                if (text === null) return null;
                                 try {
                                     return JSON.parse(text);
                                 } catch (e) {
@@ -701,10 +680,8 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
                                     [`$${endpoint.slice(0, -1)}`]: data,
                                 });
                             })
-                            .catch(() => {
-                                endpointData.push({
-                                    [`$${endpoint.slice(0, -1)}`]: null,
-                                });
+                            .catch(error => {
+                                throw error;
                             })
                     )
                 ).then(() => {

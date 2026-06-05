@@ -3,8 +3,6 @@ import { get } from 'lodash';
 const mxlUuidPattern =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const MXL_ID_PARAMS = ['mxl_domain_id', 'mxl_flow_id'];
-
 export const isMxlTransport = transportType => {
     if (typeof transportType !== 'string') return false;
     return /^urn:x-nmos:transport:mxl([./]|$)/.test(
@@ -102,22 +100,4 @@ export const resolveMxlFlowId = (
         return isSender ? 'auto' : null;
     }
     return senderValue;
-};
-
-export const prepareMxlTransportParamsForPatch = staged => {
-    const legs = get(staged, 'transport_params');
-    if (!Array.isArray(legs)) return legs;
-
-    return legs.map(leg => {
-        const preparedLeg = { ...leg };
-        MXL_ID_PARAMS.forEach(param => {
-            if (!Object.prototype.hasOwnProperty.call(preparedLeg, param)) {
-                return;
-            }
-            if (preparedLeg[param] === '') {
-                preparedLeg[param] = null;
-            }
-        });
-        return preparedLeg;
-    });
 };

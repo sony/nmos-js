@@ -27,6 +27,7 @@ const oneToOneTransportParams = {
         'connection_authorization',
         'connection_uri',
     ],
+    'urn:x-nmos:transport:mxl': [],
 };
 
 // create an array mapping receiver leg to sender leg
@@ -53,7 +54,6 @@ const getExtParams = transportParams => {
 
 // copy params from sender to receiver of the matching legs
 const copyTransportParams = (senderParams, params, patchParams, legMap) => {
-    if (!Array.isArray(params)) return;
     legMap.forEach((senderLeg, receiverLeg) => {
         params.forEach(param => {
             const lhs = get(senderParams[senderLeg], param);

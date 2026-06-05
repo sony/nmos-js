@@ -29,7 +29,6 @@ import ResourceTitle from '../../components/ResourceTitle';
 import SanitizedDivider from '../../components/SanitizedDivider';
 import TAIField from '../../components/TAIField';
 import TransportFileViewer from '../../components/TransportFileViewer';
-import { isMxlTransport } from '../../components/mxlTransportParams';
 import labelize from '../../components/labelize';
 import ConnectionManagementTab from './ConnectionManagementTab';
 import ReceiverConstraintSetCardsGrid from './ReceiverConstraintSets';
@@ -259,7 +258,8 @@ const ShowActiveTab = ({ record, ...props }) => {
                 >
                     <ReceiverTransportParamsCardsGrid record={record} />
                 </ArrayField>
-                {!isMxlTransport(get(record, '$transporttype')) && (
+                {get(record, '$transporttype') !==
+                    'urn:x-nmos:transport:mxl' && (
                     <TransportFileViewer endpoint="$active.transport_file.data" />
                 )}
             </SimpleShowLayout>
@@ -308,7 +308,8 @@ const ShowStagedTab = ({ record, ...props }) => {
                 >
                     <ReceiverTransportParamsCardsGrid record={record} />
                 </ArrayField>
-                {!isMxlTransport(get(record, '$transporttype')) && (
+                {get(record, '$transporttype') !==
+                    'urn:x-nmos:transport:mxl' && (
                     <TransportFileViewer endpoint="$staged.transport_file.data" />
                 )}
             </SimpleShowLayout>

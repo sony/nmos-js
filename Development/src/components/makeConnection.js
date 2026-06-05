@@ -1,6 +1,5 @@
 import { cloneDeep, get, set } from 'lodash';
 import dataProvider from '../dataProvider';
-import { resolveMxlDomainId, resolveMxlFlowId } from './mxlTransportParams';
 
 // keys for parameters to be copied directly from sender to receiver
 const oneToOneTransportParams = {
@@ -27,7 +26,7 @@ const oneToOneTransportParams = {
         'connection_authorization',
         'connection_uri',
     ],
-    'urn:x-nmos:transport:mxl': [],
+    'urn:x-nmos:transport:mxl': ['mxl_domain_id', 'mxl_flow_id'],
 };
 
 // create an array mapping receiver leg to sender leg
@@ -142,35 +141,14 @@ const makePatchDataWithTransportParams = (data, options) => {
             break;
         case 'urn:x-nmos:transport:websocket':
             break;
-        case 'urn:x-nmos:transport:mxl': {
-            const senderConstraints = get(data.sender, '$constraints');
-            const receiverConstraints = get(data.receiver, '$constraints');
+        case 'urn:x-nmos:transport:mxl':
+            // Receivers must not use "auto" for mxl_flow_id (BCP-007-03)
             legMap.forEach((senderLeg, receiverLeg) => {
-                set(
-                    patchParams[receiverLeg],
-                    'mxl_domain_id',
-                    resolveMxlDomainId(
-                        get(senderParams[senderLeg], 'mxl_domain_id'),
-                        senderConstraints,
-                        receiverConstraints,
-                        senderLeg,
-                        receiverLeg
-                    )
-                );
-                set(
-                    patchParams[receiverLeg],
-                    'mxl_flow_id',
-                    resolveMxlFlowId(
-                        get(senderParams[senderLeg], 'mxl_flow_id'),
-                        senderConstraints,
-                        receiverConstraints,
-                        senderLeg,
-                        receiverLeg
-                    )
-                );
+                if (get(patchParams[receiverLeg], 'mxl_flow_id') === 'auto') {
+                    set(patchParams[receiverLeg], 'mxl_flow_id', null);
+                }
             });
             break;
-        }
         default:
             break;
     }

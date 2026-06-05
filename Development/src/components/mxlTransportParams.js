@@ -18,9 +18,6 @@ const isConcreteMxlId = value =>
 const isUnresolvedMxlValue = value =>
     value === null || value === undefined || value === '' || value === 'auto';
 
-const isEmptyMxlValue = value =>
-    value === null || value === undefined || value === '';
-
 const getSingleConstraintUuid = (constraints, leg, param) => {
     const enumValues = get(constraints, [leg, param, 'enum']);
     if (!Array.isArray(enumValues)) return;
@@ -107,17 +104,7 @@ export const resolveMxlFlowId = (
     return senderValue;
 };
 
-export const isActivatingStaged = staged =>
-    [
-        'activate_immediate',
-        'activate_scheduled_relative',
-        'activate_scheduled_absolute',
-    ].includes(get(staged, 'activation.mode'));
-
-export const prepareMxlTransportParamsForPatch = (
-    staged,
-    { activating = false } = {}
-) => {
+export const prepareMxlTransportParamsForPatch = staged => {
     const legs = get(staged, 'transport_params');
     if (!Array.isArray(legs)) return legs;
 
@@ -127,38 +114,10 @@ export const prepareMxlTransportParamsForPatch = (
             if (!Object.prototype.hasOwnProperty.call(preparedLeg, param)) {
                 return;
             }
-            const value = preparedLeg[param];
-            if (activating && isEmptyMxlValue(value)) {
-                preparedLeg[param] = 'auto';
-            } else if (value === '') {
+            if (preparedLeg[param] === '') {
                 preparedLeg[param] = null;
             }
         });
         return preparedLeg;
-    });
-};
-
-export const mergeUnresolvedMxlAsAutoInPatch = (
-    patchData,
-    preparedLegs,
-    activating
-) => {
-    if (!activating || !Array.isArray(preparedLegs)) return;
-
-    preparedLegs.forEach((leg, legIndex) => {
-        MXL_ID_PARAMS.forEach(param => {
-            if (
-                Object.prototype.hasOwnProperty.call(leg, param) &&
-                leg[param] === 'auto'
-            ) {
-                if (!Array.isArray(patchData.transport_params)) {
-                    patchData.transport_params = [];
-                }
-                while (patchData.transport_params.length <= legIndex) {
-                    patchData.transport_params.push({});
-                }
-                patchData.transport_params[legIndex][param] = 'auto';
-            }
-        });
     });
 };

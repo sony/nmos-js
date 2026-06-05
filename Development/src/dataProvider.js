@@ -13,9 +13,7 @@ import { JsonPointer } from 'json-ptr';
 import diff from 'deep-diff';
 import { makeBearerAuthHeader } from './authProvider';
 import {
-    isActivatingStaged,
     isMxlTransport,
-    mergeUnresolvedMxlAsAutoInPatch,
     prepareMxlTransportParamsForPatch,
 } from './components/mxlTransportParams';
 import {
@@ -533,15 +531,11 @@ const convertDataProviderRequestToHTTP = (
                 get(params, 'data.$transporttype') ||
                 get(params, 'previousData.$transporttype') ||
                 get(params, 'previousData.transport');
-            const activating = isActivatingStaged(staged);
-
             if (
                 (resource === 'senders' || resource === 'receivers') &&
                 isMxlTransport(transportType)
             ) {
-                const preparedLegs = prepareMxlTransportParamsForPatch(staged, {
-                    activating,
-                });
+                const preparedLegs = prepareMxlTransportParamsForPatch(staged);
                 if (Array.isArray(preparedLegs)) {
                     set(params, 'data.$staged.transport_params', preparedLegs);
                 }
@@ -591,18 +585,6 @@ const convertDataProviderRequestToHTTP = (
 
             for (const d of differences) {
                 JsonPointer.set(patchData, `/${d.path.join('/')}`, d.rhs, true);
-            }
-
-            if (
-                (resource === 'senders' || resource === 'receivers') &&
-                isMxlTransport(transportType) &&
-                activating
-            ) {
-                mergeUnresolvedMxlAsAutoInPatch(
-                    patchData,
-                    get(params, 'data.$staged.transport_params'),
-                    true
-                );
             }
 
             if (has(patchData, 'transport_file')) {

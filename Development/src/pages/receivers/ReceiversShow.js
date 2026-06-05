@@ -258,10 +258,7 @@ const ShowActiveTab = ({ record, ...props }) => {
                 >
                     <ReceiverTransportParamsCardsGrid record={record} />
                 </ArrayField>
-                {get(record, '$transporttype') !==
-                    'urn:x-nmos:transport:mxl' && (
-                    <TransportFileViewer endpoint="$active.transport_file.data" />
-                )}
+                <TransportFileViewer endpoint="$active.transport_file.data" />
             </SimpleShowLayout>
         </ShowView>
     );
@@ -308,10 +305,7 @@ const ShowStagedTab = ({ record, ...props }) => {
                 >
                     <ReceiverTransportParamsCardsGrid record={record} />
                 </ArrayField>
-                {get(record, '$transporttype') !==
-                    'urn:x-nmos:transport:mxl' && (
-                    <TransportFileViewer endpoint="$staged.transport_file.data" />
-                )}
+                <TransportFileViewer endpoint="$staged.transport_file.data" />
             </SimpleShowLayout>
         </ShowView>
     );

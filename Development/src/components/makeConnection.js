@@ -142,12 +142,6 @@ const makePatchDataWithTransportParams = (data, options) => {
         case 'urn:x-nmos:transport:websocket':
             break;
         case 'urn:x-nmos:transport:mxl':
-            // Receivers must not use "auto" for mxl_flow_id (BCP-007-03)
-            legMap.forEach((senderLeg, receiverLeg) => {
-                if (get(patchParams[receiverLeg], 'mxl_flow_id') === 'auto') {
-                    set(patchParams[receiverLeg], 'mxl_flow_id', null);
-                }
-            });
             break;
         default:
             break;

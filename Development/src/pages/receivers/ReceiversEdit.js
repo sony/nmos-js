@@ -139,13 +139,20 @@ const EditStagedTab = props => (
                 }}
             </FormDataConsumer>
             <ReceiverTransportParamsCardsGrid />
-            <TextInput
-                label="Transport File"
-                source="$staged.transport_file.data"
-                fullWidth
-                multiline
-                resettable
-            />
+            <FormDataConsumer>
+                {({ formData }) =>
+                    get(formData, '$transporttype') !==
+                        'urn:x-nmos:transport:mxl' && (
+                        <TextInput
+                            label="Transport File"
+                            source="$staged.transport_file.data"
+                            fullWidth
+                            multiline
+                            resettable
+                        />
+                    )
+                }
+            </FormDataConsumer>
         </SimpleForm>
     </Edit>
 );

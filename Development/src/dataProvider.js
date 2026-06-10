@@ -13,6 +13,8 @@ import { JsonPointer } from 'json-ptr';
 import diff from 'deep-diff';
 import { makeBearerAuthHeader } from './authProvider';
 import {
+    BRIDGE_AUTO,
+    BRIDGE_FORCED,
     DNSSD_API,
     LOGGING_API,
     QUERY_API,
@@ -21,8 +23,21 @@ import {
     apiUsingRql,
     apiVersion,
     concatUrl,
+    connectionBridgeMode,
     usingAuth,
 } from './settings';
+
+// the Connection API Bridge (see ../../ConnectionBridge) makes Device
+// Connection APIs available at a well-known path on the Query API host
+// for deployments where the browser cannot reach the Device directly
+const bridgeAddress = (deviceId, version) =>
+    concatUrl(
+        new URL(apiUrl(QUERY_API), window.location.href).origin,
+        `/x-nmos-bridge/v1.0/devices/${deviceId}/connection/${version}`
+    );
+
+// which access path, direct or bridge, most recently worked for each Device
+const deviceAccessPaths = new Map();
 
 const apiResource = resource => {
     let api;
@@ -863,16 +878,59 @@ const convertHTTPResponseToDataProvider = async (
                     .sort()
                     .reverse();
 
+                const deviceId = resourceJSONData.device_id;
+                const bridgeMode = connectionBridgeMode();
+
                 let endpointData;
+                let accessPath;
                 for (let version of versions) {
-                    try {
-                        endpointData = await getConnectionResourceEndpoints(
-                            connectionAddresses[version],
-                            resource,
-                            params.id
-                        );
-                    } catch (e) {}
+                    // e.g. 'urn:x-nmos:control:sr-ctrl/v1_1' -> 'v1.1'
+                    const connectionVersion = version
+                        .split('/')
+                        .slice(-1)[0]
+                        .replace('_', '.');
+                    // preferred access sequence: use the Device control hrefs
+                    // directly, and only fall back to the bridge if they are
+                    // inaccessible; start with whichever worked last time,
+                    // unless the bridge is forced
+                    const attempts = [];
+                    if (bridgeMode !== BRIDGE_FORCED) {
+                        attempts.push(['direct', connectionAddresses[version]]);
+                    }
+                    if (
+                        bridgeMode === BRIDGE_AUTO ||
+                        bridgeMode === BRIDGE_FORCED
+                    ) {
+                        attempts.push([
+                            'bridge',
+                            [bridgeAddress(deviceId, connectionVersion)],
+                        ]);
+                    }
+                    if (
+                        bridgeMode === BRIDGE_AUTO &&
+                        deviceAccessPaths.get(deviceId) === 'bridge'
+                    ) {
+                        attempts.reverse();
+                    }
+                    for (const [path, addresses] of attempts) {
+                        try {
+                            endpointData = await getConnectionResourceEndpoints(
+                                addresses,
+                                resource,
+                                params.id
+                            );
+                        } catch (e) {}
+                        if (endpointData) {
+                            accessPath = path;
+                            break;
+                        }
+                    }
                     if (endpointData) break;
+                }
+                if (endpointData) {
+                    deviceAccessPaths.set(deviceId, accessPath);
+                } else {
+                    deviceAccessPaths.delete(deviceId);
                 }
 
                 // just return IS-04 data if no Connection API was able to connect

@@ -1,0 +1,31 @@
+# Example deployment of the NMOS Connection API Bridge.
+#
+# The registry and the nmos-js app are expected to be reachable from these
+# containers; adjust REGISTRY_QUERY_URL and APP_URL (and the network
+# configuration) to suit the deployment.
+
+services:
+  adapter:
+    build: ./adapter
+    restart: unless-stopped
+    environment:
+      # the Query API used to discover Devices, also routed at /x-nmos/
+      REGISTRY_QUERY_URL: http://registry:8870/x-nmos/query/v1.3
+      # optional: serve the nmos-js app through Envoy too, at /
+      APP_URL: http://nmos-js:80
+    volumes:
+      - envoy-dynamic:/etc/envoy/dynamic
+
+  envoy:
+    image: envoyproxy/envoy:v1.31-latest
+    restart: unless-stopped
+    depends_on:
+      - adapter
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+      - envoy-dynamic:/etc/envoy/dynamic
+
+volumes:
+  envoy-dynamic:

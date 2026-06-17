@@ -58,6 +58,11 @@ function do_run_test() {
     elif [[ $disabled_tests -gt 0 ]]; then
       echo "$disabled_tests tests disabled"
     fi
+    could_not_test=`grep -c '"Could Not Test"' ${output_file}`
+    if [[ $could_not_test -gt 0 ]]; then
+      echo "$could_not_test tests could not be tested"
+      result=2
+    fi
   fi
   case $result in
   [0-1])  echo "Pass" | tee ${badges_dir}/${suite}.txt

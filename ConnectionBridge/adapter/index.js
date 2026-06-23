@@ -2,8 +2,8 @@
 
 // NMOS Connection API Bridge - Envoy Adapter
 //
-// Converts registry state into Envoy configuration. Discovers Devices from
-// the registry's Query API, extracts their Connection API controls, and
+// Converts registry state into Envoy configuration. Tracks Devices through a
+// Query API WebSocket subscription, extracts their Connection API controls, and
 // generates Envoy route and cluster configuration files which Envoy reloads
 // via filesystem watch. The adapter does not proxy any traffic itself and
 // does not determine runtime health - Envoy does both.
@@ -18,8 +18,16 @@ const REGISTRY_QUERY_URL = (process.env.REGISTRY_QUERY_URL || '').replace(
 );
 const APP_URL = process.env.APP_URL || '';
 const OUTPUT_DIR = process.env.OUTPUT_DIR || '/etc/envoy/dynamic';
-const POLL_INTERVAL_SECONDS = Number(process.env.POLL_INTERVAL_SECONDS) || 15;
 const ROUTE_TIMEOUT_SECONDS = Number(process.env.ROUTE_TIMEOUT_SECONDS) || 15;
+// subscription update coalescing and WebSocket reconnect backoff
+const MAX_UPDATE_RATE_MS = Number(process.env.MAX_UPDATE_RATE_MS) || 100;
+const RECONNECT_MIN_MS = Number(process.env.RECONNECT_MIN_MS) || 1000;
+const RECONNECT_MAX_MS = Number(process.env.RECONNECT_MAX_MS) || 30000;
+// some registries advertise a ws_href on a host the adapter cannot reach;
+// when set, the ws_href authority is rewritten to the REGISTRY_QUERY_URL host
+const WS_USE_REGISTRY_HOST = /^(1|true|yes)$/i.test(
+    process.env.WS_USE_REGISTRY_HOST || ''
+);
 
 const BRIDGE_PREFIX = '/x-nmos-bridge/v1.0';
 
@@ -45,37 +53,14 @@ const logOnce = message => {
     log(message);
 };
 
-// --- discovery ---
+// --- device state ---
 
-const parseNextLink = linkHeader => {
-    if (!linkHeader) return undefined;
-    for (const part of linkHeader.split(',')) {
-        const match = part.match(/<([^>]+)>\s*;\s*rel="?next"?/);
-        if (match) return match[1];
-    }
-    return undefined;
-};
+// authoritative set of Devices, maintained from the Query API WebSocket
+// subscription's sync, added, modified and removed events
+let devices = new Map();
 
-const discoverDevices = async () => {
-    const devices = [];
-    const visited = new Set();
-    let url = `${REGISTRY_QUERY_URL}/devices`;
-    while (url && !visited.has(url)) {
-        visited.add(url);
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`GET ${url} -> ${response.status}`);
-        }
-        const page = await response.json();
-        if (!Array.isArray(page)) {
-            throw new Error(`GET ${url} -> unexpected response`);
-        }
-        if (page.length === 0) break;
-        devices.push(...page);
-        url = parseNextLink(response.headers.get('link'));
-    }
-    return devices;
-};
+// per-output-file content hashes, so Envoy is only reconfigured on real change
+const state = {};
 
 // --- mapping ---
 
@@ -404,30 +389,126 @@ const apply = (targets, state) => {
     return changedClusters || changedRoutes;
 };
 
-const main = async () => {
-    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-    const state = {};
-    // write a baseline configuration immediately so Envoy can serve the
-    // registry and app routes before the first successful discovery
-    apply([], state);
-    log(`watching ${REGISTRY_QUERY_URL} every ${POLL_INTERVAL_SECONDS}s`);
-    for (;;) {
-        try {
-            const devices = await discoverDevices();
-            const targets = collectTargets(devices);
-            if (apply(targets, state)) {
-                logOnce(
-                    `updated configuration: ${devices.length} Devices, ${targets.length} bridge targets`
-                );
-            }
-        } catch (e) {
-            // keep serving the last good configuration
-            log(`discovery failed: ${e.message}`);
-        }
-        await new Promise(resolve =>
-            setTimeout(resolve, POLL_INTERVAL_SECONDS * 1000)
+// --- discovery via Query API WebSocket subscription ---
+
+let backoffMs = RECONNECT_MIN_MS;
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+const rebuild = () => {
+    const targets = collectTargets([...devices.values()]);
+    if (apply(targets, state)) {
+        log(
+            `updated configuration: ${devices.size} Devices, ${targets.length} bridge targets`
         );
     }
+};
+
+// create a non-persistent subscription for Devices and return its WebSocket
+// href; the registry de-duplicates identical subscriptions, so reconnecting
+// reuses the same one
+const createSubscription = async () => {
+    const response = await fetch(`${REGISTRY_QUERY_URL}/subscriptions`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+            max_update_rate_ms: MAX_UPDATE_RATE_MS,
+            resource_path: '/devices',
+            params: {},
+            persist: false,
+            secure: false,
+        }),
+    });
+    if (!response.ok) {
+        throw new Error(
+            `POST ${REGISTRY_QUERY_URL}/subscriptions -> ${response.status}`
+        );
+    }
+    const subscription = await response.json();
+    if (!subscription.ws_href) {
+        throw new Error('subscription response did not include ws_href');
+    }
+    if (!WS_USE_REGISTRY_HOST) return subscription.ws_href;
+    const wsHref = new URL(subscription.ws_href);
+    wsHref.host = new URL(REGISTRY_QUERY_URL).host;
+    return wsHref.toString();
+};
+
+// apply one message's data items to the device set. The first message after a
+// (re)connection is the sync of current state, so it replaces the set; this is
+// how reconnecting after an interruption refreshes all mappings, including
+// Devices removed while disconnected.
+const handleMessage = (raw, connection) => {
+    const message = JSON.parse(raw);
+    const data = message && message.grain && message.grain.data;
+    if (!Array.isArray(data)) return;
+    if (!connection.primed) {
+        devices = new Map();
+        connection.primed = true;
+    }
+    for (const item of data) {
+        if (item.post) devices.set(item.post.id, item.post);
+        else if (item.pre) devices.delete(item.pre.id);
+    }
+    rebuild();
+};
+
+// open the subscription WebSocket and resolve when it closes, so the caller
+// can resubscribe
+const runConnection = wsHref =>
+    new Promise(resolve => {
+        const ws = new WebSocket(wsHref);
+        const connection = { primed: false };
+        let settled = false;
+        const settle = () => {
+            if (settled) return;
+            settled = true;
+            resolve();
+        };
+        ws.addEventListener('open', () => {
+            backoffMs = RECONNECT_MIN_MS;
+            log(`subscribed to Devices via ${wsHref}`);
+        });
+        ws.addEventListener('message', event => {
+            try {
+                handleMessage(event.data, connection);
+            } catch (e) {
+                log(`failed to handle subscription message: ${e.message}`);
+            }
+        });
+        ws.addEventListener('error', event => {
+            log(`websocket error: ${event.message || 'connection error'}`);
+            settle();
+        });
+        ws.addEventListener('close', () => {
+            log('websocket closed, will resubscribe');
+            settle();
+        });
+    });
+
+const run = async () => {
+    for (;;) {
+        try {
+            const wsHref = await createSubscription();
+            await runConnection(wsHref);
+        } catch (e) {
+            log(`subscription failed: ${e.message}`);
+        }
+        // the previous non-persistent subscription is dropped on disconnect;
+        // a fresh subscribe yields a new sync of current state. The last good
+        // configuration keeps being served until that sync arrives.
+        await sleep(backoffMs);
+        backoffMs = Math.min(backoffMs * 2, RECONNECT_MAX_MS);
+    }
+};
+
+const main = () => {
+    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+    // write a baseline configuration immediately so Envoy can serve the
+    // registry and app routes before the first subscription sync
+    apply([], state);
+    log(`subscribing to ${REGISTRY_QUERY_URL}/devices`);
+    return run();
 };
 
 main().catch(e => {

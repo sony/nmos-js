@@ -8,6 +8,6 @@
         "start": "node index.js"
     },
     "engines": {
-        "node": ">=18"
+        "node": ">=22.4.0"
     }
 }

@@ -49,7 +49,9 @@ Browser
 ```
 
 - **Envoy** performs all proxying: routing, request size limits, timeouts, retry policy, health checking and failover, and access logging of `POST` and `PATCH` requests.
-- **The adapter** (`adapter/`) converts registry state into Envoy configuration. It polls the Query API for Devices, extracts Connection API controls, and generates Envoy routes and clusters, atomically replacing the dynamic configuration files (`rds.json`, `cds.json`) which Envoy reloads via filesystem watch. The adapter does not proxy traffic and does not determine runtime health.
+- **The adapter** (`adapter/`) converts registry state into Envoy configuration. It tracks Devices through a [Query API WebSocket subscription](https://specs.amwa.tv/is-04/branches/v1.3.x/docs/4.2._Behaviour_-_Querying.html) (non-persistent, `resource_path` `/devices`), extracts Connection API controls, and generates Envoy routes and clusters, atomically replacing the dynamic configuration files (`rds.json`, `cds.json`) which Envoy reloads via filesystem watch. The adapter does not proxy traffic and does not determine runtime health.
+
+  On connecting, the registry sends a sync of all current Devices, then pushes added, modified and removed events; the adapter rebuilds configuration on each change. If the connection is interrupted, the adapter resubscribes with exponential backoff and the fresh sync re-establishes all mappings, including Devices that were removed while disconnected. The last good configuration keeps being served until the new sync arrives.
 
 ### Mapping
 
@@ -85,8 +87,11 @@ Edit `docker-compose.yml` first to point the adapter at the deployment:
 | --- | --- | --- |
 | `REGISTRY_QUERY_URL` | Query API used for Device discovery, also routed at `/x-nmos/` | (required) |
 | `APP_URL` | optionally serve the nmos-js app through Envoy at `/` | (none) |
-| `POLL_INTERVAL_SECONDS` | registry polling interval | `15` |
 | `ROUTE_TIMEOUT_SECONDS` | upstream request timeout | `15` |
+| `MAX_UPDATE_RATE_MS` | subscription `max_update_rate_ms` (event coalescing) | `100` |
+| `RECONNECT_MIN_MS` | initial WebSocket reconnect backoff | `1000` |
+| `RECONNECT_MAX_MS` | maximum WebSocket reconnect backoff | `30000` |
+| `WS_USE_REGISTRY_HOST` | rewrite the subscription `ws_href` authority to the `REGISTRY_QUERY_URL` host, for registries that advertise an unreachable host | `false` |
 | `OUTPUT_DIR` | where dynamic Envoy configuration is written | `/etc/envoy/dynamic` |
 
 Envoy listens on port 8080 and routes:

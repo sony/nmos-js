@@ -15,7 +15,7 @@ import {
     useRecordContext,
     useShowController,
 } from 'react-admin';
-import { Paper, Tab, Tabs, Button } from '@material-ui/core';
+import { Button, Paper, Tab, Tabs } from '@material-ui/core';
 import { Link, Route } from 'react-router-dom';
 import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
@@ -34,7 +34,11 @@ import TAIField from '../../components/TAIField';
 import UnsortableDatagrid from '../../components/UnsortableDatagrid';
 import UrlField from '../../components/URLField';
 import labelize from '../../components/labelize';
-import { buildIs12BrowserLaunchUrl, is12BrowserUrl, queryVersion } from '../../settings';
+import {
+    buildIs12BrowserLaunchUrl,
+    is12BrowserUrl,
+    queryVersion,
+} from '../../settings';
 import MappingShowActions from '../../components/MappingShowActions';
 import ChannelMappingMatrix from './ChannelMappingMatrix';
 
@@ -117,7 +121,9 @@ const DevicesShowView = props => {
 
 const Is12BrowserOpenButton = ({ record }) => {
     const baseUrl = is12BrowserUrl();
-    if (unversionedParameter(get(record, 'type')) !== 'urn:x-nmos:control:ncp') {
+    if (
+        unversionedParameter(get(record, 'type')) !== 'urn:x-nmos:control:ncp'
+    ) {
         return null;
     }
     const launchUrl = buildIs12BrowserLaunchUrl(get(record, 'href'));

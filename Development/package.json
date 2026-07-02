@@ -39,7 +39,7 @@
     "lint-check": "eslint --fix-dry-run ./ && prettier --config .prettierrc.js --check src/**/*.js"
   },
   "devDependencies": {
-    "@babel/core": "^7.22.10",
+    "@babel/core": "^7.29.6",
     "@babel/eslint-parser": "^7.22.10",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.0",
     "@babel/plugin-syntax-flow": "^7.14.5",

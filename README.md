@@ -65,6 +65,7 @@ The implementation is designed to be extended. Development is ongoing, following
 
 Recent activity on the project (newest first):
 
+- Launch IS-12 Device Model browser client from within nmos-js Device summary tab.
 - Added prototype [IS-12 Device Model browser client](is12-client/README.md).
 - Added [automated controller testing](TestingFacade/README.md) for nmos-js.
 - Read-only support for IS-08 Audio Channel Mapping

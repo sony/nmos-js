@@ -88,7 +88,7 @@ jobs:
         chmod +x ${root_dir}/Sandbox/run_controller_tests.sh
 
         # Install AMWA NMOS Testing Tool
-        git clone -b bcp-007-03-controller https://github.com/AMWA-TV/nmos-testing.git
+        git clone https://github.com/AMWA-TV/nmos-testing.git
         cd nmos-testing
         pip install -r requirements.txt
         pip install -r utilities/run-test-suites/gsheetsImport/requirements.txt

@@ -9,8 +9,6 @@ import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
 import {useContext, useState} from "react";
-import UploadIcon from "@mui/icons-material/Backup";
-import EditIcon from "@mui/icons-material/Edit";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import SendIcon from '@mui/icons-material/Send';
@@ -19,6 +17,15 @@ import { DataProviderContext } from "./NCAController";
 import { makePropValue, makeStructValue, makeSequenceValue, isReadOnly, isStructDatatype } from "../middleware/HelperFunctions";
 import { PROPERTY_IDS } from "../global/IS12CommandTemplates";
 import { NcDatatypeType } from "../global/Types"
+import EditablePropertyControl from "./EditablePropertyControl";
+import StatusMonitorList from "./statusMonitor/StatusMonitorList";
+import StatusMonitorTabSummary from "./statusMonitor/StatusMonitorTabSummary";
+import {
+    getStatusMonitorNodes,
+    getNonStatusMonitorChildNodes,
+    isStatusMonitor,
+    subtreeContainsStatusMonitor,
+} from "./statusMonitor/statusMonitorUtils";
 
 import {
     Box,
@@ -29,10 +36,6 @@ import {
     FormControl,
     Grid,
     IconButton,
-    InputLabel,
-    MenuItem,
-    OutlinedInput,
-    Select,
     Typography
 } from "@mui/material";
 
@@ -112,6 +115,12 @@ function Tab(valueRow) {
                 <Grid>
                     <Typography component="h3" variant="h6" color="white" gutterBottom> { node.name } </Typography>
                 </Grid>
+                {!openTab && subtreeContainsStatusMonitor(node) ?
+                    <Grid sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', pl: 1, pb: 1 }}>
+                        <StatusMonitorTabSummary monitors={getStatusMonitorNodes(node)} />
+                    </Grid>
+                    : null
+                }
             </Box>
             <Collapse in={openTab} timeout='auto' unmountOnExit>
                 <BlockTable key={node.name} row={node} state={state}/>
@@ -121,37 +130,77 @@ function Tab(valueRow) {
 }
 
 // JSX Element for most rows
+function BlockDescriptionRow({ row }) {
+    return (
+        <TableRow>
+            <TableCell sx={{ width: '35%' }}>{row.description}</TableCell>
+            <TableCell sx={{ width: '20%' }}><UserLabelSection row={row.valueHolderMap} oid={row.oid}/></TableCell>
+        </TableRow>
+    );
+}
+
 function BlockTable(valueRow) {
-    const { row } = valueRow;
-    const { state } = valueRow;
+    const { row, state, renderedMonitorOids } = valueRow;
+    const seenMonitors = renderedMonitorOids || new Set();
+    const nonMonitorChildNodes = getNonStatusMonitorChildNodes(row);
+
+    if (isStatusMonitor(row.classId)) {
+        if (seenMonitors.has(row.oid)) {
+            return null;
+        }
+
+        seenMonitors.add(row.oid);
+        return <StatusMonitorList monitors={[row]} />;
+    }
+
+    const statusMonitors = getStatusMonitorNodes(row).filter((monitor) => !seenMonitors.has(monitor.oid));
+    statusMonitors.forEach((monitor) => seenMonitors.add(monitor.oid));
+
+    const bodyContent = statusMonitors.length > 0 ? (
+        <>
+            <StatusMonitorList monitors={statusMonitors} />
+            {nonMonitorChildNodes.length > 0 ?
+                <ChildBlockTable
+                    key={row.name + 'blocks'}
+                    row={{ ...row, childNodes: nonMonitorChildNodes }}
+                    state={state}
+                    renderedMonitorOids={seenMonitors}
+                />
+                : null
+            }
+            {row.methods !== null & Object.keys(row.methods).length > 0 ?
+                <MethodsTable key={row.name + 'methods'} row={row} state={state}/>
+                : null
+            }
+        </>
+    ) : (
+        <>
+            {row.childNodes.length > 0 ?
+                <ChildBlockTable key={row.name + 'blocks'} row={row} state={state} renderedMonitorOids={seenMonitors}/>
+                : null
+            }
+            {row.valueHolderMap !== null && Object.keys(row.valueHolderMap).length > 0 ?
+                <PropsTable key={row.name + 'props'} row={row} state={state} />
+                : null
+            }
+            {row.methods !== null & Object.keys(row.methods).length > 0 ?
+                <MethodsTable key={row.name + 'methods'} row={row} state={state}/>
+                : null
+            }
+        </>
+    );
 
     return (
-        <>
-            <Table stickyHeader aria-label='collapsible table'>
-                <TableBody>
-                    <TableRow>
-                        <TableCell sx={{ width: '35%' }}>{row.description}</TableCell>
-                        <TableCell sx={{ width: '20%' }}><UserLabelSection row={row.valueHolderMap} oid={row.oid}/></TableCell>
-                    </TableRow>
-                    <TableRow>
+        <Table stickyHeader aria-label='collapsible table'>
+            <TableBody>
+                <BlockDescriptionRow row={row} />
+                <TableRow>
                     <TableCell colSpan={2}>
-                    {row.childNodes.length > 0 ?
-                        <ChildBlockTable key={row.name + 'blocks'} row={row} state={state}/>
-                        : null
-                    }
-                    {row.valueHolderMap !== null && Object.keys(row.valueHolderMap).length > 0 ?
-                        <PropsTable key={row.name + 'props'} row={row} state={state} />
-                        : null
-                    }
-                    {row.methods !== null & Object.keys(row.methods).length > 0 ?
-                        <MethodsTable key={row.name + 'methods'} row={row} state={state}/>
-                        : null
-                    }
+                        {bodyContent}
                     </TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
-        </>
+                </TableRow>
+            </TableBody>
+        </Table>
     );
 }
 
@@ -159,6 +208,7 @@ function BlockTable(valueRow) {
 function ChildBlockTable(valueRow) {
     const { row } = valueRow;
     const { state } = valueRow;
+    const { renderedMonitorOids } = valueRow;
 
     const [openBlock, setOpenBlock] = useState(false);
 
@@ -178,8 +228,14 @@ function ChildBlockTable(valueRow) {
             </Box>
             <Collapse in={openBlock} timeout='auto' unmountOnExit>
                 <Box sx={{ margin: 1 }}>
-                    {row.childNodes.map((child) => <BlockTable key={child.name + 'childblock'} row={child} state={state} />
-                    )}
+                    {row.childNodes.map((child) => (
+                        <BlockTable
+                            key={child.name + 'childblock'}
+                            row={child}
+                            state={state}
+                            renderedMonitorOids={renderedMonitorOids}
+                        />
+                    ))}
                 </Box>
             </Collapse>
         </>
@@ -531,7 +587,17 @@ function EditableProperty(valueRow) {
         index: Number(formattedId[1])
     }
 
-    return CreateEditableProperty(row.valueHolder, row.oid, propertyId, isMethod, structValue, index, parameterName)
+    return (
+        <EditablePropertyControl
+            valueHolder={row.valueHolder}
+            oid={row.oid}
+            propertyId={propertyId}
+            isMethod={isMethod}
+            structValue={structValue}
+            index={index}
+            parameterName={parameterName}
+        />
+    );
 }
 
 /**
@@ -543,193 +609,13 @@ function UserLabelSection(props) {
 
     let userLabel = row["1.6"]
 
-    return CreateEditableProperty(userLabel, oid, PROPERTY_IDS.OBJECT.USER_LABEL, false, undefined, undefined, undefined)
-}
-
-// need to use state of underlying array in state not value of single element
-function CreateEditableProperty(row, oid, propertyId, isMethod, structValue, index, parameterName) {
-    let valueHolder = row
-    let datatype = valueHolder.datatype
-    let value = valueHolder.value
-    let invariantType = undefined // use by method parameters where we have an invariant type ("any") and need to hint what the cast should be
-
-    let isSequence = index !== undefined
-
-    const [editable, setEditable] = useState(false)
-    const [newValue, setNewValue] = useState(value)
-    const [newInvariantType, setInvariantType] = useState(invariantType)
-
-    const DataProvider = useContext(DataProviderContext)
-
-    // If datatype is null then this property is an invariant 'any' property. Model as a string
-    if (datatype && datatype.type === NcDatatypeType.NcEnum) {
-        return (
-            <>
-                {/* DROP DOWN LIST: */}
-                <FormControl fullWidth>
-                    <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
-                        sx={{ fontSize: '0.9rem', width: `${((value ? value.length : 5)/ 2.5) + 3}rem`, maxWidth: '14rem' }}
-                        size='small'
-                        value={value}
-                        onChange={(e) => {
-                            setNewValue(e.target.value)
-                            if(isMethod){
-                                if(isSequence) {
-                                    DataProvider.changeSequenceParameter(oid, propertyId, index, parameterName, e.target.value, structValue, valueHolder)
-                                }else{
-                                    DataProvider.changeParameter(oid, propertyId, parameterName, e.target.value, structValue, valueHolder)
-                                }
-                            }
-                            else {
-                                if(isSequence) {
-                                    DataProvider.changeSequencePropertyValue(oid, propertyId, index, e.target.value, structValue, valueHolder)
-                                }else{
-                                    DataProvider.changeValue(oid, propertyId, e.target.value, structValue, valueHolder)
-                                }
-                            }
-                        }}
-                    >
-                        {datatype.enum.map((enumValue) => (<MenuItem value={enumValue.value} key={row.id + enumValue.name} >{enumValue.name}</MenuItem>))}
-                    </Select>
-                </FormControl>
-            </>)
-    }
-
-    if (datatype && datatype.typeName === "NcBoolean") {
-        const handleChange = () => {
-            if(isMethod){
-                if(isSequence) {
-                    DataProvider.changeSequenceParameter(oid, propertyId, index, parameterName, !value, structValue, valueHolder)
-                }else{
-                    DataProvider.changeParameter(oid, propertyId, parameterName, !value, structValue, valueHolder)
-                }
-            }
-            else {
-                if(isSequence) {
-                    DataProvider.changeSequencePropertyValue(oid, propertyId, index, !value, structValue, valueHolder)
-                }else{
-                    DataProvider.changeValue(oid, propertyId, !value, structValue, valueHolder)
-                }
-            }
-        };
-
-        return (
-            <>
-                {/* Checkbox: */}
-                <FormControl>
-                    <Checkbox
-                      checked={value}
-                      onChange={handleChange}
-                      inputProps={{ 'aria-label': 'controlled' }}
-                    />
-                </FormControl>
-            </>)
-    }
-
     return (
-        <>
-            {/* EDIT STRING: */}
-            {editable ?
-                <FormControl>
-                    <InputLabel htmlFor="defInput">{row.name}</InputLabel>
-                    <OutlinedInput
-                        id="defInput"
-                        sx={{ fontSize: '0.9rem', width: `${((newValue ? newValue.length : 5)/ 2.5) + 3}rem`, maxWidth: '14rem' }}
-                        label="User Label"
-                        size='small'
-                        autoFocus={true}
-                        error={newValue && (newValue === '' || newValue.length > 30)}
-                        onKeyDown={(key) => {
-                            if (key.code === "Enter" && newValue !== '' && newValue.length <= 30) {
-                                setEditable(!editable)
-                                if(isMethod){
-                                    if(isSequence) {
-                                        DataProvider.changeSequenceParameter(oid, propertyId, index, parameterName, newValue, structValue, valueHolder)
-                                    }else{
-                                        DataProvider.changeParameter(oid, propertyId, parameterName, newValue, structValue, valueHolder)
-                                    }
-                                }
-                                else {
-                                    if(isSequence) {
-                                        DataProvider.changeSequencePropertyValue(oid, propertyId, index, newValue, structValue, valueHolder)
-                                    }else{
-                                        DataProvider.changeValue(oid, propertyId, newValue, structValue, valueHolder)
-                                    }
-                                }
-                            }
-                        }}
-                        onChange={(e) => {
-                            setNewValue(e.target.value)
-                        }}
-                        value={newValue}
-                    />
-                </FormControl>
-                :
-                <span
-                    style={{ maxWidth: '5rem', overflowWrap: 'break-word' }}
-                    onDoubleClick={() => setEditable(!editable)}
-                >{value}</span>
-            }
-            {/* ICON NEXT TO STRING: */}
-            {editable ?
-                <IconButton
-                    aria-label='edit value'
-                    type='submit'
-                    onClick={() => {
-                        setEditable(!editable)
-                        if(isMethod){
-                            if(isSequence) {
-                                DataProvider.changeSequenceParameter(oid, propertyId, index, parameterName, newValue, structValue, valueHolder)
-                            }else{
-                                DataProvider.changeParameter(oid, propertyId, parameterName, newValue, structValue, valueHolder, newInvariantType)
-                            }
-                        }
-                        else {
-                            if(isSequence) {
-                                DataProvider.changeSequencePropertyValue(oid, propertyId, index, newValue, structValue, valueHolder)
-                            } else {
-                                DataProvider.changeValue(oid, propertyId, newValue, structValue, valueHolder)
-                            }
-                        }
-                    }}>
-                    {newValue && (newValue !== '' && newValue.length <= 30) ?
-                        <UploadIcon />
-                        :
-                        <></>
-                    }
-                </IconButton>
-                :
-                <IconButton
-                    aria-label='submit value'
-                    size='small'
-                    onClick={() => {
-                        setNewValue(value)
-                        setEditable(!editable)
-                    }}
-                ><EditIcon /></IconButton>
-            }
-            <span>{isMethod && datatype === undefined ? "Type Hint: " : ""}{isMethod && datatype === undefined ?
-                <Select
-                        labelId="type-hint-select-label"
-                        id="type-hint-select"
-                        sx={{ fontSize: '0.9rem', width: `9rem`, maxWidth: '14rem' }}
-                        size='small'
-                        value={invariantType}
-                        onChange={(e) => {
-                            setInvariantType(e.target.value)
-                            DataProvider.changeParameter(oid, propertyId, parameterName, newValue, structValue, valueHolder, e.target.value)
-                        }}
-                    >
-                        <MenuItem value="NcString" key={row.id + "string"} >String</MenuItem>
-                        <MenuItem value="NcInt64" key={row.id + "number"} >Number</MenuItem>
-                        <MenuItem value="NcBoolean" key={row.id + "bool"} >Boolean</MenuItem>
-                    </Select>
-
-                : ""}</span>
-        </>
-    )
+        <EditablePropertyControl
+            valueHolder={userLabel}
+            oid={oid}
+            propertyId={PROPERTY_IDS.OBJECT.USER_LABEL}
+        />
+    );
 }
 
 function ReadOnlyProperty(valueRow) {

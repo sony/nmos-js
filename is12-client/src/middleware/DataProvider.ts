@@ -111,7 +111,7 @@ export default class DataProvider {
             var valueHolder = this.propertyMap[prop.oid].ValueHolderMap![propId] as any
             valueHolder = this.updateProperty(valueHolder, newValue, prop.eventData.sequenceItemIndex)
             this.propertyMap[prop.oid].ValueHolderMap![propId] = valueHolder
-            this.propertyMap[prop.oid].State![propId](valueHolder)
+            this.propertyMap[prop.oid].State![propId](valueHolder.value)
         })
     }
 
@@ -432,7 +432,12 @@ export default class DataProvider {
         return this.castValue(typeName, valueHolder.value)
     }
 
-    public invokeMethod = async (oid: number, methodId: NcElementId) => {
+    public invokeMethod = async (
+        oid: number,
+        methodId: NcElementId,
+        options?: { displayAlert?: boolean }
+    ) => {
+        const displayAlert = options?.displayAlert !== false;
 
         var method_args = {} as GenericMap
 
@@ -453,20 +458,50 @@ export default class DataProvider {
 
         if (typeof result === 'object' && 'status' in result) {
             if (result.status === NcMethodStatus.OK) {
-                var message = result.value ? JSON.stringify(result.value) : 'OK'
-                alert(message)
+                if (displayAlert) {
+                    var message = result.value ? JSON.stringify(result.value) : 'OK'
+                    alert(message)
+                }
+
+                return {
+                    success: true,
+                    status: result.status,
+                    value: result.value,
+                }
             }
             else if (result.status === NcMethodStatus.MethodDeprecated){
-                alert('Method deprecated: ' + JSON.stringify(result.value))
+                if (displayAlert) {
+                    alert('Method deprecated: ' + JSON.stringify(result.value))
+                }
+
+                return {
+                    success: true,
+                    status: result.status,
+                    value: result.value,
+                }
             }
             else{
-                // error
-                alert(NcMethodStatus[result.status] + ': ' + result.errorMessage)
+                if (displayAlert) {
+                    alert(NcMethodStatus[result.status] + ': ' + result.errorMessage)
+                }
+
+                return {
+                    success: false,
+                    status: result.status,
+                    errorMessage: result.errorMessage,
+                }
             }
         }
         else {
-            // Some sort of error has occurred
-            alert('ERROR! ' + result)
+            if (displayAlert) {
+                alert('ERROR! ' + result)
+            }
+
+            return {
+                success: false,
+                status: NcMethodStatus.DeviceError,
+                errorMessage: result,
+            };
         }
     }
 }

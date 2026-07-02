@@ -17,6 +17,9 @@
     },
     "Logging API": {
     },
+    "IS-12 Browser": {
+        "value": ""
+    },
     "RQL": {
         "value": true,
         "disabled": false

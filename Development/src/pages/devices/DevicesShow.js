@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from 'react';
 import {
     ArrayField,
     BooleanField,
+    FunctionField,
     Loading,
     ReferenceArrayField,
     ReferenceField,
@@ -14,7 +15,7 @@ import {
     useRecordContext,
     useShowController,
 } from 'react-admin';
-import { Paper, Tab, Tabs } from '@material-ui/core';
+import { Paper, Tab, Tabs, Button } from '@material-ui/core';
 import { Link, Route } from 'react-router-dom';
 import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
@@ -25,6 +26,7 @@ import {
     DEVICE_TYPES,
     ParameterField,
     TAGS,
+    unversionedParameter,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
 import SanitizedDivider from '../../components/SanitizedDivider';
@@ -32,7 +34,7 @@ import TAIField from '../../components/TAIField';
 import UnsortableDatagrid from '../../components/UnsortableDatagrid';
 import UrlField from '../../components/URLField';
 import labelize from '../../components/labelize';
-import { queryVersion } from '../../settings';
+import { buildIs12BrowserLaunchUrl, is12BrowserUrl, queryVersion } from '../../settings';
 import MappingShowActions from '../../components/MappingShowActions';
 import ChannelMappingMatrix from './ChannelMappingMatrix';
 
@@ -113,6 +115,33 @@ const DevicesShowView = props => {
     );
 };
 
+const Is12BrowserOpenButton = ({ record }) => {
+    const baseUrl = is12BrowserUrl();
+    if (unversionedParameter(get(record, 'type')) !== 'urn:x-nmos:control:ncp') {
+        return null;
+    }
+    const launchUrl = buildIs12BrowserLaunchUrl(get(record, 'href'));
+    const disabled = !baseUrl || !launchUrl;
+    return (
+        <Button
+            size="small"
+            variant="outlined"
+            color="primary"
+            disabled={disabled}
+            title={
+                disabled
+                    ? 'Set IS-12 Browser in Settings'
+                    : `Open IS-12 Browser\n${get(record, 'href')}`
+            }
+            onClick={() =>
+                window.open(launchUrl, '_blank', 'noopener,noreferrer')
+            }
+        >
+            Open
+        </Button>
+    );
+};
+
 const ShowSummaryTab = ({ record, ...props }) => {
     return (
         <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
@@ -137,6 +166,14 @@ const ShowSummaryTab = ({ record, ...props }) => {
                             {queryVersion() >= 'v1.3' && (
                                 <BooleanField source="authorization" />
                             )}
+                            <FunctionField
+                                label="IS-12 Browser"
+                                render={controlRecord => (
+                                    <Is12BrowserOpenButton
+                                        record={controlRecord}
+                                    />
+                                )}
+                            />
                         </UnsortableDatagrid>
                     </ArrayField>
                 )}

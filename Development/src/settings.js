@@ -15,6 +15,8 @@ export const FRIENDLY_PARAMETERS = 'Friendly Parameters';
 
 export const CLIENT_ID = 'Client ID';
 
+export const IS12_BROWSER = 'IS-12 Browser';
+
 export const disabledSetting = name => get(CONFIG, `${name}.disabled`);
 export const hiddenSetting = name => get(CONFIG, `${name}.hidden`);
 
@@ -39,6 +41,8 @@ const defaultUrl = api => {
             return baseUrl + '/x-dns-sd/v1.1';
         case AUTH_API:
             return baseUrl + '/.well-known/oauth-authorization-server';
+        case IS12_BROWSER:
+            return get(CONFIG, `${IS12_BROWSER}.value`) || '';
         default:
             // not expected to be used
             return '';
@@ -68,6 +72,14 @@ export const setApiUrl = (api, url) => {
 export const apiVersion = api => apiUrl(api).match(/([^/]+)\/?$/g)[0];
 
 export const queryVersion = () => apiVersion(QUERY_API);
+
+export const is12BrowserUrl = () => apiUrl(IS12_BROWSER);
+
+export const buildIs12BrowserLaunchUrl = ncpWebSocketHref => {
+    const base = is12BrowserUrl().replace(/\/$/, '');
+    if (!base || !ncpWebSocketHref) return null;
+    return `${base}/?uri=${encodeURIComponent(ncpWebSocketHref)}`;
+};
 
 // single value, not per-API, right now
 // default to 10 rather than leaving undefined and letting the API use its default,
@@ -163,6 +175,7 @@ const useSettings = () => {
         [FRIENDLY_PARAMETERS]: getJSONSetting(FRIENDLY_PARAMETERS, false),
         [CLIENT_ID]: authClientId(),
         [AUTH_API]: apiUrl(AUTH_API),
+        [IS12_BROWSER]: apiUrl(IS12_BROWSER),
     });
 
     const isEffective = name => !hiddenSetting(name) && !disabledSetting(name);
@@ -178,6 +191,8 @@ const useSettings = () => {
             setJSONSetting(FRIENDLY_PARAMETERS, values[FRIENDLY_PARAMETERS]);
         if (isEffective(CLIENT_ID)) setAuthClientId(values[CLIENT_ID]);
         if (isEffective(AUTH_API)) setApiUrl(AUTH_API, values[AUTH_API]);
+        if (isEffective(IS12_BROWSER))
+            setApiUrl(IS12_BROWSER, values[IS12_BROWSER]);
     }, [values]);
 
     return [values, setValues];

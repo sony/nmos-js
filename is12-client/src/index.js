@@ -1,5 +1,5 @@
 import ReactDOM from 'react-dom/client';
-import {createContext, useState} from 'react';
+import {createContext, useEffect, useState} from 'react';
 import {CookiesProvider} from "react-cookie";
 import './index.css';
 import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
@@ -24,6 +24,38 @@ function Index(props) {
     let showClassManager = false
     if ("showClassManager" in config) {
         showClassManager = config.showClassManager
+    }
+
+    const controlInterfaceUriFromUrl = new URLSearchParams(window.location.search).get('uri');
+    const controlInterfaceUri = controlInterfaceUriFromUrl ? decodeURIComponent(controlInterfaceUriFromUrl) : null;
+
+    useEffect(() => {
+        if (!controlInterfaceUri || devices.length > 0) return;
+
+        getDevices(controlInterfaceUri)
+            .then((deviceList) => {
+                if (deviceList.length > 0) {
+                    setDevices(deviceList);
+                } else {
+                    alert('Invalid control interface URI...');
+                }
+            })
+            .catch((err) => {
+                alert(`Could not connect to ${controlInterfaceUri}`);
+                console.error('Problem encountered: ', err);
+            });
+    }, [controlInterfaceUri, devices.length]);
+
+    if (controlInterfaceUri) {
+        return (
+            <ThemeProvider theme={darkTheme}>
+                <CookiesProvider>
+                    <DeviceContext.Provider value={{devices, setDevices}}>
+                        {devices.length > 0 ? <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager}/> : <></>}
+                    </DeviceContext.Provider>
+                </CookiesProvider>
+            </ThemeProvider>
+        )
     }
 
     if (config.address !== undefined && config.port !== undefined) {

@@ -14,7 +14,7 @@ import {
     useRecordContext,
     useShowController,
 } from 'react-admin';
-import { Paper, Tab, Tabs } from '@material-ui/core';
+import { Paper, Tab, Tabs, Typography } from '@material-ui/core';
 import { Link, Route } from 'react-router-dom';
 import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
@@ -25,6 +25,7 @@ import {
     DEVICE_TYPES,
     ParameterField,
     TAGS,
+    unversionedParameter,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
 import SanitizedDivider from '../../components/SanitizedDivider';
@@ -32,7 +33,11 @@ import TAIField from '../../components/TAIField';
 import UnsortableDatagrid from '../../components/UnsortableDatagrid';
 import UrlField from '../../components/URLField';
 import labelize from '../../components/labelize';
-import { queryVersion } from '../../settings';
+import {
+    buildIs12BrowserLaunchUrl,
+    is12BrowserUrl,
+    queryVersion,
+} from '../../settings';
 import MappingShowActions from '../../components/MappingShowActions';
 import ChannelMappingMatrix from './ChannelMappingMatrix';
 
@@ -113,6 +118,51 @@ const DevicesShowView = props => {
     );
 };
 
+const ControlAddressField = ({ record, source = 'href' }) => {
+    const href = get(record, source);
+    const isDeviceControlProtocol =
+        unversionedParameter(get(record, 'type')) === 'urn:x-nmos:control:ncp';
+
+    if (isDeviceControlProtocol) {
+        const launchUrl = buildIs12BrowserLaunchUrl(href);
+        const disabled = !is12BrowserUrl() || !launchUrl;
+
+        if (disabled) {
+            return (
+                <Typography
+                    color="textSecondary"
+                    variant="body2"
+                    title="Set IS-12 Browser in Settings"
+                >
+                    {href}
+                </Typography>
+            );
+        }
+
+        return (
+            <Typography
+                color="textPrimary"
+                component="a"
+                href="#"
+                variant="body2"
+                style={{ textDecoration: 'underline', cursor: 'pointer' }}
+                title={`Open IS-12 Browser\n${href}`}
+                onClick={event => {
+                    event.preventDefault();
+                    window.open(launchUrl, '_blank', 'noopener,noreferrer');
+                }}
+            >
+                {href}
+            </Typography>
+        );
+    }
+
+    return <UrlField record={record} source={source} />;
+};
+ControlAddressField.defaultProps = {
+    addLabel: true,
+};
+
 const ShowSummaryTab = ({ record, ...props }) => {
     return (
         <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
@@ -129,7 +179,10 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 {queryVersion() >= 'v1.1' && (
                     <ArrayField source="controls">
                         <UnsortableDatagrid>
-                            <UrlField source="href" label="Address" />
+                            <ControlAddressField
+                                source="href"
+                                label="Address"
+                            />
                             <ParameterField
                                 source="type"
                                 register={CONTROL_TYPES}

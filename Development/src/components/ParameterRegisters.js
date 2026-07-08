@@ -103,6 +103,11 @@ export const CONTROL_TYPES = {
         label: 'Channel Mapping API',
         versions: ['v1.0'],
     },
+    // IS-12
+    'urn:x-nmos:control:ncp': {
+        label: 'Device Control Protocol',
+        versions: ['v1.0'],
+    },
     // Manifest Base
     'urn:x-nmos:control:manifest-base': {
         label: 'Manifest Base',

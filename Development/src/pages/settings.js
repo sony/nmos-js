@@ -18,6 +18,7 @@ import {
     CLIENT_ID,
     DNSSD_API,
     FRIENDLY_PARAMETERS,
+    IS12_BROWSER,
     LOGGING_API,
     PAGING_LIMIT,
     QUERY_API,
@@ -131,6 +132,19 @@ const Settings = () => {
                                     onFocus={selectOnFocus}
                                     disabled={disabledSetting(DNSSD_API)}
                                     helperText="Used to show alternative Query APIs"
+                                />
+                            </StyledListItem>
+                        )}
+                        {!hiddenSetting(IS12_BROWSER) && (
+                            <StyledListItem>
+                                <StyledTextField
+                                    label="IS-12 Browser"
+                                    variant="filled"
+                                    value={values[IS12_BROWSER]}
+                                    onChange={handleTextChange(IS12_BROWSER)}
+                                    onFocus={selectOnFocus}
+                                    disabled={disabledSetting(IS12_BROWSER)}
+                                    helperText="Base URL of the IS-12 Device Model Browser application"
                                 />
                             </StyledListItem>
                         )}

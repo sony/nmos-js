@@ -31,7 +31,7 @@ function isValidSubmitValue(valueHolder, newValue) {
     }
 
     if (NUMERIC_TYPE_NAMES.has(valueHolder.datatype?.typeName)) {
-        return newValue !== '' && !Number.isNaN(Number(newValue));
+        return newValue != null && newValue !== '' && !Number.isNaN(Number(newValue));
     }
 
     return newValue !== '';
@@ -75,8 +75,8 @@ export default function EditablePropertyControl({
     parameterName,
     compact = false,
 }) {
-    const datatype = valueHolder.datatype;
-    const value = valueHolder.value;
+    const datatype = valueHolder?.datatype;
+    const value = valueHolder?.value;
     const invariantType = undefined;
     const isNumericType = NUMERIC_TYPE_NAMES.has(datatype?.typeName);
 
@@ -85,6 +85,10 @@ export default function EditablePropertyControl({
     const [newInvariantType, setInvariantType] = useState(invariantType);
 
     const DataProvider = useContext(DataProviderContext);
+
+    if (!valueHolder) {
+        return null;
+    }
 
     const inputWidthSx = compact
         ? {
@@ -102,7 +106,8 @@ export default function EditablePropertyControl({
                     id="demo-simple-select"
                     sx={inputWidthSx}
                     size="small"
-                    value={value}
+                    displayEmpty
+                    value={value ?? ''}
                     onChange={(event) => {
                         setNewValue(event.target.value);
                         submitPropertyValue(

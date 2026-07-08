@@ -55,7 +55,10 @@ function addObjects(children, structure, state, tables) {
                 oid: node.oid,
                 name: node.role,
                 description: node.description,
-                userLabel: (state[`${node.oid}.${PROPERTY_IDS.OBJECT.USER_LABEL.level}.${PROPERTY_IDS.OBJECT.USER_LABEL.index}`] !== '' ? state[`${node.oid}.${PROPERTY_IDS.OBJECT.USER_LABEL.level}.${PROPERTY_IDS.OBJECT.USER_LABEL.index}`] : 'none'),
+                userLabel: (() => {
+                    const rawUserLabel = state[`${node.oid}.${PROPERTY_IDS.OBJECT.USER_LABEL.level}.${PROPERTY_IDS.OBJECT.USER_LABEL.index}`];
+                    return rawUserLabel != null && rawUserLabel !== '' ? rawUserLabel : 'none';
+                })(),
                 valueHolderMap: valueHolderMap,
                 children: node.children,
                 childNodes: [],
@@ -607,7 +610,11 @@ function UserLabelSection(props) {
     const { row } = props;
     const { oid } = props;
 
-    let userLabel = row["1.6"]
+    const userLabel = row["1.6"];
+
+    if (!userLabel) {
+        return <Typography variant="body2" color="grey.500">—</Typography>;
+    }
 
     return (
         <EditablePropertyControl
@@ -625,7 +632,7 @@ function ReadOnlyProperty(valueRow) {
     let datatype = valueHolder.datatype
     let value = valueHolder.value
 
-    if (value === null) {
+    if (value == null) {
             return (
             <>
             <p>NULL</p>

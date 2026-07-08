@@ -27,7 +27,7 @@ const NUMERIC_TYPE_NAMES = new Set([
 
 function isValidSubmitValue(valueHolder, newValue) {
     if (valueHolder.name === 'userLabel') {
-        return newValue !== '' && newValue.length <= 30;
+        return newValue !== '' && (newValue?.length ?? 0) <= 30;
     }
 
     if (NUMERIC_TYPE_NAMES.has(valueHolder.datatype?.typeName)) {

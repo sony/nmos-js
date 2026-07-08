@@ -2,7 +2,6 @@ import { Fragment, useEffect, useState } from 'react';
 import {
     ArrayField,
     BooleanField,
-    FunctionField,
     Loading,
     ReferenceArrayField,
     ReferenceField,
@@ -15,7 +14,7 @@ import {
     useRecordContext,
     useShowController,
 } from 'react-admin';
-import { Button, Paper, Tab, Tabs } from '@material-ui/core';
+import { Paper, Tab, Tabs, Typography } from '@material-ui/core';
 import { Link, Route } from 'react-router-dom';
 import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
@@ -119,33 +118,49 @@ const DevicesShowView = props => {
     );
 };
 
-const Is12BrowserOpenButton = ({ record }) => {
-    const baseUrl = is12BrowserUrl();
-    if (
-        unversionedParameter(get(record, 'type')) !== 'urn:x-nmos:control:ncp'
-    ) {
-        return null;
+const ControlAddressField = ({ record, source = 'href' }) => {
+    const href = get(record, source);
+    const isDeviceControlProtocol =
+        unversionedParameter(get(record, 'type')) === 'urn:x-nmos:control:ncp';
+
+    if (isDeviceControlProtocol) {
+        const launchUrl = buildIs12BrowserLaunchUrl(href);
+        const disabled = !is12BrowserUrl() || !launchUrl;
+
+        if (disabled) {
+            return (
+                <Typography
+                    color="textSecondary"
+                    variant="body2"
+                    title="Set IS-12 Browser in Settings"
+                >
+                    {href}
+                </Typography>
+            );
+        }
+
+        return (
+            <Typography
+                color="textPrimary"
+                component="a"
+                href="#"
+                variant="body2"
+                style={{ textDecoration: 'underline', cursor: 'pointer' }}
+                title={`Open IS-12 Browser\n${href}`}
+                onClick={event => {
+                    event.preventDefault();
+                    window.open(launchUrl, '_blank', 'noopener,noreferrer');
+                }}
+            >
+                {href}
+            </Typography>
+        );
     }
-    const launchUrl = buildIs12BrowserLaunchUrl(get(record, 'href'));
-    const disabled = !baseUrl || !launchUrl;
-    return (
-        <Button
-            size="small"
-            variant="outlined"
-            color="primary"
-            disabled={disabled}
-            title={
-                disabled
-                    ? 'Set IS-12 Browser in Settings'
-                    : `Open IS-12 Browser\n${get(record, 'href')}`
-            }
-            onClick={() =>
-                window.open(launchUrl, '_blank', 'noopener,noreferrer')
-            }
-        >
-            Open
-        </Button>
-    );
+
+    return <UrlField record={record} source={source} />;
+};
+ControlAddressField.defaultProps = {
+    addLabel: true,
 };
 
 const ShowSummaryTab = ({ record, ...props }) => {
@@ -164,7 +179,10 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 {queryVersion() >= 'v1.1' && (
                     <ArrayField source="controls">
                         <UnsortableDatagrid>
-                            <UrlField source="href" label="Address" />
+                            <ControlAddressField
+                                source="href"
+                                label="Address"
+                            />
                             <ParameterField
                                 source="type"
                                 register={CONTROL_TYPES}
@@ -172,14 +190,6 @@ const ShowSummaryTab = ({ record, ...props }) => {
                             {queryVersion() >= 'v1.3' && (
                                 <BooleanField source="authorization" />
                             )}
-                            <FunctionField
-                                label="IS-12 Browser"
-                                render={controlRecord => (
-                                    <Is12BrowserOpenButton
-                                        record={controlRecord}
-                                    />
-                                )}
-                            />
                         </UnsortableDatagrid>
                     </ArrayField>
                 )}

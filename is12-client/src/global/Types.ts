@@ -91,7 +91,7 @@ export type ValueHolder = {
     value : NCAValue | undefined // add a ValueHolderMap and ValueHolder[] here to simplify
     values : ValueHolder[] | undefined // use for sequence
     valueMap : ValueHolderMap | undefined // use for struct
-    datatype: NcDatatype
+    datatype: NcDatatype | undefined
     name: string | undefined
     description: string | undefined
     isReadOnly: boolean

@@ -77,7 +77,7 @@ export function isElementIdDatatype(datatype: NcDatatype | undefined) {
     if (!datatype || datatype.type !== NcDatatypeType.NcStruct) {
         return false;
     }
-    return datatype.typeName === 'NcElementId' || datatype.baseTypeName === 'NcElementId';
+    return datatype.baseTypeName === 'NcElementId';
 }
 
 export function makeDefaultValue(datatype: string | undefined) {
@@ -95,7 +95,7 @@ export function makeDefaultValue(datatype: string | undefined) {
 }
 
 
-export const makeValueHolder = async (value: any, isSequence: boolean, datatype: NcDatatype, isReadOnly: boolean, typeName: string, name: string | undefined, description: string | undefined, defaultValues?: boolean ): Promise<ValueHolder> => {
+export const makeValueHolder = async (value: any, isSequence: boolean, datatype: NcDatatype | undefined, isReadOnly: boolean, typeName: string, name: string | undefined, description: string | undefined, defaultValues?: boolean ): Promise<ValueHolder> => {
 
     if (datatype === undefined) {
         return {

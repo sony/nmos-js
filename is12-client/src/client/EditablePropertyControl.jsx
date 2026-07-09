@@ -25,13 +25,23 @@ const NUMERIC_TYPE_NAMES = new Set([
     'NcFloat64',
 ]);
 
-function isValidSubmitValue(valueHolder, newValue) {
+function isValidSubmitValue(valueHolder, newValue, isMethod = false) {
     if (valueHolder.name === 'userLabel') {
         return newValue !== '' && (newValue?.length ?? 0) <= 30;
     }
 
     if (NUMERIC_TYPE_NAMES.has(valueHolder.datatype?.typeName)) {
-        return newValue != null && newValue !== '' && !Number.isNaN(Number(newValue));
+        const numericValue = Number(newValue);
+
+        if (newValue == null || newValue === '' || Number.isNaN(numericValue)) {
+            return false;
+        }
+
+        if (isMethod && (valueHolder.name === 'index' || valueHolder.name === 'level')) {
+            return numericValue >= 1;
+        }
+
+        return true;
     }
 
     return newValue !== '';
@@ -169,7 +179,10 @@ export default function EditablePropertyControl({
         );
     }
 
-    const canSubmit = isValidSubmitValue(valueHolder, newValue);
+    const canSubmit = isValidSubmitValue(valueHolder, newValue, isMethod);
+    const hasMinimumOneConstraint =
+        isMethod && isNumericType && (valueHolder.name === 'index' || valueHolder.name === 'level');
+
     const inlineControlSx = {
         display: 'inline-flex',
         alignItems: 'center',
@@ -214,6 +227,7 @@ export default function EditablePropertyControl({
                             setNewValue(event.target.value);
                         }}
                         value={newValue ?? ''}
+                        inputProps={hasMinimumOneConstraint ? { min: 1 } : undefined}                        
                     />
                 </FormControl>
             ) : (

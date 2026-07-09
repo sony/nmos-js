@@ -303,7 +303,7 @@ export default class DataProvider {
             // This is an object
             var objectVal = {} as GenericMap
             for (const elem of Object.keys(parentValue)) {
-                var vh = parentValue[elem] as ValueHolder
+                var vh = parentValue[elem]
                 let name = vh.name as string
                 objectVal[name] = vh.value
             }
@@ -349,7 +349,7 @@ export default class DataProvider {
             // This is an object
             var objectVal = {} as GenericMap
             for (const elem of Object.keys(parentValue)) {
-                var vh = parentValue[elem] as ValueHolder
+                var vh = parentValue[elem]
                 let name = vh.name as string
                 objectVal[name] = vh.value
             }
@@ -398,7 +398,7 @@ export default class DataProvider {
             this.propertyMap[oid].Methods![methodIdString].ValueHolderMap![parameterName] = valueHolder
         }
         else {
-            var tmpValueHolder = this.propertyMap[oid].Methods![methodIdString].ValueHolderMap![parameterName] as ValueHolder
+            var tmpValueHolder = this.propertyMap[oid].Methods![methodIdString].ValueHolderMap![parameterName]
             var tmpValueHolderMap = tmpValueHolder.valueMap as ValueHolderMap
             var name = valueHolder.name as string
             tmpValueHolderMap[name] = valueHolder
@@ -421,7 +421,7 @@ export default class DataProvider {
             var param = {} as GenericMap
 
             for (const elem of Object.keys(valueHolder.valueMap)) {
-                var vh = valueHolder.valueMap[elem] as ValueHolder
+                var vh = valueHolder.valueMap[elem]
                 param[elem] = this.makeParameter(vh)
             }
 

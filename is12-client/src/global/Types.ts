@@ -99,7 +99,7 @@ export type ValueHolder = {
 }
 
 export type ValueHolderMap = {
-    [id: string]: ValueHolder | ValueHolder[]
+    [id: string]: ValueHolder
 }
 export type NodeProps = {
     [id: string]: Prop

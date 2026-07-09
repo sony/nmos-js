@@ -80,6 +80,10 @@ export function isElementIdDatatype(datatype: NcDatatype | undefined) {
     return datatype.baseTypeName === 'NcElementId';
 }
 
+export function getValueHolderTypeName(valueHolder: ValueHolder) {
+    return valueHolder.datatype?.typeName ?? valueHolder.typeName ?? "NcString";
+}
+
 export function makeDefaultValue(datatype: string | undefined) {
     if (datatype === "NcInt16" || datatype === "NcInt32" || datatype === "NcInt64" || datatype === "NcUint16" || datatype === "NcUint32" || datatype === "NcUint64") {
         return 0;
@@ -150,8 +154,7 @@ export const makeValueHolder = async (value: any, isSequence: boolean, datatype:
                     datatype: datatype,
                     name: name,
                     description: description,
-                    isReadOnly: isReadOnly,
-                    typeName: typeName
+                    isReadOnly: isReadOnly
             }
         }
 
@@ -186,8 +189,7 @@ export const makeValueHolder = async (value: any, isSequence: boolean, datatype:
                     datatype: datatype,
                     name: name,
                     description: description,
-                    isReadOnly: isReadOnly,
-                    typeName: typeName
+                    isReadOnly: isReadOnly
                 }
             }
         }
@@ -200,7 +202,6 @@ export const makeValueHolder = async (value: any, isSequence: boolean, datatype:
         datatype: datatype,
         name: name,
         description: description,
-        isReadOnly: isReadOnly,
-        typeName: typeName
+        isReadOnly: isReadOnly
     }
 }

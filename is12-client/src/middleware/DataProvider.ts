@@ -31,7 +31,7 @@ import {NCANotificationResponseMessage, NcMethodStatus} from "../global/Types";
 import {getClassDescriptor, getBlockProps, getFormattedBlockNodes, subscribeToObjects, getDatatypes, getRootBlock } from "../backend/BlockNodeCommands";
 import {NCAConnection} from "../backend/ConnectionHandler";
 import {getPropertyValue, setPropertyValue, setSequenceItem, invokeMethod} from "../global/IS12CommandTemplates";
-import {makeValueHolder} from "./HelperFunctions"
+import {getValueHolderTypeName, makeValueHolder} from "./HelperFunctions"
 
 export default class DataProvider {
 
@@ -297,7 +297,7 @@ export default class DataProvider {
     // send the entire updated struct to the Node)
     public changeValue = (prop_parent_oid: number, propId: NcElementId, newVal: NCAValue, parentValue: ValueHolderMap | undefined, valueHolder: ValueHolder) => {
 
-        const castVal = this.castValue(valueHolder.datatype.typeName, newVal)
+        const castVal = this.castValue(getValueHolderTypeName(valueHolder), newVal)
 
         if (parentValue) {
             // This is an object
@@ -343,7 +343,7 @@ export default class DataProvider {
     // send the entire updated struct to the Node)
     public changeSequencePropertyValue = (prop_parent_oid: number, propId: NcElementId, index: number, newVal: NCAValue, parentValue: ValueHolderMap | undefined, valueHolder: ValueHolder) => {
 
-        const castVal = this.castValue(valueHolder.datatype.typeName, newVal)
+        const castVal = this.castValue(getValueHolderTypeName(valueHolder), newVal)
 
         if (parentValue) {
             // This is an object
@@ -386,7 +386,7 @@ export default class DataProvider {
     // Change method parameter value
     public changeParameter = (oid: number, methodId: NcElementId, parameterName: string, newVal: NCAValue, parentValue: ValueHolderMap | undefined, valueHolder: ValueHolder, invariantHint: string | undefined) => {
 
-        // If this an invariant type then use the invariantHint to set a typeName on the ValueHolder
+        // If this an invariant type then use the invariantHint as the fallback type name
         if (valueHolder.datatype === undefined && invariantHint !== undefined) {
             valueHolder.typeName = invariantHint
         }
@@ -428,8 +428,7 @@ export default class DataProvider {
             return param
         }
 
-        var typeName = valueHolder.datatype ? valueHolder.datatype.typeName : (valueHolder.typeName ? valueHolder.typeName : "NcString")
-        return this.castValue(typeName, valueHolder.value)
+        return this.castValue(getValueHolderTypeName(valueHolder), valueHolder.value)
     }
 
     public invokeMethod = async (

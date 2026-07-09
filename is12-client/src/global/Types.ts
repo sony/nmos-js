@@ -95,7 +95,7 @@ export type ValueHolder = {
     name: string | undefined
     description: string | undefined
     isReadOnly: boolean
-    typeName: string
+    typeName?: string // fallback for invariant values where datatype is unknown
 }
 
 export type ValueHolderMap = {

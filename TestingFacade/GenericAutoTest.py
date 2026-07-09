@@ -16,6 +16,12 @@ class GenericAutoTest:
         self.mock_registry_url = CONFIG.MOCK_REGISTRY_URL
         self.multipart_question_storage = {}
 
+    def reset_for_new_suite(self):
+        """
+        Clear per-suite state on the shared automation instance
+        """
+        self.multipart_question_storage = {}
+
     def set_up_test(self):
         # Set up webdriver
         browser = getattr(webdriver, CONFIG.BROWSER)
@@ -75,6 +81,42 @@ class GenericAutoTest:
         """
         resources = self.driver.find_elements(By.NAME, "label")
         return [entry.text for entry in resources]
+
+    def set_rql_enabled(self, enabled):
+        """
+        Enable or disable RQL queries in nmos-js settings
+        """
+        use_rql = self.driver.find_element(By.NAME, "userql")
+        is_checked = use_rql.get_attribute('checked') == "true"
+        if enabled != is_checked:
+            use_rql.click()
+
+    def get_summary_transport(self):
+        """
+        Read the transport value from a resource summary show page
+        """
+        try:
+            transport_element = self.driver.find_element(
+                By.XPATH,
+                "//label[normalize-space()='Transport']/following-sibling::div[1]")
+            return transport_element.text.strip()
+        except NoSuchElementException:
+            return ''
+
+    def list_connect_tab_senders(self, receiver_label):
+        """
+        Return sender labels shown on a receiver's Connect tab
+        """
+        self.navigate_to_page('Receivers')
+        self.navigate_to_page(receiver_label)
+        if not self.check_connectable():
+            return []
+
+        connect = WebDriverWait(self.driver, 20).until(
+            EC.element_to_be_clickable((By.NAME, "connect")))
+        connect.click()
+        time.sleep(1)
+        return self.find_resource_labels()
 
     def next_page(self):
         """

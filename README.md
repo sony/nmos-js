@@ -9,6 +9,7 @@ This repository contains a client implementation of the [AMWA Networked Media Op
 - [AMWA IS-05 NMOS Device Connection Management Specification](https://amwa-tv.github.io/nmos-device-connection-management)
 - [AMWA IS-08 NMOS Audio Channel Mapping Specification](https://specs.amwa.tv/is-08/) (read-only for now)
 - [AMWA BCP-004-01 NMOS Receiver Capabilities](https://specs.amwa.tv/bcp-004-01/)
+- [AMWA BCP-007-03 NMOS Support for MXL](https://specs.amwa.tv/bcp-007-03/)
 
 For more information about AMWA, NMOS and the Networked Media Incubator, please refer to http://amwa.tv/.
 
@@ -52,12 +53,15 @@ The [AMWA NMOS API Testing Tool](https://github.com/AMWA-TV/nmos-testing) contro
 **Test Suite/Status:**
 [![IS-04-04][IS-04-04-badge]][IS-04-04-sheet]
 [![IS-05-03][IS-05-03-badge]][IS-05-03-sheet]
+[![BCP-007-03-02][BCP-007-03-02-badge]][BCP-007-03-02-sheet]
 
 [IS-04-04-badge]: https://raw.githubusercontent.com/sony/nmos-js/badges/IS-04-04.svg
 [IS-05-03-badge]: https://raw.githubusercontent.com/sony/nmos-js/badges/IS-05-03.svg
+[BCP-007-03-02-badge]: https://raw.githubusercontent.com/sony/nmos-js/badges/BCP-007-03-02.svg
 
 [IS-04-04-sheet]: https://docs.google.com/spreadsheets/d/1104JkWwsOp8ql4x0qc-I7nGZqD7mCSBJ__aUIw5AFfw/edit?gid=1975955785
 [IS-05-03-sheet]: https://docs.google.com/spreadsheets/d/1104JkWwsOp8ql4x0qc-I7nGZqD7mCSBJ__aUIw5AFfw/edit?gid=946113228
+[BCP-007-03-02-sheet]: https://docs.google.com/spreadsheets/d/1104JkWwsOp8ql4x0qc-I7nGZqD7mCSBJ__aUIw5AFfw/edit?gid=567974958
 
 ### Recent Activity
 
@@ -66,6 +70,7 @@ The implementation is designed to be extended. Development is ongoing, following
 Recent activity on the project (newest first):
 
 - Launch IS-12 Device Model browser client from within nmos-js Device summary tab.
+- Added BCP-007-03 NMOS Support for MXL
 - Added prototype [IS-12 Device Model browser client](is12-client/README.md).
 - Added [automated controller testing](TestingFacade/README.md) for nmos-js.
 - Read-only support for IS-08 Audio Channel Mapping

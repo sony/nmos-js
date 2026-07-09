@@ -183,12 +183,13 @@ export default function EditablePropertyControl({
 
     // level and index are only 1-based when they belong to an ID, not for any
     // parameter that happens to be named that way
-    const isElementIdField =
+    const enforceMinimumOne =
         isMethod &&
+        (valueHolder.name === 'index' || valueHolder.name === 'level') &&
         isElementIdDatatype(parentValueHolder?.datatype);
 
-    const canSubmit = isValidSubmitValue(valueHolder, newValue, isElementIdField);
-    const hasMinimumOneConstraint = isElementIdField;
+    const canSubmit = isValidSubmitValue(valueHolder, newValue, enforceMinimumOne);
+    const hasMinimumOneConstraint = enforceMinimumOne;
 
     const inlineControlSx = {
         display: 'inline-flex',

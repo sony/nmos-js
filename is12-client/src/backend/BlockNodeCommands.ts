@@ -250,17 +250,20 @@ export const getDatatypes = async (NCASocket: NCAConnection): Promise<NCDatatype
             let datatype = descriptor as NcDatatypeDescriptorStruct;
 
             var name = datatype.name
+            var baseTypeName = datatype.name
             var fields = datatype.fields.slice()
 
             // add inherited fields
             while (datatype.parentType !== null) {
                 datatype = descriptorMap[datatype.parentType]
+                baseTypeName = datatype.name
                 fields = fields.concat(datatype.fields)
             }
 
             result[name] = {
                 type: NcDatatypeType.NcStruct,
                 typeName: descriptor.name,
+                baseTypeName: baseTypeName,
                 enum: null,
                 fields: fields,
                 sequenceType: false

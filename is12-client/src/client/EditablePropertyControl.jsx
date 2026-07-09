@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { DataProviderContext } from './NCAController';
 import { NcDatatypeType } from '../global/Types';
+import { isElementIdDatatype } from '../middleware/HelperFunctions';
 
 const NUMERIC_TYPE_NAMES = new Set([
     'NcInt16',
@@ -25,7 +26,7 @@ const NUMERIC_TYPE_NAMES = new Set([
     'NcFloat64',
 ]);
 
-function isValidSubmitValue(valueHolder, newValue, isMethod = false) {
+function isValidSubmitValue(valueHolder, newValue, enforceMinimumOne = false) {
     if (valueHolder.name === 'userLabel') {
         return newValue !== '' && (newValue?.length ?? 0) <= 30;
     }
@@ -37,7 +38,7 @@ function isValidSubmitValue(valueHolder, newValue, isMethod = false) {
             return false;
         }
 
-        if (isMethod && (valueHolder.name === 'index' || valueHolder.name === 'level')) {
+        if (enforceMinimumOne) {
             return numericValue >= 1;
         }
 
@@ -80,13 +81,14 @@ export default function EditablePropertyControl({
     oid,
     propertyId,
     isMethod = false,
-    structValue,
+    parentValueHolder,
     index,
     parameterName,
     compact = false,
 }) {
     const datatype = valueHolder?.datatype;
     const value = valueHolder?.value;
+    const structValue = parentValueHolder?.valueMap;
     const invariantType = undefined;
     const isNumericType = NUMERIC_TYPE_NAMES.has(datatype?.typeName);
 
@@ -179,9 +181,15 @@ export default function EditablePropertyControl({
         );
     }
 
-    const canSubmit = isValidSubmitValue(valueHolder, newValue, isMethod);
-    const hasMinimumOneConstraint =
-        isMethod && isNumericType && (valueHolder.name === 'index' || valueHolder.name === 'level');
+    // level and index are only 1-based when they belong to an ID, not for any
+    // parameter that happens to be named that way
+    const enforceMinimumOne =
+        isMethod &&
+        (valueHolder.name === 'index' || valueHolder.name === 'level') &&
+        isElementIdDatatype(parentValueHolder?.datatype);
+
+    const canSubmit = isValidSubmitValue(valueHolder, newValue, enforceMinimumOne);
+    const hasMinimumOneConstraint = enforceMinimumOne;
 
     const inlineControlSx = {
         display: 'inline-flex',

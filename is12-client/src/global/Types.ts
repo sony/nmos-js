@@ -80,6 +80,7 @@ export enum NcDatatypeType {
 export type NcDatatype = {
     type: NcDatatypeType
     typeName: string
+    baseTypeName?: string // for struct inheritance, e.g. NcPropertyId -> NcElementId
     enum: NcEnum[] | null // for enum types
     fields: NcFieldDescriptor[] | null //for struct types
     sequenceType: boolean
@@ -90,15 +91,15 @@ export type ValueHolder = {
     value : NCAValue | undefined // add a ValueHolderMap and ValueHolder[] here to simplify
     values : ValueHolder[] | undefined // use for sequence
     valueMap : ValueHolderMap | undefined // use for struct
-    datatype: NcDatatype
+    datatype: NcDatatype | undefined
     name: string | undefined
     description: string | undefined
     isReadOnly: boolean
-    typeName: string
+    typeName?: string // fallback for invariant values where datatype is unknown
 }
 
 export type ValueHolderMap = {
-    [id: string]: ValueHolder | ValueHolder[]
+    [id: string]: ValueHolder
 }
 export type NodeProps = {
     [id: string]: Prop

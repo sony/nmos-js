@@ -72,6 +72,18 @@ export function isStructDatatype(valueHolder: ValueHolder) {
     return false;
 }
 
+// An "ID" datatype is NcElementId or a datatype derived from it.
+export function isElementIdDatatype(datatype: NcDatatype | undefined) {
+    if (!datatype || datatype.type !== NcDatatypeType.NcStruct) {
+        return false;
+    }
+    return datatype.baseTypeName === 'NcElementId';
+}
+
+export function getValueHolderTypeName(valueHolder: ValueHolder) {
+    return valueHolder.datatype?.typeName ?? valueHolder.typeName ?? "NcString";
+}
+
 export function makeDefaultValue(datatype: string | undefined) {
     if (datatype === "NcInt16" || datatype === "NcInt32" || datatype === "NcInt64" || datatype === "NcUint16" || datatype === "NcUint32" || datatype === "NcUint64") {
         return 0;
@@ -87,7 +99,7 @@ export function makeDefaultValue(datatype: string | undefined) {
 }
 
 
-export const makeValueHolder = async (value: any, isSequence: boolean, datatype: NcDatatype, isReadOnly: boolean, typeName: string, name: string | undefined, description: string | undefined, defaultValues?: boolean ): Promise<ValueHolder> => {
+export const makeValueHolder = async (value: any, isSequence: boolean, datatype: NcDatatype | undefined, isReadOnly: boolean, typeName: string, name: string | undefined, description: string | undefined, defaultValues?: boolean ): Promise<ValueHolder> => {
 
     if (datatype === undefined) {
         return {
@@ -142,8 +154,7 @@ export const makeValueHolder = async (value: any, isSequence: boolean, datatype:
                     datatype: datatype,
                     name: name,
                     description: description,
-                    isReadOnly: isReadOnly,
-                    typeName: typeName
+                    isReadOnly: isReadOnly
             }
         }
 
@@ -154,8 +165,18 @@ export const makeValueHolder = async (value: any, isSequence: boolean, datatype:
 
                 var structValues = {} as ValueHolderMap
 
+                // level and index of an ID are 1-based, so their defaults are 1 rather than 0
+                const isIdStruct = isElementIdDatatype(datatype)
+
                 for (const field of fields) {
-                    let actualValue = defaultValues ? makeDefaultValue(field.datatype?.typeName) : typeof value === 'object' ? value[field.name] : undefined
+                    let actualValue
+                    if (defaultValues) {
+                        actualValue = isIdStruct && (field.name === 'level' || field.name === 'index')
+                            ? 1
+                            : makeDefaultValue(field.datatype?.typeName)
+                    } else {
+                        actualValue = typeof value === 'object' ? value[field.name] : undefined
+                    }
                     var stv = makeValueHolder(actualValue, field.isSequence, field.datatype as NcDatatype, isReadOnly, field.typeName, field.name, field.description) as Promise<ValueHolder>
                     structValues[field.name] = await stv
                 }
@@ -168,8 +189,7 @@ export const makeValueHolder = async (value: any, isSequence: boolean, datatype:
                     datatype: datatype,
                     name: name,
                     description: description,
-                    isReadOnly: isReadOnly,
-                    typeName: typeName
+                    isReadOnly: isReadOnly
                 }
             }
         }
@@ -182,7 +202,6 @@ export const makeValueHolder = async (value: any, isSequence: boolean, datatype:
         datatype: datatype,
         name: name,
         description: description,
-        isReadOnly: isReadOnly,
-        typeName: typeName
+        isReadOnly: isReadOnly
     }
 }

@@ -31,7 +31,7 @@ import {NCANotificationResponseMessage, NcMethodStatus} from "../global/Types";
 import {getClassDescriptor, getBlockProps, getFormattedBlockNodes, subscribeToObjects, getDatatypes, getRootBlock } from "../backend/BlockNodeCommands";
 import {NCAConnection} from "../backend/ConnectionHandler";
 import {getPropertyValue, setPropertyValue, setSequenceItem, invokeMethod} from "../global/IS12CommandTemplates";
-import {makeValueHolder} from "./HelperFunctions"
+import {getValueHolderTypeName, makeValueHolder} from "./HelperFunctions"
 
 export default class DataProvider {
 
@@ -80,14 +80,30 @@ export default class DataProvider {
     }
 
     private updateProperty = (valueHolder: any, newValue: any, itemIndex: any): ValueHolder => {
+        // The device can notify about an oid that the cached client-side structure has no matching
+        // entry for (e.g. when the Device Model is restructured live and objects are added/removed/reparented).
+        // In those cases valueHolder is undefined; skip the update rather than crashing on a dereference.
+        if (!valueHolder) {
+            if (this.debug) console.warn(`Ignoring property update: no cached valueHolder to update (itemIndex=${JSON.stringify(itemIndex)})`)
+            return valueHolder
+        }
+
         if (itemIndex !== null) {
             var index = itemIndex as number
+            if (!valueHolder.values || valueHolder.values[index] === undefined) {
+                if (this.debug) console.warn(`Unknown sequence item index ${index} is not present in the cached values`)
+                return valueHolder
+            }
             valueHolder.values[index] = this.updateProperty(valueHolder.values[index], newValue, null)
         }
         else {
             if (valueHolder.valueMap) { // is it a struct
                 let nv = newValue as any
                 for (const elem of Object.keys(nv)) {
+                    if (valueHolder.valueMap[elem] === undefined) {
+                        if (this.debug) console.warn(`Unknown struct field "${elem}" is not present in the cached valueMap`)
+                        continue
+                    }
                     valueHolder.valueMap[elem] = this.updateProperty(valueHolder.valueMap[elem], nv[elem], null)
                 }
             } else {
@@ -108,10 +124,28 @@ export default class DataProvider {
 
             var newValue = prop.eventData.value
 
-            var valueHolder = this.propertyMap[prop.oid].ValueHolderMap![propId] as any
+            const objectEntry = this.propertyMap[prop.oid]
+
+            if (!objectEntry) {
+                if (this.debug) console.warn(`Unknown oid ${prop.oid}`)
+                return
+            }
+
+            if (!objectEntry.ValueHolderMap || objectEntry.ValueHolderMap[propId] === undefined) {
+                if (this.debug) console.warn(`Unknown propertyId ${propId} on oid ${prop.oid}`)
+                return
+            }
+
+            var valueHolder = objectEntry.ValueHolderMap[propId] as any
             valueHolder = this.updateProperty(valueHolder, newValue, prop.eventData.sequenceItemIndex)
-            this.propertyMap[prop.oid].ValueHolderMap![propId] = valueHolder
-            this.propertyMap[prop.oid].State![propId](valueHolder.value)
+            objectEntry.ValueHolderMap[propId] = valueHolder
+
+            if (objectEntry.State && objectEntry.State[propId]) {
+                objectEntry.State[propId](valueHolder.value)
+            }
+            else if (this.debug) {
+                console.warn(`Updated cached value for oid=${prop.oid} propertyId=${propId} but no React state setter is registered, so the UI will not reflect this change`)
+            }
         })
     }
 
@@ -297,13 +331,13 @@ export default class DataProvider {
     // send the entire updated struct to the Node)
     public changeValue = (prop_parent_oid: number, propId: NcElementId, newVal: NCAValue, parentValue: ValueHolderMap | undefined, valueHolder: ValueHolder) => {
 
-        const castVal = this.castValue(valueHolder.datatype.typeName, newVal)
+        const castVal = this.castValue(getValueHolderTypeName(valueHolder), newVal)
 
         if (parentValue) {
             // This is an object
             var objectVal = {} as GenericMap
             for (const elem of Object.keys(parentValue)) {
-                var vh = parentValue[elem] as ValueHolder
+                var vh = parentValue[elem]
                 let name = vh.name as string
                 objectVal[name] = vh.value
             }
@@ -343,13 +377,13 @@ export default class DataProvider {
     // send the entire updated struct to the Node)
     public changeSequencePropertyValue = (prop_parent_oid: number, propId: NcElementId, index: number, newVal: NCAValue, parentValue: ValueHolderMap | undefined, valueHolder: ValueHolder) => {
 
-        const castVal = this.castValue(valueHolder.datatype.typeName, newVal)
+        const castVal = this.castValue(getValueHolderTypeName(valueHolder), newVal)
 
         if (parentValue) {
             // This is an object
             var objectVal = {} as GenericMap
             for (const elem of Object.keys(parentValue)) {
-                var vh = parentValue[elem] as ValueHolder
+                var vh = parentValue[elem]
                 let name = vh.name as string
                 objectVal[name] = vh.value
             }
@@ -386,7 +420,7 @@ export default class DataProvider {
     // Change method parameter value
     public changeParameter = (oid: number, methodId: NcElementId, parameterName: string, newVal: NCAValue, parentValue: ValueHolderMap | undefined, valueHolder: ValueHolder, invariantHint: string | undefined) => {
 
-        // If this an invariant type then use the invariantHint to set a typeName on the ValueHolder
+        // If this an invariant type then use the invariantHint as the fallback type name
         if (valueHolder.datatype === undefined && invariantHint !== undefined) {
             valueHolder.typeName = invariantHint
         }
@@ -398,7 +432,7 @@ export default class DataProvider {
             this.propertyMap[oid].Methods![methodIdString].ValueHolderMap![parameterName] = valueHolder
         }
         else {
-            var tmpValueHolder = this.propertyMap[oid].Methods![methodIdString].ValueHolderMap![parameterName] as ValueHolder
+            var tmpValueHolder = this.propertyMap[oid].Methods![methodIdString].ValueHolderMap![parameterName]
             var tmpValueHolderMap = tmpValueHolder.valueMap as ValueHolderMap
             var name = valueHolder.name as string
             tmpValueHolderMap[name] = valueHolder
@@ -421,15 +455,14 @@ export default class DataProvider {
             var param = {} as GenericMap
 
             for (const elem of Object.keys(valueHolder.valueMap)) {
-                var vh = valueHolder.valueMap[elem] as ValueHolder
+                var vh = valueHolder.valueMap[elem]
                 param[elem] = this.makeParameter(vh)
             }
 
             return param
         }
 
-        var typeName = valueHolder.datatype ? valueHolder.datatype.typeName : (valueHolder.typeName ? valueHolder.typeName : "NcString")
-        return this.castValue(typeName, valueHolder.value)
+        return this.castValue(getValueHolderTypeName(valueHolder), valueHolder.value)
     }
 
     public invokeMethod = async (

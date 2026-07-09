@@ -185,8 +185,6 @@ export default function EditablePropertyControl({
     // parameter that happens to be named that way
     const isElementIdField =
         isMethod &&
-        isNumericType &&
-        (valueHolder.name === 'index' || valueHolder.name === 'level') &&
         isElementIdDatatype(parentValueHolder?.datatype);
 
     const canSubmit = isValidSubmitValue(valueHolder, newValue, isElementIdField);

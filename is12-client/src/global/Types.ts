@@ -80,6 +80,7 @@ export enum NcDatatypeType {
 export type NcDatatype = {
     type: NcDatatypeType
     typeName: string
+    baseTypeName?: string // for struct inheritance, e.g. NcPropertyId -> NcElementId
     enum: NcEnum[] | null // for enum types
     fields: NcFieldDescriptor[] | null //for struct types
     sequenceType: boolean

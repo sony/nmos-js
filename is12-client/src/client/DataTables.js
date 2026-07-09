@@ -429,7 +429,7 @@ function PropsTable(valueRow) {
 
 function PropertyRow(valueRow) {
     const { row } = valueRow;
-    const { structValue } = valueRow // used if this property is part of a struct. Undefined otherwise.
+    const { parentValueHolder } = valueRow // used if this property is part of a struct. Undefined otherwise.
     const { isMethod } = valueRow
     const { parameterName } = valueRow
     const { index } = valueRow // used if this property is part of a struct which is part of a sequence. Undefined otherwise.
@@ -438,7 +438,7 @@ function PropertyRow(valueRow) {
     return(<>
         <TableRow>
         <TableCell sx={{ width: "15%", paddingLeft: 2 }}>{row.name}</TableCell>
-        <TableCell sx={{ width: '45%' }}>{isReadOnly(row.valueHolder) ? <ReadOnlyProperty row={row} /> : <EditableProperty row={row} structValue={structValue} index={index} isMethod={isMethod} parameterName={parameterName}/>}</TableCell>
+        <TableCell sx={{ width: '45%' }}>{isReadOnly(row.valueHolder) ? <ReadOnlyProperty row={row} /> : <EditableProperty row={row} parentValueHolder={parentValueHolder} index={index} isMethod={isMethod} parameterName={parameterName}/>}</TableCell>
         {showDescription ? <TableCell>{row.description}</TableCell> :<></>}
         </TableRow>
         </>)
@@ -508,7 +508,7 @@ function StructProperty(valueRow) {
                     </TableHead>
                     <TableBody>
                         {values_map.map((value) => (
-                            Array.isArray(value.valueHolder.values) ? <SequenceProperty key={value.key} row={value} index={index} isMethod={isMethod} parameterName={parameterName}/> : isStructDatatype(value.valueHolder) ? <StructProperty key={value.key} row={value} index={index} isMethod={isMethod} parameterName={parameterName}/> : <PropertyRow key={value.key} row={value} structValue={valueMap} index={index} showDescription={true} isMethod={isMethod} parameterName={parameterName}/>
+                            Array.isArray(value.valueHolder.values) ? <SequenceProperty key={value.key} row={value} index={index} isMethod={isMethod} parameterName={parameterName}/> : isStructDatatype(value.valueHolder) ? <StructProperty key={value.key} row={value} index={index} isMethod={isMethod} parameterName={parameterName}/> : <PropertyRow key={value.key} row={value} parentValueHolder={row.valueHolder} index={index} showDescription={true} isMethod={isMethod} parameterName={parameterName}/>
                         ))}
                     </TableBody>
                 </Table>
@@ -581,7 +581,7 @@ function EditableProperty(valueRow) {
     const { row } = valueRow;
     const { isMethod } = valueRow
     const { parameterName } = valueRow
-    const { structValue } = valueRow
+    const { parentValueHolder } = valueRow
     const { index } = valueRow
 
     let formattedId = row.id.split('.')
@@ -596,7 +596,7 @@ function EditableProperty(valueRow) {
             oid={row.oid}
             propertyId={propertyId}
             isMethod={isMethod}
-            structValue={structValue}
+            parentValueHolder={parentValueHolder}
             index={index}
             parameterName={parameterName}
         />

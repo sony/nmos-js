@@ -12,7 +12,7 @@
 import * as React from 'react';
 import {useContext, useEffect} from 'react';
 import Tree from 'react-d3-tree';
-import Button from '@mui/material/Button';
+import {Box, Button} from '@mui/material';
 import './DevApp.css';
 import {NCAConnection} from '../backend/ConnectionHandler';
 import {DeviceContext} from '../index.js'
@@ -43,15 +43,16 @@ export default function DevApp() {
     //region Functions
     const establishConnection = (index) => {
         return (
-            <div key={`div-${index}`}>
+            <Box key={`div-${index}`} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 {devices[0]}
                 <Button
+                    variant="contained"
                     key={`button-${index}`}
                     onClick={() => {
                         setNCASocket(new NCAConnection(devices[0], true))
                     }
                     }>Connect</Button>
-            </div>
+            </Box>
         )
     }
 
@@ -258,11 +259,8 @@ export default function DevApp() {
     //region MAIN APP
     if (typeof NCASocket === 'object') {
         return (
-            <div className={'basic'}>
-                {/*<Button onClick={() => {*/}
-                {/*    sendMessage(getUserLabel())*/}
-                {/*}}> Get User Label </Button>*/}
-                <Button onClick={() => {
+            <Box sx={{ p: 2 }}>
+                <Button variant="contained" sx={{ mb: 2 }} onClick={() => {
                     sendMessage().then()
                 }}> Get Data </Button>
 
@@ -283,15 +281,15 @@ export default function DevApp() {
 
                     />
                 </div>
-            </div>
+            </Box>
         )
     } else {
         return (
-            <div className={'basic'}> Devices:
+            <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}> Devices:
                 {
                     establishConnection(0)
                 }
-            </div>
+            </Box>
         )
     }
     //endregion

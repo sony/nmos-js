@@ -15,7 +15,7 @@ export default function CollapsibleMonitorSection({ title, ariaLabel, children }
 
     return (
         <Box sx={{ mt: 1.5 }}>
-            <Box sx={{ display: 'flex', bgcolor: '#212a2f', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', bgcolor: 'grey.100', borderBottom: 1, borderColor: 'divider', alignItems: 'center' }}>
                 <Grid>
                     <IconButton
                         aria-label={ariaLabel}
@@ -26,7 +26,7 @@ export default function CollapsibleMonitorSection({ title, ariaLabel, children }
                     </IconButton>
                 </Grid>
                 <Grid>
-                    <Typography component="h4" variant="subtitle2" color="white" gutterBottom sx={{ mb: 0 }}>
+                    <Typography component="h4" variant="subtitle2" color="text.primary" gutterBottom sx={{ mb: 0 }}>
                         {title}
                     </Typography>
                 </Grid>

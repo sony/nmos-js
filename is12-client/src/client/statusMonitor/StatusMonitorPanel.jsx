@@ -27,8 +27,9 @@ export default function StatusMonitorPanel({ row }) {
     return (
         <Box
             sx={{
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                bgcolor: '#1a2328',
+                borderBottom: 1,
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
             }}
         >
             <Box
@@ -61,17 +62,17 @@ export default function StatusMonitorPanel({ row }) {
                 />
 
                 <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="subtitle2" color="white" sx={{ lineHeight: 1.2 }}>
+                    <Typography variant="subtitle2" color="text.primary" sx={{ lineHeight: 1.2 }}>
                         {getMonitorDisplayName(row)}
                     </Typography>
-                    <Typography variant="caption" color="grey.400" sx={{ lineHeight: 1.2 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>
                         {row.description || row.name}
                     </Typography>
                 </Box>
 
                 <Typography
                     variant="body2"
-                    color="grey.300"
+                    color="text.secondary"
                     sx={{
                         textAlign: 'right',
                         whiteSpace: 'nowrap',

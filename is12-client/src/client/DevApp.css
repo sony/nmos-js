@@ -2,16 +2,17 @@
     justify-self: center;
     width: 99vw;
     height: 90vh;
-    border: 2px outset black;
-    background-color: #333333;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+    background-color: #fafafa;
 }
 
 .node__root > circle {
-    fill: rgb(164, 1, 246);
+    fill: rgb(0, 47, 103);
 }
 
 .node__branch > circle {
-    fill: rgb(99, 1, 246);
+    fill: rgb(45, 117, 199);
 }
 
 .node__leaf > circle {
@@ -20,12 +21,12 @@
 
 .rd3t-label {
     outline-style: groove;
-    outline-color: rgba(148, 148, 148, 0.57);
-    fill: #d9d9d9;
+    outline-color: rgba(0, 0, 0, 0.2);
+    fill: #ffffff;
 }
 
 .rd3t-label > text {
-    fill: #b0aeae;
+    fill: rgba(0, 0, 0, 0.7);
 }
 
 .node__branch > g > text > tspan {
@@ -35,6 +36,6 @@
 }
 
 .rd3t-label > .rd3t-label__title {
-    fill: #62c1ce;
+    fill: rgb(45, 117, 199);
     text-decoration: underline;
 }

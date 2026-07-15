@@ -25,7 +25,7 @@ export default function StatusMonitorTabSummary({ monitors }) {
                     label={`${monitorLabel}: ${label}`}
                     tooltip={formatStatusMessage(viewModel.overallStatusMessage) || undefined}
                 />
-                <Typography variant="caption" color="grey.300">
+                <Typography variant="caption" color="text.secondary">
                     {monitorLabel}
                 </Typography>
             </Box>

@@ -21,7 +21,7 @@ export default function StatusLight({ color, size = 'medium', label, tooltip }) 
                 minWidth: diameter,
                 borderRadius: '50%',
                 backgroundColor: TRAFFIC_LIGHT_COLORS[color] || TRAFFIC_LIGHT_COLORS.unknown,
-                border: '1px solid rgba(255, 255, 255, 0.35)',
+                border: '1px solid rgba(0, 0, 0, 0.25)',
                 boxShadow: color === 'neutral' || color === 'unknown'
                     ? 'none'
                     : `0 0 8px ${TRAFFIC_LIGHT_COLORS[color]}`,

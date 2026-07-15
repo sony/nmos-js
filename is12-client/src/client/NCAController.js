@@ -71,6 +71,7 @@ export default class NCAController extends Component {
         else
             this.debug = false;
 
+        this.deviceLabel = props.deviceLabel || null;
         this.wsAddress = '';
 
         this.state = {
@@ -94,6 +95,12 @@ export default class NCAController extends Component {
     //endregion
 
     //region Functions
+
+    componentDidMount() {
+        if (this.deviceLabel) {
+            document.title = this.deviceLabel;
+        }
+    }
 
     componentWillUnmount() {
         this.state.provider.stopProvider()
@@ -241,7 +248,9 @@ export default class NCAController extends Component {
                 <AppBar position="fixed">
                     <Toolbar variant="dense">
                         <Typography variant="h6" color="inherit" noWrap sx={{ flex: 1 }}>
-                            Device Model Browser
+                            {this.deviceLabel
+                                ? `Device Model Browser: ${this.deviceLabel}`
+                                : 'Device Model Browser'}
                         </Typography>
                         {this.wsAddress ? (
                             <Typography

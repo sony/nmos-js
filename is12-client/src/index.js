@@ -51,6 +51,9 @@ function Index(props) {
     const {config} = props;
     const [devices, setDevices] = useState([])
 
+    const deviceLabelFromUrl = new URLSearchParams(window.location.search).get('label');
+    const deviceLabel = deviceLabelFromUrl ? decodeURIComponent(deviceLabelFromUrl) : null;
+
     let showClassManager = false
     if ("showClassManager" in config) {
         showClassManager = config.showClassManager
@@ -81,7 +84,7 @@ function Index(props) {
             <ThemeProvider theme={appTheme}>
                 <CookiesProvider>
                     <DeviceContext.Provider value={{devices, setDevices}}>
-                        {devices.length > 0 ? <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager}/> : <></>}
+                        {devices.length > 0 ? <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager} deviceLabel={deviceLabel}/> : <></>}
                     </DeviceContext.Provider>
                 </CookiesProvider>
             </ThemeProvider>
@@ -117,7 +120,7 @@ function Index(props) {
             <ThemeProvider theme={appTheme}>
                 <CookiesProvider>
                     <DeviceContext.Provider value={{devices, setDevices}}>
-                        {devices.length > 0 ? <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager}/> : <></>}
+                        {devices.length > 0 ? <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager} deviceLabel={deviceLabel}/> : <></>}
                     </DeviceContext.Provider>
                 </CookiesProvider>
             </ThemeProvider>
@@ -135,7 +138,7 @@ function Index(props) {
                                 <Route index element={<DeviceConnect useApp={config.useApp}/>}/>
                                 <Route path="/main-app"
                                        element={devices.length > 0 ?
-                                           <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager}/> :
+                                           <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager} deviceLabel={deviceLabel}/> :
                                            <Navigate to={"/"}/>}/>
                                 <Route path="/dev-app" element={devices.length > 0 ? <DevApp/> : <Navigate to={"/"}/>}/>
                             </Routes>

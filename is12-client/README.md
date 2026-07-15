@@ -35,6 +35,12 @@ Alternatively, pass the WebSocket URI as a URL query parameter to connect automa
 http://localhost:3001/?uri=ws%3A%2F%2F127.0.0.1%3A7002%2Fx-nmos%2Fncp%2Fv1.0
 ```
 
+You can also pass a device label to show in the header and browser tab:
+
+```
+http://localhost:3001/?uri=ws%3A%2F%2F127.0.0.1%3A7002%2Fx-nmos%2Fncp%2Fv1.0&label=Demo%20Node%202
+```
+
 ### Running:
 
 - With program recompiling every time you save changes

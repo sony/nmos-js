@@ -7,8 +7,15 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {useCookies} from 'react-cookie';
 import {DeviceContext} from '../index.js'
-import './DeviceConnect.css';
-import Button from '@mui/material/Button';
+import {
+    Box,
+    Button,
+    Checkbox,
+    FormControlLabel,
+    Paper,
+    TextField,
+    Typography,
+} from '@mui/material';
 import getDevices from '../backend/DeviceProvider';
 import {useNavigate} from 'react-router-dom';
 
@@ -93,20 +100,24 @@ export default function DeviceConnect(props) {
             return (<></>);
 
         return (
-            <div className='cookies'>
-                Keep cookies?
-                <input
-                    type='checkbox'
-                    onChange={e => {
-                        setCheckbox(e.target.checked)
-                    }}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2 }}>
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            onChange={e => {
+                                setCheckbox(e.target.checked)
+                            }}
+                        />
+                    }
+                    label="Keep cookies?"
                 />
                 <Button
+                    variant="outlined"
                     onClick={() => {
                         setCookie('agreement', checkbox, {path: '/'});
                     }}
                 > Submit </Button>
-            </div>
+            </Box>
         )
 
     }
@@ -116,21 +127,33 @@ export default function DeviceConnect(props) {
 
     // TODO: Bug - sometimes default port becomes 0
     return (
-        <>
-            {HandleCookies()}
-            <div className={'basic'}>
-                Control Protocol Websocket URL:
-                <input
-                    type='text'
-                    size='80'
-                    style={{height: '2rem', width: '100%', fontSize: '1.5rem'}}
+        <Box
+            sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+                minHeight: '100vh',
+                p: 3,
+            }}
+        >
+            <Paper elevation={2} sx={{ p: 3, mt: '15vh', width: '100%', maxWidth: 640 }}>
+                {HandleCookies()}
+                <Typography variant="h6" gutterBottom>
+                    Connect to a device
+                </Typography>
+                <TextField
+                    fullWidth
+                    label="Control Protocol Websocket URL"
+                    variant="outlined"
                     defaultValue={tempRegistryAddress.address ?? 'ws://localhost'}
                     onChange={e => setTempRegistryAddress({
                         address: e.target.value,
                         port: tempRegistryAddress.port
                     })}
+                    sx={{ mb: 2 }}
                 />
                 <Button
+                    variant="contained"
                     onClick={() => {
                         setRegistryCookies()
                         getDevices(connectionURL).then((deviceList) => {
@@ -151,8 +174,8 @@ export default function DeviceConnect(props) {
                         });
                     }}
                 > Connect </Button>
-            </div>
-        </>
+            </Paper>
+        </Box>
     )
     //endregion
 }

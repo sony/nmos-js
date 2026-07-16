@@ -118,13 +118,13 @@ const DevicesShowView = props => {
     );
 };
 
-const ControlAddressField = ({ record, source = 'href' }) => {
+const ControlAddressField = ({ record, source = 'href', deviceLabel }) => {
     const href = get(record, source);
     const isDeviceControlProtocol =
         unversionedParameter(get(record, 'type')) === 'urn:x-nmos:control:ncp';
 
     if (isDeviceControlProtocol) {
-        const launchUrl = buildIs12BrowserLaunchUrl(href);
+        const launchUrl = buildIs12BrowserLaunchUrl(href, deviceLabel);
         const disabled = !is12BrowserUrl() || !launchUrl;
 
         if (disabled) {
@@ -182,6 +182,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                             <ControlAddressField
                                 source="href"
                                 label="Address"
+                                deviceLabel={record?.label}
                             />
                             <ParameterField
                                 source="type"

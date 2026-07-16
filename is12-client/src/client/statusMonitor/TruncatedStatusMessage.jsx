@@ -14,7 +14,7 @@ const ellipsisStyles = {
 export default function TruncatedStatusMessage({
     message,
     variant = 'caption',
-    color = 'grey.400',
+    color = 'text.secondary',
     sx = {},
     placeholder = true,
 }) {

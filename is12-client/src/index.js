@@ -11,15 +11,48 @@ import getDevices from "./backend/DeviceProvider";
 
 export const DeviceContext = createContext({}); // Device list from registry
 
-const darkTheme = createTheme({
+// Mirrors the nmos-js react-admin palette (Development/src/config.json) so the
+// IS-12 browser reads as the same product when launched from the main app.
+const appTheme = createTheme({
     palette: {
-        mode: 'dark',
+        mode: 'light',
+        primary: {
+            main: 'rgb(45,117,199)',
+            contrastText: '#fff',
+        },
+        secondary: {
+            main: 'rgb(0,47,103)',
+            contrastText: '#fff',
+        },
+        background: {
+            default: '#fafafa',
+            paper: '#ffffff',
+        },
+    },
+    typography: {
+        fontFamily: ['Roboto', 'Helvetica', 'Arial', 'sans-serif'].join(','),
+    },
+    components: {
+        // react-admin renders its app bar with the secondary colour by default.
+        MuiAppBar: {
+            defaultProps: {
+                color: 'secondary',
+            },
+        },
+        MuiCard: {
+            defaultProps: {
+                variant: 'outlined',
+            },
+        },
     },
 });
 
 function Index(props) {
     const {config} = props;
     const [devices, setDevices] = useState([])
+
+    const deviceLabelFromUrl = new URLSearchParams(window.location.search).get('label');
+    const deviceLabel = deviceLabelFromUrl ? decodeURIComponent(deviceLabelFromUrl) : null;
 
     let showClassManager = false
     if ("showClassManager" in config) {
@@ -48,10 +81,10 @@ function Index(props) {
 
     if (controlInterfaceUri) {
         return (
-            <ThemeProvider theme={darkTheme}>
+            <ThemeProvider theme={appTheme}>
                 <CookiesProvider>
                     <DeviceContext.Provider value={{devices, setDevices}}>
-                        {devices.length > 0 ? <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager}/> : <></>}
+                        {devices.length > 0 ? <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager} deviceLabel={deviceLabel}/> : <></>}
                     </DeviceContext.Provider>
                 </CookiesProvider>
             </ThemeProvider>
@@ -84,10 +117,10 @@ function Index(props) {
         }
 
         return (
-            <ThemeProvider theme={darkTheme}>
+            <ThemeProvider theme={appTheme}>
                 <CookiesProvider>
                     <DeviceContext.Provider value={{devices, setDevices}}>
-                        {devices.length > 0 ? <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager}/> : <></>}
+                        {devices.length > 0 ? <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager} deviceLabel={deviceLabel}/> : <></>}
                     </DeviceContext.Provider>
                 </CookiesProvider>
             </ThemeProvider>
@@ -96,7 +129,7 @@ function Index(props) {
     } else {
 
         return (
-            <ThemeProvider theme={darkTheme}>
+            <ThemeProvider theme={appTheme}>
                 <CookiesProvider>
                     <DeviceContext.Provider value={{devices, setDevices}}>
                         <BrowserRouter>
@@ -105,7 +138,7 @@ function Index(props) {
                                 <Route index element={<DeviceConnect useApp={config.useApp}/>}/>
                                 <Route path="/main-app"
                                        element={devices.length > 0 ?
-                                           <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager}/> :
+                                           <NCAController devices={devices} debug={config.debug} showClassManager={showClassManager} deviceLabel={deviceLabel}/> :
                                            <Navigate to={"/"}/>}/>
                                 <Route path="/dev-app" element={devices.length > 0 ? <DevApp/> : <Navigate to={"/"}/>}/>
                             </Routes>

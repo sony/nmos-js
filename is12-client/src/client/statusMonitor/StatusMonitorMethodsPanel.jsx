@@ -18,7 +18,7 @@ import {
 function CounterResults({ counters }) {
     if (!counters || counters.length === 0) {
         return (
-            <Typography variant="caption" color="grey.500">
+            <Typography variant="caption" color="text.disabled">
                 No counters reported
             </Typography>
         );
@@ -28,14 +28,14 @@ function CounterResults({ counters }) {
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             {counters.map((counter) => (
                 <Box key={counter.name} sx={{ minWidth: 80 }}>
-                    <Typography variant="caption" color="grey.400" sx={{ display: 'block' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                         {counter.name}
                     </Typography>
-                    <Typography variant="body2" color="white">
+                    <Typography variant="body2" color="text.primary">
                         {counter.value}
                     </Typography>
                     {counter.description ? (
-                        <Typography variant="caption" color="grey.500" sx={{ display: 'block' }}>
+                        <Typography variant="caption" color="text.disabled" sx={{ display: 'block' }}>
                             {counter.description}
                         </Typography>
                     ) : null}
@@ -60,7 +60,7 @@ function MethodResultDisplay({ methodName, result }) {
 
     if (!result.success) {
         return (
-            <Typography variant="caption" color="error.light" sx={{ display: 'block' }}>
+            <Typography variant="caption" color="error.main" sx={{ display: 'block' }}>
                 {NcMethodStatus[result.status] || 'Error'}: {String(result.errorMessage ?? 'Method failed')}
             </Typography>
         );
@@ -68,7 +68,7 @@ function MethodResultDisplay({ methodName, result }) {
 
     if (methodName === 'ResetCountersAndMessages') {
         return (
-            <Typography variant="caption" color="success.light" sx={{ display: 'block' }}>
+            <Typography variant="caption" color="success.main" sx={{ display: 'block' }}>
                 Counters and status messages reset
             </Typography>
         );
@@ -148,11 +148,12 @@ export default function StatusMonitorMethodsPanel({ row }) {
                                 px: 1,
                                 py: 0.75,
                                 borderRadius: 1,
-                                bgcolor: 'rgba(255, 255, 255, 0.03)',
-                                border: '1px solid rgba(255, 255, 255, 0.06)',
+                                bgcolor: 'action.hover',
+                                border: 1,
+                                borderColor: 'divider',
                             }}
                         >
-                            <Typography variant="caption" color="grey.400" sx={{ display: 'block', mb: 0.5 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
                                 {formatMethodLabel(descriptor.name, descriptor.description)}
                             </Typography>
                             <MethodResultDisplay methodName={descriptor.name} result={result} />

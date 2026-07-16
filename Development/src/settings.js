@@ -75,10 +75,14 @@ export const queryVersion = () => apiVersion(QUERY_API);
 
 export const is12BrowserUrl = () => apiUrl(IS12_BROWSER);
 
-export const buildIs12BrowserLaunchUrl = ncpWebSocketHref => {
+export const buildIs12BrowserLaunchUrl = (ncpWebSocketHref, deviceLabel) => {
     const base = is12BrowserUrl().replace(/\/$/, '');
     if (!base || !ncpWebSocketHref) return null;
-    return `${base}/?uri=${encodeURIComponent(ncpWebSocketHref)}`;
+    const params = new URLSearchParams({ uri: ncpWebSocketHref });
+    if (deviceLabel) {
+        params.set('label', deviceLabel);
+    }
+    return `${base}/?${params.toString()}`;
 };
 
 // single value, not per-API, right now

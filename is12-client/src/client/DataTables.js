@@ -107,7 +107,7 @@ function Tab(valueRow) {
     return (
 
         <Card variant="outlined" sx={{ width: '100%', display: 'flex-start', flexDirection: 'row' }} key={node.name}>
-            <Box sx={{ pl: 1, pt: 1, display: 'flex', bgcolor: '#212a2f' }}>
+            <Box sx={{ pl: 1, pt: 1, display: 'flex', bgcolor: 'grey.100', borderBottom: 1, borderColor: 'divider' }}>
                 <Grid>
                 <IconButton
                     aria-label='expand row'
@@ -116,7 +116,7 @@ function Tab(valueRow) {
                 >{openTab ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}</IconButton>
                 </Grid>
                 <Grid>
-                    <Typography component="h3" variant="h6" color="white" gutterBottom> { node.name } </Typography>
+                    <Typography component="h3" variant="h6" color="text.primary" gutterBottom> { node.name } </Typography>
                 </Grid>
                 {!openTab && subtreeContainsStatusMonitor(node) ?
                     <Grid sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', pl: 1, pb: 1 }}>
@@ -217,7 +217,7 @@ function ChildBlockTable(valueRow) {
 
     return (
         <>
-            <Box sx={{ pl: 1, pt: 1, display: 'flex', bgcolor: '#212a2f' }}>
+            <Box sx={{ pl: 1, pt: 1, display: 'flex', bgcolor: 'grey.100', borderBottom: 1, borderColor: 'divider' }}>
                 <Grid>
                 <IconButton
                     aria-label='expand row'
@@ -226,7 +226,7 @@ function ChildBlockTable(valueRow) {
                 >{openBlock ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}</IconButton>
                 </Grid>
                 <Grid>
-                <Typography component="h3" variant="h6" color="white" gutterBottom>Child Members</Typography>
+                <Typography component="h3" variant="h6" color="text.primary" gutterBottom>Child Members</Typography>
                 </Grid>
             </Box>
             <Collapse in={openBlock} timeout='auto' unmountOnExit>
@@ -265,7 +265,7 @@ function MethodsTable(valueRow) {
     });
     return (
         <>
-            <Box sx={{ pl: 1, pt: 1, display: 'flex', bgcolor: '#212a2f' }}>
+            <Box sx={{ pl: 1, pt: 1, display: 'flex', bgcolor: 'grey.100', borderBottom: 1, borderColor: 'divider' }}>
                 <Grid>
                 <IconButton
                     aria-label='expand row'
@@ -274,7 +274,7 @@ function MethodsTable(valueRow) {
                 >{openProps ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}</IconButton>
                 </Grid>
                 <Grid>
-                <Typography component="h3" variant="h6" color="white" gutterBottom>Methods</Typography>
+                <Typography component="h3" variant="h6" color="text.primary" gutterBottom>Methods</Typography>
                 </Grid>
             </Box>
             <Collapse in={openProps} timeout='auto' unmountOnExit>
@@ -392,7 +392,7 @@ function PropsTable(valueRow) {
 
     return (
         <>
-            <Box sx={{ pl: 1, pt: 1, display: 'flex', bgcolor: '#212a2f' }}>
+            <Box sx={{ pl: 1, pt: 1, display: 'flex', bgcolor: 'grey.100', borderBottom: 1, borderColor: 'divider' }}>
                 <Grid>
                 <IconButton
                     aria-label='expand row'
@@ -401,7 +401,7 @@ function PropsTable(valueRow) {
                 >{openProps ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}</IconButton>
                 </Grid>
                 <Grid>
-                <Typography component="h3" variant="h6" color="white" gutterBottom>Properties</Typography>
+                <Typography component="h3" variant="h6" color="text.primary" gutterBottom>Properties</Typography>
                 </Grid>
             </Box>
             <Collapse in={openProps} timeout='auto' unmountOnExit>
@@ -484,7 +484,7 @@ function StructProperty(valueRow) {
     <>
     <TableRow>
         <TableCell colSpan={4}>
-        <Box sx={{ pl: 1, pt: 1, display: 'flex', bgcolor: '#212a2f' }}>
+        <Box sx={{ pl: 1, pt: 1, display: 'flex', bgcolor: 'grey.100', borderBottom: 1, borderColor: 'divider' }}>
             <Grid>
             <IconButton
                 aria-label='expand row'
@@ -493,7 +493,7 @@ function StructProperty(valueRow) {
             >{openProps ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}</IconButton>
             </Grid>
             <Grid>
-            <Typography component="h3" variant="h6" color="white" gutterBottom>{row.valueHolder.name}</Typography>
+            <Typography component="h3" variant="h6" color="text.primary" gutterBottom>{row.valueHolder.name}</Typography>
             </Grid>
         </Box>
         <Collapse in={openProps} timeout='auto' unmountOnExit>
@@ -613,7 +613,7 @@ function UserLabelSection(props) {
     const userLabel = row["1.6"];
 
     if (!userLabel) {
-        return <Typography variant="body2" color="grey.500">—</Typography>;
+        return <Typography variant="body2" color="text.disabled">—</Typography>;
     }
 
     return (

@@ -17,6 +17,13 @@
 import {Component, createContext} from 'react';
 import './NCAController.css';
 import {
+    AppBar,
+    Box,
+    CircularProgress,
+    Toolbar,
+    Typography,
+} from '@mui/material';
+import {
     CategoryScale,
     Chart as ChartJS,
     Filler,
@@ -64,6 +71,7 @@ export default class NCAController extends Component {
         else
             this.debug = false;
 
+        this.deviceLabel = props.deviceLabel || null;
         this.wsAddress = '';
 
         this.state = {
@@ -87,6 +95,12 @@ export default class NCAController extends Component {
     //endregion
 
     //region Functions
+
+    componentDidMount() {
+        if (this.deviceLabel) {
+            document.title = this.deviceLabel;
+        }
+    }
 
     componentWillUnmount() {
         this.state.provider.stopProvider()
@@ -196,36 +210,65 @@ export default class NCAController extends Component {
     render() {
         const state = this.state;
 
+        let content;
+        if (state.provider === 'function') { // DATA-PROVIDER NOT ACTIVE
+            content = (
+                <Typography variant="body1" color="text.secondary">
+                    Click a node to connect...
+                </Typography>
+            );
+        } else if (state.isLoading === 'true') { // DATA-PROVIDER LOADING DATA
+            content = (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 4 }}>
+                    <CircularProgress size={24} />
+                    <Typography variant="h6">Loading...</Typography>
+                </Box>
+            );
+        } else if (state.isLoading === 'false') { // SHOW TABLE OF DATA
+            content = (
+                <DataProviderContext.Provider value={state.provider}>
+                    {Tables(state)}
+                </DataProviderContext.Provider>
+            );
+        } else { // ERROR STATE
+            content = (
+                <Box>
+                    <Typography variant="h6" color="error">
+                        Error has occurred:
+                    </Typography>
+                    <Typography variant="body2" color="error">
+                        {state.isLoading}
+                    </Typography>
+                </Box>
+            );
+        }
+
         return (
-            <div className='body normal-font'>
-                <div className='page-layout-grid'>
-                    <div id='top-area' className='fixed top-block'>
-                        <h1>Device Model Browser. URL: {this.wsAddress}</h1>
-                    </div>
-                    {state.provider !== 'function' ? // IS DATA-PROVIDER ACTIVE?
-                        state.isLoading === 'true' ?  // IS DATA-PROVIDER LOADING DATA?
-                            <div className='loading'>
-                                <h2>Loading...</h2>
-                            </div>
-                            :
-                            state.isLoading === 'false' ?
-                            <div id='data-area' className='data-field'> {/* TRUE - SHOW TABLE OF DATA */}
-                                <DataProviderContext.Provider value={state.provider}>
-                                    {/* === DATA TABLES === */}
-                                    {Tables(state)}
-                                    {/* =================== */}
-                                </DataProviderContext.Provider>
-                            </div>
-                            :
-                            <div className='loading error'>
-                                <p>Error has occurred:</p>
-                                <p>{state.isLoading}</p>
-                            </div>
-                        :
-                        <div className='loading smaller'><p>Click a node to connect...</p></div> // DATA-PROVIDER FALSE
-                    }
-                </div>
-            </div>
+            <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                <AppBar position="fixed">
+                    <Toolbar variant="dense">
+                        <Typography variant="h6" color="inherit" noWrap sx={{ flex: 1 }}>
+                            {this.deviceLabel
+                                ? `Device Model Browser: ${this.deviceLabel}`
+                                : 'Device Model Browser'}
+                        </Typography>
+                        {this.wsAddress ? (
+                            <Typography
+                                variant="body2"
+                                color="inherit"
+                                noWrap
+                                sx={{ opacity: 0.85, ml: 2, maxWidth: '60%' }}
+                            >
+                                {this.wsAddress}
+                            </Typography>
+                        ) : null}
+                    </Toolbar>
+                </AppBar>
+                <Toolbar variant="dense" />
+                <Box component="main" sx={{ flex: 1, p: 2 }}>
+                    {content}
+                </Box>
+            </Box>
         )
     }
 }

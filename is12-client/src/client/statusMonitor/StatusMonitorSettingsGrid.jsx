@@ -10,7 +10,7 @@ const EDITABLE_SETTING_NAMES = new Set(['userLabel', 'statusReportingDelay']);
 function ReadOnlySettingValue({ valueHolder }) {
     if (valueHolder.value === null || valueHolder.value === undefined || valueHolder.value === '') {
         return (
-            <Typography variant="body2" color="grey.500">
+            <Typography variant="body2" color="text.disabled">
                 —
             </Typography>
         );
@@ -21,7 +21,7 @@ function ReadOnlySettingValue({ valueHolder }) {
         : String(valueHolder.value);
 
     return (
-        <Typography variant="body2" color="white" sx={{ wordBreak: 'break-word' }}>
+        <Typography variant="body2" color="text.primary" sx={{ wordBreak: 'break-word' }}>
             {displayValue}
         </Typography>
     );
@@ -70,8 +70,9 @@ export default function StatusMonitorSettingsGrid({ settingsProperties, oid }) {
                     pb: 0.5,
                     px: 1,
                     borderRadius: 1,
-                    bgcolor: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    bgcolor: 'action.hover',
+                    border: 1,
+                    borderColor: 'divider',
                 }}
             >
                 <Box
@@ -85,7 +86,7 @@ export default function StatusMonitorSettingsGrid({ settingsProperties, oid }) {
                 >
                     {settingsProperties.map(({ propKey, valueHolder, label }) => (
                         <Box key={propKey} sx={{ display: 'contents' }}>
-                            <Typography variant="caption" color="grey.400" sx={{ alignSelf: 'center' }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center' }}>
                                 {label}
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', minHeight: '1.4375em' }}>

@@ -26,8 +26,9 @@ export default function DomainStatusChip({ domain }) {
                 px: 1,
                 py: 0.75,
                 borderRadius: 1,
-                bgcolor: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                bgcolor: 'action.hover',
+                border: 1,
+                borderColor: 'divider',
             }}
         >
             <StatusLight
@@ -36,10 +37,10 @@ export default function DomainStatusChip({ domain }) {
                 label={`${domain.label}: ${statusLabel}`}
             />
             <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography variant="caption" color="grey.300" sx={{ display: 'block', lineHeight: 1.2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.2 }}>
                     {domain.label}
                 </Typography>
-                <Typography variant="body2" color="white" sx={{ lineHeight: 1.2, wordBreak: 'break-word' }}>
+                <Typography variant="body2" color="text.primary" sx={{ lineHeight: 1.2, wordBreak: 'break-word' }}>
                     {statusLabel}
                 </Typography>
                 <TruncatedStatusMessage
@@ -50,7 +51,7 @@ export default function DomainStatusChip({ domain }) {
             {counterValue !== null ? (
                 <Typography
                     variant="caption"
-                    color="grey.400"
+                    color="text.secondary"
                     sx={{ minWidth: '1.5rem', textAlign: 'right', pt: 0.25 }}
                     title={`${domain.label} transition counter`}
                 >

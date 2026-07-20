@@ -16,12 +16,14 @@ export const STATUS_MONITOR_REGISTRY = {
 export const STATUS_MONITOR_METHOD_NAMES = [
     'GetLostPacketCounters',
     'GetLatePacketCounters',
+    'GetTransmissionErrorCounters',
     'ResetCountersAndMessages',
 ];
 
 export const STATUS_MONITOR_METHOD_LABELS = {
     GetLostPacketCounters: 'Lost packet counters',
     GetLatePacketCounters: 'Late packet counters',
+    GetTransmissionErrorCounters: 'Transmission error counters',
     ResetCountersAndMessages: 'Reset counters & messages',
 };
 

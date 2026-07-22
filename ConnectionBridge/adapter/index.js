@@ -24,10 +24,8 @@ const MAX_UPDATE_RATE_MS = Number(process.env.MAX_UPDATE_RATE_MS) || 100;
 const RECONNECT_MIN_MS = Number(process.env.RECONNECT_MIN_MS) || 1000;
 const RECONNECT_MAX_MS = Number(process.env.RECONNECT_MAX_MS) || 30000;
 // some Registries advertise a ws_href on a host the adapter cannot reach;
-// when set, the ws_href authority is rewritten to the REGISTRY_QUERY_URL host
-const WS_USE_REGISTRY_HOST = /^(1|true|yes)$/i.test(
-    process.env.WS_USE_REGISTRY_HOST || ''
-);
+// when set, use this scheme and authority while preserving the subscription path
+const REGISTRY_QUERY_WS_URL = process.env.REGISTRY_QUERY_WS_URL || '';
 
 const BRIDGE_PREFIX = '/x-nmos-bridge/v1.0';
 
@@ -428,9 +426,11 @@ const createSubscription = async () => {
     if (!subscription.ws_href) {
         throw new Error('subscription response did not include ws_href');
     }
-    if (!WS_USE_REGISTRY_HOST) return subscription.ws_href;
+    if (!REGISTRY_QUERY_WS_URL) return subscription.ws_href;
     const wsHref = new URL(subscription.ws_href);
-    wsHref.host = new URL(REGISTRY_QUERY_URL).host;
+    const registryQueryWsUrl = new URL(REGISTRY_QUERY_WS_URL);
+    wsHref.protocol = registryQueryWsUrl.protocol;
+    wsHref.host = registryQueryWsUrl.host;
     return wsHref.toString();
 };
 

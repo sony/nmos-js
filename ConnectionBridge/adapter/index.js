@@ -2,7 +2,7 @@
 
 // NMOS Connection API Bridge - Envoy Adapter
 //
-// Converts registry state into Envoy configuration. Tracks Devices through a
+// Converts Registry state into Envoy configuration. Tracks Devices through a
 // Query API WebSocket subscription, extracts their Connection API controls, and
 // generates Envoy route and cluster configuration files which Envoy reloads
 // via filesystem watch. The adapter does not proxy any traffic itself and
@@ -23,7 +23,7 @@ const ROUTE_TIMEOUT_SECONDS = Number(process.env.ROUTE_TIMEOUT_SECONDS) || 15;
 const MAX_UPDATE_RATE_MS = Number(process.env.MAX_UPDATE_RATE_MS) || 100;
 const RECONNECT_MIN_MS = Number(process.env.RECONNECT_MIN_MS) || 1000;
 const RECONNECT_MAX_MS = Number(process.env.RECONNECT_MAX_MS) || 30000;
-// some registries advertise a ws_href on a host the adapter cannot reach;
+// some Registries advertise a ws_href on a host the adapter cannot reach;
 // when set, the ws_href authority is rewritten to the REGISTRY_QUERY_URL host
 const WS_USE_REGISTRY_HOST = /^(1|true|yes)$/i.test(
     process.env.WS_USE_REGISTRY_HOST || ''
@@ -338,7 +338,7 @@ const routeConfiguration = targets => ({
                     match: { prefix: `${BRIDGE_PREFIX}/` },
                     ...directResponse(404, 'Unknown bridge target'),
                 },
-                // registry APIs
+                // Registry APIs
                 {
                     match: { prefix: '/x-nmos/' },
                     route: {
@@ -405,7 +405,7 @@ const rebuild = () => {
 };
 
 // create a non-persistent subscription for Devices and return its WebSocket
-// href; the registry de-duplicates identical subscriptions, so reconnecting
+// href; the Registry de-duplicates identical subscriptions, so reconnecting
 // reuses the same one
 const createSubscription = async () => {
     const response = await fetch(`${REGISTRY_QUERY_URL}/subscriptions`, {
@@ -505,7 +505,7 @@ const run = async () => {
 const main = () => {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
     // write a baseline configuration immediately so Envoy can serve the
-    // registry and app routes before the first subscription sync
+    // Registry and app routes before the first subscription sync
     apply([], state);
     log(`subscribing to ${REGISTRY_QUERY_URL}/devices`);
     return run();

@@ -1,6 +1,6 @@
 # Example deployment of the NMOS Connection API Bridge.
 #
-# The registry and the nmos-js app are expected to be reachable from these
+# The Registry and the nmos-js app are expected to be reachable from these
 # containers; adjust REGISTRY_QUERY_URL and APP_URL (and the network
 # configuration) to suit the deployment.
 

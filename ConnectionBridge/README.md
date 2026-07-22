@@ -2,7 +2,7 @@
 
 Provides browser-accessible proxy access to [AMWA IS-05](https://specs.amwa.tv/is-05/) Connection APIs exposed by Devices registered in an NMOS Registry, where the browser may not have network access to the Device APIs directly.
 
-The bridge must not behave as an open proxy. Targets originate exclusively from registered Device `controls` entries; public requests use Device IDs only and arbitrary URLs are forbidden. The registry remains the source of truth and requires no changes.
+The bridge must not behave as an open proxy. Targets originate exclusively from registered Device `controls` entries; public requests use Device IDs only and arbitrary URLs are forbidden. The Registry remains the source of truth and requires no changes.
 
 ## Public Bridge API
 
@@ -48,10 +48,12 @@ Browser
         Device Connection APIs
 ```
 
-- **Envoy** performs all proxying: routing, request size limits, timeouts, retry policy, health checking and failover, and access logging of `POST` and `PATCH` requests.
-- **The adapter** (`adapter/`) converts registry state into Envoy configuration. It tracks Devices through a [Query API WebSocket subscription](https://specs.amwa.tv/is-04/branches/v1.3.x/docs/4.2._Behaviour_-_Querying.html) (non-persistent, `resource_path` `/devices`), extracts Connection API controls, and generates Envoy routes and clusters, atomically replacing the dynamic configuration files (`rds.json`, `cds.json`) which Envoy reloads via filesystem watch. The adapter does not proxy traffic and does not determine runtime health.
+The Connection API Bridge consists of Envoy and the adapter service:
 
-  On connecting, the registry sends a sync of all current Devices, then pushes added, modified and removed events; the adapter rebuilds configuration on each change. If the connection is interrupted, the adapter resubscribes with exponential backoff and the fresh sync re-establishes all mappings, including Devices that were removed while disconnected. The last good configuration keeps being served until the new sync arrives.
+- **Envoy** performs all proxying: routing, request size limits, timeouts, retry policy, health checking and failover, and access logging of `POST` and `PATCH` requests.
+- **The adapter** (`adapter/`) converts Registry state into Envoy configuration. It tracks Devices through a [Query API WebSocket subscription](https://specs.amwa.tv/is-04/branches/v1.3.x/docs/4.2._Behaviour_-_Querying.html) (non-persistent, `resource_path` `/devices`), extracts Connection API controls, and generates Envoy routes and clusters, atomically replacing the dynamic configuration files (`rds.json`, `cds.json`) which Envoy reloads via filesystem watch. The adapter does not proxy traffic and does not determine runtime health.
+
+  On connecting, the Registry sends a sync of all current Devices, then pushes added, modified and removed events; the adapter rebuilds configuration on each change. If the connection is interrupted, the adapter resubscribes with exponential backoff and the fresh sync re-establishes all mappings, including Devices that were removed while disconnected. The last good configuration keeps being served until the new sync arrives.
 
 ### Mapping
 
@@ -91,16 +93,66 @@ Edit `docker-compose.yml` first to point the adapter at the deployment:
 | `MAX_UPDATE_RATE_MS` | subscription `max_update_rate_ms` (event coalescing) | `100` |
 | `RECONNECT_MIN_MS` | initial WebSocket reconnect backoff | `1000` |
 | `RECONNECT_MAX_MS` | maximum WebSocket reconnect backoff | `30000` |
-| `WS_USE_REGISTRY_HOST` | rewrite the subscription `ws_href` authority to the `REGISTRY_QUERY_URL` host, for registries that advertise an unreachable host | `false` |
+| `WS_USE_REGISTRY_HOST` | rewrite the subscription `ws_href` authority to the `REGISTRY_QUERY_URL` host, for Registries that advertise an unreachable host | `false` |
 | `OUTPUT_DIR` | where dynamic Envoy configuration is written | `/etc/envoy/dynamic` |
 
 Envoy listens on port 8080 and routes:
 
 - `/x-nmos-bridge/v1.0/devices/...` to Device Connection APIs
-- `/x-nmos/...` to the registry
+- `/x-nmos/...` to the Registry
 - everything else to the nmos-js app, if `APP_URL` is set
 
-## Browser application behavior
+## Deployment
+
+Deploy Envoy as the browser-facing endpoint for both the Query API and the
+Connection API Bridge. Configure nmos-js to use the Query API through Envoy,
+for example:
+
+```text
+http://controller.example.com:8080/x-nmos/query/v1.3
+```
+
+The client derives the bridge origin from the configured Query API, so the
+corresponding bridge URL is:
+
+```text
+http://controller.example.com:8080/x-nmos-bridge/v1.0
+```
+
+The adapter must be able to reach the Query API and the WebSocket URL
+advertised when it creates the Query API subscription. Set
+`WS_USE_REGISTRY_HOST=true` when the advertised `ws_href` uses a host name or
+address which is not reachable from the adapter but the host in
+`REGISTRY_QUERY_URL` is reachable.
+
+Envoy must be able to reach every Device Connection API `href` which is to be
+used through the bridge. This is independent of browser reachability: the
+purpose of the bridge is to place Envoy on the Device networks when the
+browser cannot access those networks directly. Configure the container or
+host networking and any firewall policy accordingly.
+
+The included Compose file uses a shared volume for dynamic configuration.
+The adapter writes configuration into the volume and Envoy watches it for
+changes. Keep one adapter and one Envoy instance together when using this
+file-based arrangement. A deployment with independently scaled Envoy
+instances would require an xDS control plane, which is not currently
+implemented.
+
+If nmos-js is served separately, expose Envoy as the Query API endpoint and
+configure nmos-js to use it. Alternatively, set `APP_URL` and use Envoy as a
+single origin for nmos-js, the Registry APIs, and the bridge.
+
+### Container Orchestration
+
+The same adapter and Envoy arrangement can be deployed as containers sharing
+a writable configuration volume. In Kubernetes, they can run as containers
+in one Pod with an `emptyDir` volume. The Pod needs network interfaces and
+routes which can reach the Device Connection API addresses; this may require
+secondary networking in deployments where media devices are outside the
+cluster network. Kubernetes and OpenShift manifests are deployment-specific
+and are not included here.
+
+## Browser Application Behavior
 
 The nmos-js client offers a **Connection Bridge** setting with three modes:
 

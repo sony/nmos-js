@@ -87,8 +87,8 @@ Edit `docker-compose.yml` first to point the adapter at the deployment:
 
 | Variable | Description | Default |
 | --- | --- | --- |
-| `REGISTRY_QUERY_URL` | Query API used for Device discovery, also routed at `/x-nmos/` | (required) |
-| `APP_URL` | optionally serve the nmos-js app through Envoy at `/` | (none) |
+| `REGISTRY_QUERY_URL` | Query API URL used for Device discovery; its host and port are also used as the upstream for Envoy's `/x-nmos/` routes | (required) |
+| `APP_URL` | nmos-js application URL used as the upstream for Envoy's catch-all `/` route; if unset, no application route is configured | (none) |
 | `ROUTE_TIMEOUT_SECONDS` | upstream request timeout | `15` |
 | `MAX_UPDATE_RATE_MS` | subscription `max_update_rate_ms` (event coalescing) | `100` |
 | `RECONNECT_MIN_MS` | initial WebSocket reconnect backoff | `1000` |

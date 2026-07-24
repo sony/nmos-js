@@ -44,5 +44,8 @@
     },
     "Auth Enabled": {
         "value": false
+    },
+    "Connection Bridge": {
+        "value": "disabled"
     }
 }

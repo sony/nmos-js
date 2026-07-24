@@ -431,6 +431,9 @@ const createSubscription = async () => {
     const registryQueryWsUrl = new URL(REGISTRY_QUERY_WS_URL);
     wsHref.protocol = registryQueryWsUrl.protocol;
     wsHref.host = registryQueryWsUrl.host;
+    // setting host does not clear the port, so an omitted port would otherwise
+    // leave the advertised port in place rather than the scheme default
+    wsHref.port = registryQueryWsUrl.port;
     return wsHref.toString();
 };
 

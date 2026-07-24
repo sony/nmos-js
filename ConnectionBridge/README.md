@@ -93,7 +93,7 @@ Edit `docker-compose.yml` first to point the adapter at the deployment:
 | `MAX_UPDATE_RATE_MS` | subscription `max_update_rate_ms` (event coalescing) | `100` |
 | `RECONNECT_MIN_MS` | initial WebSocket reconnect backoff | `1000` |
 | `RECONNECT_MAX_MS` | maximum WebSocket reconnect backoff | `30000` |
-| `REGISTRY_QUERY_WS_URL` | WebSocket scheme and authority to use instead of those in the subscription `ws_href`; the advertised subscription path is preserved | (none) |
+| `REGISTRY_QUERY_WS_URL` | WebSocket scheme and authority to use instead of those in the subscription `ws_href`; the advertised subscription path is preserved; an omitted port means the scheme default | (none) |
 | `OUTPUT_DIR` | where dynamic Envoy configuration is written | `/etc/envoy/dynamic` |
 
 Envoy listens on port 8080 and routes:

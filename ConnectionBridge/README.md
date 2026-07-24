@@ -121,9 +121,9 @@ http://controller.example.com:8080/x-nmos-bridge/v1.0
 
 The adapter must be able to reach the Query API and the WebSocket URL
 advertised when it creates the Query API subscription. Set
-`WS_USE_REGISTRY_HOST=true` when the advertised `ws_href` uses a host name or
-address which is not reachable from the adapter but the host in
-`REGISTRY_QUERY_URL` is reachable.
+`REGISTRY_QUERY_WS_URL` when the advertised `ws_href` uses a scheme, host
+name or port which is not reachable from the adapter, for example
+`ws://192.168.6.101:81`.
 
 Envoy must be able to reach every Device Connection API `href` which is to be
 used through the bridge. This is independent of browser reachability: the

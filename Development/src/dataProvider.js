@@ -568,6 +568,18 @@ const convertDataProviderRequestToHTTP = (
                 JsonPointer.set(patchData, `/${d.path.join('/')}`, d.rhs, true);
             }
 
+            // the activation object in a PATCH requests an activation, rather
+            // than reflecting staged state, so when a mode is set, include it
+            // even if the staged endpoint already reported the same values,
+            // which otherwise leaves it out of the differences (see #97)
+            if (get(params, 'data.$staged.activation.mode') != null) {
+                set(
+                    patchData,
+                    'activation',
+                    get(params, 'data.$staged.activation')
+                );
+            }
+
             if (has(patchData, 'transport_file')) {
                 if (get(patchData, 'transport_file.data') === null) {
                     set(patchData, 'transport_file.type', null);

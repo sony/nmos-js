@@ -1,0 +1,13 @@
+{
+    "name": "nmos-connection-bridge-adapter",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Generates Envoy configuration for the NMOS Connection API Bridge from Query API WebSocket events",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "engines": {
+        "node": ">=22.4.0"
+    }
+}

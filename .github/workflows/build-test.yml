@@ -13,9 +13,9 @@ jobs:
   build_and_test:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
 
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v7
 
     - name: set environment variables
       shell: bash
@@ -34,7 +34,7 @@ jobs:
         yarn test --passWithNoTests --coverage --watchAll=false
 
     - name: install python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
         python-version: 3.8
 
@@ -106,12 +106,12 @@ jobs:
         export SHEET=https://docs.google.com/spreadsheets/d/${{ env.SECRET_RESULTS_SHEET_ID }}
         python nmos-testing/utilities/run-test-suites/gsheetsImport/resultsImporter.py --credentials ${{ env.GDRIVE_CREDENTIALS }} --sheet "$SHEET" --insert --json nmos-testing/results/${{ env.GITHUB_COMMIT }}-*.json || echo "upload failed"
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: badges
         path: ${{ runner.workspace }}/nmos-js/nmos-testing/badges
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: results
         path: ${{ runner.workspace }}/nmos-js/nmos-testing/results
@@ -121,7 +121,7 @@ jobs:
     needs: [build_and_test]
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
 
     - name: set environment variables
       shell: bash
@@ -131,7 +131,7 @@ jobs:
         echo "GITHUB_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV
         echo "RUNNER_WORKSPACE=${{ runner.workspace }}" >> $GITHUB_ENV
 
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         path: ${{ runner.workspace }}/artifacts
 

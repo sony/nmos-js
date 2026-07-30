@@ -8,7 +8,7 @@ import {
     UPDATE,
     fetchUtils,
 } from 'react-admin';
-import { assign, get, has, isEmpty, set } from 'lodash';
+import { assign, get, has, isEmpty, pick, set } from 'lodash';
 import { JsonPointer } from 'json-ptr';
 import diff from 'deep-diff';
 import { makeBearerAuthHeader } from './authProvider';
@@ -589,11 +589,12 @@ const convertDataProviderRequestToHTTP = (
             // devices that leave activate_immediate on /staged (see #97). A null mode is
             // only sent when it appears in the differences, so unrelated edits do not
             // cancel a pending activation.
-            if (get(params, 'data.$staged.activation.mode') != null) {
+            const activation = get(params, 'data.$staged.activation');
+            if (get(activation, 'mode') != null) {
                 set(
                     patchData,
                     'activation',
-                    get(params, 'data.$staged.activation')
+                    pick(activation, ['mode', 'requested_time'])
                 );
             }
 

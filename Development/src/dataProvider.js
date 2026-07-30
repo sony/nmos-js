@@ -583,6 +583,20 @@ const convertDataProviderRequestToHTTP = (
                 JsonPointer.set(patchData, `/${d.path.join('/')}`, d.rhs, true);
             }
 
+            // Activation in a PATCH is a request, not staged state. Include it whenever
+            // the request has a non-null mode, even if GET /staged already reported the
+            // same values (otherwise deep-diff omits it). That also covers non-conformant
+            // devices that leave activate_immediate on /staged (see #97). A null mode is
+            // only sent when it appears in the differences, so unrelated edits do not
+            // cancel a pending activation.
+            if (get(params, 'data.$staged.activation.mode') != null) {
+                set(
+                    patchData,
+                    'activation',
+                    get(params, 'data.$staged.activation')
+                );
+            }
+
             if (has(patchData, 'transport_file')) {
                 if (get(patchData, 'transport_file.data') === null) {
                     set(patchData, 'transport_file.type', null);

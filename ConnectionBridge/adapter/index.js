@@ -279,11 +279,18 @@ const bridgeRoutes = target => {
         timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
     };
     return [
-        // GETs may be retried, POSTs and PATCHes must not be
+        // GET and HEAD may be retried; POSTs and PATCHes must not be
         {
             match: {
                 path_separated_prefix: pathPrefix,
-                headers: [{ name: ':method', string_match: { exact: 'GET' } }],
+                headers: [
+                    {
+                        name: ':method',
+                        string_match: {
+                            safe_regex: { regex: 'GET|HEAD' },
+                        },
+                    },
+                ],
             },
             route: {
                 ...action,
@@ -329,7 +336,7 @@ const routeConfiguration = targets => ({
                     allow_origin_string_match: [
                         { safe_regex: { regex: '.*' } },
                     ],
-                    allow_methods: 'GET, POST, PATCH, OPTIONS',
+                    allow_methods: 'GET, HEAD, POST, PATCH, OPTIONS',
                     allow_headers: 'content-type,authorization',
                 },
             },

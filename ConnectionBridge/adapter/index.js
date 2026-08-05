@@ -267,17 +267,22 @@ const directResponse = (status, error) => ({
 });
 
 const bridgeRoutes = target => {
-    const prefix = `${BRIDGE_PREFIX}/devices/${target.deviceId}/connection/${target.version}/`;
+    // path_separated_prefix matches the version path exactly or with a
+    // following '/...' (Envoy 1.22+; compose pins v1.31). That preserves
+    // whatever the client sent after the version (nothing, '/', or a
+    // sub-path) when rewriting onto the Device Connection API basePath,
+    // so trailing-slash handling stays with the upstream per IS-04/IS-05.
+    const pathPrefix = `${BRIDGE_PREFIX}/devices/${target.deviceId}/connection/${target.version}`;
     const action = {
         cluster: clusterName(target),
-        prefix_rewrite: `${target.basePath}/`,
+        prefix_rewrite: target.basePath,
         timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
     };
     return [
         // GETs may be retried, POSTs and PATCHes must not be
         {
             match: {
-                prefix,
+                path_separated_prefix: pathPrefix,
                 headers: [{ name: ':method', string_match: { exact: 'GET' } }],
             },
             route: {
@@ -290,7 +295,7 @@ const bridgeRoutes = target => {
         },
         {
             match: {
-                prefix,
+                path_separated_prefix: pathPrefix,
                 headers: [
                     {
                         name: ':method',
@@ -304,7 +309,7 @@ const bridgeRoutes = target => {
         },
         // any other method on a known target
         {
-            match: { prefix },
+            match: { path_separated_prefix: pathPrefix },
             ...directResponse(405, 'Method not allowed'),
         },
     ];

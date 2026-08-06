@@ -373,7 +373,10 @@ const routeConfiguration = targets => ({
                         { safe_regex: { regex: '.*' } },
                     ],
                     allow_methods: 'GET, HEAD, POST, PATCH, OPTIONS',
-                    allow_headers: 'content-type,authorization',
+                    // Request-Timeout: NMOS clients (e.g. nmos-js Query /
+                    // DNS-SD) send this on long-poll style requests; not
+                    // CORS-safelisted. See sony/nmos-js@6d0e783.
+                    allow_headers: 'content-type,authorization,request-timeout',
                 },
             },
             routes: [

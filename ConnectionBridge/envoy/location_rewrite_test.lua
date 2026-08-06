@@ -292,6 +292,220 @@ assert_eq("reject", handle("ftp://device.local/foo"), "non-http(s) absolute -> r
 assert_eq("reject", handle("http://"), "malformed absolute -> reject")
 assert_eq("reject", handle("http:///x-nmos/connection/v1.1/"), "absolute missing authority -> reject")
 
+-- ---------------------------------------------------------------------------
+-- Envoy entry points (mock handles)
+-- ---------------------------------------------------------------------------
+
+-- Minimal mocks of the Envoy Lua handle API used by envoy_on_request and
+-- envoy_on_response. body() mimics Envoy: nil for an absent or empty body,
+-- unless called with always_wrap_body.
+
+local function mock_headers(init)
+    local headers = { data = {} }
+    for name, value in pairs(init or {}) do
+        headers.data[name] = value
+    end
+    function headers:get(name)
+        return self.data[name]
+    end
+    function headers:replace(name, value)
+        self.data[name] = value
+    end
+    function headers:add(name, value)
+        self.data[name] = value
+    end
+    function headers:remove(name)
+        self.data[name] = nil
+    end
+    return headers
+end
+
+local function mock_stream_info(metadata)
+    return {
+        dynamicMetadata = function()
+            return {
+                set = function(_, namespace, key, value)
+                    metadata[namespace] = metadata[namespace] or {}
+                    metadata[namespace][key] = value
+                end,
+                get = function(_, namespace)
+                    return metadata[namespace]
+                end,
+            }
+        end,
+    }
+end
+
+local function mock_request_handle(headers, metadata)
+    local wrapped = mock_headers(headers)
+    return {
+        headers = function()
+            return wrapped
+        end,
+        streamInfo = function()
+            return mock_stream_info(metadata)
+        end,
+    }
+end
+
+local function mock_response_handle(headers, metadata, body)
+    local wrapped = mock_headers(headers)
+    local response = { header_data = wrapped.data, body_written = nil }
+    response.headers = function()
+        return wrapped
+    end
+    response.streamInfo = function()
+        return mock_stream_info(metadata)
+    end
+    response.body = function(_, always_wrap_body)
+        if (body == nil or #body == 0) and not always_wrap_body then
+            return nil
+        end
+        return {
+            setBytes = function(_, bytes)
+                response.body_written = bytes
+            end,
+        }
+    end
+    return response
+end
+
+local function location_metadata()
+    return {
+        nmos_bridge_location = {
+            base_path = BASE,
+            bridge_path = BRIDGE,
+            upstream_scheme = "http",
+            upstream_authorities = AUTHS,
+            host = "controller.example:8080",
+            scheme = "http",
+            path = DOWN,
+        },
+    }
+end
+
+local function run_response(response)
+    local ok, err = pcall(envoy_on_response, response)
+    if not ok then
+        fail("envoy_on_response error: " .. tostring(err))
+    end
+end
+
+do
+    local metadata = {}
+    envoy_on_request(mock_request_handle({
+        [":authority"] = "controller.example:8080",
+        [":path"] = DOWN,
+        [":scheme"] = "http",
+    }, metadata))
+    local dyn = metadata["nmos_bridge_location"]
+    assert_eq("controller.example:8080", dyn.host, "envoy_on_request stores host")
+    assert_eq("http", dyn.scheme, "envoy_on_request stores scheme")
+    assert_eq(DOWN, dyn.path, "envoy_on_request stores path")
+end
+
+do
+    local metadata = {}
+    envoy_on_request(mock_request_handle({
+        [":authority"] = "controller.example:8080",
+        [":path"] = DOWN,
+        [":scheme"] = "http",
+        ["x-forwarded-proto"] = "https",
+    }, metadata))
+    assert_eq(
+        "https",
+        metadata["nmos_bridge_location"].scheme,
+        "envoy_on_request prefers x-forwarded-proto over :scheme"
+    )
+end
+
+-- in-base root-relative Location on a body-less 307 -> rewritten in place
+do
+    local response = mock_response_handle({
+        [":status"] = "307",
+        ["location"] = BASE .. "/single/receivers/r1/active",
+    }, location_metadata(), nil)
+    run_response(response)
+    assert_eq("307", response.header_data[":status"], "rewrite keeps 3xx status")
+    assert_eq(
+        BRIDGE .. "/single/receivers/r1/active",
+        response.header_data["location"],
+        "rewrite maps Location onto the bridge"
+    )
+    assert_nil(response.body_written, "rewrite leaves the body alone")
+end
+
+-- reject path on a body-less 307: redirects typically carry no body, and
+-- Envoy's body() returns nil then unless called with always_wrap_body
+do
+    local response = mock_response_handle({
+        [":status"] = "307",
+        ["location"] = "/x-manifest/stream",
+    }, location_metadata(), nil)
+    run_response(response)
+    assert_eq("502", response.header_data[":status"], "reject body-less 307: 502")
+    assert_eq(
+        "application/json",
+        response.header_data["content-type"],
+        "reject body-less 307: content-type"
+    )
+    assert_eq(
+        "unsupported upstream location: /x-manifest/stream",
+        response.header_data["x-nmos-bridge-error"],
+        "reject body-less 307: error header"
+    )
+    assert_nil(response.header_data["location"], "reject body-less 307: Location removed")
+    assert_eq(
+        '{"code":502,"error":"unsupported upstream location: /x-manifest/stream","debug":null}',
+        response.body_written,
+        "reject body-less 307: NMOS error body"
+    )
+end
+
+-- reject path when the upstream 3xx does carry a body
+do
+    local response = mock_response_handle({
+        [":status"] = "307",
+        ["location"] = "/x-manifest/stream",
+    }, location_metadata(), "<html>moved</html>")
+    run_response(response)
+    assert_eq("502", response.header_data[":status"], "reject 307 with body: 502")
+    assert_eq(
+        '{"code":502,"error":"unsupported upstream location: /x-manifest/stream","debug":null}',
+        response.body_written,
+        "reject 307 with body: NMOS error body"
+    )
+end
+
+-- non-3xx responses and responses without route metadata are left alone
+do
+    local response = mock_response_handle({
+        [":status"] = "200",
+        ["location"] = "/x-manifest/stream",
+    }, location_metadata(), nil)
+    run_response(response)
+    assert_eq("200", response.header_data[":status"], "non-3xx: status untouched")
+    assert_eq(
+        "/x-manifest/stream",
+        response.header_data["location"],
+        "non-3xx: Location untouched"
+    )
+end
+
+do
+    local response = mock_response_handle({
+        [":status"] = "307",
+        ["location"] = "/x-manifest/stream",
+    }, {}, nil)
+    run_response(response)
+    assert_eq("307", response.header_data[":status"], "no metadata: status untouched")
+    assert_eq(
+        "/x-manifest/stream",
+        response.header_data["location"],
+        "no metadata: Location untouched"
+    )
+end
+
 if failures > 0 then
     io.stderr:write(string.format("%d failure(s)\n", failures))
     os.exit(1)

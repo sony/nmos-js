@@ -267,7 +267,8 @@ local function reject_unsupported(response_handle, location)
     response_handle:headers():replace("content-type", "application/json")
     response_handle:headers():add("x-nmos-bridge-error", header_safe(msg))
     response_handle:headers():remove("location")
-    response_handle:body():setBytes(body)
+    -- always_wrap_body: an upstream 3xx typically has no body to wrap
+    response_handle:body(true):setBytes(body)
 end
 
 -- ---------------------------------------------------------------------------

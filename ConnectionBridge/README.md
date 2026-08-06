@@ -77,6 +77,14 @@ Envoy health checks the candidates and fails over from higher to lower priority 
 
 Controls that are not safe to proxy are logged and ignored: missing or malformed hrefs, unsupported schemes (Phase 1 supports `http` upstreams only), hrefs whose path is inconsistent with the advertised version, and duplicates after normalization.
 
+## Testing
+
+Location rewrite policy is covered by Lua unit tests (Lua 5.1 / LuaJIT, matching Envoy). From `envoy/`:
+
+```bash
+lua5.1 location_rewrite_test.lua
+```
+
 ## Running
 
 ```bash

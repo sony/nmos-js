@@ -29,9 +29,12 @@
 -- (LuaPerRoute from the adapter).
 --
 -- Structure: generic URL/string helpers, then bridge-specific helpers, then
--- policy (handle_location) and Envoy entry points. Envoy Lua has no URL
--- library, so most of the file is RFC-oriented parse/resolve support.
+-- policy (handle_location) and Envoy entry points. Pure helpers are exported
+-- via the module return value for unit tests; Envoy loads this file for the
+-- global envoy_on_* entry points and ignores the return. Envoy Lua has no URL
+-- library, so most of the file is RFC 3986-oriented parse/resolve support.
 
+local M = {}
 local DYN = "nmos_bridge_location"
 
 -- ---------------------------------------------------------------------------
@@ -105,19 +108,33 @@ local function path_suffix_after(pathquery, prefix)
     return nil
 end
 
--- RFC 3986 remove_dot_segments (path only).
+-- RFC 3986 §5.2.4 remove_dot_segments (path only).
 local function remove_dot_segments(path)
+    -- 1. The input buffer is initialized with the now-appended path
+    --    components and the output buffer is initialized to the empty
+    --    string.
     local input = path
     local output = {}
+    -- 2. While the input buffer is not empty, loop as follows:
     while input ~= "" do
+        -- A. If the input buffer begins with a prefix of "../" or "./",
+        --    then remove that prefix from the input buffer; otherwise,
         if input:sub(1, 3) == "../" then
             input = input:sub(4)
         elseif input:sub(1, 2) == "./" then
             input = input:sub(3)
+        -- B. if the input buffer begins with a prefix of "/./" or "/.",
+        --    where "." is a complete path segment, then replace that
+        --    prefix with "/" in the input buffer; otherwise,
         elseif input:sub(1, 3) == "/./" then
             input = "/" .. input:sub(4)
         elseif input == "/." then
             input = "/"
+        -- C. if the input buffer begins with a prefix of "/../" or "/..",
+        --    where ".." is a complete path segment, then replace that
+        --    prefix with "/" in the input buffer and remove the last
+        --    segment and its preceding "/" (if any) from the output
+        --    buffer; otherwise,
         elseif input:sub(1, 4) == "/../" then
             input = "/" .. input:sub(5)
             if #output > 0 then
@@ -128,14 +145,16 @@ local function remove_dot_segments(path)
             if #output > 0 then
                 table.remove(output)
             end
+        -- D. if the input buffer consists only of "." or "..", then remove
+        --    that from the input buffer; otherwise,
         elseif input == "." or input == ".." then
             input = ""
-        elseif input == "/" then
-            -- preserve a trailing slash (final empty segment)
-            table.insert(output, "/")
-            input = ""
+        -- E. move the first path segment in the input buffer to the end of
+        --    the output buffer, including the initial "/" character (if
+        --    any) and any subsequent characters up to, but not including,
+        --    the next "/" character or the end of the input buffer.
         else
-            local seg, rest = input:match("^(/?[^/]+)(.*)$")
+            local seg, rest = input:match("^(/?[^/]*)(.*)$")
             if not seg then
                 break
             end
@@ -143,6 +162,7 @@ local function remove_dot_segments(path)
             input = rest
         end
     end
+    -- 3. Finally, the output buffer is returned as the result.
     return table.concat(output)
 end
 
@@ -403,3 +423,13 @@ function envoy_on_response(response_handle)
         response_handle:headers():replace("location", result)
     end
 end
+
+-- Pure helpers (Envoy entry points stay global; reject_unsupported needs handles).
+M.path_suffix_after = path_suffix_after
+M.remove_dot_segments = remove_dot_segments
+M.resolve_path_relative = resolve_path_relative
+M.parse_absolute = parse_absolute
+M.rewrite_onto_bridge = rewrite_onto_bridge
+M.handle_location = handle_location
+
+return M

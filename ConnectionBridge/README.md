@@ -164,4 +164,16 @@ The nmos-js client offers a **Connection Bridge** setting with three modes:
 
 ## Status
 
-Phase 1 (HTTP browser and upstream access, file-based dynamic configuration, `GET`/`POST`/`PATCH`, no response rewriting) is implemented, plus health checking and multi-endpoint failover from Phase 2. Not yet implemented: response size limits, HTTPS upstreams, authentication translation, mTLS, and an xDS control plane.
+Phase 1 is implemented, plus health checking and multi-endpoint failover from Phase 2:
+
+- HTTP browser and upstream access, file-based dynamic configuration
+- `GET`/`HEAD`/`POST`/`PATCH`
+- Upstream 3xx `Location` handling (see below)
+
+Not yet implemented: response size limits, HTTPS upstreams, authentication translation, mTLS, and an xDS control plane.
+
+`Location` handling uses each target's Connection API `base_path` (the path of the Device control `href`, typically `/x-nmos/connection/v1.1` or similar):
+
+- Absolute or scheme-relative (filled with the client scheme) Locations whose scheme and authority match a Device Connection API candidate and whose path stays under that `base_path` are rewritten onto the bridge; other absolute Locations are forwarded unchanged (including candidate URLs outside `base_path`, e.g. `http://device/x-manifest/...`).
+- Path-relative and root-relative Locations are resolved against the upstream Connection API path and rewritten onto the bridge when they stay under `base_path`; relatives outside `base_path` are rejected with `502` and an NMOS error body (`x-nmos-bridge-error` describes the unsupported Location), since an absolute Device URL cannot be reconstructed without knowing which candidate Envoy selected.
+- Envoy internal redirects are not used: absolute Device Locations under `/x-nmos/` would be re-routed by path onto the Registry `/x-nmos/` routes.

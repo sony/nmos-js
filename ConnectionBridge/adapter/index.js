@@ -127,13 +127,16 @@ const collectTargets = devices => {
             }
             const candidates = targets.get(key).candidates;
             const host = href.hostname;
-            const port = Number(href.port) || 80;
+            // URL.port is empty when the href omits an explicit port
+            const scheme = href.protocol.replace(/:$/, '');
+            const port = Number(href.port) || (scheme === 'https' ? 443 : 80);
             // de-duplicate normalized hrefs
             if (
                 candidates.some(
                     c =>
                         c.host === host &&
                         c.port === port &&
+                        c.scheme === scheme &&
                         c.basePath === basePath
                 )
             ) {
@@ -142,27 +145,29 @@ const collectTargets = devices => {
             candidates.push({
                 host,
                 port,
+                scheme,
                 basePath,
                 priority: priorityFor(host),
             });
         }
     }
     // all candidates in a cluster share one route rewrite, so if hrefs for
-    // the same target disagree on base path, keep only those that share a
-    // path with the most preferred candidate
+    // the same target disagree on scheme or base path, keep only those that
+    // share both with the most preferred candidate
     for (const target of targets.values()) {
         target.candidates.sort((a, b) => a.priority - b.priority);
-        const basePath = target.candidates[0].basePath;
+        const { scheme, basePath } = target.candidates[0];
         for (const c of target.candidates) {
-            if (c.basePath !== basePath) {
+            if (c.scheme !== scheme || c.basePath !== basePath) {
                 logOnce(
-                    `dropping candidate with differing base path for Device ${target.deviceId} ${target.version}: ${c.host}:${c.port}${c.basePath}`
+                    `dropping candidate with differing scheme or base path for Device ${target.deviceId} ${target.version}: ${c.scheme}://${c.host}:${c.port}${c.basePath}`
                 );
             }
         }
         target.candidates = target.candidates.filter(
-            c => c.basePath === basePath
+            c => c.scheme === scheme && c.basePath === basePath
         );
+        target.scheme = scheme;
         target.basePath = basePath;
     }
     return [...targets.values()].sort((a, b) =>
@@ -267,18 +272,59 @@ const directResponse = (status, error) => ({
 });
 
 const bridgeRoutes = target => {
-    const prefix = `${BRIDGE_PREFIX}/devices/${target.deviceId}/connection/${target.version}/`;
+    // path_separated_prefix matches the version path exactly or with a
+    // following '/...' (Envoy 1.22+; compose pins v1.31). That preserves
+    // whatever the client sent after the version (nothing, '/', or a
+    // sub-path) when rewriting onto the Device Connection API basePath,
+    // so trailing-slash handling stays with the upstream per IS-04/IS-05.
+    const pathPrefix = `${BRIDGE_PREFIX}/devices/${target.deviceId}/connection/${target.version}`;
+    // Envoy 1.31 set_metadata has no per-route config; LuaPerRoute on a
+    // dedicated filter writes Location-rewrite context into dynamic metadata
+    // for location_rewrite.lua. Values are NMOS paths / host:port lists.
+    const escapeLua = s =>
+        String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const formatAuthority = c =>
+        c.host.includes(':') ? `[${c.host}]:${c.port}` : `${c.host}:${c.port}`;
+    const upstreamAuthorities = target.candidates
+        .map(formatAuthority)
+        .join(',');
+    const locationMeta = {
+        typed_per_filter_config: {
+            'nmos.bridge.location_meta': {
+                '@type':
+                    'type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute',
+                source_code: {
+                    inline_string: [
+                        'function envoy_on_request(request_handle)',
+                        '  local md = request_handle:streamInfo():dynamicMetadata()',
+                        `  md:set("nmos_bridge_location", "base_path", "${escapeLua(target.basePath)}")`,
+                        `  md:set("nmos_bridge_location", "bridge_path", "${escapeLua(pathPrefix)}")`,
+                        `  md:set("nmos_bridge_location", "upstream_scheme", "${escapeLua(target.scheme)}")`,
+                        `  md:set("nmos_bridge_location", "upstream_authorities", "${escapeLua(upstreamAuthorities)}")`,
+                        'end',
+                    ].join('\n'),
+                },
+            },
+        },
+    };
     const action = {
         cluster: clusterName(target),
-        prefix_rewrite: `${target.basePath}/`,
+        prefix_rewrite: target.basePath,
         timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
     };
     return [
-        // GETs may be retried, POSTs and PATCHes must not be
+        // GET and HEAD may be retried; POSTs and PATCHes must not be
         {
             match: {
-                prefix,
-                headers: [{ name: ':method', string_match: { exact: 'GET' } }],
+                path_separated_prefix: pathPrefix,
+                headers: [
+                    {
+                        name: ':method',
+                        string_match: {
+                            safe_regex: { regex: 'GET|HEAD' },
+                        },
+                    },
+                ],
             },
             route: {
                 ...action,
@@ -287,10 +333,11 @@ const bridgeRoutes = target => {
                     num_retries: 2,
                 },
             },
+            ...locationMeta,
         },
         {
             match: {
-                prefix,
+                path_separated_prefix: pathPrefix,
                 headers: [
                     {
                         name: ':method',
@@ -301,10 +348,11 @@ const bridgeRoutes = target => {
                 ],
             },
             route: action,
+            ...locationMeta,
         },
         // any other method on a known target
         {
-            match: { prefix },
+            match: { path_separated_prefix: pathPrefix },
             ...directResponse(405, 'Method not allowed'),
         },
     ];
@@ -324,8 +372,11 @@ const routeConfiguration = targets => ({
                     allow_origin_string_match: [
                         { safe_regex: { regex: '.*' } },
                     ],
-                    allow_methods: 'GET, POST, PATCH, OPTIONS',
-                    allow_headers: 'content-type,authorization',
+                    allow_methods: 'GET, HEAD, POST, PATCH, OPTIONS',
+                    // Request-Timeout: NMOS clients (e.g. nmos-js Query /
+                    // DNS-SD) send this on long-poll style requests; not
+                    // CORS-safelisted. See sony/nmos-js@6d0e783.
+                    allow_headers: 'content-type,authorization,request-timeout',
                 },
             },
             routes: [

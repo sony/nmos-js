@@ -25,6 +25,7 @@ services:
       - "8080:8080"
     volumes:
       - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+      - ./envoy/location_rewrite.lua:/etc/envoy/location_rewrite.lua:ro
       - envoy-dynamic:/etc/envoy/dynamic
 
 volumes:

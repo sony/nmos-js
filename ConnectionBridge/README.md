@@ -83,6 +83,7 @@ Location rewrite policy is covered by Lua unit tests (Lua 5.1 / LuaJIT, matching
 
 ```bash
 lua5.1 location_rewrite_test.lua
+lua5.1 location_rewrite_test.lua -v   # per-case status lines
 ```
 
 ## Running

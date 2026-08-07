@@ -1,13 +1,36 @@
 -- Unit tests for location_rewrite.lua (Lua 5.1 / LuaJIT).
--- Run from this directory: lua5.1 location_rewrite_test.lua
+-- Run from this directory:
+--   lua5.1 location_rewrite_test.lua
+--   lua5.1 location_rewrite_test.lua -v
 
 local rewrite = require("location_rewrite")
 
+local verbose = os.getenv("VERBOSE") == "1"
+if arg then
+    for i = 1, #arg do
+        if arg[i] == "-v" or arg[i] == "--verbose" then
+            verbose = true
+        end
+    end
+end
+
 local failures = 0
+local tests_run = 0
+local tests_failed = 0
+-- When non-nil, soft-fail lines are buffered until the current test() finishes
+-- so verbose status ("... ok" / "... FAILED") prints before FAIL details.
+-- All harness output goes to stdout (like cargo test).
+local pending_fails = nil
 
 local function fail(msg)
     failures = failures + 1
-    io.stderr:write("FAIL: " .. msg .. "\n")
+    local line = "FAIL: " .. msg .. "\n"
+    if pending_fails then
+        pending_fails[#pending_fails + 1] = line
+    else
+        io.write(line)
+        io.flush()
+    end
 end
 
 local function assert_eq(expected, actual, label)
@@ -29,47 +52,83 @@ local function assert_nil(actual, label)
     end
 end
 
+local function test(name, fn)
+    tests_run = tests_run + 1
+    if verbose then
+        io.write("test " .. name .. " ... ")
+        io.flush()
+        pending_fails = {}
+    end
+    local before = failures
+    local ok, err = pcall(fn)
+    if not ok then
+        fail(name .. ": " .. tostring(err))
+    end
+    local failed = failures > before
+    if failed then
+        tests_failed = tests_failed + 1
+    end
+    if verbose then
+        io.write(failed and "FAILED\n" or "ok\n")
+        for i = 1, #pending_fails do
+            io.write(pending_fails[i])
+        end
+        io.flush()
+        pending_fails = nil
+    end
+end
+
 -- ---------------------------------------------------------------------------
 -- Helpers
 -- ---------------------------------------------------------------------------
 
-do
+test("path_suffix_after_under_prefix", function()
     local suffix, rest = rewrite.path_suffix_after(
         "/x-nmos/connection/v1.1/single/receivers/r1",
         "/x-nmos/connection/v1.1"
     )
     assert_eq("/single/receivers/r1", suffix, "path_suffix_after under prefix")
     assert_eq("", rest, "path_suffix_after no query")
-end
+end)
 
-do
+test("path_suffix_after_exact_path", function()
     local suffix, rest = rewrite.path_suffix_after(
         "/x-nmos/connection/v1.1?x=1",
         "/x-nmos/connection/v1.1"
     )
     assert_eq("", suffix, "path_suffix_after exact path")
     assert_eq("?x=1", rest, "path_suffix_after keeps query")
-end
+end)
 
-assert_nil(
-    rewrite.path_suffix_after("/x-manifest/foo", "/x-nmos/connection/v1.1"),
-    "path_suffix_after outside prefix"
-)
+test("path_suffix_after_outside_prefix", function()
+    assert_nil(
+        rewrite.path_suffix_after("/x-manifest/foo", "/x-nmos/connection/v1.1"),
+        "path_suffix_after outside prefix"
+    )
+end)
 
 -- RFC 3986 §5.2.4 worked examples
-assert_eq("/a/g", rewrite.remove_dot_segments("/a/b/c/./../../g"), "RFC 3986 §5.2.4 /a/b/c/./../../g")
-assert_eq("mid/6", rewrite.remove_dot_segments("mid/content=5/../6"), "RFC 3986 §5.2.4 mid/content=5/../6")
+test("rfc3986_5_2_4_dot_segments", function()
+    assert_eq("/a/g", rewrite.remove_dot_segments("/a/b/c/./../../g"), "RFC 3986 §5.2.4 /a/b/c/./../../g")
+    assert_eq("mid/6", rewrite.remove_dot_segments("mid/content=5/../6"), "RFC 3986 §5.2.4 mid/content=5/../6")
+end)
+
 -- Empty segments (segment = *pchar) and trailing slash via 2E
-assert_eq("/a/b/", rewrite.remove_dot_segments("/a/b/"), "remove_dot_segments trailing slash")
-assert_eq("/a/b//c", rewrite.remove_dot_segments("/a/b//c"), "remove_dot_segments mid-path empty segment")
-assert_eq("//", rewrite.remove_dot_segments("//"), "remove_dot_segments two empty segments")
-assert_eq("/a/", rewrite.remove_dot_segments("/a/b//c/../../.."), "remove_dot_segments empty segment then ..")
-assert_eq("/a/c", rewrite.remove_dot_segments("/a/b/../c"), "remove_dot_segments ..")
-assert_eq("/", rewrite.remove_dot_segments("/."), "remove_dot_segments /.")
-assert_eq("/", rewrite.remove_dot_segments("/.."), "remove_dot_segments /..")
+test("remove_dot_segments_empty_and_trailing", function()
+    assert_eq("/a/b/", rewrite.remove_dot_segments("/a/b/"), "remove_dot_segments trailing slash")
+    assert_eq("/a/b//c", rewrite.remove_dot_segments("/a/b//c"), "remove_dot_segments mid-path empty segment")
+    assert_eq("//", rewrite.remove_dot_segments("//"), "remove_dot_segments two empty segments")
+    assert_eq("/a/", rewrite.remove_dot_segments("/a/b//c/../../.."), "remove_dot_segments empty segment then ..")
+    assert_eq("/a/c", rewrite.remove_dot_segments("/a/b/../c"), "remove_dot_segments ..")
+    assert_eq("/", rewrite.remove_dot_segments("/."), "remove_dot_segments /.")
+    assert_eq("/", rewrite.remove_dot_segments("/.."), "remove_dot_segments /..")
+end)
+
 -- §5.4.2 path-absolute abnormal (remove_dot_segments only)
-assert_eq("/g", rewrite.remove_dot_segments("/./g"), "RFC 3986 §5.4.2 /./g")
-assert_eq("/g", rewrite.remove_dot_segments("/../g"), "RFC 3986 §5.4.2 /../g")
+test("rfc3986_5_4_2_path_absolute_abnormal", function()
+    assert_eq("/g", rewrite.remove_dot_segments("/./g"), "RFC 3986 §5.4.2 /./g")
+    assert_eq("/g", rewrite.remove_dot_segments("/../g"), "RFC 3986 §5.4.2 /../g")
+end)
 
 -- RFC 3986 §5.4.1 / §5.4.2 path-relative examples (base URI http://a/b/c/d;p?q).
 -- Assert path + query/fragment only (no scheme/host). Skip scheme, authority,
@@ -85,84 +144,94 @@ local function assert_resolve(ref, expected_pathquery, label)
 end
 
 -- §5.4.1 Normal Examples (path-relative subset)
-assert_resolve("g", "/b/c/g", "RFC 3986 §5.4.1 g")
-assert_resolve("./g", "/b/c/g", "RFC 3986 §5.4.1 ./g")
-assert_resolve("g/", "/b/c/g/", "RFC 3986 §5.4.1 g/")
-assert_resolve("g?y", "/b/c/g?y", "RFC 3986 §5.4.1 g?y")
-assert_resolve("g#s", "/b/c/g#s", "RFC 3986 §5.4.1 g#s")
-assert_resolve("g?y#s", "/b/c/g?y#s", "RFC 3986 §5.4.1 g?y#s")
-assert_resolve(";x", "/b/c/;x", "RFC 3986 §5.4.1 ;x")
-assert_resolve("g;x", "/b/c/g;x", "RFC 3986 §5.4.1 g;x")
-assert_resolve("g;x?y#s", "/b/c/g;x?y#s", "RFC 3986 §5.4.1 g;x?y#s")
-assert_resolve(".", "/b/c/", "RFC 3986 §5.4.1 .")
-assert_resolve("./", "/b/c/", "RFC 3986 §5.4.1 ./")
-assert_resolve("..", "/b/", "RFC 3986 §5.4.1 ..")
-assert_resolve("../", "/b/", "RFC 3986 §5.4.1 ../")
-assert_resolve("../g", "/b/g", "RFC 3986 §5.4.1 ../g")
-assert_resolve("../..", "/", "RFC 3986 §5.4.1 ../..")
-assert_resolve("../../", "/", "RFC 3986 §5.4.1 ../../")
-assert_resolve("../../g", "/g", "RFC 3986 §5.4.1 ../../g")
+test("rfc3986_5_4_1_normal_path_relative", function()
+    assert_resolve("g", "/b/c/g", "RFC 3986 §5.4.1 g")
+    assert_resolve("./g", "/b/c/g", "RFC 3986 §5.4.1 ./g")
+    assert_resolve("g/", "/b/c/g/", "RFC 3986 §5.4.1 g/")
+    assert_resolve("g?y", "/b/c/g?y", "RFC 3986 §5.4.1 g?y")
+    assert_resolve("g#s", "/b/c/g#s", "RFC 3986 §5.4.1 g#s")
+    assert_resolve("g?y#s", "/b/c/g?y#s", "RFC 3986 §5.4.1 g?y#s")
+    assert_resolve(";x", "/b/c/;x", "RFC 3986 §5.4.1 ;x")
+    assert_resolve("g;x", "/b/c/g;x", "RFC 3986 §5.4.1 g;x")
+    assert_resolve("g;x?y#s", "/b/c/g;x?y#s", "RFC 3986 §5.4.1 g;x?y#s")
+    assert_resolve(".", "/b/c/", "RFC 3986 §5.4.1 .")
+    assert_resolve("./", "/b/c/", "RFC 3986 §5.4.1 ./")
+    assert_resolve("..", "/b/", "RFC 3986 §5.4.1 ..")
+    assert_resolve("../", "/b/", "RFC 3986 §5.4.1 ../")
+    assert_resolve("../g", "/b/g", "RFC 3986 §5.4.1 ../g")
+    assert_resolve("../..", "/", "RFC 3986 §5.4.1 ../..")
+    assert_resolve("../../", "/", "RFC 3986 §5.4.1 ../../")
+    assert_resolve("../../g", "/g", "RFC 3986 §5.4.1 ../../g")
+end)
 
 -- §5.4.2 Abnormal Examples (path-relative subset + query/fragment isolation)
-assert_resolve("../../../g", "/g", "RFC 3986 §5.4.2 ../../../g")
-assert_resolve("../../../../g", "/g", "RFC 3986 §5.4.2 ../../../../g")
-assert_resolve("g.", "/b/c/g.", "RFC 3986 §5.4.2 g.")
-assert_resolve(".g", "/b/c/.g", "RFC 3986 §5.4.2 .g")
-assert_resolve("g..", "/b/c/g..", "RFC 3986 §5.4.2 g..")
-assert_resolve("..g", "/b/c/..g", "RFC 3986 §5.4.2 ..g")
-assert_resolve("./../g", "/b/g", "RFC 3986 §5.4.2 ./../g")
-assert_resolve("./g/.", "/b/c/g/", "RFC 3986 §5.4.2 ./g/.")
-assert_resolve("g/./h", "/b/c/g/h", "RFC 3986 §5.4.2 g/./h")
-assert_resolve("g/../h", "/b/c/h", "RFC 3986 §5.4.2 g/../h")
-assert_resolve("g;x=1/./y", "/b/c/g;x=1/y", "RFC 3986 §5.4.2 g;x=1/./y")
-assert_resolve("g;x=1/../y", "/b/c/y", "RFC 3986 §5.4.2 g;x=1/../y")
-assert_resolve("g?y/./x", "/b/c/g?y/./x", "RFC 3986 §5.4.2 g?y/./x")
-assert_resolve("g?y/../x", "/b/c/g?y/../x", "RFC 3986 §5.4.2 g?y/../x")
-assert_resolve("g#s/./x", "/b/c/g#s/./x", "RFC 3986 §5.4.2 g#s/./x")
-assert_resolve("g#s/../x", "/b/c/g#s/../x", "RFC 3986 §5.4.2 g#s/../x")
+test("rfc3986_5_4_2_abnormal_path_relative", function()
+    assert_resolve("../../../g", "/g", "RFC 3986 §5.4.2 ../../../g")
+    assert_resolve("../../../../g", "/g", "RFC 3986 §5.4.2 ../../../../g")
+    assert_resolve("g.", "/b/c/g.", "RFC 3986 §5.4.2 g.")
+    assert_resolve(".g", "/b/c/.g", "RFC 3986 §5.4.2 .g")
+    assert_resolve("g..", "/b/c/g..", "RFC 3986 §5.4.2 g..")
+    assert_resolve("..g", "/b/c/..g", "RFC 3986 §5.4.2 ..g")
+    assert_resolve("./../g", "/b/g", "RFC 3986 §5.4.2 ./../g")
+    assert_resolve("./g/.", "/b/c/g/", "RFC 3986 §5.4.2 ./g/.")
+    assert_resolve("g/./h", "/b/c/g/h", "RFC 3986 §5.4.2 g/./h")
+    assert_resolve("g/../h", "/b/c/h", "RFC 3986 §5.4.2 g/../h")
+    assert_resolve("g;x=1/./y", "/b/c/g;x=1/y", "RFC 3986 §5.4.2 g;x=1/./y")
+    assert_resolve("g;x=1/../y", "/b/c/y", "RFC 3986 §5.4.2 g;x=1/../y")
+    assert_resolve("g?y/./x", "/b/c/g?y/./x", "RFC 3986 §5.4.2 g?y/./x")
+    assert_resolve("g?y/../x", "/b/c/g?y/../x", "RFC 3986 §5.4.2 g?y/../x")
+    assert_resolve("g#s/./x", "/b/c/g#s/./x", "RFC 3986 §5.4.2 g#s/./x")
+    assert_resolve("g#s/../x", "/b/c/g#s/../x", "RFC 3986 §5.4.2 g#s/../x")
+end)
 
 -- Bridge-oriented resolve checks (same helper)
-assert_eq(
-    "/x-nmos/connection/v1.1/single/receivers/r1/active",
-    rewrite.resolve_path_relative("/x-nmos/connection/v1.1/single/receivers/r1/staged", "active"),
-    "resolve_path_relative sibling"
-)
-assert_eq(
-    "/x-nmos/connection/v1.1/single/senders/s1",
-    rewrite.resolve_path_relative("/x-nmos/connection/v1.1/single/receivers/r1/staged", "../../senders/s1"),
-    "resolve_path_relative up"
-)
+test("resolve_path_relative_bridge_oriented", function()
+    assert_eq(
+        "/x-nmos/connection/v1.1/single/receivers/r1/active",
+        rewrite.resolve_path_relative("/x-nmos/connection/v1.1/single/receivers/r1/staged", "active"),
+        "resolve_path_relative sibling"
+    )
+    assert_eq(
+        "/x-nmos/connection/v1.1/single/senders/s1",
+        rewrite.resolve_path_relative("/x-nmos/connection/v1.1/single/receivers/r1/staged", "../../senders/s1"),
+        "resolve_path_relative up"
+    )
+end)
 
-do
+test("parse_absolute_http", function()
     local scheme, host, port, pathquery =
         rewrite.parse_absolute("HTTP://Device.Example:8080/x-nmos/connection/v1.1/foo")
     assert_eq("http", scheme, "parse_absolute scheme")
     assert_eq("Device.Example", host, "parse_absolute host")
     assert_eq("8080", port, "parse_absolute port")
     assert_eq("/x-nmos/connection/v1.1/foo", pathquery, "parse_absolute path")
-end
+end)
 
-assert_nil(select(1, rewrite.parse_absolute("http://")), "parse_absolute empty authority")
-assert_nil(select(1, rewrite.parse_absolute("http:///path")), "parse_absolute missing authority")
-assert_nil(select(1, rewrite.parse_absolute("not-a-url")), "parse_absolute no scheme")
+test("parse_absolute_rejects", function()
+    assert_nil(select(1, rewrite.parse_absolute("http://")), "parse_absolute empty authority")
+    assert_nil(select(1, rewrite.parse_absolute("http:///path")), "parse_absolute missing authority")
+    assert_nil(select(1, rewrite.parse_absolute("not-a-url")), "parse_absolute no scheme")
+end)
 
-assert_eq(
-    "/x-nmos-bridge/v1.0/devices/d1/connection/v1.1/single/receivers/r1",
-    rewrite.rewrite_onto_bridge(
-        "/x-nmos/connection/v1.1/single/receivers/r1",
-        "/x-nmos/connection/v1.1",
-        "/x-nmos-bridge/v1.0/devices/d1/connection/v1.1"
-    ),
-    "rewrite_onto_bridge in-base"
-)
-assert_nil(
-    rewrite.rewrite_onto_bridge(
-        "/x-manifest/foo",
-        "/x-nmos/connection/v1.1",
-        "/x-nmos-bridge/v1.0/devices/d1/connection/v1.1"
-    ),
-    "rewrite_onto_bridge out-of-base"
-)
+test("rewrite_onto_bridge", function()
+    assert_eq(
+        "/x-nmos-bridge/v1.0/devices/d1/connection/v1.1/single/receivers/r1",
+        rewrite.rewrite_onto_bridge(
+            "/x-nmos/connection/v1.1/single/receivers/r1",
+            "/x-nmos/connection/v1.1",
+            "/x-nmos-bridge/v1.0/devices/d1/connection/v1.1"
+        ),
+        "rewrite_onto_bridge in-base"
+    )
+    assert_nil(
+        rewrite.rewrite_onto_bridge(
+            "/x-manifest/foo",
+            "/x-nmos/connection/v1.1",
+            "/x-nmos-bridge/v1.0/devices/d1/connection/v1.1"
+        ),
+        "rewrite_onto_bridge out-of-base"
+    )
+end)
 
 -- ---------------------------------------------------------------------------
 -- handle_location policy
@@ -188,109 +257,126 @@ local function handle(location, extras)
     )
 end
 
-assert_nil(handle(nil), "empty: nil location")
-assert_nil(handle(""), "empty: empty string")
+test("handle_location_empty", function()
+    assert_nil(handle(nil), "empty: nil location")
+    assert_nil(handle(""), "empty: empty string")
+end)
 
-assert_eq(
-    BRIDGE .. "/single/receivers/r1/active",
-    handle("/x-nmos/connection/v1.1/single/receivers/r1/active"),
-    "root-relative in-base -> bridge path"
-)
-assert_eq(BRIDGE, handle(BASE), "root-relative exact base_path -> bridge path")
-assert_eq(
-    BRIDGE .. "/single/receivers/r1/active?x=1",
-    handle("/x-nmos/connection/v1.1/single/receivers/r1/active?x=1"),
-    "root-relative in-base preserves query"
-)
-assert_eq("reject", handle("/x-manifest/stream"), "root-relative out-of-base -> reject")
+test("handle_location_root_relative", function()
+    assert_eq(
+        BRIDGE .. "/single/receivers/r1/active",
+        handle("/x-nmos/connection/v1.1/single/receivers/r1/active"),
+        "root-relative in-base -> bridge path"
+    )
+    assert_eq(BRIDGE, handle(BASE), "root-relative exact base_path -> bridge path")
+    assert_eq(
+        BRIDGE .. "/single/receivers/r1/active?x=1",
+        handle("/x-nmos/connection/v1.1/single/receivers/r1/active?x=1"),
+        "root-relative in-base preserves query"
+    )
+    assert_eq("reject", handle("/x-manifest/stream"), "root-relative out-of-base -> reject")
+end)
 
-assert_eq(
-    BRIDGE .. "/single/receivers/r1/active",
-    handle("active"),
-    "path-relative sibling -> bridge"
-)
-assert_eq(
-    "reject",
-    handle("../../../../../x-manifest/foo"),
-    "path-relative escapes Connection API base -> reject"
-)
+test("handle_location_path_relative", function()
+    assert_eq(
+        BRIDGE .. "/single/receivers/r1/active",
+        handle("active"),
+        "path-relative sibling -> bridge"
+    )
+    assert_eq(
+        "reject",
+        handle("../../../../../x-manifest/foo"),
+        "path-relative escapes Connection API base -> reject"
+    )
+end)
 
-assert_eq(
-    "http://controller.example:8080" .. BRIDGE .. "/single/receivers/r1/active",
-    handle("http://device.local/x-nmos/connection/v1.1/single/receivers/r1/active"),
-    "absolute candidate in-base -> bridge absolute"
-)
-assert_eq(
-    "http://controller.example:8080" .. BRIDGE .. "/single/receivers/r1/active?x=1",
-    handle("http://device.local/x-nmos/connection/v1.1/single/receivers/r1/active?x=1"),
-    "absolute candidate in-base preserves query"
-)
-assert_eq(
-    "http://controller.example:8080" .. BRIDGE .. "/single/senders/s1",
-    handle("http://10.0.0.5/x-nmos/connection/v1.1/single/senders/s1"),
-    "absolute other candidate in-base -> bridge absolute"
-)
-assert_eq(
-    "http://controller.example:8080" .. BRIDGE .. "/single/receivers/r1/active",
-    handle(
-        "http://device.local:80/x-nmos/connection/v1.1/single/receivers/r1/active",
-        { upstream_authorities = "device.local" }
-    ),
-    "absolute explicit :80 matches authority without port"
-)
-assert_eq(
-    "http://controller.example:8080" .. BRIDGE .. "/single/receivers/r1/active",
-    handle("http://Device.Local/x-nmos/connection/v1.1/single/receivers/r1/active"),
-    "absolute candidate host match is case-insensitive"
-)
-assert_eq(
-    "http://controller.example:8080" .. BRIDGE .. "/single/receivers/r1/active",
-    handle(
-        "http://[2001:db8::1]/x-nmos/connection/v1.1/single/receivers/r1/active",
-        { upstream_authorities = "[2001:db8::1]:80" }
-    ),
-    "absolute IPv6 candidate in-base -> bridge absolute"
-)
-assert_nil(
-    handle("http://foreign.example/x-nmos/connection/v1.1/single/receivers/r1"),
-    "foreign absolute -> leave unchanged"
-)
-assert_nil(
-    handle("http://device.local/x-manifest/foo"),
-    "candidate absolute outside base -> leave unchanged"
-)
-assert_eq(
-    "http://controller.example:8080" .. BRIDGE .. "/single/receivers/r1/active",
-    handle("//device.local/x-nmos/connection/v1.1/single/receivers/r1/active"),
-    "scheme-relative candidate in-base uses client scheme"
-)
-assert_eq(
-    "https://controller.example" .. BRIDGE .. "/single/receivers/r1/active",
-    handle(
-        "//device.local/x-nmos/connection/v1.1/single/receivers/r1/active",
-        {
-            bridge_scheme = "https",
-            bridge_host = "controller.example",
-            upstream_scheme = "https",
-            upstream_authorities = "device.local:443",
-        }
-    ),
-    "scheme-relative with https client and https upstream"
-)
-assert_nil(
-    handle(
-        "//device.local/x-nmos/connection/v1.1/single/receivers/r1/active",
-        { bridge_scheme = "https", bridge_host = "controller.example" }
-    ),
-    "scheme-relative https client vs http upstream -> leave unchanged"
-)
-assert_nil(
-    handle("https://device.local/x-nmos/connection/v1.1/single/receivers/r1"),
-    "https absolute when upstream is http -> leave unchanged"
-)
-assert_eq("reject", handle("ftp://device.local/foo"), "non-http(s) absolute -> reject")
-assert_eq("reject", handle("http://"), "malformed absolute -> reject")
-assert_eq("reject", handle("http:///x-nmos/connection/v1.1/"), "absolute missing authority -> reject")
+test("handle_location_absolute_candidate", function()
+    assert_eq(
+        "http://controller.example:8080" .. BRIDGE .. "/single/receivers/r1/active",
+        handle("http://device.local/x-nmos/connection/v1.1/single/receivers/r1/active"),
+        "absolute candidate in-base -> bridge absolute"
+    )
+    assert_eq(
+        "http://controller.example:8080" .. BRIDGE .. "/single/receivers/r1/active?x=1",
+        handle("http://device.local/x-nmos/connection/v1.1/single/receivers/r1/active?x=1"),
+        "absolute candidate in-base preserves query"
+    )
+    assert_eq(
+        "http://controller.example:8080" .. BRIDGE .. "/single/senders/s1",
+        handle("http://10.0.0.5/x-nmos/connection/v1.1/single/senders/s1"),
+        "absolute other candidate in-base -> bridge absolute"
+    )
+    assert_eq(
+        "http://controller.example:8080" .. BRIDGE .. "/single/receivers/r1/active",
+        handle(
+            "http://device.local:80/x-nmos/connection/v1.1/single/receivers/r1/active",
+            { upstream_authorities = "device.local" }
+        ),
+        "absolute explicit :80 matches authority without port"
+    )
+    assert_eq(
+        "http://controller.example:8080" .. BRIDGE .. "/single/receivers/r1/active",
+        handle("http://Device.Local/x-nmos/connection/v1.1/single/receivers/r1/active"),
+        "absolute candidate host match is case-insensitive"
+    )
+    assert_eq(
+        "http://controller.example:8080" .. BRIDGE .. "/single/receivers/r1/active",
+        handle(
+            "http://[2001:db8::1]/x-nmos/connection/v1.1/single/receivers/r1/active",
+            { upstream_authorities = "[2001:db8::1]:80" }
+        ),
+        "absolute IPv6 candidate in-base -> bridge absolute"
+    )
+end)
+
+test("handle_location_absolute_leave_unchanged", function()
+    assert_nil(
+        handle("http://foreign.example/x-nmos/connection/v1.1/single/receivers/r1"),
+        "foreign absolute -> leave unchanged"
+    )
+    assert_nil(
+        handle("http://device.local/x-manifest/foo"),
+        "candidate absolute outside base -> leave unchanged"
+    )
+end)
+
+test("handle_location_scheme_relative", function()
+    assert_eq(
+        "http://controller.example:8080" .. BRIDGE .. "/single/receivers/r1/active",
+        handle("//device.local/x-nmos/connection/v1.1/single/receivers/r1/active"),
+        "scheme-relative candidate in-base uses client scheme"
+    )
+    assert_eq(
+        "https://controller.example" .. BRIDGE .. "/single/receivers/r1/active",
+        handle(
+            "//device.local/x-nmos/connection/v1.1/single/receivers/r1/active",
+            {
+                bridge_scheme = "https",
+                bridge_host = "controller.example",
+                upstream_scheme = "https",
+                upstream_authorities = "device.local:443",
+            }
+        ),
+        "scheme-relative with https client and https upstream"
+    )
+    assert_nil(
+        handle(
+            "//device.local/x-nmos/connection/v1.1/single/receivers/r1/active",
+            { bridge_scheme = "https", bridge_host = "controller.example" }
+        ),
+        "scheme-relative https client vs http upstream -> leave unchanged"
+    )
+end)
+
+test("handle_location_scheme_and_malformed", function()
+    assert_nil(
+        handle("https://device.local/x-nmos/connection/v1.1/single/receivers/r1"),
+        "https absolute when upstream is http -> leave unchanged"
+    )
+    assert_eq("reject", handle("ftp://device.local/foo"), "non-http(s) absolute -> reject")
+    assert_eq("reject", handle("http://"), "malformed absolute -> reject")
+    assert_eq("reject", handle("http:///x-nmos/connection/v1.1/"), "absolute missing authority -> reject")
+end)
 
 -- ---------------------------------------------------------------------------
 -- Envoy entry points (mock handles)
@@ -400,7 +486,7 @@ local function run_response(response)
     end
 end
 
-do
+test("envoy_on_request_stores_metadata", function()
     local metadata = {}
     envoy_on_request(mock_request_handle({
         [":authority"] = "controller.example:8080",
@@ -411,9 +497,9 @@ do
     assert_eq("controller.example:8080", dyn.host, "envoy_on_request stores host")
     assert_eq("http", dyn.scheme, "envoy_on_request stores scheme")
     assert_eq(DOWN, dyn.path, "envoy_on_request stores path")
-end
+end)
 
-do
+test("envoy_on_request_prefers_x_forwarded_proto", function()
     local metadata = {}
     envoy_on_request(mock_request_handle({
         [":authority"] = "controller.example:8080",
@@ -426,10 +512,10 @@ do
         metadata["nmos_bridge_location"].scheme,
         "envoy_on_request prefers x-forwarded-proto over :scheme"
     )
-end
+end)
 
 -- Host only (no :authority) — HTTP/1.1 style
-do
+test("envoy_on_request_falls_back_to_host", function()
     local metadata = {}
     envoy_on_request(mock_request_handle({
         ["Host"] = "controller.example:8080",
@@ -441,10 +527,10 @@ do
         metadata["nmos_bridge_location"].host,
         "envoy_on_request falls back to Host"
     )
-end
+end)
 
 -- Prefer :authority when both are present
-do
+test("envoy_on_request_prefers_authority_over_host", function()
     local metadata = {}
     envoy_on_request(mock_request_handle({
         [":authority"] = "controller.example:8080",
@@ -457,20 +543,20 @@ do
         metadata["nmos_bridge_location"].host,
         "envoy_on_request prefers :authority over Host"
     )
-end
+end)
 
 -- Empty / missing host → early return, no metadata written
-do
+test("envoy_on_request_skips_empty_host", function()
     local metadata = {}
     envoy_on_request(mock_request_handle({
         [":path"] = DOWN,
         [":scheme"] = "http",
     }, metadata))
     assert_nil(metadata["nmos_bridge_location"], "envoy_on_request skips empty host")
-end
+end)
 
 -- in-base root-relative Location on a body-less 307 -> rewritten in place
-do
+test("envoy_on_response_rewrites_in_base_location", function()
     local response = mock_response_handle({
         [":status"] = "307",
         ["location"] = BASE .. "/single/receivers/r1/active",
@@ -483,11 +569,11 @@ do
         "rewrite maps Location onto the bridge"
     )
     assert_nil(response.body_written, "rewrite leaves the body alone")
-end
+end)
 
 -- reject path on a body-less 307: redirects typically carry no body, and
 -- Envoy's body() returns nil then unless called with always_wrap_body
-do
+test("envoy_on_response_reject_bodyless_307", function()
     local expected_body =
         '{"code":502,"error":"unsupported upstream location: /x-manifest/stream","debug":null}'
     local response = mock_response_handle({
@@ -514,10 +600,10 @@ do
         response.header_data["content-length"],
         "reject body-less 307: content-length matches body"
     )
-end
+end)
 
 -- reject path when the upstream 3xx does carry a body
-do
+test("envoy_on_response_reject_307_with_body", function()
     local expected_body =
         '{"code":502,"error":"unsupported upstream location: /x-manifest/stream","debug":null}'
     local response = mock_response_handle({
@@ -537,10 +623,10 @@ do
         response.header_data["content-length"],
         "reject 307 with body: content-length matches body"
     )
-end
+end)
 
 -- non-3xx responses and responses without route metadata are left alone
-do
+test("envoy_on_response_leaves_non_3xx_alone", function()
     local response = mock_response_handle({
         [":status"] = "200",
         ["location"] = "/x-manifest/stream",
@@ -552,9 +638,9 @@ do
         response.header_data["location"],
         "non-3xx: Location untouched"
     )
-end
+end)
 
-do
+test("envoy_on_response_leaves_missing_metadata_alone", function()
     local response = mock_response_handle({
         [":status"] = "307",
         ["location"] = "/x-manifest/stream",
@@ -566,10 +652,17 @@ do
         response.header_data["location"],
         "no metadata: Location untouched"
     )
-end
+end)
 
-if failures > 0 then
-    io.stderr:write(string.format("%d failure(s)\n", failures))
+local tests_passed = tests_run - tests_failed
+if tests_failed > 0 then
+    print(
+        string.format(
+            "test result: FAILED. %d passed; %d failed",
+            tests_passed,
+            tests_failed
+        )
+    )
     os.exit(1)
 end
-print("ok")
+print(string.format("test result: ok. %d passed; 0 failed", tests_passed))

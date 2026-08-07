@@ -298,24 +298,31 @@ assert_eq("reject", handle("http:///x-nmos/connection/v1.1/"), "absolute missing
 
 -- Minimal mocks of the Envoy Lua handle API used by envoy_on_request and
 -- envoy_on_response. body() mimics Envoy: nil for an absent or empty body,
--- unless called with always_wrap_body.
+-- unless called with always_wrap_body. Header keys are lowercased; values are
+-- stringified on write (luaL_checkstring); add appends with a comma join.
 
 local function mock_headers(init)
     local headers = { data = {} }
     for name, value in pairs(init or {}) do
-        headers.data[name] = value
+        headers.data[string.lower(name)] = tostring(value)
     end
     function headers:get(name)
-        return self.data[name]
+        return self.data[string.lower(name)]
     end
     function headers:replace(name, value)
-        self.data[name] = value
+        self.data[string.lower(name)] = tostring(value)
     end
     function headers:add(name, value)
-        self.data[name] = value
+        local k = string.lower(name)
+        local v = tostring(value)
+        if self.data[k] then
+            self.data[k] = self.data[k] .. "," .. v
+        else
+            self.data[k] = v
+        end
     end
     function headers:remove(name)
-        self.data[name] = nil
+        self.data[string.lower(name)] = nil
     end
     return headers
 end
@@ -364,6 +371,8 @@ local function mock_response_handle(headers, metadata, body)
         return {
             setBytes = function(_, bytes)
                 response.body_written = bytes
+                -- Envoy's setBytes returns the new buffer length.
+                return #bytes
             end,
         }
     end
@@ -438,9 +447,12 @@ end
 -- reject path on a body-less 307: redirects typically carry no body, and
 -- Envoy's body() returns nil then unless called with always_wrap_body
 do
+    local expected_body =
+        '{"code":502,"error":"unsupported upstream location: /x-manifest/stream","debug":null}'
     local response = mock_response_handle({
         [":status"] = "307",
         ["location"] = "/x-manifest/stream",
+        ["content-length"] = "0",
     }, location_metadata(), nil)
     run_response(response)
     assert_eq("502", response.header_data[":status"], "reject body-less 307: 502")
@@ -455,25 +467,34 @@ do
         "reject body-less 307: error header"
     )
     assert_nil(response.header_data["location"], "reject body-less 307: Location removed")
+    assert_eq(expected_body, response.body_written, "reject body-less 307: NMOS error body")
     assert_eq(
-        '{"code":502,"error":"unsupported upstream location: /x-manifest/stream","debug":null}',
-        response.body_written,
-        "reject body-less 307: NMOS error body"
+        tostring(#expected_body),
+        response.header_data["content-length"],
+        "reject body-less 307: content-length matches body"
     )
 end
 
 -- reject path when the upstream 3xx does carry a body
 do
+    local expected_body =
+        '{"code":502,"error":"unsupported upstream location: /x-manifest/stream","debug":null}'
     local response = mock_response_handle({
         [":status"] = "307",
         ["location"] = "/x-manifest/stream",
+        ["content-length"] = "18",
     }, location_metadata(), "<html>moved</html>")
     run_response(response)
     assert_eq("502", response.header_data[":status"], "reject 307 with body: 502")
     assert_eq(
-        '{"code":502,"error":"unsupported upstream location: /x-manifest/stream","debug":null}',
+        expected_body,
         response.body_written,
         "reject 307 with body: NMOS error body"
+    )
+    assert_eq(
+        tostring(#expected_body),
+        response.header_data["content-length"],
+        "reject 307 with body: content-length matches body"
     )
 end
 

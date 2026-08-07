@@ -428,6 +428,47 @@ do
     )
 end
 
+-- Host only (no :authority) — HTTP/1.1 style
+do
+    local metadata = {}
+    envoy_on_request(mock_request_handle({
+        ["Host"] = "controller.example:8080",
+        [":path"] = DOWN,
+        [":scheme"] = "http",
+    }, metadata))
+    assert_eq(
+        "controller.example:8080",
+        metadata["nmos_bridge_location"].host,
+        "envoy_on_request falls back to Host"
+    )
+end
+
+-- Prefer :authority when both are present
+do
+    local metadata = {}
+    envoy_on_request(mock_request_handle({
+        [":authority"] = "controller.example:8080",
+        ["host"] = "other.example:9999",
+        [":path"] = DOWN,
+        [":scheme"] = "http",
+    }, metadata))
+    assert_eq(
+        "controller.example:8080",
+        metadata["nmos_bridge_location"].host,
+        "envoy_on_request prefers :authority over Host"
+    )
+end
+
+-- Empty / missing host → early return, no metadata written
+do
+    local metadata = {}
+    envoy_on_request(mock_request_handle({
+        [":path"] = DOWN,
+        [":scheme"] = "http",
+    }, metadata))
+    assert_nil(metadata["nmos_bridge_location"], "envoy_on_request skips empty host")
+end
+
 -- in-base root-relative Location on a body-less 307 -> rewritten in place
 do
     local response = mock_response_handle({

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
     Card,
     CardContent,
@@ -8,10 +9,14 @@ import {
     List,
     ListItem,
     MenuItem,
+    Paper,
     Switch,
+    Tab,
+    Tabs,
     TextField,
     withStyles,
 } from '@material-ui/core';
+import { useTheme } from '@material-ui/styles';
 import { Title } from 'react-admin';
 import {
     AUTH_API,
@@ -19,7 +24,8 @@ import {
     BRIDGE_DISABLED,
     BRIDGE_FORCED,
     CLIENT_ID,
-    CONNECTION_BRIDGE,
+    CONNECTION_BRIDGE_API,
+    CONNECTION_BRIDGE_MODE,
     DNSSD_API,
     FRIENDLY_PARAMETERS,
     IS12_BROWSER,
@@ -46,9 +52,17 @@ const StyledTextField = withStyles(theme => ({
     },
 }))(TextField);
 
+const StyledFormControl = withStyles(theme => ({
+    root: {
+        width: 450,
+        textAlign: 'left',
+    },
+}))(FormControl);
+
 const StyledDivider = withStyles(theme => ({
     root: {
         width: 450,
+        margin: theme.spacing(1, 'auto'),
     },
 }))(Divider);
 
@@ -92,9 +106,22 @@ const pagingLimits = [
 
 const selectOnFocus = event => event.target.select();
 
+const BASIC = 'basic';
+const ADVANCED = 'advanced';
+
+// Survive remount when Authorization toggles authProvider on <Admin>
+let selectedTab = BASIC;
+
 const Settings = () => {
     const [values, setValues] = useSettingsContext();
     const [useAuth, setUseAuth] = useAuthContext();
+    const [tab, setTab] = useState(selectedTab);
+
+    const theme = useTheme();
+    const tabBackgroundColor =
+        theme.palette.type === 'light'
+            ? theme.palette.grey[100]
+            : theme.palette.grey[900];
 
     const handleTextChange = name => event => {
         setValues({ ...values, [name]: event.target.value });
@@ -110,228 +137,280 @@ const Settings = () => {
 
     return (
         <div style={{ paddingTop: '24px' }}>
-            <Card>
-                <Title title={'Settings'} />
-                <CardContent align="center">
-                    <List>
-                        {!hiddenSetting(QUERY_API) && (
-                            <StyledListItem>
-                                <StyledTextField
-                                    label="Query API"
-                                    variant="filled"
-                                    value={values[QUERY_API]}
-                                    onChange={handleTextChange(QUERY_API)}
-                                    onFocus={selectOnFocus}
-                                    disabled={disabledSetting(QUERY_API)}
-                                    helperText="Used to show the registered Nodes and their sub-resources"
-                                    name="queryapi"
-                                />
-                            </StyledListItem>
-                        )}
-                        {!hiddenSetting(LOGGING_API) && (
-                            <StyledListItem>
-                                <StyledTextField
-                                    label="Logging API"
-                                    variant="filled"
-                                    value={values[LOGGING_API]}
-                                    onChange={handleTextChange(LOGGING_API)}
-                                    onFocus={selectOnFocus}
-                                    disabled={disabledSetting(LOGGING_API)}
-                                    helperText="Used to show registry Logs"
-                                />
-                            </StyledListItem>
-                        )}
-                        {!hiddenSetting(DNSSD_API) && (
-                            <StyledListItem>
-                                <StyledTextField
-                                    label="DNS-SD API"
-                                    variant="filled"
-                                    value={values[DNSSD_API]}
-                                    onChange={handleTextChange(DNSSD_API)}
-                                    onFocus={selectOnFocus}
-                                    disabled={disabledSetting(DNSSD_API)}
-                                    helperText="Used to show alternative Query APIs"
-                                />
-                            </StyledListItem>
-                        )}
-                        {!hiddenSetting(IS12_BROWSER) && (
-                            <StyledListItem>
-                                <StyledTextField
-                                    label="IS-12 Browser"
-                                    variant="filled"
-                                    value={values[IS12_BROWSER]}
-                                    onChange={handleTextChange(IS12_BROWSER)}
-                                    onFocus={selectOnFocus}
-                                    disabled={disabledSetting(IS12_BROWSER)}
-                                    helperText="Base URL of the IS-12 Device Model Browser application"
-                                />
-                            </StyledListItem>
-                        )}
-                        {!hiddenSetting(USE_RQL) && (
-                            <StyledListItem>
-                                <FormControl
-                                    variant="filled"
-                                    disabled={disabledSetting(USE_RQL)}
-                                >
-                                    <FormControlLabel
-                                        label="RQL"
-                                        name="userql"
-                                        control={
-                                            <Switch
-                                                checked={values[USE_RQL]}
-                                                onChange={handleBooleanChange(
-                                                    USE_RQL
-                                                )}
-                                                color="primary"
-                                            />
-                                        }
+            <Title title={'Settings'} />
+            <div style={{ display: 'flex' }}>
+                <Paper
+                    style={{
+                        alignSelf: 'flex-end',
+                        background: tabBackgroundColor,
+                    }}
+                >
+                    <Tabs
+                        value={tab}
+                        onChange={(event, value) => {
+                            selectedTab = value;
+                            setTab(value);
+                        }}
+                        indicatorColor="primary"
+                        textColor="primary"
+                    >
+                        <Tab label="Basic" value={BASIC} />
+                        <Tab label="Advanced" value={ADVANCED} />
+                    </Tabs>
+                </Paper>
+                <span style={{ flexGrow: 1 }} />
+            </div>
+            <div style={{ display: 'flex' }}>
+                <Card style={{ flex: '1 1 auto' }}>
+                    <CardContent align="center">
+                        <List
+                            style={{ display: tab === BASIC ? null : 'none' }}
+                        >
+                            {!hiddenSetting(QUERY_API) && (
+                                <StyledListItem>
+                                    <StyledTextField
+                                        label="Query API"
+                                        variant="filled"
+                                        value={values[QUERY_API]}
+                                        onChange={handleTextChange(QUERY_API)}
+                                        onFocus={selectOnFocus}
+                                        disabled={disabledSetting(QUERY_API)}
+                                        helperText="Used to show the registered Nodes and their sub-resources"
+                                        name="queryapi"
                                     />
-                                    <FormHelperText variant="filled">
-                                        Use Resource Query Language rather than
-                                        basic query syntax
-                                    </FormHelperText>
-                                </FormControl>
-                            </StyledListItem>
-                        )}
-                        <StyledDivider />
-                        {!hiddenSetting(USE_AUTH) && (
-                            <StyledListItem>
-                                <FormControl
-                                    variant="filled"
-                                    disabled={disabledSetting(USE_AUTH)}
-                                >
-                                    <FormControlLabel
-                                        label="Authorization"
-                                        control={
-                                            <Switch
-                                                checked={useAuth}
-                                                onChange={handleUseAuthChange()}
-                                                color="primary"
-                                            />
-                                        }
+                                </StyledListItem>
+                            )}
+                            {!hiddenSetting(LOGGING_API) && (
+                                <StyledListItem>
+                                    <StyledTextField
+                                        label="Logging API"
+                                        variant="filled"
+                                        value={values[LOGGING_API]}
+                                        onChange={handleTextChange(LOGGING_API)}
+                                        onFocus={selectOnFocus}
+                                        disabled={disabledSetting(LOGGING_API)}
+                                        helperText="Used to show registry Logs"
                                     />
-                                    <FormHelperText variant="filled">
-                                        Use IS-10 authenticated API calls
-                                    </FormHelperText>
-                                </FormControl>
-                            </StyledListItem>
-                        )}
-                        {!hiddenSetting(CLIENT_ID) && (
-                            <StyledListItem>
-                                <StyledTextField
-                                    label="Client ID"
-                                    variant="filled"
-                                    value={values[CLIENT_ID]}
-                                    onChange={handleTextChange(CLIENT_ID)}
-                                    onFocus={selectOnFocus}
-                                    disabled={
-                                        !useAuth || disabledSetting(CLIENT_ID)
-                                    }
-                                    helperText="Used by the Authentication Server to uniquely identify this client"
-                                />
-                            </StyledListItem>
-                        )}
-                        {!hiddenSetting(AUTH_API) && (
-                            <StyledListItem>
-                                <StyledTextField
-                                    label="Authorization API"
-                                    variant="filled"
-                                    value={values[AUTH_API]}
-                                    onChange={handleTextChange(AUTH_API)}
-                                    onFocus={selectOnFocus}
-                                    disabled={
-                                        !useAuth || disabledSetting(AUTH_API)
-                                    }
-                                    helperText="Authentication Server's well known endpoint"
-                                />
-                            </StyledListItem>
-                        )}
-                        <StyledDivider />
-                        {!hiddenSetting(CONNECTION_BRIDGE) && (
-                            <StyledListItem>
-                                <StyledTextField
-                                    select
-                                    label="Connection Bridge"
-                                    variant="filled"
-                                    value={values[CONNECTION_BRIDGE]}
-                                    onChange={handleTextChange(
-                                        CONNECTION_BRIDGE
-                                    )}
-                                    margin="normal"
-                                    disabled={disabledSetting(
-                                        CONNECTION_BRIDGE
-                                    )}
-                                    helperText={
-                                        'Proxy Connection API requests via the bridge at /x-nmos-bridge/v1.0 on the Query API host, when Device control endpoints are not directly reachable (Auto) or always (Forced)'
-                                    }
-                                >
-                                    {bridgeModes.map(option => (
-                                        <MenuItem
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </MenuItem>
-                                    ))}
-                                </StyledTextField>
-                            </StyledListItem>
-                        )}
-                        <StyledDivider />
-                        {!hiddenSetting(PAGING_LIMIT) && (
-                            <StyledListItem>
-                                <StyledTextField
-                                    select
-                                    label="Paging Limit"
-                                    variant="filled"
-                                    value={values[PAGING_LIMIT]}
-                                    onChange={handleTextChange(PAGING_LIMIT)}
-                                    margin="normal"
-                                    disabled={disabledSetting(PAGING_LIMIT)}
-                                    helperText="Applied to paginated API requests for list views"
-                                >
-                                    {pagingLimits.map(option => (
-                                        <MenuItem
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </MenuItem>
-                                    ))}
-                                </StyledTextField>
-                            </StyledListItem>
-                        )}
-                        {!hiddenSetting(FRIENDLY_PARAMETERS) && (
-                            <StyledListItem>
-                                <FormControl
-                                    variant="filled"
-                                    disabled={disabledSetting(
-                                        FRIENDLY_PARAMETERS
-                                    )}
-                                >
-                                    <FormControlLabel
-                                        control={
-                                            <Switch
-                                                checked={
-                                                    values[FRIENDLY_PARAMETERS]
-                                                }
-                                                onChange={handleBooleanChange(
-                                                    FRIENDLY_PARAMETERS
-                                                )}
-                                                color="primary"
-                                            />
-                                        }
-                                        label="Friendly Names"
+                                </StyledListItem>
+                            )}
+                            {!hiddenSetting(DNSSD_API) && (
+                                <StyledListItem>
+                                    <StyledTextField
+                                        label="DNS-SD API"
+                                        variant="filled"
+                                        value={values[DNSSD_API]}
+                                        onChange={handleTextChange(DNSSD_API)}
+                                        onFocus={selectOnFocus}
+                                        disabled={disabledSetting(DNSSD_API)}
+                                        helperText="Used to show alternative Query APIs"
                                     />
-                                    <FormHelperText>
-                                        Show friendly names rather than API
-                                        parameter values
-                                    </FormHelperText>
-                                </FormControl>
-                            </StyledListItem>
-                        )}
-                    </List>
-                </CardContent>
-            </Card>
+                                </StyledListItem>
+                            )}
+                            {!hiddenSetting(USE_RQL) && (
+                                <StyledListItem>
+                                    <StyledFormControl
+                                        variant="filled"
+                                        disabled={disabledSetting(USE_RQL)}
+                                    >
+                                        <FormControlLabel
+                                            label="RQL"
+                                            name="userql"
+                                            control={
+                                                <Switch
+                                                    checked={values[USE_RQL]}
+                                                    onChange={handleBooleanChange(
+                                                        USE_RQL
+                                                    )}
+                                                    color="primary"
+                                                />
+                                            }
+                                        />
+                                        <FormHelperText variant="filled">
+                                            Use Resource Query Language rather
+                                            than basic query syntax
+                                        </FormHelperText>
+                                    </StyledFormControl>
+                                </StyledListItem>
+                            )}
+                            {!hiddenSetting(PAGING_LIMIT) && (
+                                <StyledListItem>
+                                    <StyledTextField
+                                        select
+                                        label="Paging Limit"
+                                        variant="filled"
+                                        value={values[PAGING_LIMIT]}
+                                        onChange={handleTextChange(
+                                            PAGING_LIMIT
+                                        )}
+                                        disabled={disabledSetting(PAGING_LIMIT)}
+                                        helperText="Applied to paginated API requests for list views"
+                                    >
+                                        {pagingLimits.map(option => (
+                                            <MenuItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </MenuItem>
+                                        ))}
+                                    </StyledTextField>
+                                </StyledListItem>
+                            )}
+                            {!hiddenSetting(FRIENDLY_PARAMETERS) && (
+                                <StyledListItem>
+                                    <StyledFormControl
+                                        variant="filled"
+                                        disabled={disabledSetting(
+                                            FRIENDLY_PARAMETERS
+                                        )}
+                                    >
+                                        <FormControlLabel
+                                            control={
+                                                <Switch
+                                                    checked={
+                                                        values[
+                                                            FRIENDLY_PARAMETERS
+                                                        ]
+                                                    }
+                                                    onChange={handleBooleanChange(
+                                                        FRIENDLY_PARAMETERS
+                                                    )}
+                                                    color="primary"
+                                                />
+                                            }
+                                            label="Friendly Names"
+                                        />
+                                        <FormHelperText>
+                                            Show friendly names rather than API
+                                            parameter values
+                                        </FormHelperText>
+                                    </StyledFormControl>
+                                </StyledListItem>
+                            )}
+                        </List>
+                        <List
+                            style={{
+                                display: tab === ADVANCED ? null : 'none',
+                            }}
+                        >
+                            {!hiddenSetting(USE_AUTH) && (
+                                <StyledListItem>
+                                    <StyledFormControl
+                                        variant="filled"
+                                        disabled={disabledSetting(USE_AUTH)}
+                                    >
+                                        <FormControlLabel
+                                            label="Authorization"
+                                            control={
+                                                <Switch
+                                                    checked={useAuth}
+                                                    onChange={handleUseAuthChange()}
+                                                    color="primary"
+                                                />
+                                            }
+                                        />
+                                        <FormHelperText variant="filled">
+                                            Use IS-10 authenticated API calls
+                                        </FormHelperText>
+                                    </StyledFormControl>
+                                </StyledListItem>
+                            )}
+                            {!hiddenSetting(CLIENT_ID) && (
+                                <StyledListItem>
+                                    <StyledTextField
+                                        label="Client ID"
+                                        variant="filled"
+                                        value={values[CLIENT_ID]}
+                                        onChange={handleTextChange(CLIENT_ID)}
+                                        onFocus={selectOnFocus}
+                                        disabled={
+                                            !useAuth ||
+                                            disabledSetting(CLIENT_ID)
+                                        }
+                                        helperText="Used by the Authentication Server to uniquely identify this client"
+                                    />
+                                </StyledListItem>
+                            )}
+                            {!hiddenSetting(AUTH_API) && (
+                                <StyledListItem>
+                                    <StyledTextField
+                                        label="Authorization API"
+                                        variant="filled"
+                                        value={values[AUTH_API]}
+                                        onChange={handleTextChange(AUTH_API)}
+                                        onFocus={selectOnFocus}
+                                        disabled={
+                                            !useAuth ||
+                                            disabledSetting(AUTH_API)
+                                        }
+                                        helperText="Authentication Server's well known endpoint"
+                                    />
+                                </StyledListItem>
+                            )}
+                            <StyledDivider />
+                            {!hiddenSetting(CONNECTION_BRIDGE_MODE) && (
+                                <StyledListItem>
+                                    <StyledTextField
+                                        select
+                                        label="Connection Bridge Mode"
+                                        variant="filled"
+                                        value={values[CONNECTION_BRIDGE_MODE]}
+                                        onChange={handleTextChange(
+                                            CONNECTION_BRIDGE_MODE
+                                        )}
+                                        disabled={disabledSetting(
+                                            CONNECTION_BRIDGE_MODE
+                                        )}
+                                        helperText="Proxy Connection API requests when Device endpoints are unreachable (Auto) or always (Forced)"
+                                    >
+                                        {bridgeModes.map(option => (
+                                            <MenuItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </MenuItem>
+                                        ))}
+                                    </StyledTextField>
+                                </StyledListItem>
+                            )}
+                            {!hiddenSetting(CONNECTION_BRIDGE_API) && (
+                                <StyledListItem>
+                                    <StyledTextField
+                                        label="Connection Bridge API"
+                                        variant="filled"
+                                        value={values[CONNECTION_BRIDGE_API]}
+                                        onChange={handleTextChange(
+                                            CONNECTION_BRIDGE_API
+                                        )}
+                                        onFocus={selectOnFocus}
+                                        disabled={disabledSetting(
+                                            CONNECTION_BRIDGE_API
+                                        )}
+                                        helperText="Base URL for proxied Connection API requests"
+                                    />
+                                </StyledListItem>
+                            )}
+                            <StyledDivider />
+                            {!hiddenSetting(IS12_BROWSER) && (
+                                <StyledListItem>
+                                    <StyledTextField
+                                        label="IS-12 Browser"
+                                        variant="filled"
+                                        value={values[IS12_BROWSER]}
+                                        onChange={handleTextChange(
+                                            IS12_BROWSER
+                                        )}
+                                        onFocus={selectOnFocus}
+                                        disabled={disabledSetting(IS12_BROWSER)}
+                                        helperText="Base URL of the IS-12 Device Model Browser application"
+                                    />
+                                </StyledListItem>
+                            )}
+                        </List>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 };

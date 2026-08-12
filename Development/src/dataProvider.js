@@ -15,6 +15,7 @@ import { makeBearerAuthHeader } from './authProvider';
 import {
     BRIDGE_AUTO,
     BRIDGE_FORCED,
+    CONNECTION_BRIDGE_API,
     DNSSD_API,
     LOGGING_API,
     QUERY_API,
@@ -28,12 +29,12 @@ import {
 } from './settings';
 
 // the Connection API Bridge (see ../../ConnectionBridge) makes Device
-// Connection APIs available at a well-known path on the Query API host
-// for deployments where the browser cannot reach the Device directly
+// Connection APIs available at a configured base URL for deployments where
+// the browser cannot reach the Device directly
 const bridgeAddress = (deviceId, version) =>
     concatUrl(
-        new URL(apiUrl(QUERY_API), window.location.href).origin,
-        `/x-nmos-bridge/v1.0/devices/${deviceId}/connection/${version}`
+        apiUrl(CONNECTION_BRIDGE_API),
+        `/devices/${deviceId}/connection/${version}`
     );
 
 // which access path, direct or bridge, most recently worked for each Device

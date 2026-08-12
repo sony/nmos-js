@@ -21,8 +21,9 @@
 --   candidate Envoy selected).
 --
 -- Envoy internal redirects are not used: they require a fully qualified
--- Location and then re-select a route by path, so Device absolutes under
--- /x-nmos/ would hit the Registry cluster.
+-- Location and then re-select a route by path. A Device path such as
+-- /x-nmos/connection/... would not match a bridge route under
+-- /x-nmos-bridge/... (and would not hit the Query API cluster either).
 --
 -- Per-route context is set into dynamic metadata namespace
 -- nmos_bridge_location by the nmos.bridge.location_meta Lua filter

@@ -17,6 +17,22 @@ const REGISTRY_QUERY_URL = (process.env.REGISTRY_QUERY_URL || '').replace(
     ''
 );
 const APP_URL = process.env.APP_URL || '';
+// optional override for /x-dns-sd/ upstream; when unset, use the same host
+// and port as REGISTRY_QUERY_URL (typical when nmos-cpp mdns_port matches
+// query_port). Only hostname and port are used for the Envoy cluster; any
+// path in either URL is ignored (Envoy forwards the client request path).
+const REGISTRY_DNS_SD_URL = (process.env.REGISTRY_DNS_SD_URL || '').replace(
+    /\/$/,
+    ''
+);
+// optional override for /log/ upstream; when unset, use the same host and
+// port as REGISTRY_QUERY_URL (typical when nmos-cpp logging_port matches
+// query_port). Only hostname and port are used for the Envoy cluster; any
+// path in either URL is ignored (Envoy forwards the client request path).
+const REGISTRY_LOGGING_URL = (process.env.REGISTRY_LOGGING_URL || '').replace(
+    /\/$/,
+    ''
+);
 const OUTPUT_DIR = process.env.OUTPUT_DIR || '/etc/envoy/dynamic';
 const ROUTE_TIMEOUT_SECONDS = Number(process.env.ROUTE_TIMEOUT_SECONDS) || 15;
 // subscription update coalescing and WebSocket reconnect backoff
@@ -183,6 +199,8 @@ const clusterName = target =>
     )}`;
 
 const staticClusterFromUrl = (name, urlString) => {
+    // Only scheme defaults, hostname, and port are used; any path in
+    // urlString is ignored (Envoy forwards the client request path).
     const url = new URL(urlString);
     return {
         '@type': 'type.googleapis.com/envoy.config.cluster.v3.Cluster',
@@ -258,18 +276,18 @@ const bridgeCluster = target => {
     };
 };
 
-const nmosError = (status, error) =>
-    JSON.stringify({ code: status, error, debug: null });
-
-const directResponse = (status, error) => ({
+const directResponse = (status, jsonBody) => ({
     direct_response: {
         status,
-        body: { inline_string: nmosError(status, error) },
+        body: { inline_string: JSON.stringify(jsonBody) },
     },
     response_headers_to_add: [
         { header: { key: 'content-type', value: 'application/json' } },
     ],
 });
+
+const directErrorResponse = (status, error) =>
+    directResponse(status, { code: status, error, debug: null });
 
 const bridgeRoutes = target => {
     // path_separated_prefix matches the version path exactly or with a
@@ -353,7 +371,7 @@ const bridgeRoutes = target => {
         // any other method on a known target
         {
             match: { path_separated_prefix: pathPrefix },
-            ...directResponse(405, 'Method not allowed'),
+            ...directErrorResponse(405, 'Method not allowed'),
         },
     ];
 };
@@ -385,18 +403,59 @@ const routeConfiguration = targets => ({
                 // controls produce routes, everything else stops here
                 {
                     match: { prefix: `${BRIDGE_PREFIX}/` },
-                    ...directResponse(404, 'Unknown bridge target'),
+                    ...directErrorResponse(404, 'Unknown bridge target'),
                 },
-                // Registry APIs
+                // Query API (host/port from REGISTRY_QUERY_URL; path is not
+                // rewritten — clients request /x-nmos/query...)
                 {
-                    match: { prefix: '/x-nmos/' },
+                    match: { path_separated_prefix: '/x-nmos/query' },
                     route: {
-                        cluster: 'registry',
+                        cluster: 'registry_query',
+                        timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
+                    },
+                },
+                // IS-04 /x-nmos base: list only APIs this Envoy front door
+                // actually proxies (not Registration/Node/etc.)
+                {
+                    match: { path: '/x-nmos' },
+                    ...directResponse(200, ['query/']),
+                },
+                {
+                    match: { path: '/x-nmos/' },
+                    ...directResponse(200, ['query/']),
+                },
+                // DNS-SD / MDNS API (same host/port as Query unless
+                // REGISTRY_DNS_SD_URL is set)
+                {
+                    match: { path_separated_prefix: '/x-dns-sd' },
+                    route: {
+                        cluster: REGISTRY_DNS_SD_URL
+                            ? 'registry_dns_sd'
+                            : 'registry_query',
+                        timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
+                    },
+                },
+                // Logging API (same host/port as Query unless
+                // REGISTRY_LOGGING_URL is set)
+                {
+                    match: { path_separated_prefix: '/log' },
+                    route: {
+                        cluster: REGISTRY_LOGGING_URL
+                            ? 'registry_logging'
+                            : 'registry_query',
                         timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
                     },
                 },
                 ...(APP_URL
-                    ? [{ match: { prefix: '/' }, route: { cluster: 'app' } }]
+                    ? [
+                          {
+                              match: { prefix: '/' },
+                              route: {
+                                  cluster: 'app',
+                                  timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
+                              },
+                          },
+                      ]
                     : []),
             ],
         },
@@ -424,7 +483,13 @@ const writeResource = (filename, resources, state) => {
 
 const apply = (targets, state) => {
     const clusters = [
-        staticClusterFromUrl('registry', REGISTRY_QUERY_URL),
+        staticClusterFromUrl('registry_query', REGISTRY_QUERY_URL),
+        ...(REGISTRY_DNS_SD_URL
+            ? [staticClusterFromUrl('registry_dns_sd', REGISTRY_DNS_SD_URL)]
+            : []),
+        ...(REGISTRY_LOGGING_URL
+            ? [staticClusterFromUrl('registry_logging', REGISTRY_LOGGING_URL)]
+            : []),
         ...(APP_URL ? [staticClusterFromUrl('app', APP_URL)] : []),
         ...targets.map(bridgeCluster),
     ];

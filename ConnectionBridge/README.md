@@ -37,20 +37,33 @@ Methods are restricted to `GET`, `POST`, `PATCH` and `OPTIONS`. Query strings, m
 ```text
 Browser
     |
-    v
- Envoy
+    +--(HTTP / WebSocket)------> Registry Query API
     |
-    +--> Registry APIs
+    +--(HTTP)------------------> Envoy
+                                    |
+                                    +--> /x-nmos-bridge/... --> Device Connection APIs
+                                    |
+                                    +--> /x-nmos -> ["query/"] (fixed listing)
+                                    |
+                                    +--> /x-nmos/query/... (convenience)
+                                    |         --> Registry Query API
+                                    |
+                                    +--> /x-dns-sd/... (convenience)
+                                    |         --> Registry DNS-SD API
+                                    |
+                                    +--> /log/... (convenience)
+                                    |         --> Registry Logging API
+                                    |
+                                    +--> /... (optional) --> nmos-js app
+
+Adapter (server-side; not on the browser path)
     |
-    +--> NMOS Connection API Bridge
-             |
-             v
-        Device Connection APIs
+    +--(HTTP / WebSocket)------> Registry Query API (Device discovery)
 ```
 
 The Connection API Bridge consists of Envoy and the adapter service:
 
-- **Envoy** performs all proxying: routing, request size limits, timeouts, retry policy, health checking and failover, and access logging of `POST` and `PATCH` requests.
+- **Envoy** proxies browser HTTP to Device Connection APIs on `/x-nmos-bridge/...` (required for the bridge). It may also proxy the Query API on `/x-nmos/query/...`, DNS-SD on `/x-dns-sd/...`, and the nmos-js app on `/` as optional convenience. `GET /x-nmos/` returns a fixed listing of `["query/"]` so discovery matches what is actually proxied. Other `/x-nmos/` APIs (Registration, Node, …) are not proxied — they may use different ports. It applies routing, request size limits, timeouts, retry policy, health checking and failover, and access logging of `POST` and `PATCH` requests. It does not proxy Query API WebSocket subscriptions.
 - **The adapter** (`adapter/`) converts Registry state into Envoy configuration. It tracks Devices through a [Query API WebSocket subscription](https://specs.amwa.tv/is-04/branches/v1.3.x/docs/4.2._Behaviour_-_Querying.html) (non-persistent, `resource_path` `/devices`), extracts Connection API controls, and generates Envoy routes and clusters, atomically replacing the dynamic configuration files (`rds.json`, `cds.json`) which Envoy reloads via filesystem watch. The adapter does not proxy traffic and does not determine runtime health.
 
   On connecting, the Registry sends a sync of all current Devices, then pushes added, modified and removed events; the adapter rebuilds configuration on each change. If the connection is interrupted, the adapter resubscribes with exponential backoff and the fresh sync re-establishes all mappings, including Devices that were removed while disconnected. The last good configuration keeps being served until the new sync arrives.
@@ -77,6 +90,15 @@ Envoy health checks the candidates and fails over from higher to lower priority 
 
 Controls that are not safe to proxy are logged and ignored: missing or malformed hrefs, unsupported schemes (Phase 1 supports `http` upstreams only), hrefs whose path is inconsistent with the advertised version, and duplicates after normalization.
 
+## Testing
+
+Location rewrite policy is covered by Lua unit tests (Lua 5.1 / LuaJIT, matching Envoy). From `envoy/`:
+
+```bash
+lua5.1 location_rewrite_test.lua
+lua5.1 location_rewrite_test.lua -v   # per-case status lines
+```
+
 ## Running
 
 ```bash
@@ -87,8 +109,10 @@ Edit `docker-compose.yml` first to point the adapter at the deployment:
 
 | Variable | Description | Default |
 | --- | --- | --- |
-| `REGISTRY_QUERY_URL` | Query API URL used for Device discovery; its host and port are also used as the upstream for Envoy's `/x-nmos/` routes | (required) |
-| `APP_URL` | nmos-js application URL used as the upstream for Envoy's catch-all `/` route; if unset, no application route is configured | (none) |
+| `REGISTRY_QUERY_URL` | Query API URL used by the adapter for Device discovery; its host and port are the upstream for Envoy's `/x-nmos/query/` routes (and `/x-dns-sd/` / `/log/` when the corresponding override is unset). The path in this URL is not used for proxying. | (required) |
+| `REGISTRY_DNS_SD_URL` | optional upstream for Envoy's `/x-dns-sd/` routes when DNS-SD is not on the same host/port as `REGISTRY_QUERY_URL` | (same as Query) |
+| `REGISTRY_LOGGING_URL` | optional upstream for Envoy's `/log/` routes when Logging is not on the same host/port as `REGISTRY_QUERY_URL` | (same as Query) |
+| `APP_URL` | upstream for Envoy's catch-all `/` route (standalone nmos-js at `/`, or a Registry that serves the UI under `/admin`); if unset, no application route is configured | (none) |
 | `ROUTE_TIMEOUT_SECONDS` | upstream request timeout | `15` |
 | `MAX_UPDATE_RATE_MS` | subscription `max_update_rate_ms` (event coalescing) | `100` |
 | `RECONNECT_MIN_MS` | initial WebSocket reconnect backoff | `1000` |
@@ -98,29 +122,54 @@ Edit `docker-compose.yml` first to point the adapter at the deployment:
 
 Envoy listens on port 8080 and routes:
 
-- `/x-nmos-bridge/v1.0/devices/...` to Device Connection APIs
-- `/x-nmos/...` to the Registry
-- everything else to the nmos-js app, if `APP_URL` is set
+- `/x-nmos` and `/x-nmos/` return a fixed IS-04-style listing of `["query/"]` (only what this front door proxies)
+- `/x-nmos/query/...` to the Registry Query API (convenience; see Deployment)
+- `/x-dns-sd/...` to the Registry DNS-SD / MDNS API (convenience; same upstream as Query unless `REGISTRY_DNS_SD_URL` is set)
+- `/log/...` to the Registry Logging API (convenience; same upstream as Query unless `REGISTRY_LOGGING_URL` is set)
+- everything else to the nmos-js app (or Registry UI), if `APP_URL` is set
 
 ## Deployment
 
-Deploy Envoy as the browser-facing endpoint for both the Query API and the
-Connection API Bridge. Configure nmos-js to use the Query API through Envoy,
-for example:
+The bridge itself only requires browser HTTP access to
+`/x-nmos-bridge/v1.0/...` on Envoy. Proxying Query HTTP on `/x-nmos/query/...`,
+DNS-SD on `/x-dns-sd/...`, and Logging on `/log/...` is convenience (one
+browser-facing HTTP origin when the SPA is also served via `APP_URL`, or when
+those SPA settings point at Envoy). Registration, Node, and other non-Query
+`/x-nmos/` APIs are not proxied; `GET /x-nmos/` therefore lists only `query/`,
+rather than reflecting the Registry's full `/x-nmos/` catalogue. By default
+`/x-dns-sd/` and `/log/` use the same upstream host and port as
+`REGISTRY_QUERY_URL`; set `REGISTRY_DNS_SD_URL` or `REGISTRY_LOGGING_URL` when
+those APIs listen elsewhere (for example a different `mdns_port` or
+`logging_port`).
 
-```text
-http://controller.example.com:8080/x-nmos/query/v1.3
-```
+`APP_URL` may be a standalone nmos-js host (SPA at `/`) or a Registry that
+serves the UI under `/admin` (nmos-cpp-registry). In both cases Envoy's `/log/`
+route supports the SPA Logging API default (`{origin}/log/v1.0`).
 
-The client derives the bridge origin from the configured Query API, so the
-corresponding bridge URL is:
+Configure nmos-js **Connection Bridge API** to the bridge base, for example:
 
 ```text
 http://controller.example.com:8080/x-nmos-bridge/v1.0
 ```
 
-The adapter must be able to reach the Query API and the WebSocket URL
-advertised when it creates the Query API subscription. Set
+The default (when unset in config or Settings) is this page's origin plus
+`/x-nmos-bridge/v1.0`.
+
+A layout that also proxies Query and Logging through Envoy might use:
+
+```text
+Query API:              http://controller.example.com:8080/x-nmos/query/v1.3
+Logging API:            http://controller.example.com:8080/log/v1.0
+Connection Bridge API:  http://controller.example.com:8080/x-nmos-bridge/v1.0
+```
+
+Query API WebSocket subscriptions are not proxied by Envoy. Subscription
+`ws_href` values are absolute URIs (`format: uri`) advertised by the
+Registry and often use a different port than Query HTTP (for example
+nmos-cpp-registry's `query_ws_port`). Browser clients that open those
+sockets connect to the Registry (or whatever `ws_href` names), not through
+Envoy. The adapter's server-side subscription is separate: it must reach
+the Query API and the WebSocket URL from the subscription response. Set
 `REGISTRY_QUERY_WS_URL` when the advertised `ws_href` uses a scheme, host
 name or port which is not reachable from the adapter, for example
 `ws://192.168.6.101:81`.
@@ -138,9 +187,10 @@ file-based arrangement. A deployment with independently scaled Envoy
 instances would require an xDS control plane, which is not currently
 implemented.
 
-If nmos-js is served separately, expose Envoy as the Query API endpoint and
-configure nmos-js to use it. Alternatively, set `APP_URL` and use Envoy as a
-single origin for nmos-js, the Registry APIs, and the bridge.
+If nmos-js is served separately, set Query API, Logging API and Connection
+Bridge API as needed (Registry and/or Envoy). Alternatively, set `APP_URL`
+and use Envoy as a single origin for nmos-js, Query/DNS-SD/Logging APIs, and
+the bridge.
 
 ### Container Orchestration
 
@@ -154,14 +204,27 @@ and are not included here.
 
 ## Browser Application Behavior
 
-The nmos-js client offers a **Connection Bridge** setting with three modes:
+The nmos-js client offers a **Connection Bridge Mode** and a separate
+**Connection Bridge API**:
 
 - **No Bridge** (default): use the Device control hrefs directly, never the bridge.
 - **Auto Bridge**: the preferred access sequence. Use the Device control href directly; if inaccessible, use the bridge URL; cache the successful access path per Device. Note that on first access to a Device that is not directly reachable, the browser must wait for the direct attempt to fail (up to 5 seconds) before falling back; the cached path avoids this on subsequent accesses.
 - **Forced Bridge**: always use the bridge, skipping direct attempts entirely. Useful when it is known that no Device is reachable from the browser.
 
-`POST` and `PATCH` requests are not automatically retried via alternate paths; they follow whichever path was resolved for the Device. The client expects the bridge on the same host as the configured Query API.
+`POST` and `PATCH` requests are not automatically retried via alternate paths; they follow whichever path was resolved for the Device. Bridge requests use the configured Connection Bridge API (default: SPA origin + `/x-nmos-bridge/v1.0`).
 
 ## Status
 
-Phase 1 (HTTP browser and upstream access, file-based dynamic configuration, `GET`/`POST`/`PATCH`, no response rewriting) is implemented, plus health checking and multi-endpoint failover from Phase 2. Not yet implemented: response size limits, HTTPS upstreams, authentication translation, mTLS, and an xDS control plane.
+Phase 1 is implemented, plus health checking and multi-endpoint failover from Phase 2:
+
+- HTTP browser and upstream access, file-based dynamic configuration
+- `GET`/`HEAD`/`POST`/`PATCH`
+- Upstream 3xx `Location` handling (see below)
+
+Not yet implemented: response size limits, HTTPS upstreams, authentication translation, mTLS, and an xDS control plane.
+
+`Location` handling uses each target's Connection API `base_path` (the path of the Device control `href`, typically `/x-nmos/connection/v1.1` or similar):
+
+- Absolute or scheme-relative (filled with the client scheme) Locations whose scheme and authority match a Device Connection API candidate and whose path stays under that `base_path` are rewritten onto the bridge; other absolute Locations are forwarded unchanged (including candidate URLs outside `base_path`, e.g. `http://device/x-manifest/...`).
+- Path-relative and root-relative Locations are resolved against the upstream Connection API path and rewritten onto the bridge when they stay under `base_path`; relatives outside `base_path` are rejected with `502` and an NMOS error body (`x-nmos-bridge-error` describes the unsupported Location), since an absolute Device URL cannot be reconstructed without knowing which candidate Envoy selected.
+- Envoy internal redirects are not used: absolute Device Locations under `/x-nmos/` would be matched by path (e.g. `/x-nmos/query/` onto the Query cluster) rather than treated as Device Connection API targets.

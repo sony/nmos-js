@@ -9,9 +9,15 @@ services:
     build: ./adapter
     restart: unless-stopped
     environment:
-      # the Query API used to discover Devices, also routed at /x-nmos/
+      # Query API used to discover Devices; also upstream for /x-nmos/query/
+      # (and /x-dns-sd/, /log/ unless overridden below)
       REGISTRY_QUERY_URL: http://registry:8870/x-nmos/query/v1.3
-      # optional: serve the nmos-js app through Envoy too, at /
+      # optional: different host/port for /x-dns-sd/ (default: same as Query)
+      # REGISTRY_DNS_SD_URL: http://registry:3208
+      # optional: different host/port for /log/ (default: same as Query)
+      # REGISTRY_LOGGING_URL: http://registry:5106
+      # optional: serve the UI through Envoy too (catch-all /)
+      # standalone nmos-js (SPA at /), or a Registry (UI under /admin)
       APP_URL: http://nmos-js:80
     volumes:
       - envoy-dynamic:/etc/envoy/dynamic
@@ -25,6 +31,7 @@ services:
       - "8080:8080"
     volumes:
       - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+      - ./envoy/location_rewrite.lua:/etc/envoy/location_rewrite.lua:ro
       - envoy-dynamic:/etc/envoy/dynamic
 
 volumes:

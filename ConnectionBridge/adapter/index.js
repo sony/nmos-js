@@ -17,6 +17,22 @@ const REGISTRY_QUERY_URL = (process.env.REGISTRY_QUERY_URL || '').replace(
     ''
 );
 const APP_URL = process.env.APP_URL || '';
+// optional override for /x-dns-sd/ upstream; when unset, use the same host
+// and port as REGISTRY_QUERY_URL (typical when nmos-cpp mdns_port matches
+// query_port). Only hostname and port are used for the Envoy cluster; any
+// path in either URL is ignored (Envoy forwards the client request path).
+const REGISTRY_DNS_SD_URL = (process.env.REGISTRY_DNS_SD_URL || '').replace(
+    /\/$/,
+    ''
+);
+// optional override for /log/ upstream; when unset, use the same host and
+// port as REGISTRY_QUERY_URL (typical when nmos-cpp logging_port matches
+// query_port). Only hostname and port are used for the Envoy cluster; any
+// path in either URL is ignored (Envoy forwards the client request path).
+const REGISTRY_LOGGING_URL = (process.env.REGISTRY_LOGGING_URL || '').replace(
+    /\/$/,
+    ''
+);
 const OUTPUT_DIR = process.env.OUTPUT_DIR || '/etc/envoy/dynamic';
 const ROUTE_TIMEOUT_SECONDS = Number(process.env.ROUTE_TIMEOUT_SECONDS) || 15;
 // subscription update coalescing and WebSocket reconnect backoff
@@ -127,13 +143,16 @@ const collectTargets = devices => {
             }
             const candidates = targets.get(key).candidates;
             const host = href.hostname;
-            const port = Number(href.port) || 80;
+            // URL.port is empty when the href omits an explicit port
+            const scheme = href.protocol.replace(/:$/, '');
+            const port = Number(href.port) || (scheme === 'https' ? 443 : 80);
             // de-duplicate normalized hrefs
             if (
                 candidates.some(
                     c =>
                         c.host === host &&
                         c.port === port &&
+                        c.scheme === scheme &&
                         c.basePath === basePath
                 )
             ) {
@@ -142,27 +161,29 @@ const collectTargets = devices => {
             candidates.push({
                 host,
                 port,
+                scheme,
                 basePath,
                 priority: priorityFor(host),
             });
         }
     }
     // all candidates in a cluster share one route rewrite, so if hrefs for
-    // the same target disagree on base path, keep only those that share a
-    // path with the most preferred candidate
+    // the same target disagree on scheme or base path, keep only those that
+    // share both with the most preferred candidate
     for (const target of targets.values()) {
         target.candidates.sort((a, b) => a.priority - b.priority);
-        const basePath = target.candidates[0].basePath;
+        const { scheme, basePath } = target.candidates[0];
         for (const c of target.candidates) {
-            if (c.basePath !== basePath) {
+            if (c.scheme !== scheme || c.basePath !== basePath) {
                 logOnce(
-                    `dropping candidate with differing base path for Device ${target.deviceId} ${target.version}: ${c.host}:${c.port}${c.basePath}`
+                    `dropping candidate with differing scheme or base path for Device ${target.deviceId} ${target.version}: ${c.scheme}://${c.host}:${c.port}${c.basePath}`
                 );
             }
         }
         target.candidates = target.candidates.filter(
-            c => c.basePath === basePath
+            c => c.scheme === scheme && c.basePath === basePath
         );
+        target.scheme = scheme;
         target.basePath = basePath;
     }
     return [...targets.values()].sort((a, b) =>
@@ -178,6 +199,8 @@ const clusterName = target =>
     )}`;
 
 const staticClusterFromUrl = (name, urlString) => {
+    // Only scheme defaults, hostname, and port are used; any path in
+    // urlString is ignored (Envoy forwards the client request path).
     const url = new URL(urlString);
     return {
         '@type': 'type.googleapis.com/envoy.config.cluster.v3.Cluster',
@@ -253,32 +276,73 @@ const bridgeCluster = target => {
     };
 };
 
-const nmosError = (status, error) =>
-    JSON.stringify({ code: status, error, debug: null });
-
-const directResponse = (status, error) => ({
+const directResponse = (status, jsonBody) => ({
     direct_response: {
         status,
-        body: { inline_string: nmosError(status, error) },
+        body: { inline_string: JSON.stringify(jsonBody) },
     },
     response_headers_to_add: [
         { header: { key: 'content-type', value: 'application/json' } },
     ],
 });
 
+const directErrorResponse = (status, error) =>
+    directResponse(status, { code: status, error, debug: null });
+
 const bridgeRoutes = target => {
-    const prefix = `${BRIDGE_PREFIX}/devices/${target.deviceId}/connection/${target.version}/`;
+    // path_separated_prefix matches the version path exactly or with a
+    // following '/...' (Envoy 1.22+; compose pins v1.31). That preserves
+    // whatever the client sent after the version (nothing, '/', or a
+    // sub-path) when rewriting onto the Device Connection API basePath,
+    // so trailing-slash handling stays with the upstream per IS-04/IS-05.
+    const pathPrefix = `${BRIDGE_PREFIX}/devices/${target.deviceId}/connection/${target.version}`;
+    // Envoy 1.31 set_metadata has no per-route config; LuaPerRoute on a
+    // dedicated filter writes Location-rewrite context into dynamic metadata
+    // for location_rewrite.lua. Values are NMOS paths / host:port lists.
+    const escapeLua = s =>
+        String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const formatAuthority = c =>
+        c.host.includes(':') ? `[${c.host}]:${c.port}` : `${c.host}:${c.port}`;
+    const upstreamAuthorities = target.candidates
+        .map(formatAuthority)
+        .join(',');
+    const locationMeta = {
+        typed_per_filter_config: {
+            'nmos.bridge.location_meta': {
+                '@type':
+                    'type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute',
+                source_code: {
+                    inline_string: [
+                        'function envoy_on_request(request_handle)',
+                        '  local md = request_handle:streamInfo():dynamicMetadata()',
+                        `  md:set("nmos_bridge_location", "base_path", "${escapeLua(target.basePath)}")`,
+                        `  md:set("nmos_bridge_location", "bridge_path", "${escapeLua(pathPrefix)}")`,
+                        `  md:set("nmos_bridge_location", "upstream_scheme", "${escapeLua(target.scheme)}")`,
+                        `  md:set("nmos_bridge_location", "upstream_authorities", "${escapeLua(upstreamAuthorities)}")`,
+                        'end',
+                    ].join('\n'),
+                },
+            },
+        },
+    };
     const action = {
         cluster: clusterName(target),
-        prefix_rewrite: `${target.basePath}/`,
+        prefix_rewrite: target.basePath,
         timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
     };
     return [
-        // GETs may be retried, POSTs and PATCHes must not be
+        // GET and HEAD may be retried; POSTs and PATCHes must not be
         {
             match: {
-                prefix,
-                headers: [{ name: ':method', string_match: { exact: 'GET' } }],
+                path_separated_prefix: pathPrefix,
+                headers: [
+                    {
+                        name: ':method',
+                        string_match: {
+                            safe_regex: { regex: 'GET|HEAD' },
+                        },
+                    },
+                ],
             },
             route: {
                 ...action,
@@ -287,10 +351,11 @@ const bridgeRoutes = target => {
                     num_retries: 2,
                 },
             },
+            ...locationMeta,
         },
         {
             match: {
-                prefix,
+                path_separated_prefix: pathPrefix,
                 headers: [
                     {
                         name: ':method',
@@ -301,11 +366,12 @@ const bridgeRoutes = target => {
                 ],
             },
             route: action,
+            ...locationMeta,
         },
         // any other method on a known target
         {
-            match: { prefix },
-            ...directResponse(405, 'Method not allowed'),
+            match: { path_separated_prefix: pathPrefix },
+            ...directErrorResponse(405, 'Method not allowed'),
         },
     ];
 };
@@ -324,8 +390,11 @@ const routeConfiguration = targets => ({
                     allow_origin_string_match: [
                         { safe_regex: { regex: '.*' } },
                     ],
-                    allow_methods: 'GET, POST, PATCH, OPTIONS',
-                    allow_headers: 'content-type,authorization',
+                    allow_methods: 'GET, HEAD, POST, PATCH, OPTIONS',
+                    // Request-Timeout: NMOS clients (e.g. nmos-js Query /
+                    // DNS-SD) send this on long-poll style requests; not
+                    // CORS-safelisted. See sony/nmos-js@6d0e783.
+                    allow_headers: 'content-type,authorization,request-timeout',
                 },
             },
             routes: [
@@ -334,18 +403,59 @@ const routeConfiguration = targets => ({
                 // controls produce routes, everything else stops here
                 {
                     match: { prefix: `${BRIDGE_PREFIX}/` },
-                    ...directResponse(404, 'Unknown bridge target'),
+                    ...directErrorResponse(404, 'Unknown bridge target'),
                 },
-                // Registry APIs
+                // Query API (host/port from REGISTRY_QUERY_URL; path is not
+                // rewritten — clients request /x-nmos/query...)
                 {
-                    match: { prefix: '/x-nmos/' },
+                    match: { path_separated_prefix: '/x-nmos/query' },
                     route: {
-                        cluster: 'registry',
+                        cluster: 'registry_query',
+                        timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
+                    },
+                },
+                // IS-04 /x-nmos base: list only APIs this Envoy front door
+                // actually proxies (not Registration/Node/etc.)
+                {
+                    match: { path: '/x-nmos' },
+                    ...directResponse(200, ['query/']),
+                },
+                {
+                    match: { path: '/x-nmos/' },
+                    ...directResponse(200, ['query/']),
+                },
+                // DNS-SD / MDNS API (same host/port as Query unless
+                // REGISTRY_DNS_SD_URL is set)
+                {
+                    match: { path_separated_prefix: '/x-dns-sd' },
+                    route: {
+                        cluster: REGISTRY_DNS_SD_URL
+                            ? 'registry_dns_sd'
+                            : 'registry_query',
+                        timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
+                    },
+                },
+                // Logging API (same host/port as Query unless
+                // REGISTRY_LOGGING_URL is set)
+                {
+                    match: { path_separated_prefix: '/log' },
+                    route: {
+                        cluster: REGISTRY_LOGGING_URL
+                            ? 'registry_logging'
+                            : 'registry_query',
                         timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
                     },
                 },
                 ...(APP_URL
-                    ? [{ match: { prefix: '/' }, route: { cluster: 'app' } }]
+                    ? [
+                          {
+                              match: { prefix: '/' },
+                              route: {
+                                  cluster: 'app',
+                                  timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
+                              },
+                          },
+                      ]
                     : []),
             ],
         },
@@ -373,7 +483,13 @@ const writeResource = (filename, resources, state) => {
 
 const apply = (targets, state) => {
     const clusters = [
-        staticClusterFromUrl('registry', REGISTRY_QUERY_URL),
+        staticClusterFromUrl('registry_query', REGISTRY_QUERY_URL),
+        ...(REGISTRY_DNS_SD_URL
+            ? [staticClusterFromUrl('registry_dns_sd', REGISTRY_DNS_SD_URL)]
+            : []),
+        ...(REGISTRY_LOGGING_URL
+            ? [staticClusterFromUrl('registry_logging', REGISTRY_LOGGING_URL)]
+            : []),
         ...(APP_URL ? [staticClusterFromUrl('app', APP_URL)] : []),
         ...targets.map(bridgeCluster),
     ];

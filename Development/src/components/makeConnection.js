@@ -142,6 +142,9 @@ const makePatchDataWithTransportParams = (data, options) => {
         case 'urn:x-nmos:transport:websocket':
             break;
         case 'urn:x-nmos:transport:mxl':
+            // When patching in a multi-node cluster environment where flows are replicated across nodes,
+            // the MXL domain a Sender writes to may be different to the MXL domain the Receiver reads from.
+            // For this reason it is unsafe to patch the domain id verbatim, and instead "auto" is a better default.
             legMap.forEach((senderLeg, receiverLeg) => {
                 set(patchParams[receiverLeg], 'mxl_domain_id', 'auto');
             });

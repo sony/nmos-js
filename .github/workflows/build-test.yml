@@ -10,6 +10,23 @@ env:
   SECRET_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
   SECRET_RESULTS_SHEET_ID: ${{ secrets.RESULTS_SHEET_ID }}
 jobs:
+  connection_bridge_lua:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ConnectionBridge/envoy
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: install lua
+      working-directory: ${{ github.workspace }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lua5.1
+
+    - name: unit test location rewrite
+      run: lua5.1 location_rewrite_test.lua -v
+
   build_and_test:
     runs-on: ubuntu-22.04
     steps:

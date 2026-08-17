@@ -45,7 +45,9 @@
     "Auth Enabled": {
         "value": false
     },
-    "Connection Bridge": {
+    "Connection Bridge Mode": {
         "value": "disabled"
+    },
+    "Connection Bridge API": {
     }
 }

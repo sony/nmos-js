@@ -17,9 +17,9 @@ export const CLIENT_ID = 'Client ID';
 
 export const IS12_BROWSER = 'IS-12 Browser';
 
-export const CONNECTION_BRIDGE_API = 'Connection Bridge API';
-export const CONNECTION_BRIDGE_MODE = 'Connection Bridge Mode';
-// Connection Bridge modes
+export const BRIDGE_API = 'NMOS Bridge API';
+export const BRIDGE_MODE = 'NMOS Bridge Mode';
+// NMOS Bridge modes
 export const BRIDGE_DISABLED = 'disabled';
 export const BRIDGE_AUTO = 'auto';
 export const BRIDGE_FORCED = 'forced';
@@ -44,7 +44,7 @@ const defaultUrl = api => {
             return baseUrl + '/log/v1.0';
         case QUERY_API:
             return baseUrl + '/x-nmos/query/v1.3';
-        case CONNECTION_BRIDGE_API:
+        case BRIDGE_API:
             return baseUrl + '/x-nmos-bridge/v1.0';
         case DNSSD_API:
             return baseUrl + '/x-dns-sd/v1.1';
@@ -128,8 +128,8 @@ export const setUsingAuth = auth => {
 };
 
 // an unrecognized stored value falls back to the default mode
-export const connectionBridgeMode = () => {
-    const mode = getJSONSetting(CONNECTION_BRIDGE_MODE, BRIDGE_DISABLED);
+export const bridgeMode = () => {
+    const mode = getJSONSetting(BRIDGE_MODE, BRIDGE_DISABLED);
     return [BRIDGE_DISABLED, BRIDGE_AUTO, BRIDGE_FORCED].includes(mode)
         ? mode
         : BRIDGE_DISABLED;
@@ -194,8 +194,8 @@ const useSettings = () => {
         [PAGING_LIMIT]: apiPagingLimit(QUERY_API),
         [USE_RQL]: apiUsingRql(QUERY_API),
         [FRIENDLY_PARAMETERS]: getJSONSetting(FRIENDLY_PARAMETERS, false),
-        [CONNECTION_BRIDGE_MODE]: connectionBridgeMode(),
-        [CONNECTION_BRIDGE_API]: apiUrl(CONNECTION_BRIDGE_API),
+        [BRIDGE_MODE]: bridgeMode(),
+        [BRIDGE_API]: apiUrl(BRIDGE_API),
         [CLIENT_ID]: authClientId(),
         [AUTH_API]: apiUrl(AUTH_API),
         [IS12_BROWSER]: apiUrl(IS12_BROWSER),
@@ -212,13 +212,9 @@ const useSettings = () => {
         if (isEffective(USE_RQL)) setApiUsingRql(QUERY_API, values[USE_RQL]);
         if (isEffective(FRIENDLY_PARAMETERS))
             setJSONSetting(FRIENDLY_PARAMETERS, values[FRIENDLY_PARAMETERS]);
-        if (isEffective(CONNECTION_BRIDGE_MODE))
-            setJSONSetting(
-                CONNECTION_BRIDGE_MODE,
-                values[CONNECTION_BRIDGE_MODE]
-            );
-        if (isEffective(CONNECTION_BRIDGE_API))
-            setApiUrl(CONNECTION_BRIDGE_API, values[CONNECTION_BRIDGE_API]);
+        if (isEffective(BRIDGE_MODE))
+            setJSONSetting(BRIDGE_MODE, values[BRIDGE_MODE]);
+        if (isEffective(BRIDGE_API)) setApiUrl(BRIDGE_API, values[BRIDGE_API]);
         if (isEffective(CLIENT_ID)) setAuthClientId(values[CLIENT_ID]);
         if (isEffective(AUTH_API)) setApiUrl(AUTH_API, values[AUTH_API]);
         if (isEffective(IS12_BROWSER))

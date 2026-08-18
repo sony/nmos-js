@@ -13,9 +13,9 @@ import { JsonPointer } from 'json-ptr';
 import diff from 'deep-diff';
 import { makeBearerAuthHeader } from './authProvider';
 import {
+    BRIDGE_API,
     BRIDGE_AUTO,
     BRIDGE_FORCED,
-    CONNECTION_BRIDGE_API,
     DNSSD_API,
     LOGGING_API,
     QUERY_API,
@@ -23,19 +23,16 @@ import {
     apiUrl,
     apiUsingRql,
     apiVersion,
+    bridgeMode,
     concatUrl,
-    connectionBridgeMode,
     usingAuth,
 } from './settings';
 
-// the Connection API Bridge (see ../../ConnectionBridge) makes Device
-// Connection and Channel Mapping APIs available at a configured base URL for
-// deployments where the browser cannot reach the Device directly
+// the NMOS Bridge (see ../../nmos-bridge) makes Device Control APIs
+// available at a configured base URL for deployments where the browser
+// cannot reach the Device directly
 const bridgeAddress = (deviceId, api, version) =>
-    concatUrl(
-        apiUrl(CONNECTION_BRIDGE_API),
-        `/devices/${deviceId}/${api}/${version}`
-    );
+    concatUrl(apiUrl(BRIDGE_API), `/devices/${deviceId}/${api}/${version}`);
 
 // which access path, direct or bridge, most recently worked for each Device
 const deviceAccessPaths = new Map();
@@ -895,7 +892,7 @@ const convertHTTPResponseToDataProvider = async (
                     .reverse();
 
                 const deviceId = resourceJSONData.device_id;
-                const bridgeMode = connectionBridgeMode();
+                const mode = bridgeMode();
 
                 let endpointData;
                 let accessPath;
@@ -910,13 +907,10 @@ const convertHTTPResponseToDataProvider = async (
                     // inaccessible; start with whichever worked last time,
                     // unless the bridge is forced
                     const attempts = [];
-                    if (bridgeMode !== BRIDGE_FORCED) {
+                    if (mode !== BRIDGE_FORCED) {
                         attempts.push(['direct', connectionAddresses[version]]);
                     }
-                    if (
-                        bridgeMode === BRIDGE_AUTO ||
-                        bridgeMode === BRIDGE_FORCED
-                    ) {
+                    if (mode === BRIDGE_AUTO || mode === BRIDGE_FORCED) {
                         attempts.push([
                             'bridge',
                             [
@@ -929,7 +923,7 @@ const convertHTTPResponseToDataProvider = async (
                         ]);
                     }
                     if (
-                        bridgeMode === BRIDGE_AUTO &&
+                        mode === BRIDGE_AUTO &&
                         deviceAccessPaths.get(deviceId) === 'bridge'
                     ) {
                         attempts.reverse();
@@ -1001,7 +995,7 @@ const convertHTTPResponseToDataProvider = async (
                     .reverse();
 
                 const deviceId = deviceJSONData.id;
-                const bridgeMode = connectionBridgeMode();
+                const mode = bridgeMode();
 
                 let endpointData;
                 let accessPath;
@@ -1015,16 +1009,13 @@ const convertHTTPResponseToDataProvider = async (
                     // bridge; start with whichever path last worked for this
                     // Device unless Forced
                     const attempts = [];
-                    if (bridgeMode !== BRIDGE_FORCED) {
+                    if (mode !== BRIDGE_FORCED) {
                         attempts.push([
                             'direct',
                             channelmappingAddresses[version],
                         ]);
                     }
-                    if (
-                        bridgeMode === BRIDGE_AUTO ||
-                        bridgeMode === BRIDGE_FORCED
-                    ) {
+                    if (mode === BRIDGE_AUTO || mode === BRIDGE_FORCED) {
                         attempts.push([
                             'bridge',
                             [
@@ -1037,7 +1028,7 @@ const convertHTTPResponseToDataProvider = async (
                         ]);
                     }
                     if (
-                        bridgeMode === BRIDGE_AUTO &&
+                        mode === BRIDGE_AUTO &&
                         deviceAccessPaths.get(deviceId) === 'bridge'
                     ) {
                         attempts.reverse();

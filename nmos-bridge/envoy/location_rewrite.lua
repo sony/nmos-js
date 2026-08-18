@@ -1,4 +1,4 @@
--- Handle Connection API Bridge upstream 3xx Location headers.
+-- Handle NMOS Bridge upstream 3xx Location headers.
 --
 -- Relative Location values are resolved against the reconstructed upstream
 -- request path (base_path + suffix of the downstream bridge path). That path

@@ -29,12 +29,12 @@ import {
 } from './settings';
 
 // the Connection API Bridge (see ../../ConnectionBridge) makes Device
-// Connection APIs available at a configured base URL for deployments where
-// the browser cannot reach the Device directly
-const bridgeAddress = (deviceId, version) =>
+// Connection and Channel Mapping APIs available at a configured base URL for
+// deployments where the browser cannot reach the Device directly
+const bridgeAddress = (deviceId, api, version) =>
     concatUrl(
         apiUrl(CONNECTION_BRIDGE_API),
-        `/devices/${deviceId}/connection/${version}`
+        `/devices/${deviceId}/${api}/${version}`
     );
 
 // which access path, direct or bridge, most recently worked for each Device
@@ -919,7 +919,13 @@ const convertHTTPResponseToDataProvider = async (
                     ) {
                         attempts.push([
                             'bridge',
-                            [bridgeAddress(deviceId, connectionVersion)],
+                            [
+                                bridgeAddress(
+                                    deviceId,
+                                    'connection',
+                                    connectionVersion
+                                ),
+                            ],
                         ]);
                     }
                     if (
@@ -994,15 +1000,66 @@ const convertHTTPResponseToDataProvider = async (
                     .sort()
                     .reverse();
 
+                const deviceId = deviceJSONData.id;
+                const bridgeMode = connectionBridgeMode();
+
                 let endpointData;
+                let accessPath;
                 for (let version of versions) {
-                    try {
-                        endpointData = await getChannelMappingEndPoints(
+                    // e.g. 'urn:x-nmos:control:cm-ctrl/v1_0' -> 'v1.0'
+                    const channelmappingVersion = version
+                        .split('/')
+                        .slice(-1)[0]
+                        .replace('_', '.');
+                    // same access sequence as Connection: direct hrefs, then
+                    // bridge; start with whichever path last worked for this
+                    // Device unless Forced
+                    const attempts = [];
+                    if (bridgeMode !== BRIDGE_FORCED) {
+                        attempts.push([
+                            'direct',
                             channelmappingAddresses[version],
-                            ['io', 'map/active', 'map/activations']
-                        );
-                    } catch (e) {}
+                        ]);
+                    }
+                    if (
+                        bridgeMode === BRIDGE_AUTO ||
+                        bridgeMode === BRIDGE_FORCED
+                    ) {
+                        attempts.push([
+                            'bridge',
+                            [
+                                bridgeAddress(
+                                    deviceId,
+                                    'channelmapping',
+                                    channelmappingVersion
+                                ),
+                            ],
+                        ]);
+                    }
+                    if (
+                        bridgeMode === BRIDGE_AUTO &&
+                        deviceAccessPaths.get(deviceId) === 'bridge'
+                    ) {
+                        attempts.reverse();
+                    }
+                    for (const [path, addresses] of attempts) {
+                        try {
+                            endpointData = await getChannelMappingEndPoints(
+                                addresses,
+                                ['io', 'map/active', 'map/activations']
+                            );
+                        } catch (e) {}
+                        if (endpointData) {
+                            accessPath = path;
+                            break;
+                        }
+                    }
                     if (endpointData) break;
+                }
+                if (endpointData) {
+                    deviceAccessPaths.set(deviceId, accessPath);
+                } else {
+                    deviceAccessPaths.delete(deviceId);
                 }
 
                 // just return IS-04 data if no Channel Mapping API was able to connect

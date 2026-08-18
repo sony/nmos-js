@@ -216,13 +216,14 @@ and are not included here.
 ## Browser Application Behavior
 
 The nmos-js client offers a **Connection Bridge Mode** and a separate
-**Connection Bridge API**:
+**Connection Bridge API**. The same mode applies to Device Connection (IS-05)
+and Channel Mapping (IS-08) fetches:
 
 - **No Bridge** (default): use the Device control hrefs directly, never the bridge.
-- **Auto Bridge**: the preferred access sequence. Use the Device control href directly; if inaccessible, use the bridge URL; cache the successful access path per Device. Note that on first access to a Device that is not directly reachable, the browser must wait for the direct attempt to fail (up to 5 seconds) before falling back; the cached path avoids this on subsequent accesses.
+- **Auto Bridge**: the preferred access sequence. Use the Device control href directly; if inaccessible, use the bridge URL; cache the successful access path per Device (shared across Connection and Channel Mapping). Note that on first access to a Device that is not directly reachable, the browser must wait for the direct attempt to fail (up to 5 seconds) before falling back; the cached path avoids this on subsequent accesses.
 - **Forced Bridge**: always use the bridge, skipping direct attempts entirely. Useful when it is known that no Device is reachable from the browser.
 
-`POST` and `PATCH` requests are not automatically retried via alternate paths; they follow whichever path was resolved for the Device. Bridge requests use the configured Connection Bridge API (default: SPA origin + `/x-nmos-bridge/v1.0`).
+`POST`, `PATCH` and `DELETE` requests are not automatically retried via alternate paths; they follow whichever path was resolved for the Device (`$connectionAPI` / `$channelmappingAPI`). Bridge requests use the configured Connection Bridge API (default: SPA origin + `/x-nmos-bridge/v1.0`).
 
 ## Status
 

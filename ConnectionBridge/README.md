@@ -1,13 +1,13 @@
 # NMOS Connection API Bridge
 
-Provides browser-accessible proxy access to [AMWA IS-05](https://specs.amwa.tv/is-05/) Connection APIs exposed by Devices registered in an NMOS Registry, where the browser may not have network access to the Device APIs directly.
+Provides browser-accessible proxy access to [AMWA IS-05](https://specs.amwa.tv/is-05/) Connection APIs and [AMWA IS-08](https://specs.amwa.tv/is-08/) Channel Mapping APIs exposed by Devices registered in an NMOS Registry, where the browser may not have network access to the Device APIs directly.
 
 The bridge must not behave as an open proxy. Targets originate exclusively from registered Device `controls` entries; public requests use Device IDs only and arbitrary URLs are forbidden. The Registry remains the source of truth and requires no changes.
 
 ## Public Bridge API
 
 ```text
-/x-nmos-bridge/v1.0/devices/{device_id}/connection/{version}/{sub-path}
+/x-nmos-bridge/v1.0/devices/{device_id}/{api}/{version}/{sub-path}
 ```
 
 proxies to:
@@ -16,7 +16,14 @@ proxies to:
 {href}/{sub-path}
 ```
 
-where `href` is taken from the Device resource `controls` entry matching `urn:x-nmos:control:sr-ctrl/{version}`. The bridge API version (`v1.0`) is independent of the Connection API version (`{version}`).
+where `href` is taken from the Device resource `controls` entry matching the control type for `{api}`:
+
+| `{api}` | Control type | Device API |
+| --- | --- | --- |
+| `connection` | `urn:x-nmos:control:sr-ctrl/{version}` | IS-05 Connection |
+| `channelmapping` | `urn:x-nmos:control:cm-ctrl/{version}` | IS-08 Channel Mapping |
+
+`{api}` is the same path segment as in the advertised `href` (`/x-nmos/{api}/{version}`). The bridge API version (`v1.0`) is independent of the Device API version (`{version}`).
 
 For example:
 
@@ -30,7 +37,7 @@ is proxied to:
 PATCH http://device.example.local/x-nmos/connection/v1.1/single/receivers/{receiver_id}/staged
 ```
 
-Methods are restricted to `GET`, `POST`, `PATCH` and `OPTIONS`. Query strings, methods and request bodies are preserved. `GET` requests may be retried; `POST` and `PATCH` are never automatically retried.
+Methods are restricted to `GET`, `HEAD`, `POST`, `PATCH`, `DELETE` and `OPTIONS`, the union of the methods the proxied Device APIs use; which methods a given resource actually supports is up to the Device. Query strings, methods and request bodies are preserved. `GET` and `HEAD` requests may be retried; mutating methods are never automatically retried.
 
 ## Architecture
 
@@ -63,20 +70,20 @@ Adapter (server-side; not on the browser path)
 
 The Connection API Bridge consists of Envoy and the adapter service:
 
-- **Envoy** proxies browser HTTP to Device Connection APIs on `/x-nmos-bridge/...` (required for the bridge). It may also proxy the Query API on `/x-nmos/query/...`, DNS-SD on `/x-dns-sd/...`, and the nmos-js app on `/` as optional convenience. `GET /x-nmos/` returns a fixed listing of `["query/"]` so discovery matches what is actually proxied. Other `/x-nmos/` APIs (Registration, Node, …) are not proxied — they may use different ports. It applies routing, request size limits, timeouts, retry policy, health checking and failover, and access logging of `POST` and `PATCH` requests. It does not proxy Query API WebSocket subscriptions.
-- **The adapter** (`adapter/`) converts Registry state into Envoy configuration. It tracks Devices through a [Query API WebSocket subscription](https://specs.amwa.tv/is-04/branches/v1.3.x/docs/4.2._Behaviour_-_Querying.html) (non-persistent, `resource_path` `/devices`), extracts Connection API controls, and generates Envoy routes and clusters, atomically replacing the dynamic configuration files (`rds.json`, `cds.json`) which Envoy reloads via filesystem watch. The adapter does not proxy traffic and does not determine runtime health.
+- **Envoy** proxies browser HTTP to Device Connection and Channel Mapping APIs on `/x-nmos-bridge/...` (required for the bridge). It may also proxy the Query API on `/x-nmos/query/...`, DNS-SD on `/x-dns-sd/...`, and the nmos-js app on `/` as optional convenience. `GET /x-nmos/` returns a fixed listing of `["query/"]` so discovery matches what is actually proxied. Other `/x-nmos/` APIs (Registration, Node, …) are not proxied — they may use different ports. It applies routing, request size limits, timeouts, retry policy, health checking and failover, and access logging of mutating requests. It does not proxy Query API WebSocket subscriptions.
+- **The adapter** (`adapter/`) converts Registry state into Envoy configuration. It tracks Devices through a [Query API WebSocket subscription](https://specs.amwa.tv/is-04/branches/v1.3.x/docs/4.2._Behaviour_-_Querying.html) (non-persistent, `resource_path` `/devices`), extracts Connection and Channel Mapping API controls, and generates Envoy routes and clusters, atomically replacing the dynamic configuration files (`rds.json`, `cds.json`) which Envoy reloads via filesystem watch. The adapter does not proxy traffic and does not determine runtime health.
 
   On connecting, the Registry sends a sync of all current Devices, then pushes added, modified and removed events; the adapter rebuilds configuration on each change. If the connection is interrupted, the adapter resubscribes with exponential backoff and the fresh sync re-establishes all mappings, including Devices that were removed while disconnected. The last good configuration keeps being served until the new sync arrives.
 
 ### Mapping
 
-Each unique combination of Device ID and Connection API version is a separate bridge target, producing one route and one cluster with deterministic names:
+Each unique combination of Device ID, API and version is a separate bridge target, producing one route and one cluster with deterministic names:
 
 ```text
-nmos_bridge_device_{safe_device_id}_connection_{safe_connection_version}
+nmos_bridge_device_{safe_device_id}_{api}_{safe_version}
 ```
 
-where characters outside `[A-Za-z0-9_]` are replaced by `_` (e.g. `v1.1` becomes `v1_1`). Separate Connection API versions are never merged: a `v1.0` route cannot fail over to a `v1.1` href.
+where characters outside `[A-Za-z0-9_]` are replaced by `_` (e.g. `v1.1` becomes `v1_1`). Separate APIs and versions are never merged: a `v1.0` route cannot fail over to a `v1.1` href, and a Connection API route cannot fail over to a Channel Mapping href even when the Device advertises both at the same host and port.
 
 If multiple eligible hrefs exist for the same Device and version, they become candidates of a single cluster, prioritized as:
 
@@ -218,13 +225,13 @@ The nmos-js client offers a **Connection Bridge Mode** and a separate
 Phase 1 is implemented, plus health checking and multi-endpoint failover from Phase 2:
 
 - HTTP browser and upstream access, file-based dynamic configuration
-- `GET`/`HEAD`/`POST`/`PATCH`
+- `GET`/`HEAD`/`POST`/`PATCH`/`DELETE`
 - Upstream 3xx `Location` handling (see below)
 
 Not yet implemented: response size limits, HTTPS upstreams, authentication translation, mTLS, and an xDS control plane.
 
-`Location` handling uses each target's Connection API `base_path` (the path of the Device control `href`, typically `/x-nmos/connection/v1.1` or similar):
+`Location` handling uses each target's `base_path` (the path of the Device control `href`, typically `/x-nmos/connection/v1.1`, `/x-nmos/channelmapping/v1.0` or similar):
 
-- Absolute or scheme-relative (filled with the client scheme) Locations whose scheme and authority match a Device Connection API candidate and whose path stays under that `base_path` are rewritten onto the bridge; other absolute Locations are forwarded unchanged (including candidate URLs outside `base_path`, e.g. `http://device/x-manifest/...`).
-- Path-relative and root-relative Locations are resolved against the upstream Connection API path and rewritten onto the bridge when they stay under `base_path`; relatives outside `base_path` are rejected with `502` and an NMOS error body (`x-nmos-bridge-error` describes the unsupported Location), since an absolute Device URL cannot be reconstructed without knowing which candidate Envoy selected.
-- Envoy internal redirects are not used: absolute Device Locations under `/x-nmos/` would be matched by path (e.g. `/x-nmos/query/` onto the Query cluster) rather than treated as Device Connection API targets.
+- Absolute or scheme-relative (filled with the client scheme) Locations whose scheme and authority match a candidate for that target and whose path stays under that `base_path` are rewritten onto the bridge; other absolute Locations are forwarded unchanged (including candidate URLs outside `base_path`, e.g. `http://device/x-manifest/...`).
+- Path-relative and root-relative Locations are resolved against the upstream API path and rewritten onto the bridge when they stay under `base_path`; relatives outside `base_path` are rejected with `502` and an NMOS error body (`x-nmos-bridge-error` describes the unsupported Location), since an absolute Device URL cannot be reconstructed without knowing which candidate Envoy selected.
+- Envoy internal redirects are not used: absolute Device Locations under `/x-nmos/` would be matched by path (e.g. `/x-nmos/query/` onto the Query cluster) rather than treated as Device API targets.

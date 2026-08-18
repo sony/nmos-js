@@ -3,10 +3,10 @@
 // NMOS Connection API Bridge - Envoy Adapter
 //
 // Converts Registry state into Envoy configuration. Tracks Devices through a
-// Query API WebSocket subscription, extracts their Connection API controls, and
-// generates Envoy route and cluster configuration files which Envoy reloads
-// via filesystem watch. The adapter does not proxy any traffic itself and
-// does not determine runtime health - Envoy does both.
+// Query API WebSocket subscription, extracts their Connection and Channel
+// Mapping API controls, and generates Envoy route and cluster configuration
+// files which Envoy reloads via filesystem watch. The adapter does not proxy
+// any traffic itself and does not determine runtime health - Envoy does both.
 
 const crypto = require('crypto');
 const fs = require('fs');
@@ -48,7 +48,15 @@ const BRIDGE_PREFIX = '/x-nmos-bridge/v1.0';
 // Phase 1 supports HTTP upstreams only
 const ALLOWED_PROTOCOLS = ['http:'];
 
-const CONNECTION_CONTROL = /^urn:x-nmos:control:sr-ctrl\/(v\d+\.\d+)$/;
+// the proxied Device APIs; each api is the path segment both in the advertised
+// href and in the bridge path
+const CONTROL_TYPES = [
+    { pattern: /^urn:x-nmos:control:sr-ctrl\/(v\d+\.\d+)$/, api: 'connection' },
+    {
+        pattern: /^urn:x-nmos:control:cm-ctrl\/(v\d+\.\d+)$/,
+        api: 'channelmapping',
+    },
+];
 
 if (!REGISTRY_QUERY_URL) {
     console.error(
@@ -102,14 +110,21 @@ const priorityFor = host => {
     return 1;
 };
 
-// one bridge target per unique Device ID + Connection API version
+// one bridge target per unique Device ID + API + version
 const collectTargets = devices => {
     const targets = new Map();
     for (const device of devices) {
         for (const control of device.controls || []) {
-            const match = CONNECTION_CONTROL.exec(control.type || '');
-            if (!match) continue;
-            const version = match[1];
+            let api;
+            let version;
+            for (const controlType of CONTROL_TYPES) {
+                const match = controlType.pattern.exec(control.type || '');
+                if (!match) continue;
+                api = controlType.api;
+                version = match[1];
+                break;
+            }
+            if (!version) continue;
             let href;
             try {
                 href = new URL(control.href);
@@ -127,16 +142,17 @@ const collectTargets = devices => {
             }
             // the href path must correspond to the advertised version
             const basePath = href.pathname.replace(/\/$/, '');
-            if (!basePath.endsWith(`/x-nmos/connection/${version}`)) {
+            if (!basePath.endsWith(`/x-nmos/${api}/${version}`)) {
                 logOnce(
-                    `skipping href inconsistent with ${version} for Device ${device.id}: ${control.href}`
+                    `skipping href inconsistent with ${api} ${version} for Device ${device.id}: ${control.href}`
                 );
                 continue;
             }
-            const key = `${device.id}/${version}`;
+            const key = `${device.id}/${api}/${version}`;
             if (!targets.has(key)) {
                 targets.set(key, {
                     deviceId: device.id,
+                    api,
                     version,
                     candidates: [],
                 });
@@ -176,7 +192,7 @@ const collectTargets = devices => {
         for (const c of target.candidates) {
             if (c.scheme !== scheme || c.basePath !== basePath) {
                 logOnce(
-                    `dropping candidate with differing scheme or base path for Device ${target.deviceId} ${target.version}: ${c.scheme}://${c.host}:${c.port}${c.basePath}`
+                    `dropping candidate with differing scheme or base path for Device ${target.deviceId} ${target.api} ${target.version}: ${c.scheme}://${c.host}:${c.port}${c.basePath}`
                 );
             }
         }
@@ -187,14 +203,16 @@ const collectTargets = devices => {
         target.basePath = basePath;
     }
     return [...targets.values()].sort((a, b) =>
-        `${a.deviceId}/${a.version}`.localeCompare(`${b.deviceId}/${b.version}`)
+        `${a.deviceId}/${a.api}/${a.version}`.localeCompare(
+            `${b.deviceId}/${b.api}/${b.version}`
+        )
     );
 };
 
 // --- Envoy configuration ---
 
 const clusterName = target =>
-    `nmos_bridge_device_${safeName(target.deviceId)}_connection_${safeName(
+    `nmos_bridge_device_${safeName(target.deviceId)}_${target.api}_${safeName(
         target.version
     )}`;
 
@@ -293,9 +311,9 @@ const bridgeRoutes = target => {
     // path_separated_prefix matches the version path exactly or with a
     // following '/...' (Envoy 1.22+; compose pins v1.31). That preserves
     // whatever the client sent after the version (nothing, '/', or a
-    // sub-path) when rewriting onto the Device Connection API basePath,
-    // so trailing-slash handling stays with the upstream per IS-04/IS-05.
-    const pathPrefix = `${BRIDGE_PREFIX}/devices/${target.deviceId}/connection/${target.version}`;
+    // sub-path) when rewriting onto the Device API basePath, so
+    // trailing-slash handling stays with the upstream per that API.
+    const pathPrefix = `${BRIDGE_PREFIX}/devices/${target.deviceId}/${target.api}/${target.version}`;
     // Envoy 1.31 set_metadata has no per-route config; LuaPerRoute on a
     // dedicated filter writes Location-rewrite context into dynamic metadata
     // for location_rewrite.lua. Values are NMOS paths / host:port lists.
@@ -331,7 +349,7 @@ const bridgeRoutes = target => {
         timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
     };
     return [
-        // GET and HEAD may be retried; POSTs and PATCHes must not be
+        // GET and HEAD may be retried; mutating methods must not be
         {
             match: {
                 path_separated_prefix: pathPrefix,
@@ -360,7 +378,7 @@ const bridgeRoutes = target => {
                     {
                         name: ':method',
                         string_match: {
-                            safe_regex: { regex: 'POST|PATCH|OPTIONS' },
+                            safe_regex: { regex: 'POST|PATCH|DELETE|OPTIONS' },
                         },
                     },
                 ],
@@ -390,7 +408,7 @@ const routeConfiguration = targets => ({
                     allow_origin_string_match: [
                         { safe_regex: { regex: '.*' } },
                     ],
-                    allow_methods: 'GET, HEAD, POST, PATCH, OPTIONS',
+                    allow_methods: 'GET, HEAD, POST, PATCH, DELETE, OPTIONS',
                     // Request-Timeout: NMOS clients (e.g. nmos-js Query /
                     // DNS-SD) send this on long-poll style requests; not
                     // CORS-safelisted. See sony/nmos-js@6d0e783.

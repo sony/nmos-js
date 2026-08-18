@@ -378,6 +378,42 @@ test("handle_location_scheme_and_malformed", function()
     assert_eq("reject", handle("http:///x-nmos/connection/v1.1/"), "absolute missing authority -> reject")
 end)
 
+-- Channel Mapping target, where a Device may redirect a collection request to
+-- its trailing-slash form
+local CM_BASE = "/x-nmos/channelmapping/v1.0"
+local CM_BRIDGE = "/x-nmos-bridge/v1.0/devices/d1/channelmapping/v1.0"
+local CM = {
+    base_path = CM_BASE,
+    bridge_path = CM_BRIDGE,
+    downstream_path = CM_BRIDGE .. "/map/activations",
+}
+
+test("handle_location_channelmapping_target", function()
+    assert_eq(
+        CM_BRIDGE .. "/map/activations/",
+        handle(CM_BASE .. "/map/activations/", CM),
+        "root-relative trailing-slash redirect -> bridge path"
+    )
+    assert_eq(
+        "http://controller.example:8080" .. CM_BRIDGE .. "/map/activations/",
+        handle(
+            "http://device.local" .. CM_BASE .. "/map/activations/",
+            CM
+        ),
+        "absolute candidate trailing-slash redirect -> bridge absolute"
+    )
+    assert_eq(
+        CM_BRIDGE .. "/map/activations/",
+        handle("activations/", CM),
+        "path-relative trailing-slash redirect -> bridge path"
+    )
+    assert_eq(
+        "reject",
+        handle("/x-nmos/connection/v1.1/single/senders/s1", CM),
+        "root-relative outside this target's base_path -> reject"
+    )
+end)
+
 -- ---------------------------------------------------------------------------
 -- Envoy entry points (mock handles)
 -- ---------------------------------------------------------------------------

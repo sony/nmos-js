@@ -396,6 +396,45 @@ const bridgeRoutes = target => {
     ];
 };
 
+// what the bridge proxies for one Device, so a client holding a Device ID from
+// the Registry can see which APIs and versions became targets
+const deviceListingRoutes = targets => {
+    const devices = new Map();
+    for (const target of targets) {
+        if (!devices.has(target.deviceId)) {
+            devices.set(target.deviceId, new Map());
+        }
+        const apis = devices.get(target.deviceId);
+        if (!apis.has(target.api)) apis.set(target.api, []);
+        apis.get(target.api).push(`${target.version}/`);
+    }
+    const routes = [];
+    // targets are sorted, so the listings are too
+    for (const [deviceId, apis] of devices) {
+        const devicePath = `${BRIDGE_PREFIX}/devices/${deviceId}`;
+        const deviceListing = directResponse(
+            200,
+            [...apis.keys()].map(api => `${api}/`)
+        );
+        routes.push({ match: { path: devicePath }, ...deviceListing });
+        routes.push({ match: { path: `${devicePath}/` }, ...deviceListing });
+        for (const [api, versions] of apis) {
+            const apiListing = directResponse(200, versions);
+            routes.push({
+                match: { path: `${devicePath}/${api}` },
+                ...apiListing,
+            });
+            routes.push({
+                match: { path: `${devicePath}/${api}/` },
+                ...apiListing,
+            });
+        }
+    }
+    return routes;
+};
+
+const DEVICES_NOT_LISTED = `Devices are not listed; request a specific device at ${BRIDGE_PREFIX}/devices/{deviceId}`;
+
 const routeConfiguration = targets => ({
     '@type': 'type.googleapis.com/envoy.config.route.v3.RouteConfiguration',
     name: 'nmos_bridge_routes',
@@ -419,8 +458,18 @@ const routeConfiguration = targets => ({
             },
             routes: [
                 ...targets.flatMap(bridgeRoutes),
-                // listings of the bridge API itself, like /x-nmos below;
-                // Devices are not listed, the Registry answers that
+                ...deviceListingRoutes(targets),
+                // the Device collection is not listed, the Registry answers
+                // which Devices exist
+                {
+                    match: { path: `${BRIDGE_PREFIX}/devices` },
+                    ...directErrorResponse(404, DEVICES_NOT_LISTED),
+                },
+                {
+                    match: { path: `${BRIDGE_PREFIX}/devices/` },
+                    ...directErrorResponse(404, DEVICES_NOT_LISTED),
+                },
+                // listings of the bridge API itself, like /x-nmos below
                 {
                     match: { path: BRIDGE_ROOT },
                     ...directResponse(200, [`${BRIDGE_VERSION}/`]),

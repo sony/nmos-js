@@ -39,7 +39,9 @@ PATCH http://device.example.local/x-nmos/connection/v1.1/single/receivers/{recei
 
 Methods are restricted to `GET`, `HEAD`, `POST`, `PATCH`, `DELETE` and `OPTIONS`, the union of the methods the proxied Device APIs use; which methods a given resource actually supports is up to the Device. Query strings, methods and request bodies are preserved. `GET` and `HEAD` requests may be retried; mutating methods are never automatically retried.
 
-`GET /x-nmos-bridge` and `GET /x-nmos-bridge/v1.0` return listings (`["v1.0/"]` and `["devices/"]`). Devices are not listed; the Registry remains the source of truth for which Devices exist. Every other path under `/x-nmos-bridge`, including other bridge API versions, returns `404` with an NMOS error body, so nothing in the bridge namespace falls through to the optional app route on `/`.
+`GET /x-nmos-bridge` and `GET /x-nmos-bridge/v1.0` return listings (`["v1.0/"]` and `["devices/"]`). Devices are not listed; the Registry remains the source of truth for which Devices exist. Given a Device ID from the Registry, `GET …/devices/{device_id}` lists the APIs proxied for that Device (e.g. `["channelmapping/","connection/"]`) and `GET …/devices/{device_id}/{api}` lists the versions, so a client can see what became a bridge target without inspecting Envoy configuration.
+
+Every other path under `/x-nmos-bridge`, including other bridge API versions and a version or API that is not a target for that Device, returns `404` with an NMOS error body, so nothing in the bridge namespace falls through to the optional app route on `/`.
 
 ## Architecture
 

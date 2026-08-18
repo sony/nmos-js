@@ -43,7 +43,9 @@ const RECONNECT_MAX_MS = Number(process.env.RECONNECT_MAX_MS) || 30000;
 // when set, use this scheme and authority while preserving the subscription path
 const REGISTRY_QUERY_WS_URL = process.env.REGISTRY_QUERY_WS_URL || '';
 
-const BRIDGE_PREFIX = '/x-nmos-bridge/v1.0';
+const BRIDGE_ROOT = '/x-nmos-bridge';
+const BRIDGE_VERSION = 'v1.0';
+const BRIDGE_PREFIX = `${BRIDGE_ROOT}/${BRIDGE_VERSION}`;
 
 // Phase 1 supports HTTP upstreams only
 const ALLOWED_PROTOCOLS = ['http:'];
@@ -417,10 +419,30 @@ const routeConfiguration = targets => ({
             },
             routes: [
                 ...targets.flatMap(bridgeRoutes),
-                // arbitrary URLs are forbidden; only registered Device
-                // controls produce routes, everything else stops here
+                // listings of the bridge API itself, like /x-nmos below;
+                // Devices are not listed, the Registry answers that
                 {
-                    match: { prefix: `${BRIDGE_PREFIX}/` },
+                    match: { path: BRIDGE_ROOT },
+                    ...directResponse(200, [`${BRIDGE_VERSION}/`]),
+                },
+                {
+                    match: { path: `${BRIDGE_ROOT}/` },
+                    ...directResponse(200, [`${BRIDGE_VERSION}/`]),
+                },
+                {
+                    match: { path: BRIDGE_PREFIX },
+                    ...directResponse(200, ['devices/']),
+                },
+                {
+                    match: { path: `${BRIDGE_PREFIX}/` },
+                    ...directResponse(200, ['devices/']),
+                },
+                // arbitrary URLs are forbidden; only registered Device
+                // controls produce routes. The whole bridge namespace stops
+                // here, including other bridge API versions, so no request
+                // for it reaches the app catch-all below.
+                {
+                    match: { path_separated_prefix: BRIDGE_ROOT },
                     ...directErrorResponse(404, 'Unknown bridge target'),
                 },
                 // Query API (host/port from REGISTRY_QUERY_URL; path is not

@@ -12,6 +12,10 @@ services:
       # Query API used to discover Devices; also upstream for /x-nmos/query/
       # (and /x-dns-sd/, /log/ unless overridden below)
       REGISTRY_QUERY_URL: http://registry:8870/x-nmos/query/v1.3
+      # optional: Query WebSocket scheme/authority when ws_href is not reachable
+      # from the adapter or Envoy (also upstream for /x-nmos-bridge/.../query/
+      # subscription WebSockets). Example when query_ws_port is HTTP+1:
+      # REGISTRY_QUERY_WS_URL: ws://registry:8871
       # optional: different host/port for /x-dns-sd/ (default: same as Query)
       # REGISTRY_DNS_SD_URL: http://registry:3208
       # optional: different host/port for /log/ (default: same as Query)

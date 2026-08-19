@@ -1,6 +1,7 @@
 # Design plan: Envoy WebSocket proxying (Query API and Device NCP)
 
-Status: proposal; Envoy WS spike validated 2026-08-18 (see Investigation notes). Complements the NMOS Bridge in
+Status: Case A (Query WS) implemented in the adapter; Case B (NCP) not started.
+Envoy WS spike validated 2026-08-18 (see Investigation notes). Complements the NMOS Bridge in
 `nmos-bridge/README.md`, which today proxies browser **HTTP** to Device
 Connection APIs and optionally to Registry Query / DNS-SD / Logging HTTP.
 Query subscription WebSockets and Device NCP WebSockets are explicitly out of
@@ -9,8 +10,8 @@ scope there.
 ## Motivation
 
 When the browser cannot reach the Registry or Devices directly, Envoy is the
-single browser-facing edge for discovery HTTP and IS-05. Two WebSocket paths
-still bypass that edge:
+single browser-facing proxy for discovery HTTP and IS-05. Two WebSocket paths
+still bypass Envoy:
 
 | Path | Who opens it | Advertised / used URL |
 | --- | --- | --- |
@@ -59,7 +60,7 @@ Both cases need:
    grains / NCP sessions.
 3. **Schemes** — Phase 1: `ws://` upstreams only (parallel to Connection's
    `http` only). Browser-facing Envoy may be `ws://` or `wss://` depending on
-   edge TLS.
+   its TLS configuration.
 4. **No CORS for WS** — browsers do not CORS-preflight WebSockets; `Origin` is
    advisory to the upstream. Unifying under Envoy helps reachability and TLS,
    not CORS.
@@ -148,9 +149,10 @@ another Registry breaks the shared-listener / path-template assumption.
 
 ### Client impact
 
-- Bridge-aware clients (nmos-js when using the Envoy edge for Query): after
-  create/GET subscription, open WS at the canonical bridge URL using `id` +
-  Query version; do not open `ws_href`.
+- Bridge-aware clients: after create/GET subscription, open WS at the
+  canonical bridge URL using `id` + Query version; do not open `ws_href`.
+- nmos-js currently manages Query subscriptions over HTTP but does not consume
+  their WebSocket grains, so no SPA change is required for Case A.
 - Subscription UI may still **display** Registry `ws_href` (direct); optional
   later: also show the bridge URL when bridge mode is on.
 - Adapter keeps using `REGISTRY_QUERY_WS_URL` for its own socket; no need to
@@ -165,7 +167,7 @@ another Registry breaks the shared-listener / path-template assumption.
   document nmos-cpp as the supported shape; escape hatch above.
 - **Secure subscriptions** / WSS upstream — defer with WSS.
 - Docs should state Query HTTP on `/x-nmos/query` remains optional convenience;
-  Query WS on the bridge is the remapped edge path.
+  Query WS uses the browser-facing bridge path.
 
 ### Acceptance (Case A)
 

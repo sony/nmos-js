@@ -3,10 +3,10 @@
 // NMOS Bridge - Envoy Adapter
 //
 // Converts Registry state into Envoy configuration. Tracks Devices through a
-// Query API WebSocket subscription, extracts their Connection and Channel
-// Mapping API controls, and generates Envoy route and cluster configuration
-// files which Envoy reloads via filesystem watch. The adapter does not proxy
-// any traffic itself and does not determine runtime health - Envoy does both.
+// Query API WebSocket subscription, extracts their Device controls, and
+// generates Envoy route and cluster configuration files which Envoy reloads
+// via filesystem watch. The adapter does not proxy any traffic itself and
+// does not determine runtime health - Envoy does both.
 
 const crypto = require('crypto');
 const fs = require('fs');
@@ -35,12 +35,18 @@ const REGISTRY_LOGGING_URL = (process.env.REGISTRY_LOGGING_URL || '').replace(
 );
 const OUTPUT_DIR = process.env.OUTPUT_DIR || '/etc/envoy/dynamic';
 const ROUTE_TIMEOUT_SECONDS = Number(process.env.ROUTE_TIMEOUT_SECONDS) || 15;
+// long-lived WebSocket routes; must not use the HTTP
+// ROUTE_TIMEOUT_SECONDS or upgraded connections are cut after 15s
+const WS_IDLE_TIMEOUT_SECONDS =
+    Number(process.env.WS_IDLE_TIMEOUT_SECONDS) || 3600;
 // subscription update coalescing and WebSocket reconnect backoff
 const MAX_UPDATE_RATE_MS = Number(process.env.MAX_UPDATE_RATE_MS) || 100;
 const RECONNECT_MIN_MS = Number(process.env.RECONNECT_MIN_MS) || 1000;
 const RECONNECT_MAX_MS = Number(process.env.RECONNECT_MAX_MS) || 30000;
 // some Registries advertise a ws_href on a host the adapter cannot reach;
-// when set, use this scheme and authority while preserving the subscription path
+// when set, use this scheme and authority while preserving the subscription
+// path; the same origin is the Envoy upstream for browser Query subscription
+// WebSockets under /x-nmos-bridge/v1.0/query/...
 const REGISTRY_QUERY_WS_URL = process.env.REGISTRY_QUERY_WS_URL || '';
 
 const BRIDGE_ROOT = '/x-nmos-bridge';
@@ -85,6 +91,13 @@ let devices = new Map();
 
 // per-output-file content hashes, so Envoy is only reconfigured on real change
 const state = {};
+
+// Envoy's shared Query WebSocket upstream origin (ws://host:port). The adapter
+// uses the full resolved ws_href separately. This origin is fixed by
+// REGISTRY_QUERY_WS_URL or the first subscription; empty until then, so the
+// baseline cluster discovery service (cds.json) and route discovery service
+// (rds.json) omit the browser-facing WebSocket route.
+let envoyQueryWsOrigin = '';
 
 // --- mapping ---
 
@@ -218,6 +231,11 @@ const clusterName = target =>
         target.version
     )}`;
 
+const defaultPortFor = protocol => {
+    if (protocol === 'https:' || protocol === 'wss:') return 443;
+    return 80;
+};
+
 const staticClusterFromUrl = (name, urlString) => {
     // Only scheme defaults, hostname, and port are used; any path in
     // urlString is ignored (Envoy forwards the client request path).
@@ -239,9 +257,7 @@ const staticClusterFromUrl = (name, urlString) => {
                                         address: url.hostname,
                                         port_value:
                                             Number(url.port) ||
-                                            (url.protocol === 'https:'
-                                                ? 443
-                                                : 80),
+                                            defaultPortFor(url.protocol),
                                     },
                                 },
                             },
@@ -308,6 +324,18 @@ const directResponse = (status, jsonBody) => ({
 
 const directErrorResponse = (status, error) =>
     directResponse(status, { code: status, error, debug: null });
+
+// The HTTP buffer filter waits for a full request body; WebSocket upgrades
+// never finish that way, so disable it on upgrade routes.
+const wsBufferDisabled = {
+    typed_per_filter_config: {
+        'envoy.filters.http.buffer': {
+            '@type':
+                'type.googleapis.com/envoy.extensions.filters.http.buffer.v3.BufferPerRoute',
+            disabled: true,
+        },
+    },
+};
 
 const bridgeRoutes = target => {
     // path_separated_prefix matches the version path exactly or with a
@@ -435,6 +463,26 @@ const deviceListingRoutes = targets => {
 
 const DEVICES_NOT_LISTED = `Devices are not listed; request a specific device at ${BRIDGE_PREFIX}/devices/{deviceId}`;
 
+// Query subscription WebSockets on the bridge path (nmos-cpp path template).
+// Separate from /x-nmos/query HTTP so upgrade and long idle timeouts do not
+// affect the convenience HTTP routes.
+const queryWsRoutes = () => {
+    if (!envoyQueryWsOrigin) return [];
+    return [
+        {
+            match: { prefix: `${BRIDGE_PREFIX}/query/` },
+            route: {
+                cluster: 'registry_query_ws',
+                timeout: '0s',
+                idle_timeout: `${WS_IDLE_TIMEOUT_SECONDS}s`,
+                prefix_rewrite: '/x-nmos/query/',
+                upgrade_configs: [{ upgrade_type: 'websocket' }],
+            },
+            ...wsBufferDisabled,
+        },
+    ];
+};
+
 const routeConfiguration = targets => ({
     '@type': 'type.googleapis.com/envoy.config.route.v3.RouteConfiguration',
     name: 'nmos_bridge_routes',
@@ -480,12 +528,15 @@ const routeConfiguration = targets => ({
                 },
                 {
                     match: { path: BRIDGE_PREFIX },
-                    ...directResponse(200, ['devices/']),
+                    ...directResponse(200, ['devices/', 'query/']),
                 },
                 {
                     match: { path: `${BRIDGE_PREFIX}/` },
-                    ...directResponse(200, ['devices/']),
+                    ...directResponse(200, ['devices/', 'query/']),
                 },
+                // Query subscription WebSocket before the bridge namespace
+                // catch-all
+                ...queryWsRoutes(),
                 // arbitrary URLs are forbidden; only registered Device
                 // controls produce routes. The whole bridge namespace stops
                 // here, including other bridge API versions, so no request
@@ -573,6 +624,9 @@ const writeResource = (filename, resources, state) => {
 const apply = (targets, state) => {
     const clusters = [
         staticClusterFromUrl('registry_query', REGISTRY_QUERY_URL),
+        ...(envoyQueryWsOrigin
+            ? [staticClusterFromUrl('registry_query_ws', envoyQueryWsOrigin)]
+            : []),
         ...(REGISTRY_DNS_SD_URL
             ? [staticClusterFromUrl('registry_dns_sd', REGISTRY_DNS_SD_URL)]
             : []),
@@ -631,15 +685,30 @@ const createSubscription = async () => {
     if (!subscription.ws_href) {
         throw new Error('subscription response did not include ws_href');
     }
-    if (!REGISTRY_QUERY_WS_URL) return subscription.ws_href;
-    const wsHref = new URL(subscription.ws_href);
-    const registryQueryWsUrl = new URL(REGISTRY_QUERY_WS_URL);
-    wsHref.protocol = registryQueryWsUrl.protocol;
-    wsHref.host = registryQueryWsUrl.host;
-    // setting host does not clear the port, so an omitted port would otherwise
-    // leave the advertised port in place rather than the scheme default
-    wsHref.port = registryQueryWsUrl.port;
-    return wsHref.toString();
+    let wsHref = subscription.ws_href;
+    if (REGISTRY_QUERY_WS_URL) {
+        const advertised = new URL(subscription.ws_href);
+        const override = new URL(REGISTRY_QUERY_WS_URL);
+        advertised.protocol = override.protocol;
+        advertised.host = override.host;
+        // setting host does not clear the port, so an omitted port would
+        // otherwise leave the advertised port in place rather than the
+        // scheme default
+        advertised.port = override.port;
+        wsHref = advertised.toString();
+    }
+    // Envoy uses the same origin the adapter uses for its own subscription.
+    // Static routing assumes all Query subscriptions share one listener;
+    // reject a later conflicting origin rather than silently changing Envoy.
+    const resolved = new URL(wsHref);
+    const origin = `${resolved.protocol}//${resolved.host}`;
+    if (envoyQueryWsOrigin && envoyQueryWsOrigin !== origin) {
+        throw new Error(
+            `subscription ws_href origin changed from ${envoyQueryWsOrigin} to ${origin}; configure REGISTRY_QUERY_WS_URL`
+        );
+    }
+    envoyQueryWsOrigin = origin;
+    return wsHref;
 };
 
 // apply one message's data items to the device set. The first message after a
@@ -698,6 +767,9 @@ const run = async () => {
     for (;;) {
         try {
             const wsHref = await createSubscription();
+            // publish the browser-facing Query WebSocket route once its
+            // upstream is known
+            rebuild();
             await runConnection(wsHref);
         } catch (e) {
             log(`subscription failed: ${e.message}`);

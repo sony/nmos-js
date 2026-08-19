@@ -39,7 +39,25 @@ PATCH http://device.example.local/x-nmos/connection/v1.1/single/receivers/{recei
 
 Methods are restricted to `GET`, `HEAD`, `POST`, `PATCH`, `DELETE` and `OPTIONS`, the union of the methods the proxied Device APIs use; which methods a given resource actually supports is up to the Device. Query strings, methods and request bodies are preserved. `GET` and `HEAD` requests may be retried; mutating methods are never automatically retried.
 
-`GET /x-nmos-bridge` and `GET /x-nmos-bridge/v1.0` return listings (`["v1.0/"]` and `["devices/"]`). Devices are not listed; the Registry remains the source of truth for which Devices exist. Given a Device ID from the Registry, `GET …/devices/{device_id}` lists the APIs proxied for that Device (e.g. `["channelmapping/","connection/"]`) and `GET …/devices/{device_id}/{api}` lists the versions, so a client can see what became a bridge target without inspecting Envoy configuration.
+`GET /x-nmos-bridge` and `GET /x-nmos-bridge/v1.0` return listings (`["v1.0/"]` and `["devices/","query/"]`). Devices are not listed; the Registry remains the source of truth for which Devices exist. Given a Device ID from the Registry, `GET …/devices/{device_id}` lists the APIs proxied for that Device (e.g. `["channelmapping/","connection/"]`) and `GET …/devices/{device_id}/{api}` lists the versions, so a client can see what became a bridge target without inspecting Envoy configuration.
+
+Query subscription WebSockets use a canonical bridge path (nmos-cpp `ws_href` path shape). The handshake:
+
+```text
+GET /x-nmos-bridge/v1.0/query/{version}/subscriptions/{id}
+Upgrade: websocket
+Connection: Upgrade
+```
+
+is proxied to the Registry Query API WebSocket listener as:
+
+```text
+GET /x-nmos/query/{version}/subscriptions/{id}
+Upgrade: websocket
+Connection: Upgrade
+```
+
+Bridge-aware clients build that URL from the Bridge API origin, Query version, and subscription `id`; they do not open the absolute `ws_href` from the subscription resource when using the bridge as the browser-facing proxy. Query **HTTP** remains on `/x-nmos/query/...` (optional convenience).
 
 Every other path under `/x-nmos-bridge`, including other bridge API versions and a version or API that is not a target for that Device, returns `404` with an NMOS error body, so nothing in the bridge namespace falls through to the optional app route on `/`.
 
@@ -48,15 +66,18 @@ Every other path under `/x-nmos-bridge`, including other bridge API versions and
 ```text
 Browser
     |
-    +--(HTTP / WebSocket)------> Registry Query API
+    +--(HTTP / WebSocket)------> Registry Query API (when reachable directly)
     |
-    +--(HTTP)------------------> Envoy
+    +--(HTTP / WebSocket)------> Envoy
                                     |
-                                    +--> /x-nmos-bridge/... --> Device Control APIs
+                                    +--> /x-nmos-bridge/devices/... --> Device Control APIs
+                                    |
+                                    +--> /x-nmos-bridge/query/.../subscriptions/{id}
+                                    |         --(WebSocket)--> Registry Query API
                                     |
                                     +--> /x-nmos -> ["query/"] (fixed listing)
                                     |
-                                    +--> /x-nmos/query/... (convenience)
+                                    +--> /x-nmos/query/... (HTTP convenience)
                                     |         --> Registry Query API
                                     |
                                     +--> /x-dns-sd/... (convenience)
@@ -74,8 +95,8 @@ Adapter (server-side; not on the browser path)
 
 The NMOS Bridge consists of Envoy and the adapter service:
 
-- **Envoy** proxies browser HTTP to Device Control APIs on `/x-nmos-bridge/...` (required for the bridge). It may also proxy the Query API on `/x-nmos/query/...`, DNS-SD on `/x-dns-sd/...`, and the nmos-js app on `/` as optional convenience. `GET /x-nmos/` returns a fixed listing of `["query/"]` so discovery matches what is actually proxied. Other `/x-nmos/` APIs (Registration, Node, …) are not proxied — they may use different ports. It applies routing, request size limits, timeouts, retry policy, health checking and failover, and access logging of mutating requests. It does not proxy Query API WebSocket subscriptions.
-- **The adapter** (`adapter/`) converts Registry state into Envoy configuration. It tracks Devices through a [Query API WebSocket subscription](https://specs.amwa.tv/is-04/branches/v1.3.x/docs/4.2._Behaviour_-_Querying.html) (non-persistent, `resource_path` `/devices`), extracts Device Control API controls, and generates Envoy routes and clusters, atomically replacing the dynamic configuration files (`rds.json`, `cds.json`) which Envoy reloads via filesystem watch. The adapter does not proxy traffic and does not determine runtime health.
+- **Envoy** proxies browser HTTP to Device Control APIs on `/x-nmos-bridge/...` (required for the bridge), and Query subscription WebSockets on `/x-nmos-bridge/v1.0/query/...` (rewritten to the Registry Query API WebSocket path). It may also proxy Query **HTTP** on `/x-nmos/query/...`, DNS-SD on `/x-dns-sd/...`, and the nmos-js app on `/` as optional convenience. `GET /x-nmos/` returns a fixed listing of `["query/"]` so discovery matches what is actually proxied. Other `/x-nmos/` APIs (Registration, Node, …) are not proxied — they may use different ports. It applies routing, request size limits, timeouts, retry policy, health checking and failover, and access logging of mutating requests.
+- **The adapter** (`adapter/`) converts Registry state into Envoy configuration. It tracks Devices through a [Query API WebSocket subscription](https://specs.amwa.tv/is-04/branches/v1.3.x/docs/4.2._Behaviour_-_Querying.html) (non-persistent, `resource_path` `/devices`), extracts Device controls, and generates Envoy routes and clusters, atomically replacing the dynamic configuration files (`rds.json`, `cds.json`) which Envoy reloads via filesystem watch. The adapter does not proxy traffic and does not determine runtime health.
 
   On connecting, the Registry sends a sync of all current Devices, then pushes added, modified and removed events; the adapter rebuilds configuration on each change. If the connection is interrupted, the adapter resubscribes with exponential backoff and the fresh sync re-establishes all mappings, including Devices that were removed while disconnected. The last good configuration keeps being served until the new sync arrives.
 
@@ -174,16 +195,9 @@ Logging API:            http://controller.example.com:8080/log/v1.0
 NMOS Bridge API:        http://controller.example.com:8080/x-nmos-bridge/v1.0
 ```
 
-Query API WebSocket subscriptions are not proxied by Envoy. Subscription
-`ws_href` values are absolute URIs (`format: uri`) advertised by the
-Registry and often use a different port than Query HTTP (for example
-nmos-cpp-registry's `query_ws_port`). Browser clients that open those
-sockets connect to the Registry (or whatever `ws_href` names), not through
-Envoy. The adapter's server-side subscription is separate: it must reach
-the Query API and the WebSocket URL from the subscription response. Set
-`REGISTRY_QUERY_WS_URL` when the advertised `ws_href` uses a scheme, host
-name or port which is not reachable from the adapter, for example
-`ws://192.168.6.101:81`.
+Query API WebSocket subscriptions for **bridge-aware** clients use `/x-nmos-bridge/v1.0/query/{version}/subscriptions/{id}` through Envoy (static path rewrite to the Registry Query API WebSocket listener). The subscription resource's absolute `ws_href` is unchanged and still names the Registry; clients that only follow `ws_href` need to reach that listener. The adapter's server-side subscription is separate: it must reach the Query API and the WebSocket URL from the subscription response. Set `REGISTRY_QUERY_WS_URL` when the advertised `ws_href` uses a scheme, host name or port which is not reachable from the adapter (and from Envoy), for example `ws://192.168.6.101:81`. That override is also the upstream for the browser-facing Query subscription WebSocket route.
+
+WebSocket routes use `timeout: 0s` and `WS_IDLE_TIMEOUT_SECONDS` (default `3600`) so long-lived grains are not cut by `ROUTE_TIMEOUT_SECONDS`.
 
 Envoy must be able to reach every Device Control API `href` which is to be
 used through the bridge. This is independent of browser reachability: the
@@ -198,8 +212,8 @@ file-based arrangement. A deployment with independently scaled Envoy
 instances would require an xDS control plane, which is not currently
 implemented.
 
-If nmos-js is served separately, set Query API, Logging API and Connection
-Bridge API as needed (Registry and/or Envoy). Alternatively, set `APP_URL`
+If nmos-js is served separately, set Query API, Logging API and NMOS Bridge
+API as needed (Registry and/or Envoy). Alternatively, set `APP_URL`
 and use Envoy as a single origin for nmos-js, Query/DNS-SD/Logging APIs, and
 the bridge.
 
@@ -231,6 +245,7 @@ Phase 1 is implemented, plus health checking and multi-endpoint failover from Ph
 - HTTP browser and upstream access, file-based dynamic configuration
 - `GET`/`HEAD`/`POST`/`PATCH`/`DELETE`
 - Upstream 3xx `Location` handling (see below)
+- Query subscription WebSockets on `/x-nmos-bridge/v1.0/query/...` (static rewrite to the Registry Query API WebSocket listener)
 
 Not yet implemented: response size limits, HTTPS upstreams, authentication translation, mTLS, and an xDS control plane.
 

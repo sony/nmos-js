@@ -53,16 +53,25 @@ const BRIDGE_ROOT = '/x-nmos-bridge';
 const BRIDGE_VERSION = 'v1.0';
 const BRIDGE_PREFIX = `${BRIDGE_ROOT}/${BRIDGE_VERSION}`;
 
-// Phase 1 supports HTTP upstreams only
-const ALLOWED_PROTOCOLS = ['http:'];
-
 // the proxied Device APIs; each api is the path segment both in the advertised
-// href and in the bridge path
+// href and in the bridge path. protocols lists the allowed href schemes for
+// that control type (Connection and Channel Mapping are HTTP; NCP is
+// WebSocket).
 const CONTROL_TYPES = [
-    { pattern: /^urn:x-nmos:control:sr-ctrl\/(v\d+\.\d+)$/, api: 'connection' },
+    {
+        pattern: /^urn:x-nmos:control:sr-ctrl\/(v\d+\.\d+)$/,
+        api: 'connection',
+        protocols: ['http:'],
+    },
     {
         pattern: /^urn:x-nmos:control:cm-ctrl\/(v\d+\.\d+)$/,
         api: 'channelmapping',
+        protocols: ['http:'],
+    },
+    {
+        pattern: /^urn:x-nmos:control:ncp\/(v\d+\.\d+)$/,
+        api: 'ncp',
+        protocols: ['ws:'],
     },
 ];
 
@@ -132,11 +141,13 @@ const collectTargets = devices => {
         for (const control of device.controls || []) {
             let api;
             let version;
+            let protocols;
             for (const controlType of CONTROL_TYPES) {
                 const match = controlType.pattern.exec(control.type || '');
                 if (!match) continue;
                 api = controlType.api;
                 version = match[1];
+                protocols = controlType.protocols;
                 break;
             }
             if (!version) continue;
@@ -149,7 +160,7 @@ const collectTargets = devices => {
                 );
                 continue;
             }
-            if (!ALLOWED_PROTOCOLS.includes(href.protocol)) {
+            if (!protocols.includes(href.protocol)) {
                 logOnce(
                     `skipping unsupported scheme for Device ${device.id}: ${control.href}`
                 );
@@ -176,7 +187,9 @@ const collectTargets = devices => {
             const host = href.hostname;
             // URL.port is empty when the href omits an explicit port
             const scheme = href.protocol.replace(/:$/, '');
-            const port = Number(href.port) || (scheme === 'https' ? 443 : 80);
+            const port =
+                Number(href.port) ||
+                (scheme === 'https' || scheme === 'wss' ? 443 : 80);
             // de-duplicate normalized hrefs
             if (
                 candidates.some(
@@ -299,15 +312,24 @@ const bridgeCluster = target => {
             })),
         },
         // Envoy, not the adapter, determines candidate health, so that
-        // failover between priority levels happens at runtime
+        // failover between priority levels happens at runtime. NCP listeners
+        // reject HTTP probes (426); use TCP for ws/wss targets.
         health_checks: [
-            {
-                timeout: '2s',
-                interval: '10s',
-                unhealthy_threshold: 2,
-                healthy_threshold: 2,
-                http_health_check: { path: `${target.basePath}/` },
-            },
+            target.scheme === 'ws' || target.scheme === 'wss'
+                ? {
+                      timeout: '2s',
+                      interval: '10s',
+                      unhealthy_threshold: 2,
+                      healthy_threshold: 2,
+                      tcp_health_check: {},
+                  }
+                : {
+                      timeout: '2s',
+                      interval: '10s',
+                      unhealthy_threshold: 2,
+                      healthy_threshold: 2,
+                      http_health_check: { path: `${target.basePath}/` },
+                  },
         ],
     };
 };
@@ -344,6 +366,22 @@ const bridgeRoutes = target => {
     // sub-path) when rewriting onto the Device API basePath, so
     // trailing-slash handling stays with the upstream per that API.
     const pathPrefix = `${BRIDGE_PREFIX}/devices/${target.deviceId}/${target.api}/${target.version}`;
+    if (target.scheme === 'ws' || target.scheme === 'wss') {
+        // NCP (and similar): upgrade only; no Location rewrite
+        return [
+            {
+                match: { path_separated_prefix: pathPrefix },
+                route: {
+                    cluster: clusterName(target),
+                    prefix_rewrite: target.basePath,
+                    timeout: '0s',
+                    idle_timeout: `${WS_IDLE_TIMEOUT_SECONDS}s`,
+                    upgrade_configs: [{ upgrade_type: 'websocket' }],
+                },
+                ...wsBufferDisabled,
+            },
+        ];
+    }
     // Envoy 1.31 set_metadata has no per-route config; LuaPerRoute on a
     // dedicated filter writes Location-rewrite context into dynamic metadata
     // for location_rewrite.lua. Values are NMOS paths / host:port lists.

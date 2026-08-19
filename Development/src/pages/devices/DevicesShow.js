@@ -34,6 +34,9 @@ import UnsortableDatagrid from '../../components/UnsortableDatagrid';
 import UrlField from '../../components/URLField';
 import labelize from '../../components/labelize';
 import {
+    BRIDGE_FORCED,
+    bridgeMode,
+    bridgeUrl,
     buildIs12BrowserLaunchUrl,
     is12BrowserUrl,
     queryVersion,
@@ -118,13 +121,33 @@ const DevicesShowView = props => {
     );
 };
 
-const ControlAddressField = ({ record, source = 'href', deviceLabel }) => {
+const ControlAddressField = ({
+    record,
+    source = 'href',
+    deviceLabel,
+    deviceId,
+}) => {
     const href = get(record, source);
     const isDeviceControlProtocol =
         unversionedParameter(get(record, 'type')) === 'urn:x-nmos:control:ncp';
 
     if (isDeviceControlProtocol) {
-        const launchUrl = buildIs12BrowserLaunchUrl(href, deviceLabel);
+        // Forced Bridge: IS-12 launches against the bridge NCP path, not the
+        // Device control href. Auto / No Bridge keep the advertised href.
+        let ncpHref = href;
+        if (bridgeMode() === BRIDGE_FORCED && deviceId) {
+            const version = (get(record, 'type') || '').split('/').pop();
+            if (version) {
+                try {
+                    const url = new URL(bridgeUrl(deviceId, 'ncp', version));
+                    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+                    ncpHref = url.toString();
+                } catch (e) {
+                    // fall back to the Device href
+                }
+            }
+        }
+        const launchUrl = buildIs12BrowserLaunchUrl(ncpHref, deviceLabel);
         const disabled = !is12BrowserUrl() || !launchUrl;
 
         if (disabled) {
@@ -146,7 +169,7 @@ const ControlAddressField = ({ record, source = 'href', deviceLabel }) => {
                 href="#"
                 variant="body2"
                 style={{ textDecoration: 'underline', cursor: 'pointer' }}
-                title={`Open IS-12 Browser\n${href}`}
+                title={`Open IS-12 Browser\n${ncpHref}`}
                 onClick={event => {
                     event.preventDefault();
                     window.open(launchUrl, '_blank', 'noopener,noreferrer');
@@ -182,6 +205,7 @@ const ShowSummaryTab = ({ record, ...props }) => {
                             <ControlAddressField
                                 source="href"
                                 label="Address"
+                                deviceId={record?.id}
                                 deviceLabel={record?.label}
                             />
                             <ParameterField

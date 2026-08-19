@@ -1,11 +1,9 @@
 # Design plan: Envoy WebSocket proxying (Query API and Device NCP)
 
-Status: Case A (Query WS) implemented in the adapter; Case B (NCP) not started.
-Envoy WS spike validated 2026-08-18 (see Investigation notes). Complements the NMOS Bridge in
-`nmos-bridge/README.md`, which today proxies browser **HTTP** to Device
-Connection APIs and optionally to Registry Query / DNS-SD / Logging HTTP.
-Query subscription WebSockets and Device NCP WebSockets are explicitly out of
-scope there.
+Status: Query subscription WebSocket proxying implemented; Device NCP WebSocket
+proxying implemented (adapter + Forced Bridge IS-12 launch). Envoy WS spike
+validated 2026-08-18 (see Investigation notes). Complements the NMOS Bridge in
+`nmos-bridge/README.md`.
 
 ## Motivation
 
@@ -359,5 +357,9 @@ Spike against local nmos-cpp registry (`query_ws_port` 3213) and virtnode
 
 ### Suggested next implementation slice
 
-Case A first (static `registry_query_ws` + nmos-js remap of subscription sockets when Bridge Mode is Forced/Auto and Query is on the bridge origin), then Case B (NCP in `CONTROL_TYPES`, `ws` scheme, no HTTP health check, Forced launch URI).
+Done: Query subscription WebSockets (`registry_query_ws` + bridge path rewrite;
+nmos-js does not consume Query grains today). Done: NCP in `CONTROL_TYPES`,
+`ws` scheme, TCP health check, Forced Bridge IS-12 launch URI. Optional later:
+Auto Bridge NCP fallback; Query grain client remap if the SPA starts using
+subscriptions over WebSocket.
 

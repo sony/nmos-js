@@ -1,6 +1,6 @@
 # NMOS Bridge
 
-Provides browser-accessible proxy access to [AMWA IS-05](https://specs.amwa.tv/is-05/) Connection APIs and [AMWA IS-08](https://specs.amwa.tv/is-08/) Channel Mapping APIs exposed by Devices registered in an NMOS Registry, where the browser may not have network access to the Device APIs directly.
+Provides browser-accessible proxy access to [AMWA IS-05](https://specs.amwa.tv/is-05/) Connection APIs, [AMWA IS-08](https://specs.amwa.tv/is-08/) Channel Mapping APIs, and [AMWA IS-12](https://specs.amwa.tv/is-12/) / [BCP-008](https://specs.amwa.tv/bcp-008-01/) Device Control Protocol (NCP) WebSockets exposed by Devices registered in an NMOS Registry, where the browser may not have network access to the Device APIs directly.
 
 The bridge must not behave as an open proxy. Targets originate exclusively from registered Device `controls` entries; public requests use Device IDs only and arbitrary URLs are forbidden. The Registry remains the source of truth and requires no changes.
 
@@ -22,22 +22,41 @@ where `href` is taken from the Device resource `controls` entry matching the con
 | --- | --- | --- |
 | `connection` | `urn:x-nmos:control:sr-ctrl/{version}` | IS-05 Connection |
 | `channelmapping` | `urn:x-nmos:control:cm-ctrl/{version}` | IS-08 Channel Mapping |
+| `ncp` | `urn:x-nmos:control:ncp/{version}` | IS-12 / BCP-008 NCP (WebSocket) |
 
 `{api}` is the same path segment as in the advertised `href` (`/x-nmos/{api}/{version}`). The bridge API version (`v1.0`) is independent of the Device API version (`{version}`).
 
-For example:
+For Connection and Channel Mapping (HTTP), the request:
 
 ```text
 PATCH /x-nmos-bridge/v1.0/devices/{device_id}/connection/v1.1/single/receivers/{receiver_id}/staged
 ```
 
-is proxied to:
+is proxied to `http://device.example.local` as:
 
 ```text
-PATCH http://device.example.local/x-nmos/connection/v1.1/single/receivers/{receiver_id}/staged
+PATCH /x-nmos/connection/v1.1/single/receivers/{receiver_id}/staged
 ```
 
 Methods are restricted to `GET`, `HEAD`, `POST`, `PATCH`, `DELETE` and `OPTIONS`, the union of the methods the proxied Device APIs use; which methods a given resource actually supports is up to the Device. Query strings, methods and request bodies are preserved. `GET` and `HEAD` requests may be retried; mutating methods are never automatically retried.
+
+For NCP (WebSocket), the handshake:
+
+```text
+GET /x-nmos-bridge/v1.0/devices/{device_id}/ncp/{version}
+Upgrade: websocket
+Connection: Upgrade
+```
+
+is proxied to `http://device.example.local:7002` as:
+
+```text
+GET /x-nmos/ncp/{version}
+Upgrade: websocket
+Connection: Upgrade
+```
+
+(`http://device.example.local:7002` coming from the Device control `href`.) Upstream schemes are `ws` only for now (parallel to HTTP-only Connection). Envoy uses TCP health checks for NCP clusters (HTTP probes return `426` Upgrade Required on nmos-cpp's NCP port so a standard HTTP health check doesn't work).
 
 `GET /x-nmos-bridge` and `GET /x-nmos-bridge/v1.0` return listings (`["v1.0/"]` and `["devices/","query/"]`). Devices are not listed; the Registry remains the source of truth for which Devices exist. Given a Device ID from the Registry, `GET …/devices/{device_id}` lists the APIs proxied for that Device (e.g. `["channelmapping/","connection/"]`) and `GET …/devices/{device_id}/{api}` lists the versions, so a client can see what became a bridge target without inspecting Envoy configuration.
 
@@ -71,6 +90,8 @@ Browser
     +--(HTTP / WebSocket)------> Envoy
                                     |
                                     +--> /x-nmos-bridge/devices/... --> Device Control APIs
+                                    |         (HTTP Connection / Channel Mapping;
+                                    |          WebSocket NCP)
                                     |
                                     +--> /x-nmos-bridge/query/.../subscriptions/{id}
                                     |         --(WebSocket)--> Registry Query API
@@ -95,7 +116,7 @@ Adapter (server-side; not on the browser path)
 
 The NMOS Bridge consists of Envoy and the adapter service:
 
-- **Envoy** proxies browser HTTP to Device Control APIs on `/x-nmos-bridge/...` (required for the bridge), and Query subscription WebSockets on `/x-nmos-bridge/v1.0/query/...` (rewritten to the Registry Query API WebSocket path). It may also proxy Query **HTTP** on `/x-nmos/query/...`, DNS-SD on `/x-dns-sd/...`, and the nmos-js app on `/` as optional convenience. `GET /x-nmos/` returns a fixed listing of `["query/"]` so discovery matches what is actually proxied. Other `/x-nmos/` APIs (Registration, Node, …) are not proxied — they may use different ports. It applies routing, request size limits, timeouts, retry policy, health checking and failover, and access logging of mutating requests.
+- **Envoy** proxies browser HTTP to Device Connection and Channel Mapping APIs on `/x-nmos-bridge/...` (required for the bridge), Device NCP WebSockets on `/x-nmos-bridge/.../ncp/...`, and Query subscription WebSockets on `/x-nmos-bridge/v1.0/query/...` (rewritten to the Registry Query API WebSocket path). It may also proxy Query **HTTP** on `/x-nmos/query/...`, DNS-SD on `/x-dns-sd/...`, and the nmos-js app on `/` as optional convenience. `GET /x-nmos/` returns a fixed listing of `["query/"]` so discovery matches what is actually proxied. Other `/x-nmos/` APIs (Registration, Node, …) are not proxied — they may use different ports. It applies routing, request size limits, timeouts, retry policy, health checking and failover, and access logging of mutating requests.
 - **The adapter** (`adapter/`) converts Registry state into Envoy configuration. It tracks Devices through a [Query API WebSocket subscription](https://specs.amwa.tv/is-04/branches/v1.3.x/docs/4.2._Behaviour_-_Querying.html) (non-persistent, `resource_path` `/devices`), extracts Device controls, and generates Envoy routes and clusters, atomically replacing the dynamic configuration files (`rds.json`, `cds.json`) which Envoy reloads via filesystem watch. The adapter does not proxy traffic and does not determine runtime health.
 
   On connecting, the Registry sends a sync of all current Devices, then pushes added, modified and removed events; the adapter rebuilds configuration on each change. If the connection is interrupted, the adapter resubscribes with exponential backoff and the fresh sync re-establishes all mappings, including Devices that were removed while disconnected. The last good configuration keeps being served until the new sync arrives.
@@ -238,6 +259,8 @@ The nmos-js client offers a **NMOS Bridge Mode** and a separate
 
 `POST`, `PATCH` and `DELETE` requests are not automatically retried via alternate paths; they follow whichever path was resolved for the Device (`$connectionAPI` / `$channelmappingAPI`). Bridge requests use the configured NMOS Bridge API (default: SPA origin + `/x-nmos-bridge/v1.0`).
 
+IS-12 Browser launch (`?uri=`) uses the Device NCP `href` under No Bridge and Auto Bridge. Under **Forced Bridge**, the launch `uri` is the bridge NCP WebSocket URL (`ws`/`wss` on the Bridge API origin, path `…/devices/{id}/ncp/{version}`).
+
 ## Status
 
 Phase 1 is implemented, plus health checking and multi-endpoint failover from Phase 2:
@@ -246,6 +269,7 @@ Phase 1 is implemented, plus health checking and multi-endpoint failover from Ph
 - `GET`/`HEAD`/`POST`/`PATCH`/`DELETE`
 - Upstream 3xx `Location` handling (see below)
 - Query subscription WebSockets on `/x-nmos-bridge/v1.0/query/...` (static rewrite to the Registry Query API WebSocket listener)
+- Device NCP WebSockets on `/x-nmos-bridge/.../ncp/...` (Forced Bridge remaps IS-12 Browser launch)
 
 Not yet implemented: response size limits, HTTPS upstreams, authentication translation, mTLS, and an xDS control plane.
 

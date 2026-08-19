@@ -3,10 +3,10 @@
 // NMOS Connection API Bridge - Envoy Adapter
 //
 // Converts Registry state into Envoy configuration. Tracks Devices through a
-// Query API WebSocket subscription, extracts their Connection API controls, and
-// generates Envoy route and cluster configuration files which Envoy reloads
-// via filesystem watch. The adapter does not proxy any traffic itself and
-// does not determine runtime health - Envoy does both.
+// Query API WebSocket subscription, extracts their Connection and Channel
+// Mapping API controls, and generates Envoy route and cluster configuration
+// files which Envoy reloads via filesystem watch. The adapter does not proxy
+// any traffic itself and does not determine runtime health - Envoy does both.
 
 const crypto = require('crypto');
 const fs = require('fs');
@@ -43,12 +43,22 @@ const RECONNECT_MAX_MS = Number(process.env.RECONNECT_MAX_MS) || 30000;
 // when set, use this scheme and authority while preserving the subscription path
 const REGISTRY_QUERY_WS_URL = process.env.REGISTRY_QUERY_WS_URL || '';
 
-const BRIDGE_PREFIX = '/x-nmos-bridge/v1.0';
+const BRIDGE_ROOT = '/x-nmos-bridge';
+const BRIDGE_VERSION = 'v1.0';
+const BRIDGE_PREFIX = `${BRIDGE_ROOT}/${BRIDGE_VERSION}`;
 
 // Phase 1 supports HTTP upstreams only
 const ALLOWED_PROTOCOLS = ['http:'];
 
-const CONNECTION_CONTROL = /^urn:x-nmos:control:sr-ctrl\/(v\d+\.\d+)$/;
+// the proxied Device APIs; each api is the path segment both in the advertised
+// href and in the bridge path
+const CONTROL_TYPES = [
+    { pattern: /^urn:x-nmos:control:sr-ctrl\/(v\d+\.\d+)$/, api: 'connection' },
+    {
+        pattern: /^urn:x-nmos:control:cm-ctrl\/(v\d+\.\d+)$/,
+        api: 'channelmapping',
+    },
+];
 
 if (!REGISTRY_QUERY_URL) {
     console.error(
@@ -102,14 +112,21 @@ const priorityFor = host => {
     return 1;
 };
 
-// one bridge target per unique Device ID + Connection API version
+// one bridge target per unique Device ID + API + version
 const collectTargets = devices => {
     const targets = new Map();
     for (const device of devices) {
         for (const control of device.controls || []) {
-            const match = CONNECTION_CONTROL.exec(control.type || '');
-            if (!match) continue;
-            const version = match[1];
+            let api;
+            let version;
+            for (const controlType of CONTROL_TYPES) {
+                const match = controlType.pattern.exec(control.type || '');
+                if (!match) continue;
+                api = controlType.api;
+                version = match[1];
+                break;
+            }
+            if (!version) continue;
             let href;
             try {
                 href = new URL(control.href);
@@ -127,16 +144,17 @@ const collectTargets = devices => {
             }
             // the href path must correspond to the advertised version
             const basePath = href.pathname.replace(/\/$/, '');
-            if (!basePath.endsWith(`/x-nmos/connection/${version}`)) {
+            if (!basePath.endsWith(`/x-nmos/${api}/${version}`)) {
                 logOnce(
-                    `skipping href inconsistent with ${version} for Device ${device.id}: ${control.href}`
+                    `skipping href inconsistent with ${api} ${version} for Device ${device.id}: ${control.href}`
                 );
                 continue;
             }
-            const key = `${device.id}/${version}`;
+            const key = `${device.id}/${api}/${version}`;
             if (!targets.has(key)) {
                 targets.set(key, {
                     deviceId: device.id,
+                    api,
                     version,
                     candidates: [],
                 });
@@ -176,7 +194,7 @@ const collectTargets = devices => {
         for (const c of target.candidates) {
             if (c.scheme !== scheme || c.basePath !== basePath) {
                 logOnce(
-                    `dropping candidate with differing scheme or base path for Device ${target.deviceId} ${target.version}: ${c.scheme}://${c.host}:${c.port}${c.basePath}`
+                    `dropping candidate with differing scheme or base path for Device ${target.deviceId} ${target.api} ${target.version}: ${c.scheme}://${c.host}:${c.port}${c.basePath}`
                 );
             }
         }
@@ -187,14 +205,16 @@ const collectTargets = devices => {
         target.basePath = basePath;
     }
     return [...targets.values()].sort((a, b) =>
-        `${a.deviceId}/${a.version}`.localeCompare(`${b.deviceId}/${b.version}`)
+        `${a.deviceId}/${a.api}/${a.version}`.localeCompare(
+            `${b.deviceId}/${b.api}/${b.version}`
+        )
     );
 };
 
 // --- Envoy configuration ---
 
 const clusterName = target =>
-    `nmos_bridge_device_${safeName(target.deviceId)}_connection_${safeName(
+    `nmos_bridge_device_${safeName(target.deviceId)}_${target.api}_${safeName(
         target.version
     )}`;
 
@@ -293,9 +313,9 @@ const bridgeRoutes = target => {
     // path_separated_prefix matches the version path exactly or with a
     // following '/...' (Envoy 1.22+; compose pins v1.31). That preserves
     // whatever the client sent after the version (nothing, '/', or a
-    // sub-path) when rewriting onto the Device Connection API basePath,
-    // so trailing-slash handling stays with the upstream per IS-04/IS-05.
-    const pathPrefix = `${BRIDGE_PREFIX}/devices/${target.deviceId}/connection/${target.version}`;
+    // sub-path) when rewriting onto the Device API basePath, so
+    // trailing-slash handling stays with the upstream per that API.
+    const pathPrefix = `${BRIDGE_PREFIX}/devices/${target.deviceId}/${target.api}/${target.version}`;
     // Envoy 1.31 set_metadata has no per-route config; LuaPerRoute on a
     // dedicated filter writes Location-rewrite context into dynamic metadata
     // for location_rewrite.lua. Values are NMOS paths / host:port lists.
@@ -331,7 +351,7 @@ const bridgeRoutes = target => {
         timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
     };
     return [
-        // GET and HEAD may be retried; POSTs and PATCHes must not be
+        // GET and HEAD may be retried; mutating methods must not be
         {
             match: {
                 path_separated_prefix: pathPrefix,
@@ -360,7 +380,7 @@ const bridgeRoutes = target => {
                     {
                         name: ':method',
                         string_match: {
-                            safe_regex: { regex: 'POST|PATCH|OPTIONS' },
+                            safe_regex: { regex: 'POST|PATCH|DELETE|OPTIONS' },
                         },
                     },
                 ],
@@ -376,6 +396,45 @@ const bridgeRoutes = target => {
     ];
 };
 
+// what the bridge proxies for one Device, so a client holding a Device ID from
+// the Registry can see which APIs and versions became targets
+const deviceListingRoutes = targets => {
+    const devices = new Map();
+    for (const target of targets) {
+        if (!devices.has(target.deviceId)) {
+            devices.set(target.deviceId, new Map());
+        }
+        const apis = devices.get(target.deviceId);
+        if (!apis.has(target.api)) apis.set(target.api, []);
+        apis.get(target.api).push(`${target.version}/`);
+    }
+    const routes = [];
+    // targets are sorted, so the listings are too
+    for (const [deviceId, apis] of devices) {
+        const devicePath = `${BRIDGE_PREFIX}/devices/${deviceId}`;
+        const deviceListing = directResponse(
+            200,
+            [...apis.keys()].map(api => `${api}/`)
+        );
+        routes.push({ match: { path: devicePath }, ...deviceListing });
+        routes.push({ match: { path: `${devicePath}/` }, ...deviceListing });
+        for (const [api, versions] of apis) {
+            const apiListing = directResponse(200, versions);
+            routes.push({
+                match: { path: `${devicePath}/${api}` },
+                ...apiListing,
+            });
+            routes.push({
+                match: { path: `${devicePath}/${api}/` },
+                ...apiListing,
+            });
+        }
+    }
+    return routes;
+};
+
+const DEVICES_NOT_LISTED = `Devices are not listed; request a specific device at ${BRIDGE_PREFIX}/devices/{deviceId}`;
+
 const routeConfiguration = targets => ({
     '@type': 'type.googleapis.com/envoy.config.route.v3.RouteConfiguration',
     name: 'nmos_bridge_routes',
@@ -390,7 +449,7 @@ const routeConfiguration = targets => ({
                     allow_origin_string_match: [
                         { safe_regex: { regex: '.*' } },
                     ],
-                    allow_methods: 'GET, HEAD, POST, PATCH, OPTIONS',
+                    allow_methods: 'GET, HEAD, POST, PATCH, DELETE, OPTIONS',
                     // Request-Timeout: NMOS clients (e.g. nmos-js Query /
                     // DNS-SD) send this on long-poll style requests; not
                     // CORS-safelisted. See sony/nmos-js@6d0e783.
@@ -399,10 +458,40 @@ const routeConfiguration = targets => ({
             },
             routes: [
                 ...targets.flatMap(bridgeRoutes),
-                // arbitrary URLs are forbidden; only registered Device
-                // controls produce routes, everything else stops here
+                ...deviceListingRoutes(targets),
+                // the Device collection is not listed, the Registry answers
+                // which Devices exist
                 {
-                    match: { prefix: `${BRIDGE_PREFIX}/` },
+                    match: { path: `${BRIDGE_PREFIX}/devices` },
+                    ...directErrorResponse(404, DEVICES_NOT_LISTED),
+                },
+                {
+                    match: { path: `${BRIDGE_PREFIX}/devices/` },
+                    ...directErrorResponse(404, DEVICES_NOT_LISTED),
+                },
+                // listings of the bridge API itself, like /x-nmos below
+                {
+                    match: { path: BRIDGE_ROOT },
+                    ...directResponse(200, [`${BRIDGE_VERSION}/`]),
+                },
+                {
+                    match: { path: `${BRIDGE_ROOT}/` },
+                    ...directResponse(200, [`${BRIDGE_VERSION}/`]),
+                },
+                {
+                    match: { path: BRIDGE_PREFIX },
+                    ...directResponse(200, ['devices/']),
+                },
+                {
+                    match: { path: `${BRIDGE_PREFIX}/` },
+                    ...directResponse(200, ['devices/']),
+                },
+                // arbitrary URLs are forbidden; only registered Device
+                // controls produce routes. The whole bridge namespace stops
+                // here, including other bridge API versions, so no request
+                // for it reaches the app catch-all below.
+                {
+                    match: { path_separated_prefix: BRIDGE_ROOT },
                     ...directErrorResponse(404, 'Unknown bridge target'),
                 },
                 // Query API (host/port from REGISTRY_QUERY_URL; path is not

@@ -7,7 +7,7 @@
 --
 -- Policy:
 -- - Path-relative or root-relative (path-absolute) whose resolved path is
---   under this target's Connection API base_path: rewrite onto the bridge.
+--   under this target's base_path: rewrite onto the bridge.
 -- - Absolute http(s) (or scheme-relative resolved with the client scheme)
 --   whose host/port matches a candidate and whose path is under base_path:
 --   rewrite onto the bridge (client scheme/host/port).

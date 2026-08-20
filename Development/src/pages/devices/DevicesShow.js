@@ -11,12 +11,25 @@ import {
     SimpleShowLayout,
     SingleFieldList,
     TextField,
+    useNotify,
     useRecordContext,
+    useRefresh,
     useShowController,
 } from 'react-admin';
-import { Paper, Tab, Tabs, Typography } from '@material-ui/core';
+import {
+    Button,
+    Paper,
+    Tab,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    Tabs,
+    Typography,
+} from '@material-ui/core';
 import { Link, Route } from 'react-router-dom';
-import get from 'lodash/get';
+import { get, isEmpty, map } from 'lodash';
 import { useTheme } from '@material-ui/styles';
 import LinkChipField from '../../components/LinkChipField';
 import ObjectField from '../../components/ObjectField';
@@ -32,7 +45,9 @@ import SanitizedDivider from '../../components/SanitizedDivider';
 import TAIField from '../../components/TAIField';
 import UnsortableDatagrid from '../../components/UnsortableDatagrid';
 import UrlField from '../../components/URLField';
+import { CancelScheduledActivationIcon } from '../../icons';
 import labelize from '../../components/labelize';
+import dataProvider from '../../dataProvider';
 import {
     buildIs12BrowserLaunchUrl,
     is12BrowserUrl,
@@ -40,6 +55,12 @@ import {
 } from '../../settings';
 import MappingShowActions from '../../components/MappingShowActions';
 import ChannelMappingMatrix from './ChannelMappingMatrix';
+
+// Channel Mapping tabs, and the Channel Mapping API data each one needs
+const channelMappingTabs = {
+    active_map: '$io',
+    activations: '$activations',
+};
 
 export const DevicesShow = props => {
     const controllerProps = useShowController(props);
@@ -91,18 +112,21 @@ const DevicesShowView = props => {
                             component={Link}
                             to={`${props.basePath}/${props.id}/show/`}
                         />
-                        {['active_map'].map(key => (
-                            <Tab
-                                key={key}
-                                label={labelize(key)}
-                                value={`${props.match.url}/${key}`}
-                                component={Link}
-                                to={`${props.basePath}/${props.id}/show/${key}`}
-                                disabled={
-                                    !get(record, '$io') || !useChannelMappingAPI
-                                }
-                            />
-                        ))}
+                        {Object.entries(channelMappingTabs).map(
+                            ([key, source]) => (
+                                <Tab
+                                    key={key}
+                                    label={labelize(key)}
+                                    value={`${props.match.url}/${key}`}
+                                    component={Link}
+                                    to={`${props.basePath}/${props.id}/show/${key}`}
+                                    disabled={
+                                        !get(record, source) ||
+                                        !useChannelMappingAPI
+                                    }
+                                />
+                            )
+                        )}
                     </Tabs>
                 </Paper>
                 <span style={{ flexGrow: 1 }} />
@@ -113,6 +137,12 @@ const DevicesShowView = props => {
             </Route>
             <Route exact path={`${props.basePath}/${props.id}/show/active_map`}>
                 <ShowActiveMapTab record={record} {...props} />
+            </Route>
+            <Route
+                exact
+                path={`${props.basePath}/${props.id}/show/activations`}
+            >
+                <ShowActivationsTab record={record} {...props} />
             </Route>
         </>
     );
@@ -245,6 +275,116 @@ const ShowActiveMapTab = ({ record, ...props }) => {
                     isShow={true}
                     mapping={get(record, '$active.map')}
                 />
+            </SimpleShowLayout>
+        </ShowView>
+    );
+};
+
+// the changed output channels of a pending activation, e.g. 'output0 (0, 1)'
+const actionSummary = action =>
+    map(
+        action,
+        (channels, outputId) =>
+            `${outputId} (${Object.keys(channels).join(', ')})`
+    ).join('; ');
+
+const CancelActivationButton = ({ record, activationId }) => {
+    const notify = useNotify();
+    const refresh = useRefresh();
+    const [cancelling, setCancelling] = useState(false);
+    return (
+        <Button
+            color="primary"
+            disabled={cancelling}
+            onClick={async () => {
+                setCancelling(true);
+                try {
+                    await dataProvider('DELETE', 'devices', {
+                        id: record.id,
+                        activationId,
+                        previousData: record,
+                    });
+                    notify('Channel Mapping activation cancelled', 'info');
+                    refresh();
+                } catch (error) {
+                    notify(error.toString(), 'warning');
+                    setCancelling(false);
+                }
+            }}
+            startIcon={<CancelScheduledActivationIcon />}
+        >
+            Cancel
+        </Button>
+    );
+};
+
+// cf. ObjectField
+const ActivationsField = ({ record, source }) => {
+    const activations = get(record, source);
+    if (isEmpty(activations)) {
+        return (
+            <Typography variant="body2">{'No pending activations'}</Typography>
+        );
+    }
+    return (
+        <Table size="small">
+            <TableHead>
+                <TableRow>
+                    <TableCell>ID</TableCell>
+                    <TableCell>Mode</TableCell>
+                    <TableCell>Requested Time</TableCell>
+                    <TableCell>Activation Time</TableCell>
+                    <TableCell>Action</TableCell>
+                    <TableCell />
+                </TableRow>
+            </TableHead>
+            <TableBody>
+                {map(activations, (activation, activationId) => (
+                    <TableRow key={activationId}>
+                        <TableCell>{activationId}</TableCell>
+                        <TableCell>
+                            {get(activation, 'activation.mode')}
+                        </TableCell>
+                        <TableCell>
+                            <TAIField
+                                record={activation}
+                                source="activation.requested_time"
+                                mode="activation.mode"
+                            />
+                        </TableCell>
+                        <TableCell>
+                            <TAIField
+                                record={activation}
+                                source="activation.activation_time"
+                            />
+                        </TableCell>
+                        <TableCell>
+                            {actionSummary(get(activation, 'action'))}
+                        </TableCell>
+                        <TableCell>
+                            <CancelActivationButton
+                                record={record}
+                                activationId={activationId}
+                            />
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    );
+};
+ActivationsField.defaultProps = {
+    addLabel: true,
+};
+
+const ShowActivationsTab = ({ record, ...props }) => {
+    if (!record || get(record, '$activations') === undefined) {
+        return <Loading />;
+    }
+    return (
+        <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
+            <SimpleShowLayout>
+                <ActivationsField label="Pending" source="$activations" />
             </SimpleShowLayout>
         </ShowView>
     );

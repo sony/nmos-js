@@ -20,6 +20,11 @@ export default function MappingShowActions({ basePath, id, resource }) {
     if (record) {
         if (tab === 'active_map' && record.$channelmappingAPI) {
             json_href = concatUrl(record.$channelmappingAPI, '/map/active');
+        } else if (tab === 'activations' && record.$channelmappingAPI) {
+            json_href = concatUrl(
+                record.$channelmappingAPI,
+                '/map/activations'
+            );
         } else {
             json_href = resourceUrl(resource, `/${id}`);
         }

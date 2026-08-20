@@ -586,6 +586,19 @@ const convertDataProviderRequestToHTTP = (
                     get(params, 'previousData.$active.map'),
                     get(params, 'data.$active.map')
                 );
+                const mode = get(
+                    params,
+                    'data.$activation.mode',
+                    'activate_immediate'
+                );
+                const activation = { mode };
+                if (mode !== 'activate_immediate') {
+                    activation.requested_time = get(
+                        params,
+                        'data.$activation.requested_time',
+                        null
+                    );
+                }
                 return {
                     url: concatUrl(
                         params.data.$channelmappingAPI,
@@ -595,7 +608,7 @@ const convertDataProviderRequestToHTTP = (
                         method: 'POST',
                         headers,
                         body: JSON.stringify({
-                            activation: { mode: 'activate_immediate' },
+                            activation,
                             action,
                         }),
                     },
@@ -691,6 +704,22 @@ const convertDataProviderRequestToHTTP = (
             };
         }
         case DELETE: {
+            if (resource === 'devices') {
+                const activationId = params.activationId;
+                if (!activationId) {
+                    throw new Error('missing activation id');
+                }
+                return {
+                    url: concatUrl(
+                        get(params, 'previousData.$channelmappingAPI'),
+                        `/map/activations/${activationId}`
+                    ),
+                    options: {
+                        method: 'DELETE',
+                        headers,
+                    },
+                };
+            }
             return {
                 url: resourceUrl(resource, `/${params.id}`),
                 options: {

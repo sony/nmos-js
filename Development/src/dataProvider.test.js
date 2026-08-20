@@ -122,4 +122,69 @@ describe('UPDATE devices', () => {
             })
         );
     });
+
+    it('posts a scheduled activation with requested_time', async () => {
+        const fetchJson = jest
+            .spyOn(fetchUtils, 'fetchJson')
+            .mockResolvedValue({ json: { activation0: {} } });
+
+        const requestedMap = {
+            output0: {
+                0: { input: 'input0', channel_index: 0 },
+            },
+        };
+
+        await dataProvider('UPDATE', 'devices', {
+            id: record.id,
+            data: {
+                ...record,
+                $active: { map: requestedMap },
+                $activation: {
+                    mode: 'activate_scheduled_relative',
+                    requested_time: '0:1000000000',
+                },
+            },
+            previousData: record,
+        });
+
+        expect(fetchJson).toHaveBeenCalledWith(
+            'http://node/x-nmos/channelmapping/v1.0/map/activations/',
+            expect.objectContaining({
+                method: 'POST',
+                body: JSON.stringify({
+                    activation: {
+                        mode: 'activate_scheduled_relative',
+                        requested_time: '0:1000000000',
+                    },
+                    action: requestedMap,
+                }),
+            })
+        );
+    });
+});
+
+describe('DELETE devices', () => {
+    const record = {
+        id: '11111111-1111-4111-8111-111111111111',
+        $channelmappingAPI: 'http://node/x-nmos/channelmapping/v1.0',
+    };
+
+    it('deletes the pending activation, not the Device', async () => {
+        const fetchJson = jest
+            .spyOn(fetchUtils, 'fetchJson')
+            .mockResolvedValue({ json: {} });
+
+        await dataProvider('DELETE', 'devices', {
+            id: record.id,
+            activationId: 'activation0',
+            previousData: record,
+        });
+
+        expect(fetchJson).toHaveBeenCalledWith(
+            'http://node/x-nmos/channelmapping/v1.0/map/activations/activation0',
+            expect.objectContaining({
+                method: 'DELETE',
+            })
+        );
+    });
 });

@@ -1,5 +1,12 @@
 import React, { Fragment, useEffect, useMemo, useState } from 'react';
-import { Button, Paper, Tab, Tabs } from '@material-ui/core';
+import {
+    Button,
+    MenuItem,
+    Paper,
+    Tab,
+    Tabs,
+    TextField,
+} from '@material-ui/core';
 import { useTheme } from '@material-ui/styles';
 import { cloneDeep, get, isEqual, setWith } from 'lodash';
 import {
@@ -16,9 +23,15 @@ import {
 } from 'react-admin';
 import { Link, useHistory } from 'react-router-dom';
 import ResourceTitle from '../../components/ResourceTitle';
-import { ActivateImmediateIcon } from '../../icons';
+import { ActivateImmediateIcon, ActivateScheduledIcon } from '../../icons';
 import dataProvider from '../../dataProvider';
 import ChannelMappingMatrix from './ChannelMappingMatrix';
+
+const activationModes = [
+    'activate_immediate',
+    'activate_scheduled_relative',
+    'activate_scheduled_absolute',
+];
 
 const DevicesEditActions = ({ basePath, id }) => {
     const theme = useTheme();
@@ -47,11 +60,14 @@ const DevicesEditView = props => {
     const { record } = useRecordContext();
     const activeMap = get(record, '$active.map');
     const [draftMap, setDraftMap] = useState();
+    const [activationMode, setActivationMode] = useState('activate_immediate');
+    const [requestedTime, setRequestedTime] = useState('');
     const [activating, setActivating] = useState(false);
     const history = useHistory();
     const notify = useNotify();
     const refresh = useRefresh();
     const theme = useTheme();
+    const scheduled = activationMode !== 'activate_immediate';
 
     // Seed the draft once, so that a refresh of the Device record while still
     // on Edit does not discard it. A later Edit visit remounts and seeds from
@@ -104,13 +120,29 @@ const DevicesEditView = props => {
         try {
             await dataProvider('UPDATE', props.resource, {
                 id: props.id,
-                data: { ...record, $active: { map: draftMap } },
+                data: {
+                    ...record,
+                    $active: { map: draftMap },
+                    $activation: {
+                        mode: activationMode,
+                        requested_time: scheduled ? requestedTime : null,
+                    },
+                },
                 previousData: record,
             });
-            notify('Channel Mapping activated', 'info');
+            notify(
+                scheduled
+                    ? 'Channel Mapping activation scheduled'
+                    : 'Channel Mapping activated',
+                'info'
+            );
             refresh();
             // returning to Show unmounts this view, so leave `activating` set
-            history.push(`${props.basePath}/${props.id}/show/active_map`);
+            history.push(
+                scheduled
+                    ? `${props.basePath}/${props.id}/show/activations`
+                    : `${props.basePath}/${props.id}/show/active_map`
+            );
         } catch (error) {
             notify(error.toString(), 'warning');
             setActivating(false);
@@ -147,6 +179,11 @@ const DevicesEditView = props => {
                             component={Link}
                             to={`${props.basePath}/${props.id}/show/active_map`}
                         />
+                        <Tab
+                            label="Activations"
+                            component={Link}
+                            to={`${props.basePath}/${props.id}/show/activations`}
+                        />
                     </Tabs>
                 </Paper>
                 <span style={{ flexGrow: 1 }} />
@@ -158,15 +195,69 @@ const DevicesEditView = props => {
                 actions={<Fragment />}
             >
                 <SimpleShowLayout>
-                    <div style={{ display: 'flex' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                        }}
+                    >
+                        <TextField
+                            label="Activation Mode"
+                            margin="dense"
+                            onChange={event => {
+                                setActivationMode(event.target.value);
+                                if (
+                                    event.target.value === 'activate_immediate'
+                                ) {
+                                    setRequestedTime('');
+                                }
+                            }}
+                            select
+                            style={{
+                                marginRight: theme.spacing(2),
+                                minWidth: 240,
+                            }}
+                            value={activationMode}
+                            variant="filled"
+                        >
+                            {activationModes.map(mode => (
+                                <MenuItem key={mode} value={mode}>
+                                    {mode}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                        {scheduled && (
+                            <TextField
+                                label="Requested Time"
+                                margin="dense"
+                                onChange={event =>
+                                    setRequestedTime(event.target.value)
+                                }
+                                onFocus={event => event.target.select()}
+                                style={{ marginRight: theme.spacing(2) }}
+                                value={requestedTime}
+                                variant="filled"
+                            />
+                        )}
                         <Button
                             color="primary"
-                            disabled={!changed || activating}
+                            disabled={
+                                !changed ||
+                                activating ||
+                                (scheduled && !requestedTime)
+                            }
                             onClick={activate}
-                            startIcon={<ActivateImmediateIcon />}
+                            startIcon={
+                                scheduled ? (
+                                    <ActivateScheduledIcon />
+                                ) : (
+                                    <ActivateImmediateIcon />
+                                )
+                            }
                             variant="contained"
                         >
-                            Activate
+                            {scheduled ? 'Activate Scheduled' : 'Activate'}
                         </Button>
                     </div>
                     <ChannelMappingMatrix

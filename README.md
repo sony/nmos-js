@@ -73,7 +73,7 @@ The implementation is designed to be extended. Development is ongoing, following
 
 Recent activity on the project (newest first):
 
-- IS-08 Channel Mapping: edit the Active Map and activate immediately.
+- IS-08 Channel Mapping: edit the Active Map and post immediate or scheduled activations.
 - Added the optional NMOS Bridge (formerly Connection API Bridge).
 - Launch IS-12 Device Model browser client from within nmos-js Device summary tab.
 - Added BCP-007-03 NMOS Support for MXL

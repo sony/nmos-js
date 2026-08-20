@@ -1,11 +1,11 @@
 # Design plan: Editable IS-08 Channel Mapping in nmos-js
 
-Status: immediate activation (steps 1 and 2) implemented. Soft validation
-(step 4) is in progress. Builds on the existing read-only Device **Active Map**
-view (`ChannelMappingMatrix` with `isShow={true}`) and the NMOS Bridge support
-for Channel Mapping. Reads and activation requests use the resolved
-`$channelmappingAPI`, so No Bridge, Auto Bridge and Forced Bridge apply
-consistently.
+Status: implemented. Device Edit drafts the Active Map and posts immediate or
+scheduled activations (diff-only `action`). The matrix soft-validates
+`routable_inputs`, `block_size` and `reordering` without blocking Activate.
+Show has a pending Activations tab with Cancel (`DELETE`). Reads and
+activation requests use the resolved `$channelmappingAPI`, so No Bridge, Auto
+Bridge and Forced Bridge apply consistently.
 
 ## Motivation
 
@@ -136,13 +136,13 @@ where possible; avoid inventing a second design system.
 
 ## Sequencing
 
-| Step | Work |
-| --- | --- |
-| 1 | Wire Edit route + matrix `handleMap` draft state; no POST yet |
-| 2 | Diff builder + `POST /map/activations/` + immediate mode end-to-end |
-| 3 | Scheduled modes + `requested_time` (mirror Connection Edit) |
-| 4 | Soft cap warnings on the matrix (`routable_inputs` first, then block size / reordering) |
-| 5 | Activations show tab + DELETE cancel |
+| Step | Work | Status |
+| --- | --- | --- |
+| 1 | Wire Edit route + matrix `handleMap` draft state; no POST yet | Done |
+| 2 | Diff builder + `POST /map/activations/` + immediate mode end-to-end | Done |
+| 3 | Scheduled modes + `requested_time` (mirror Connection Edit) | Done |
+| 4 | Soft cap warnings on the matrix (`routable_inputs` first, then block size / reordering) | Done |
+| 5 | Activations show tab + DELETE cancel | Done |
 
 ## Acceptance
 

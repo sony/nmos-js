@@ -77,6 +77,11 @@ export const setApiUrl = (api, url) => {
     }
 };
 
+// the NMOS Bridge makes Device Control APIs available at a configured base
+// URL for deployments where the browser cannot reach the Device directly
+export const bridgeUrl = (deviceId, api, version) =>
+    concatUrl(apiUrl(BRIDGE_API), `/devices/${deviceId}/${api}/${version}`);
+
 // version, e.g. 'v1.3', is always the last path component
 export const apiVersion = api => apiUrl(api).match(/([^/]+)\/?$/g)[0];
 

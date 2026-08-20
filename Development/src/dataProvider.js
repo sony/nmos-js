@@ -13,7 +13,6 @@ import { JsonPointer } from 'json-ptr';
 import diff from 'deep-diff';
 import { makeBearerAuthHeader } from './authProvider';
 import {
-    BRIDGE_API,
     BRIDGE_AUTO,
     BRIDGE_FORCED,
     DNSSD_API,
@@ -24,15 +23,10 @@ import {
     apiUsingRql,
     apiVersion,
     bridgeMode,
+    bridgeUrl,
     concatUrl,
     usingAuth,
 } from './settings';
-
-// the NMOS Bridge (see ../../nmos-bridge) makes Device Control APIs
-// available at a configured base URL for deployments where the browser
-// cannot reach the Device directly
-const bridgeAddress = (deviceId, api, version) =>
-    concatUrl(apiUrl(BRIDGE_API), `/devices/${deviceId}/${api}/${version}`);
 
 // which access path, direct or bridge, most recently worked for each Device
 const deviceAccessPaths = new Map();
@@ -914,7 +908,7 @@ const convertHTTPResponseToDataProvider = async (
                         attempts.push([
                             'bridge',
                             [
-                                bridgeAddress(
+                                bridgeUrl(
                                     deviceId,
                                     'connection',
                                     connectionVersion
@@ -1019,7 +1013,7 @@ const convertHTTPResponseToDataProvider = async (
                         attempts.push([
                             'bridge',
                             [
-                                bridgeAddress(
+                                bridgeUrl(
                                     deviceId,
                                     'channelmapping',
                                     channelmappingVersion

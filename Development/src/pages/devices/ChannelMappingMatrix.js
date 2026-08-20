@@ -139,6 +139,29 @@ const TooltipDivider = withStyles({
     },
 })(Divider);
 
+const ConstraintWarning = withStyles(theme => ({
+    root: {
+        color:
+            theme.palette.type === 'light'
+                ? theme.palette.warning.dark
+                : theme.palette.warning.light,
+    },
+}))(Typography);
+
+export const isRoutableInput = (outputItem, inputId) => {
+    const routableInputs = get(outputItem, 'caps.routable_inputs');
+    // null means that the Output has no routing restrictions. If the field is
+    // absent or malformed, leave validation to the Node.
+    return !Array.isArray(routableInputs) || routableInputs.includes(inputId);
+};
+
+const routableInputConstraintWarning = (outputItem, inputId) => {
+    if (isRoutableInput(outputItem, inputId)) return;
+    return inputId === null
+        ? "This output's routable inputs do not include Unrouted."
+        : "This output's routable inputs do not include this input.";
+};
+
 const InteractiveTooltipContext = createContext();
 
 const InteractiveTooltip = ({ title, ...props }) => {
@@ -329,6 +352,7 @@ const MappedCellTooltip = ({
     inputName,
     inputChannelIndex,
     inputChannelLabel,
+    constraintWarning,
 }) => (
     <>
         {'Input'}
@@ -345,6 +369,15 @@ const MappedCellTooltip = ({
             {outputChannelLabel}
             {outputChannelIndex && ` (Channel ${outputChannelIndex})`}
         </Typography>
+        {constraintWarning && (
+            <>
+                <TooltipDivider />
+                {'Expected Constraint Violation'}
+                <ConstraintWarning variant="body2">
+                    {constraintWarning}
+                </ConstraintWarning>
+            </>
+        )}
     </>
 );
 
@@ -610,6 +643,14 @@ const InputChannelMappingCells = ({
                                                         `inputs.${inputId}.channels.${inputChannelIndex}`
                                                     ) || inputChannel.label
                                                 }
+                                                constraintWarning={
+                                                    mappingDisabled
+                                                        ? undefined
+                                                        : routableInputConstraintWarning(
+                                                              outputItem,
+                                                              inputId
+                                                          )
+                                                }
                                             />
                                         }
                                         placement="bottom-start"
@@ -633,6 +674,13 @@ const InputChannelMappingCells = ({
                                                     inputChannelIndex,
                                                     outputChannelIndex
                                                 )}
+                                                constraintWarning={
+                                                    !mappingDisabled &&
+                                                    routableInputConstraintWarning(
+                                                        outputItem,
+                                                        inputId
+                                                    )
+                                                }
                                             />
                                         </div>
                                     </InteractiveTooltip>
@@ -683,6 +731,14 @@ const UnroutedRow = ({
                                                 ) || outputChannel.label
                                             }
                                             inputName="Unrouted"
+                                            constraintWarning={
+                                                mappingDisabled
+                                                    ? undefined
+                                                    : routableInputConstraintWarning(
+                                                          outputItem,
+                                                          null
+                                                      )
+                                            }
                                         />
                                     }
                                     placement="bottom-start"
@@ -709,6 +765,13 @@ const UnroutedRow = ({
                                                 null,
                                                 outputChannelIndex
                                             )}
+                                            constraintWarning={
+                                                !mappingDisabled &&
+                                                routableInputConstraintWarning(
+                                                    outputItem,
+                                                    null
+                                                )
+                                            }
                                         />
                                     </div>
                                 </InteractiveTooltip>

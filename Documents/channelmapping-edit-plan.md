@@ -1,10 +1,11 @@
 # Design plan: Editable IS-08 Channel Mapping in nmos-js
 
-Status: proposal (not implemented). Builds on the existing read-only Device
-**Active Map** view (`ChannelMappingMatrix` with `isShow={true}`) and the NMOS
-Bridge support for Channel Mapping. Reads and activation requests use the
-resolved `$channelmappingAPI`, so No Bridge, Auto Bridge and Forced Bridge
-apply consistently.
+Status: immediate activation (steps 1 and 2) implemented. Soft validation
+(step 4) is in progress. Builds on the existing read-only Device **Active Map**
+view (`ChannelMappingMatrix` with `isShow={true}`) and the NMOS Bridge support
+for Channel Mapping. Reads and activation requests use the resolved
+`$channelmappingAPI`, so No Bridge, Auto Bridge and Forced Bridge apply
+consistently.
 
 ## Motivation
 
@@ -107,9 +108,19 @@ Edit view is only a local draft until Activate.
 On the Connect tab, receiver caps filter / warn without always forbidding
 connect. Same idea here:
 
-- When a mapping would break caps, style the control (warning colour / icon /
-  tooltip stating which rule).
-- Activate remains enabled.
+- All mapping controls remain usable and Activate remains enabled. The Node is
+  the authority; the UI warning is a prediction which can deliberately be
+  submitted when testing a Node.
+- For `routable_inputs`, an unselected mapping which the Output does not list
+  uses a faded warning-colour hollow icon. If selected, it uses a full
+  warning-colour checked icon. Both tooltips state the expected constraint
+  violation. The same applies to Unrouted when the constraint omits `null`.
+- `routable_inputs: null` means unconstrained. Missing or malformed caps are
+  left to the Node rather than guessed at.
+- Block size and reordering require validation of the complete draft. Warn on
+  selected cells participating in a broken block; do not pre-colour all cells
+  which might form an incomplete block.
+- The read-only Active Map does not show predicted warnings.
 - Useful for testing strict vs buggy Nodes.
 
 Exact visual language: match existing warning patterns in Connect / forms
@@ -130,7 +141,7 @@ where possible; avoid inventing a second design system.
 | 1 | Wire Edit route + matrix `handleMap` draft state; no POST yet |
 | 2 | Diff builder + `POST /map/activations/` + immediate mode end-to-end |
 | 3 | Scheduled modes + `requested_time` (mirror Connection Edit) |
-| 4 | Soft cap warnings on the matrix |
+| 4 | Soft cap warnings on the matrix (`routable_inputs` first, then block size / reordering) |
 | 5 | Activations show tab + DELETE cancel |
 
 ## Acceptance

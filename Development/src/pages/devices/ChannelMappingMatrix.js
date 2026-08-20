@@ -328,11 +328,11 @@ export const channelMappingConstraintWarnings = (io, mapping) => {
     return warnings;
 };
 
-const InteractiveTooltipContext = createContext();
+const MappingHeadTooltipContext = createContext();
 
-const InteractiveTooltip = ({ title, ...props }) => {
+const MappingHeadTooltip = ({ title, ...props }) => {
     const { tooltipModal, setTooltipModal } = useContext(
-        InteractiveTooltipContext
+        MappingHeadTooltipContext
     );
 
     const [open, setOpen] = useState(false);
@@ -368,6 +368,14 @@ const InteractiveTooltip = ({ title, ...props }) => {
     );
 };
 
+// mapping cell tooltips have no editable content, so they must not capture the
+// pointer or stay open when the mouse moves on to another cell
+const MappingCellTooltip = props => {
+    const { tooltipModal } = useContext(MappingHeadTooltipContext);
+
+    return <Tooltip disableHoverListener={tooltipModal} {...props} />;
+};
+
 const popperPropsOffset = (skidding, distance) => ({
     popperOptions: {
         modifiers: {
@@ -383,7 +391,7 @@ const popperPropsOffset = (skidding, distance) => ({
 const popperPropsNearer = popperPropsOffset(0, -10);
 
 const OutputTooltip = ({ outputId, outputItem, getInputAPIName }) => {
-    const { setTooltipModal } = useContext(InteractiveTooltipContext);
+    const { setTooltipModal } = useContext(MappingHeadTooltipContext);
 
     const { getCustomName } = useCustomNamesContext();
     const source = `outputs.${outputId}.name`;
@@ -434,7 +442,7 @@ const OutputTooltip = ({ outputId, outputItem, getInputAPIName }) => {
 };
 
 const InputTooltip = ({ inputId, inputItem }) => {
-    const { setTooltipModal } = useContext(InteractiveTooltipContext);
+    const { setTooltipModal } = useContext(MappingHeadTooltipContext);
 
     const { getCustomName } = useCustomNamesContext();
     const source = `inputs.${inputId}.name`;
@@ -485,7 +493,7 @@ const InputTooltip = ({ inputId, inputItem }) => {
 
 const ChannelTooltip = ({ ioResource, id, channelIndex, channelLabel }) => {
     const { getCustomName } = useCustomNamesContext();
-    const { setTooltipModal } = useContext(InteractiveTooltipContext);
+    const { setTooltipModal } = useContext(MappingHeadTooltipContext);
     const source = `${ioResource}.${id}.channels.${channelIndex}`;
     return (
         <>
@@ -629,7 +637,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded, truncateValue }) =>
             key={outputId}
         >
             {get(outputItem, 'source_id') ? (
-                <InteractiveTooltip
+                <MappingHeadTooltip
                     title={<OutputSourceTooltip {...{ outputItem }} />}
                     placement="top"
                     arrow
@@ -647,9 +655,9 @@ const OutputSourceAssociation = ({ outputs, isExpanded, truncateValue }) =>
                             <LinkChipField transform={truncateValue} />
                         </ReferenceField>
                     </div>
-                </InteractiveTooltip>
+                </MappingHeadTooltip>
             ) : (
-                <InteractiveTooltip
+                <MappingHeadTooltip
                     title={
                         <Typography variant="body2">{'No Source'}</Typography>
                     }
@@ -658,7 +666,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded, truncateValue }) =>
                     PopperProps={popperPropsNearer}
                 >
                     <div>{truncateValue('No Source')}</div>
-                </InteractiveTooltip>
+                </MappingHeadTooltip>
             )}
         </MappingHeadCell>
     ));
@@ -693,16 +701,16 @@ const InputParentAssociation = ({
         rowSpan={isInputExpanded ? Object.keys(inputItem.channels).length : 1}
     >
         {inputItem.parent.type === null ? (
-            <InteractiveTooltip
+            <MappingHeadTooltip
                 title={<Typography variant="body2">{'No Parent'}</Typography>}
                 placement="left"
                 arrow
                 PopperProps={popperPropsNearer}
             >
                 <div>{truncateValue('No Parent')}</div>
-            </InteractiveTooltip>
+            </MappingHeadTooltip>
         ) : (
-            <InteractiveTooltip
+            <MappingHeadTooltip
                 title={<InputParentTooltip inputItem={inputItem} />}
                 placement="left"
                 arrow
@@ -713,7 +721,7 @@ const InputParentAssociation = ({
                         <LinkChipField transform={truncateValue} />
                     </InputParentReferenceField>
                 </div>
-            </InteractiveTooltip>
+            </MappingHeadTooltip>
         )}
     </MappingHeadCell>
 );
@@ -750,7 +758,7 @@ const InputChannelMappingCells = ({
     return (
         <>
             <MappingHeadCell key={inputChannelIndex}>
-                <InteractiveTooltip
+                <MappingHeadTooltip
                     title={
                         <ChannelTooltip
                             {...{
@@ -772,7 +780,7 @@ const InputChannelMappingCells = ({
                             ) || inputChannel.label
                         )}
                     </div>
-                </InteractiveTooltip>
+                </MappingHeadTooltip>
             </MappingHeadCell>
             <>
                 {outputs.map(([outputId, outputItem]) =>
@@ -780,7 +788,7 @@ const InputChannelMappingCells = ({
                         Object.entries(outputItem.channels).map(
                             ([outputChannelIndex, outputChannel]) => (
                                 <MappingCell key={outputChannelIndex}>
-                                    <InteractiveTooltip
+                                    <MappingCellTooltip
                                         title={
                                             <MappedCellTooltip
                                                 outputName={
@@ -849,7 +857,7 @@ const InputChannelMappingCells = ({
                                                 )}
                                             />
                                         </div>
-                                    </InteractiveTooltip>
+                                    </MappingCellTooltip>
                                 </MappingCell>
                             )
                         )
@@ -881,7 +889,7 @@ const UnroutedRow = ({
                     Object.entries(outputItem.channels).map(
                         ([outputChannelIndex, outputChannel]) => (
                             <MappingCell key={outputChannelIndex}>
-                                <InteractiveTooltip
+                                <MappingCellTooltip
                                     title={
                                         <MappedCellTooltip
                                             outputName={
@@ -940,7 +948,7 @@ const UnroutedRow = ({
                                             )}
                                         />
                                     </div>
-                                </InteractiveTooltip>
+                                </MappingCellTooltip>
                             </MappingCell>
                         )
                     )
@@ -975,7 +983,7 @@ const OutputsHeadRow = ({
                         rowSpan={isOutputExpanded(outputId) ? 1 : 2}
                         key={outputId}
                     >
-                        <InteractiveTooltip
+                        <MappingHeadTooltip
                             title={
                                 <OutputTooltip
                                     {...{
@@ -995,7 +1003,7 @@ const OutputsHeadRow = ({
                                         outputItem.properties.name
                                 )}
                             </div>
-                        </InteractiveTooltip>
+                        </MappingHeadTooltip>
                         <CollapseButton
                             onClick={() => onExpandOutput(outputId)}
                             isExpanded={isOutputExpanded(outputId)}
@@ -1014,7 +1022,7 @@ const OutputsHeadRow = ({
                         ? Object.entries(outputItem.channels).map(
                               ([channelIndex, channel]) => (
                                   <MappingHeadCell key={channelIndex}>
-                                      <InteractiveTooltip
+                                      <MappingHeadTooltip
                                           title={
                                               <ChannelTooltip
                                                   {...{
@@ -1037,7 +1045,7 @@ const OutputsHeadRow = ({
                                                   ) || channel.label
                                               )}
                                           </div>
-                                      </InteractiveTooltip>
+                                      </MappingHeadTooltip>
                                   </MappingHeadCell>
                               )
                           )
@@ -1077,7 +1085,7 @@ const InputsRows = ({
                     }
                     colSpan={isInputExpanded(inputId) ? 1 : 2}
                 >
-                    <InteractiveTooltip
+                    <MappingHeadTooltip
                         title={
                             <InputTooltip
                                 {...{
@@ -1096,7 +1104,7 @@ const InputsRows = ({
                                     inputItem.properties.name
                             )}
                         </div>
-                    </InteractiveTooltip>
+                    </MappingHeadTooltip>
                     <CollapseButton
                         onClick={() => onExpandInput(inputId)}
                         isExpanded={isInputExpanded(inputId)}
@@ -1347,7 +1355,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                     Clear Custom Names
                 </MenuItem>
             </FilterPanel>
-            <InteractiveTooltipContext.Provider
+            <MappingHeadTooltipContext.Provider
                 value={{ tooltipModal, setTooltipModal }}
             >
                 <Table>
@@ -1393,7 +1401,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                         />
                     </TableBody>
                 </Table>
-            </InteractiveTooltipContext.Provider>
+            </MappingHeadTooltipContext.Provider>
         </CustomNamesContextProvider>
     );
 };

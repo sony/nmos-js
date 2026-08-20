@@ -1,6 +1,6 @@
 'use strict';
 
-// NMOS Connection API Bridge - Envoy Adapter
+// NMOS Bridge - Envoy Adapter
 //
 // Converts Registry state into Envoy configuration. Tracks Devices through a
 // Query API WebSocket subscription, extracts their Connection and Channel
@@ -503,7 +503,7 @@ const routeConfiguration = targets => ({
                         timeout: `${ROUTE_TIMEOUT_SECONDS}s`,
                     },
                 },
-                // IS-04 /x-nmos base: list only APIs this Envoy front door
+                // IS-04 /x-nmos base: list only APIs this Envoy instance
                 // actually proxies (not Registration/Node/etc.)
                 {
                     match: { path: '/x-nmos' },

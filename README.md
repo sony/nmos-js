@@ -31,8 +31,8 @@ After setting up the dependencies, follow these [instructions](Documents/Getting
 The web application can also be packaged and deployed with the [nmos-cpp-registry application](https://github.com/sony/nmos-cpp).
 Copy the contents of the nmos-js build directory into the admin directory next to the nmos-cpp-registry executable.
 
-For deployments where the browser cannot reach Device Connection APIs directly,
-the optional [NMOS Connection API Bridge](ConnectionBridge/README.md) provides
+For deployments where the browser cannot reach Device Control APIs directly,
+the optional [NMOS Bridge](nmos-bridge/README.md) provides
 controlled access through Envoy.
 
 ## Agile Development
@@ -73,7 +73,7 @@ The implementation is designed to be extended. Development is ongoing, following
 
 Recent activity on the project (newest first):
 
-- Added the optional NMOS Connection API Bridge.
+- Added the optional NMOS Bridge (formerly Connection API Bridge).
 - Launch IS-12 Device Model browser client from within nmos-js Device summary tab.
 - Added BCP-007-03 NMOS Support for MXL
 - Added prototype [IS-12 Device Model browser client](is12-client/README.md).

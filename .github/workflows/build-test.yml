@@ -10,11 +10,11 @@ env:
   SECRET_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
   SECRET_RESULTS_SHEET_ID: ${{ secrets.RESULTS_SHEET_ID }}
 jobs:
-  connection_bridge_lua:
+  nmos_bridge_lua:
     runs-on: ubuntu-22.04
     defaults:
       run:
-        working-directory: ConnectionBridge/envoy
+        working-directory: nmos-bridge/envoy
     steps:
     - uses: actions/checkout@v7
 

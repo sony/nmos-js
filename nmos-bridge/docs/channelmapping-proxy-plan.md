@@ -1,7 +1,7 @@
 # Design plan: Envoy proxying for IS-08 Channel Mapping API
 
-Status: proposal (not implemented). Extends the Connection API Bridge in
-`ConnectionBridge/README.md`, which today proxies browser HTTP only for Device
+Status: proposal (not implemented). Extends the NMOS Bridge in
+`nmos-bridge/README.md`, which today proxies browser HTTP only for Device
 Connection controls (`urn:x-nmos:control:sr-ctrl/{version}`).
 
 ## Motivation
@@ -10,7 +10,7 @@ IS-08 Channel Mapping is advertised on Devices as
 `urn:x-nmos:control:cm-ctrl/{version}` with an HTTP `href` (nmos-cpp:
 `http://host:port/x-nmos/channelmapping/{version}`). nmos-js already loads
 Channel Mapping data from those hrefs for the Device UI, but it does **not**
-use the Connection Bridge. In deployments where the browser cannot reach Device
+use the NMOS Bridge. In deployments where the browser cannot reach Device
 networks, IS-05 works via `/x-nmos-bridge/...` while IS-08 still fails.
 
 Channel Mapping is the same reachability class as Connection: HTTP Device
@@ -98,8 +98,7 @@ bridge via existing `Location` handling.
   nmos-cpp may differ from the Connection API port).
 - No change to Query HTTP convenience routes or adapter Device discovery.
 - README: document Channel Mapping under the bridge public API and method
-  list; keep "Connection API Bridge" naming until a broader rename is decided
-  (optional later: "Device control bridge").
+  list.
 
 ## Non-goals
 
@@ -130,6 +129,6 @@ bridge via existing `Location` handling.
 
 ## References
 
-- `ConnectionBridge/README.md` — Connection bridge mapping and deployment
+- `nmos-bridge/README.md` — Connection bridge mapping and deployment
 - IS-08 Channel Mapping / `urn:x-nmos:control:cm-ctrl`
 - nmos-js `dataProvider` Channel Mapping paths (direct hrefs today)

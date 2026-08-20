@@ -45,9 +45,9 @@
     "Auth Enabled": {
         "value": false
     },
-    "Connection Bridge Mode": {
+    "NMOS Bridge Mode": {
         "value": "disabled"
     },
-    "Connection Bridge API": {
+    "NMOS Bridge API": {
     }
 }

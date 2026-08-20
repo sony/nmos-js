@@ -20,12 +20,12 @@ import { useTheme } from '@material-ui/styles';
 import { Title } from 'react-admin';
 import {
     AUTH_API,
+    BRIDGE_API,
     BRIDGE_AUTO,
     BRIDGE_DISABLED,
     BRIDGE_FORCED,
+    BRIDGE_MODE,
     CLIENT_ID,
-    CONNECTION_BRIDGE_API,
-    CONNECTION_BRIDGE_MODE,
     DNSSD_API,
     FRIENDLY_PARAMETERS,
     IS12_BROWSER,
@@ -348,20 +348,16 @@ const Settings = () => {
                                 </StyledListItem>
                             )}
                             <StyledDivider />
-                            {!hiddenSetting(CONNECTION_BRIDGE_MODE) && (
+                            {!hiddenSetting(BRIDGE_MODE) && (
                                 <StyledListItem>
                                     <StyledTextField
                                         select
-                                        label="Connection Bridge Mode"
+                                        label="NMOS Bridge Mode"
                                         variant="filled"
-                                        value={values[CONNECTION_BRIDGE_MODE]}
-                                        onChange={handleTextChange(
-                                            CONNECTION_BRIDGE_MODE
-                                        )}
-                                        disabled={disabledSetting(
-                                            CONNECTION_BRIDGE_MODE
-                                        )}
-                                        helperText="Proxy Connection API requests when Device endpoints are unreachable (Auto) or always (Forced)"
+                                        value={values[BRIDGE_MODE]}
+                                        onChange={handleTextChange(BRIDGE_MODE)}
+                                        disabled={disabledSetting(BRIDGE_MODE)}
+                                        helperText="Proxy Device Control API requests when Device endpoints are unreachable (Auto) or always (Forced)"
                                     >
                                         {bridgeModes.map(option => (
                                             <MenuItem
@@ -374,20 +370,16 @@ const Settings = () => {
                                     </StyledTextField>
                                 </StyledListItem>
                             )}
-                            {!hiddenSetting(CONNECTION_BRIDGE_API) && (
+                            {!hiddenSetting(BRIDGE_API) && (
                                 <StyledListItem>
                                     <StyledTextField
-                                        label="Connection Bridge API"
+                                        label="NMOS Bridge API"
                                         variant="filled"
-                                        value={values[CONNECTION_BRIDGE_API]}
-                                        onChange={handleTextChange(
-                                            CONNECTION_BRIDGE_API
-                                        )}
+                                        value={values[BRIDGE_API]}
+                                        onChange={handleTextChange(BRIDGE_API)}
                                         onFocus={selectOnFocus}
-                                        disabled={disabledSetting(
-                                            CONNECTION_BRIDGE_API
-                                        )}
-                                        helperText="Base URL for proxied Connection API requests"
+                                        disabled={disabledSetting(BRIDGE_API)}
+                                        helperText="Base URL for proxied Device Control API requests"
                                     />
                                 </StyledListItem>
                             )}

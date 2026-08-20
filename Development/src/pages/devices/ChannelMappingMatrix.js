@@ -162,6 +162,172 @@ const routableInputConstraintWarning = (outputItem, inputId) => {
         : "This output's routable inputs do not include this input.";
 };
 
+const setConstraintWarning = (
+    warnings,
+    outputId,
+    outputChannelIndex,
+    warning
+) => {
+    setWith(warnings, [outputId, outputChannelIndex], warning, Object);
+};
+
+export const channelMappingConstraintWarnings = (io, mapping) => {
+    const routableInputWarnings = {};
+    const blockSizeWarnings = {};
+    const reorderingWarnings = {};
+
+    for (const [outputId, outputMap] of Object.entries(mapping || {})) {
+        const outputItem = get(io, ['outputs', outputId]);
+        const entries = Object.entries(outputMap)
+            .sort(([left], [right]) => Number(left) - Number(right))
+            .map(([outputChannelIndex, entry]) => ({
+                outputChannelIndex,
+                outputIndex: Number(outputChannelIndex),
+                inputId: get(entry, 'input'),
+                inputIndex: get(entry, 'channel_index'),
+            }));
+
+        for (const entry of entries) {
+            const warning = routableInputConstraintWarning(
+                outputItem,
+                entry.inputId
+            );
+            if (warning) {
+                setConstraintWarning(
+                    routableInputWarnings,
+                    outputId,
+                    entry.outputChannelIndex,
+                    warning
+                );
+            }
+        }
+
+        const inputOffsets = {};
+        const reorderingViolationInputs = new Set();
+        let currentInputId;
+        let currentBlockSize;
+        let currentBlock = [];
+
+        const checkCurrentBlock = () => {
+            if (!currentBlock.length || !currentBlockSize) return;
+            const inputBlock = Math.floor(
+                currentBlock[0].inputIndex / currentBlockSize
+            );
+            const inputChannels = new Set(
+                currentBlock.map(({ inputIndex }) => inputIndex)
+            );
+            const complete =
+                currentBlock.length === currentBlockSize &&
+                inputChannels.size === currentBlockSize &&
+                currentBlock.every(
+                    ({ inputIndex }) =>
+                        Math.floor(inputIndex / currentBlockSize) === inputBlock
+                );
+            if (!complete) {
+                const warning = `This input requires channels to be routed in complete blocks of ${currentBlockSize}.`;
+                for (const { outputChannelIndex } of currentBlock) {
+                    setConstraintWarning(
+                        blockSizeWarnings,
+                        outputId,
+                        outputChannelIndex,
+                        warning
+                    );
+                }
+            }
+        };
+
+        for (const entry of entries) {
+            if (entry.inputId === null) continue;
+            const inputItem = get(io, ['inputs', entry.inputId]);
+            const blockSize = get(inputItem, 'caps.block_size');
+            if (
+                !Number.isInteger(entry.outputIndex) ||
+                !Number.isInteger(entry.inputIndex) ||
+                !Number.isInteger(blockSize) ||
+                blockSize < 1
+            ) {
+                checkCurrentBlock();
+                currentBlock = [];
+                currentInputId = undefined;
+                currentBlockSize = undefined;
+                continue;
+            }
+
+            if (entry.inputId !== currentInputId) {
+                checkCurrentBlock();
+                currentBlock = [];
+                currentInputId = entry.inputId;
+                currentBlockSize = blockSize;
+                if (get(inputItem, 'caps.reordering') === false) {
+                    if (entry.inputIndex % blockSize !== 0) {
+                        reorderingViolationInputs.add(entry.inputId);
+                    }
+                    if (
+                        !Object.prototype.hasOwnProperty.call(
+                            inputOffsets,
+                            entry.inputId
+                        )
+                    ) {
+                        inputOffsets[entry.inputId] =
+                            entry.inputIndex - entry.outputIndex;
+                    }
+                }
+            } else if (currentBlock.length === currentBlockSize) {
+                checkCurrentBlock();
+                currentBlock = [];
+            }
+
+            if (get(inputItem, 'caps.reordering') === false) {
+                const offset = entry.inputIndex - entry.outputIndex;
+                if (offset !== inputOffsets[entry.inputId]) {
+                    reorderingViolationInputs.add(entry.inputId);
+                }
+                if (
+                    currentBlock.length &&
+                    entry.inputIndex !==
+                        currentBlock[currentBlock.length - 1].inputIndex + 1
+                ) {
+                    reorderingViolationInputs.add(entry.inputId);
+                }
+            }
+            currentBlock.push(entry);
+        }
+        checkCurrentBlock();
+
+        const reorderingWarning =
+            'This input does not allow reordering; channels must keep a fixed offset on this output.';
+        for (const entry of entries) {
+            if (reorderingViolationInputs.has(entry.inputId)) {
+                setConstraintWarning(
+                    reorderingWarnings,
+                    outputId,
+                    entry.outputChannelIndex,
+                    reorderingWarning
+                );
+            }
+        }
+    }
+
+    const warnings = {};
+    for (const [outputId, outputMap] of Object.entries(mapping || {})) {
+        for (const outputChannelIndex of Object.keys(outputMap)) {
+            const warning =
+                get(routableInputWarnings, [outputId, outputChannelIndex]) ||
+                get(blockSizeWarnings, [outputId, outputChannelIndex]) ||
+                get(reorderingWarnings, [outputId, outputChannelIndex]);
+            if (warning) {
+                setConstraintWarning(
+                    warnings,
+                    outputId,
+                    outputChannelIndex,
+                    warning
+                );
+            }
+        }
+    }
+    return warnings;
+};
+
 const InteractiveTooltipContext = createContext();
 
 const InteractiveTooltip = ({ title, ...props }) => {
@@ -577,6 +743,7 @@ const InputChannelMappingCells = ({
     mappingDisabled,
     handleMap,
     isMapped,
+    getConstraintWarning,
     truncateValue,
 }) => {
     const { getCustomName } = useCustomNamesContext();
@@ -643,14 +810,13 @@ const InputChannelMappingCells = ({
                                                         `inputs.${inputId}.channels.${inputChannelIndex}`
                                                     ) || inputChannel.label
                                                 }
-                                                constraintWarning={
-                                                    mappingDisabled
-                                                        ? undefined
-                                                        : routableInputConstraintWarning(
-                                                              outputItem,
-                                                              inputId
-                                                          )
-                                                }
+                                                constraintWarning={getConstraintWarning(
+                                                    inputId,
+                                                    outputId,
+                                                    inputChannelIndex,
+                                                    outputChannelIndex,
+                                                    outputItem
+                                                )}
                                             />
                                         }
                                         placement="bottom-start"
@@ -674,13 +840,13 @@ const InputChannelMappingCells = ({
                                                     inputChannelIndex,
                                                     outputChannelIndex
                                                 )}
-                                                constraintWarning={
-                                                    !mappingDisabled &&
-                                                    routableInputConstraintWarning(
-                                                        outputItem,
-                                                        inputId
-                                                    )
-                                                }
+                                                constraintWarning={getConstraintWarning(
+                                                    inputId,
+                                                    outputId,
+                                                    inputChannelIndex,
+                                                    outputChannelIndex,
+                                                    outputItem
+                                                )}
                                             />
                                         </div>
                                     </InteractiveTooltip>
@@ -703,6 +869,7 @@ const UnroutedRow = ({
     mappingDisabled,
     handleMap,
     isMapped,
+    getConstraintWarning,
     isOutputExpanded,
 }) => {
     const { getCustomName } = useCustomNamesContext();
@@ -731,14 +898,13 @@ const UnroutedRow = ({
                                                 ) || outputChannel.label
                                             }
                                             inputName="Unrouted"
-                                            constraintWarning={
-                                                mappingDisabled
-                                                    ? undefined
-                                                    : routableInputConstraintWarning(
-                                                          outputItem,
-                                                          null
-                                                      )
-                                            }
+                                            constraintWarning={getConstraintWarning(
+                                                null,
+                                                outputId,
+                                                null,
+                                                outputChannelIndex,
+                                                outputItem
+                                            )}
                                         />
                                     }
                                     placement="bottom-start"
@@ -765,13 +931,13 @@ const UnroutedRow = ({
                                                 null,
                                                 outputChannelIndex
                                             )}
-                                            constraintWarning={
-                                                !mappingDisabled &&
-                                                routableInputConstraintWarning(
-                                                    outputItem,
-                                                    null
-                                                )
-                                            }
+                                            constraintWarning={getConstraintWarning(
+                                                null,
+                                                outputId,
+                                                null,
+                                                outputChannelIndex,
+                                                outputItem
+                                            )}
                                         />
                                     </div>
                                 </InteractiveTooltip>
@@ -891,6 +1057,7 @@ const InputsRows = ({
     isShow,
     handleMap,
     isMapped,
+    getConstraintWarning,
     truncateValue,
 }) => {
     const { getCustomName } = useCustomNamesContext();
@@ -957,6 +1124,7 @@ const InputsRows = ({
                         mappingDisabled={isShow}
                         handleMap={handleMap}
                         isMapped={isMapped}
+                        getConstraintWarning={getConstraintWarning}
                         truncateValue={truncateValue}
                     />
                 ) : null}
@@ -977,6 +1145,7 @@ const InputsRows = ({
                                 mappingDisabled={isShow}
                                 handleMap={handleMap}
                                 isMapped={isMapped}
+                                getConstraintWarning={getConstraintWarning}
                                 truncateValue={truncateValue}
                             />
                         </TableRow>
@@ -1077,6 +1246,24 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
     const truncateValue = value => truncateValueAtLength(value, maxLength);
 
     const io = convertChannelsArraysToObjects(get(record, '$io'));
+    const constraintWarnings = channelMappingConstraintWarnings(io, mapping);
+    const getConstraintWarning = (
+        inputId,
+        outputId,
+        inputChannelIndex,
+        outputChannelIndex,
+        outputItem
+    ) => {
+        if (isShow) return;
+        return isMapped(
+            inputId,
+            outputId,
+            inputChannelIndex,
+            outputChannelIndex
+        )
+            ? get(constraintWarnings, [outputId, outputChannelIndex])
+            : routableInputConstraintWarning(outputItem, inputId);
+    };
 
     const getInputAPIName = inputId =>
         get(io, `inputs.${inputId}.properties.name`);
@@ -1189,6 +1376,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                             mappingDisabled={isShow}
                             handleMap={handleMap}
                             isMapped={isMapped}
+                            getConstraintWarning={getConstraintWarning}
                             isOutputExpanded={id => isExpanded('outputs', id)}
                         />
                         <InputsRows
@@ -1200,6 +1388,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                             isShow={isShow}
                             handleMap={handleMap}
                             isMapped={isMapped}
+                            getConstraintWarning={getConstraintWarning}
                             truncateValue={truncateValue}
                         />
                     </TableBody>

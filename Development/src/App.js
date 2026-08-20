@@ -12,7 +12,7 @@ import AdminMenu from './pages/menu';
 import AppBar from './pages/appbar';
 import About from './pages/about';
 import { NodesList, NodesShow } from './pages/nodes';
-import { DevicesList, DevicesShow } from './pages/devices';
+import { DevicesEdit, DevicesList, DevicesShow } from './pages/devices';
 import { SourcesList, SourcesShow } from './pages/sources';
 import { FlowsList, FlowsShow } from './pages/flows';
 import { ReceiversEdit, ReceiversList, ReceiversShow } from './pages/receivers';
@@ -59,7 +59,12 @@ const AppAdmin = () => {
         >
             <Resource name="Settings" list={Settings} />
             <Resource name="nodes" list={NodesList} show={NodesShow} />
-            <Resource name="devices" list={DevicesList} show={DevicesShow} />
+            <Resource
+                name="devices"
+                list={DevicesList}
+                show={DevicesShow}
+                edit={DevicesEdit}
+            />
             <Resource name="sources" list={SourcesList} show={SourcesShow} />
             <Resource name="flows" list={FlowsList} show={FlowsShow} />
             <Resource

@@ -8,7 +8,18 @@ import {
     UPDATE,
     fetchUtils,
 } from 'react-admin';
-import { assign, get, has, isEmpty, pick, set } from 'lodash';
+import {
+    assign,
+    cloneDeep,
+    get,
+    has,
+    isEmpty,
+    isEqual,
+    pick,
+    set,
+    setWith,
+    union,
+} from 'lodash';
 import { JsonPointer } from 'json-ptr';
 import diff from 'deep-diff';
 import { makeBearerAuthHeader } from './authProvider';
@@ -298,6 +309,39 @@ const isAuth = () => {
     return token && usingAuth();
 };
 
+// map entries which differ between the active map and the requested map,
+// cf. the deep-diff of '$staged' used to PATCH the Connection API
+export const channelMappingAction = (activeMap, requestedMap) => {
+    const action = {};
+    for (const outputId of union(
+        Object.keys(activeMap || {}),
+        Object.keys(requestedMap || {})
+    )) {
+        const activeOutput = get(activeMap, outputId, {});
+        const requestedOutput = get(requestedMap, outputId, {});
+        for (const channelIndex of union(
+            Object.keys(activeOutput),
+            Object.keys(requestedOutput)
+        )) {
+            const activeEntry = get(activeOutput, channelIndex);
+            const requestedEntry = get(requestedOutput, channelIndex);
+            if (!isEqual(activeEntry, requestedEntry)) {
+                // use setWith rather than set to avoid creating arrays if any
+                // channel index is a number
+                setWith(
+                    action,
+                    [outputId, channelIndex],
+                    requestedEntry === undefined
+                        ? null
+                        : cloneDeep(requestedEntry),
+                    Object
+                );
+            }
+        }
+    }
+    return action;
+};
+
 const convertDataProviderRequestToHTTP = (
     type,
     resource,
@@ -535,6 +579,29 @@ const convertDataProviderRequestToHTTP = (
             }
         }
         case UPDATE: {
+            if (resource === 'devices') {
+                // an IS-08 activation request carries only the changed output
+                // channels, not the whole map
+                const action = channelMappingAction(
+                    get(params, 'previousData.$active.map'),
+                    get(params, 'data.$active.map')
+                );
+                return {
+                    url: concatUrl(
+                        params.data.$channelmappingAPI,
+                        '/map/activations/'
+                    ),
+                    options: {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            activation: { mode: 'activate_immediate' },
+                            action,
+                        }),
+                    },
+                };
+            }
+
             let differences = [];
             let allDifferences = diff(
                 get(params, 'previousData.$staged'),
@@ -1138,6 +1205,10 @@ const convertHTTPResponseToDataProvider = async (
                 total: null,
             };
         case UPDATE:
+            if (resource === 'devices') {
+                // the Channel Mapping API returns the activation, not the Device
+                return { data: { ...params.data, id: params.id } };
+            }
             return { data: { ...json, id: json.id } };
         case CREATE:
             return { data: { ...params.data, id: json.id } };

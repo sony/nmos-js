@@ -7,7 +7,7 @@ This repository contains a client implementation of the [AMWA Networked Media Op
 
 - [AMWA IS-04 NMOS Discovery and Registration Specification](https://amwa-tv.github.io/nmos-discovery-registration)
 - [AMWA IS-05 NMOS Device Connection Management Specification](https://amwa-tv.github.io/nmos-device-connection-management)
-- [AMWA IS-08 NMOS Audio Channel Mapping Specification](https://specs.amwa.tv/is-08/) (read-only for now)
+- [AMWA IS-08 NMOS Audio Channel Mapping Specification](https://specs.amwa.tv/is-08/)
 - [AMWA BCP-004-01 NMOS Receiver Capabilities](https://specs.amwa.tv/bcp-004-01/)
 - [AMWA BCP-007-03 NMOS Support for MXL](https://specs.amwa.tv/bcp-007-03/)
 
@@ -73,6 +73,7 @@ The implementation is designed to be extended. Development is ongoing, following
 
 Recent activity on the project (newest first):
 
+- IS-08 Channel Mapping: edit the Active Map and activate immediately.
 - Added the optional NMOS Bridge (formerly Connection API Bridge).
 - Launch IS-12 Device Model browser client from within nmos-js Device summary tab.
 - Added BCP-007-03 NMOS Support for MXL

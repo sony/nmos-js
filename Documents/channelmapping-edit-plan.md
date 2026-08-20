@@ -53,8 +53,12 @@ Edit view is only a local draft until Activate.
 ### Edit — map draft + activate
 
 - Route: the normal react-admin Device Edit route, implemented by a dedicated
-  Channel Mapping Edit component. Enter it from the Active Map tab; the Device
-  resource has no other Edit view today.
+  Channel Mapping Edit component. Enter it from the Active Map tab (Edit
+  button is shown only on that tab); the Device resource has no other Edit
+  view today. The Edit view keeps the Summary / Active Map tabs and highlights
+  Active Map, matching Receiver/Sender Staged edit. Activate sits in a bar at
+  the top of the tab content, above the filter panels, so it is not a long
+  scroll away when the matrix is tall.
 - Seed local draft from current `$active.map` on load / refresh.
 - Matrix with `isShow={false}` and `handleMap` updating the draft (including
   unroute).
@@ -65,8 +69,9 @@ Edit view is only a local draft until Activate.
   - `requested_time` when scheduled
 - Primary action: **Activate** (or Save in react-admin terms that maps to
   Activate) → build diff `action` → `POST …/map/activations/` → on success
-  refresh active map / activations and navigate to Show Active Map (or
-  Activations if scheduled and still pending).
+  refresh the Device record and return to Show Active Map. A later Edit visit
+  remounts and seeds from the refreshed `$active.map`, so the next Activate
+  only includes changes since that POST.
 - No "save draft" control.
 - Soft validation: visually flag cells / rows that violate
   `routable_inputs`, reordering, or `block_size` (and similar caps from `$io`),
@@ -84,13 +89,16 @@ Edit view is only a local draft until Activate.
 - Extend Device load (or Edit load) as needed so Edit has `$io`, `$active`,
   `$channelmappingAPI`, and Activations tab has activations data (already
   partially fetched as `map/activations` today).
-- Implement a dedicated activation helper that posts to the resolved
-  `$channelmappingAPI`. Do not represent activation as a fake react-admin
-  `UPDATE` of the Device resource.
-- Diff algorithm: compare draft map to the active map snapshot taken at Edit
-  load (or last successful activate); emit only changed
+- Activation goes through the dataProvider as `UPDATE` of the `devices`
+  resource, posting to the resolved `$channelmappingAPI`, in the same way
+  `UPDATE` of `receivers` / `senders` PATCHes the resolved `$connectionAPI`.
+  That keeps URL, headers, auth and error-body handling in one place.
+- Diff algorithm (in the dataProvider, beside the `$staged` deep-diff):
+  compare the requested map in `data.$active.map` to the map the Device
+  reported in `previousData.$active.map`; emit only changed
   `output_id → channel_index → { input, channel_index }` entries; omit
-  unchanged outputs entirely.
+  unchanged outputs entirely. The Edit view holds the draft and enables
+  Activate only while it differs from the map it was seeded with.
 - Auth: reuse existing bearer headers when auth is on (`channelmapping` scope
   already listed).
 
@@ -124,7 +132,6 @@ where possible; avoid inventing a second design system.
 | 3 | Scheduled modes + `requested_time` (mirror Connection Edit) |
 | 4 | Soft cap warnings on the matrix |
 | 5 | Activations show tab + DELETE cancel |
-| 6 | README: drop "read-only for now" for IS-08 |
 
 ## Acceptance
 
@@ -144,4 +151,3 @@ where possible; avoid inventing a second design system.
 - Existing `ChannelMappingMatrix`, `DevicesShow` Active Map tab
 - Connection Edit activation mode UI (`ReceiversEdit` / `SendersEdit`)
 - IS-08 `POST /map/activations/` / map-entries schema (partial `action`)
-- README today: "IS-08 … (read-only for now)"

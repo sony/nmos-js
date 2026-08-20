@@ -139,11 +139,200 @@ const TooltipDivider = withStyles({
     },
 })(Divider);
 
-const InteractiveTooltipContext = createContext();
+const ConstraintWarning = withStyles(theme => ({
+    root: {
+        color:
+            theme.palette.type === 'light'
+                ? theme.palette.warning.dark
+                : theme.palette.warning.light,
+    },
+}))(Typography);
 
-const InteractiveTooltip = ({ title, ...props }) => {
+export const isRoutableInput = (outputItem, inputId) => {
+    const routableInputs = get(outputItem, 'caps.routable_inputs');
+    // null means that the Output has no routing restrictions. If the field is
+    // absent or malformed, leave validation to the Node.
+    return !Array.isArray(routableInputs) || routableInputs.includes(inputId);
+};
+
+const routableInputConstraintWarning = (outputItem, inputId) => {
+    if (isRoutableInput(outputItem, inputId)) return;
+    return inputId === null
+        ? "This output's routable inputs do not include Unrouted."
+        : "This output's routable inputs do not include this input.";
+};
+
+const setConstraintWarning = (
+    warnings,
+    outputId,
+    outputChannelIndex,
+    warning
+) => {
+    setWith(warnings, [outputId, outputChannelIndex], warning, Object);
+};
+
+export const channelMappingConstraintWarnings = (io, mapping) => {
+    const routableInputWarnings = {};
+    const blockSizeWarnings = {};
+    const reorderingWarnings = {};
+
+    for (const [outputId, outputMap] of Object.entries(mapping || {})) {
+        const outputItem = get(io, ['outputs', outputId]);
+        const entries = Object.entries(outputMap)
+            .sort(([left], [right]) => Number(left) - Number(right))
+            .map(([outputChannelIndex, entry]) => ({
+                outputChannelIndex,
+                outputIndex: Number(outputChannelIndex),
+                inputId: get(entry, 'input'),
+                inputIndex: get(entry, 'channel_index'),
+            }));
+
+        for (const entry of entries) {
+            const warning = routableInputConstraintWarning(
+                outputItem,
+                entry.inputId
+            );
+            if (warning) {
+                setConstraintWarning(
+                    routableInputWarnings,
+                    outputId,
+                    entry.outputChannelIndex,
+                    warning
+                );
+            }
+        }
+
+        const inputOffsets = {};
+        const reorderingViolationInputs = new Set();
+        let currentInputId;
+        let currentBlockSize;
+        let currentBlock = [];
+
+        const checkCurrentBlock = () => {
+            if (!currentBlock.length || !currentBlockSize) return;
+            const inputBlock = Math.floor(
+                currentBlock[0].inputIndex / currentBlockSize
+            );
+            const inputChannels = new Set(
+                currentBlock.map(({ inputIndex }) => inputIndex)
+            );
+            const complete =
+                currentBlock.length === currentBlockSize &&
+                inputChannels.size === currentBlockSize &&
+                currentBlock.every(
+                    ({ inputIndex }) =>
+                        Math.floor(inputIndex / currentBlockSize) === inputBlock
+                );
+            if (!complete) {
+                const warning = `This input requires channels to be routed in complete blocks of ${currentBlockSize}.`;
+                for (const { outputChannelIndex } of currentBlock) {
+                    setConstraintWarning(
+                        blockSizeWarnings,
+                        outputId,
+                        outputChannelIndex,
+                        warning
+                    );
+                }
+            }
+        };
+
+        for (const entry of entries) {
+            if (entry.inputId === null) continue;
+            const inputItem = get(io, ['inputs', entry.inputId]);
+            const blockSize = get(inputItem, 'caps.block_size');
+            if (
+                !Number.isInteger(entry.outputIndex) ||
+                !Number.isInteger(entry.inputIndex) ||
+                !Number.isInteger(blockSize) ||
+                blockSize < 1
+            ) {
+                checkCurrentBlock();
+                currentBlock = [];
+                currentInputId = undefined;
+                currentBlockSize = undefined;
+                continue;
+            }
+
+            if (entry.inputId !== currentInputId) {
+                checkCurrentBlock();
+                currentBlock = [];
+                currentInputId = entry.inputId;
+                currentBlockSize = blockSize;
+                if (get(inputItem, 'caps.reordering') === false) {
+                    if (entry.inputIndex % blockSize !== 0) {
+                        reorderingViolationInputs.add(entry.inputId);
+                    }
+                    if (
+                        !Object.prototype.hasOwnProperty.call(
+                            inputOffsets,
+                            entry.inputId
+                        )
+                    ) {
+                        inputOffsets[entry.inputId] =
+                            entry.inputIndex - entry.outputIndex;
+                    }
+                }
+            } else if (currentBlock.length === currentBlockSize) {
+                checkCurrentBlock();
+                currentBlock = [];
+            }
+
+            if (get(inputItem, 'caps.reordering') === false) {
+                const offset = entry.inputIndex - entry.outputIndex;
+                if (offset !== inputOffsets[entry.inputId]) {
+                    reorderingViolationInputs.add(entry.inputId);
+                }
+                if (
+                    currentBlock.length &&
+                    entry.inputIndex !==
+                        currentBlock[currentBlock.length - 1].inputIndex + 1
+                ) {
+                    reorderingViolationInputs.add(entry.inputId);
+                }
+            }
+            currentBlock.push(entry);
+        }
+        checkCurrentBlock();
+
+        const reorderingWarning =
+            'This input does not allow reordering; channels must keep a fixed offset on this output.';
+        for (const entry of entries) {
+            if (reorderingViolationInputs.has(entry.inputId)) {
+                setConstraintWarning(
+                    reorderingWarnings,
+                    outputId,
+                    entry.outputChannelIndex,
+                    reorderingWarning
+                );
+            }
+        }
+    }
+
+    const warnings = {};
+    for (const [outputId, outputMap] of Object.entries(mapping || {})) {
+        for (const outputChannelIndex of Object.keys(outputMap)) {
+            const warning =
+                get(routableInputWarnings, [outputId, outputChannelIndex]) ||
+                get(blockSizeWarnings, [outputId, outputChannelIndex]) ||
+                get(reorderingWarnings, [outputId, outputChannelIndex]);
+            if (warning) {
+                setConstraintWarning(
+                    warnings,
+                    outputId,
+                    outputChannelIndex,
+                    warning
+                );
+            }
+        }
+    }
+    return warnings;
+};
+
+const MappingHeadTooltipContext = createContext();
+
+const MappingHeadTooltip = ({ title, ...props }) => {
     const { tooltipModal, setTooltipModal } = useContext(
-        InteractiveTooltipContext
+        MappingHeadTooltipContext
     );
 
     const [open, setOpen] = useState(false);
@@ -179,6 +368,14 @@ const InteractiveTooltip = ({ title, ...props }) => {
     );
 };
 
+// mapping cell tooltips have no editable content, so they must not capture the
+// pointer or stay open when the mouse moves on to another cell
+const MappingCellTooltip = props => {
+    const { tooltipModal } = useContext(MappingHeadTooltipContext);
+
+    return <Tooltip disableHoverListener={tooltipModal} {...props} />;
+};
+
 const popperPropsOffset = (skidding, distance) => ({
     popperOptions: {
         modifiers: {
@@ -194,7 +391,7 @@ const popperPropsOffset = (skidding, distance) => ({
 const popperPropsNearer = popperPropsOffset(0, -10);
 
 const OutputTooltip = ({ outputId, outputItem, getInputAPIName }) => {
-    const { setTooltipModal } = useContext(InteractiveTooltipContext);
+    const { setTooltipModal } = useContext(MappingHeadTooltipContext);
 
     const { getCustomName } = useCustomNamesContext();
     const source = `outputs.${outputId}.name`;
@@ -245,7 +442,7 @@ const OutputTooltip = ({ outputId, outputItem, getInputAPIName }) => {
 };
 
 const InputTooltip = ({ inputId, inputItem }) => {
-    const { setTooltipModal } = useContext(InteractiveTooltipContext);
+    const { setTooltipModal } = useContext(MappingHeadTooltipContext);
 
     const { getCustomName } = useCustomNamesContext();
     const source = `inputs.${inputId}.name`;
@@ -296,7 +493,7 @@ const InputTooltip = ({ inputId, inputItem }) => {
 
 const ChannelTooltip = ({ ioResource, id, channelIndex, channelLabel }) => {
     const { getCustomName } = useCustomNamesContext();
-    const { setTooltipModal } = useContext(InteractiveTooltipContext);
+    const { setTooltipModal } = useContext(MappingHeadTooltipContext);
     const source = `${ioResource}.${id}.channels.${channelIndex}`;
     return (
         <>
@@ -329,6 +526,7 @@ const MappedCellTooltip = ({
     inputName,
     inputChannelIndex,
     inputChannelLabel,
+    constraintWarning,
 }) => (
     <>
         {'Input'}
@@ -345,6 +543,15 @@ const MappedCellTooltip = ({
             {outputChannelLabel}
             {outputChannelIndex && ` (Channel ${outputChannelIndex})`}
         </Typography>
+        {constraintWarning && (
+            <>
+                <TooltipDivider />
+                {'Expected Constraint Violation'}
+                <ConstraintWarning variant="body2">
+                    {constraintWarning}
+                </ConstraintWarning>
+            </>
+        )}
     </>
 );
 
@@ -430,7 +637,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded, truncateValue }) =>
             key={outputId}
         >
             {get(outputItem, 'source_id') ? (
-                <InteractiveTooltip
+                <MappingHeadTooltip
                     title={<OutputSourceTooltip {...{ outputItem }} />}
                     placement="top"
                     arrow
@@ -448,9 +655,9 @@ const OutputSourceAssociation = ({ outputs, isExpanded, truncateValue }) =>
                             <LinkChipField transform={truncateValue} />
                         </ReferenceField>
                     </div>
-                </InteractiveTooltip>
+                </MappingHeadTooltip>
             ) : (
-                <InteractiveTooltip
+                <MappingHeadTooltip
                     title={
                         <Typography variant="body2">{'No Source'}</Typography>
                     }
@@ -459,7 +666,7 @@ const OutputSourceAssociation = ({ outputs, isExpanded, truncateValue }) =>
                     PopperProps={popperPropsNearer}
                 >
                     <div>{truncateValue('No Source')}</div>
-                </InteractiveTooltip>
+                </MappingHeadTooltip>
             )}
         </MappingHeadCell>
     ));
@@ -494,16 +701,16 @@ const InputParentAssociation = ({
         rowSpan={isInputExpanded ? Object.keys(inputItem.channels).length : 1}
     >
         {inputItem.parent.type === null ? (
-            <InteractiveTooltip
+            <MappingHeadTooltip
                 title={<Typography variant="body2">{'No Parent'}</Typography>}
                 placement="left"
                 arrow
                 PopperProps={popperPropsNearer}
             >
                 <div>{truncateValue('No Parent')}</div>
-            </InteractiveTooltip>
+            </MappingHeadTooltip>
         ) : (
-            <InteractiveTooltip
+            <MappingHeadTooltip
                 title={<InputParentTooltip inputItem={inputItem} />}
                 placement="left"
                 arrow
@@ -514,7 +721,7 @@ const InputParentAssociation = ({
                         <LinkChipField transform={truncateValue} />
                     </InputParentReferenceField>
                 </div>
-            </InteractiveTooltip>
+            </MappingHeadTooltip>
         )}
     </MappingHeadCell>
 );
@@ -544,13 +751,14 @@ const InputChannelMappingCells = ({
     mappingDisabled,
     handleMap,
     isMapped,
+    getConstraintWarning,
     truncateValue,
 }) => {
     const { getCustomName } = useCustomNamesContext();
     return (
         <>
             <MappingHeadCell key={inputChannelIndex}>
-                <InteractiveTooltip
+                <MappingHeadTooltip
                     title={
                         <ChannelTooltip
                             {...{
@@ -572,7 +780,7 @@ const InputChannelMappingCells = ({
                             ) || inputChannel.label
                         )}
                     </div>
-                </InteractiveTooltip>
+                </MappingHeadTooltip>
             </MappingHeadCell>
             <>
                 {outputs.map(([outputId, outputItem]) =>
@@ -580,7 +788,7 @@ const InputChannelMappingCells = ({
                         Object.entries(outputItem.channels).map(
                             ([outputChannelIndex, outputChannel]) => (
                                 <MappingCell key={outputChannelIndex}>
-                                    <InteractiveTooltip
+                                    <MappingCellTooltip
                                         title={
                                             <MappedCellTooltip
                                                 outputName={
@@ -610,6 +818,13 @@ const InputChannelMappingCells = ({
                                                         `inputs.${inputId}.channels.${inputChannelIndex}`
                                                     ) || inputChannel.label
                                                 }
+                                                constraintWarning={getConstraintWarning(
+                                                    inputId,
+                                                    outputId,
+                                                    inputChannelIndex,
+                                                    outputChannelIndex,
+                                                    outputItem
+                                                )}
                                             />
                                         }
                                         placement="bottom-start"
@@ -633,9 +848,16 @@ const InputChannelMappingCells = ({
                                                     inputChannelIndex,
                                                     outputChannelIndex
                                                 )}
+                                                constraintWarning={getConstraintWarning(
+                                                    inputId,
+                                                    outputId,
+                                                    inputChannelIndex,
+                                                    outputChannelIndex,
+                                                    outputItem
+                                                )}
                                             />
                                         </div>
-                                    </InteractiveTooltip>
+                                    </MappingCellTooltip>
                                 </MappingCell>
                             )
                         )
@@ -655,6 +877,7 @@ const UnroutedRow = ({
     mappingDisabled,
     handleMap,
     isMapped,
+    getConstraintWarning,
     isOutputExpanded,
 }) => {
     const { getCustomName } = useCustomNamesContext();
@@ -666,7 +889,7 @@ const UnroutedRow = ({
                     Object.entries(outputItem.channels).map(
                         ([outputChannelIndex, outputChannel]) => (
                             <MappingCell key={outputChannelIndex}>
-                                <InteractiveTooltip
+                                <MappingCellTooltip
                                     title={
                                         <MappedCellTooltip
                                             outputName={
@@ -683,6 +906,13 @@ const UnroutedRow = ({
                                                 ) || outputChannel.label
                                             }
                                             inputName="Unrouted"
+                                            constraintWarning={getConstraintWarning(
+                                                null,
+                                                outputId,
+                                                null,
+                                                outputChannelIndex,
+                                                outputItem
+                                            )}
                                         />
                                     }
                                     placement="bottom-start"
@@ -709,9 +939,16 @@ const UnroutedRow = ({
                                                 null,
                                                 outputChannelIndex
                                             )}
+                                            constraintWarning={getConstraintWarning(
+                                                null,
+                                                outputId,
+                                                null,
+                                                outputChannelIndex,
+                                                outputItem
+                                            )}
                                         />
                                     </div>
-                                </InteractiveTooltip>
+                                </MappingCellTooltip>
                             </MappingCell>
                         )
                     )
@@ -746,7 +983,7 @@ const OutputsHeadRow = ({
                         rowSpan={isOutputExpanded(outputId) ? 1 : 2}
                         key={outputId}
                     >
-                        <InteractiveTooltip
+                        <MappingHeadTooltip
                             title={
                                 <OutputTooltip
                                     {...{
@@ -766,7 +1003,7 @@ const OutputsHeadRow = ({
                                         outputItem.properties.name
                                 )}
                             </div>
-                        </InteractiveTooltip>
+                        </MappingHeadTooltip>
                         <CollapseButton
                             onClick={() => onExpandOutput(outputId)}
                             isExpanded={isOutputExpanded(outputId)}
@@ -785,7 +1022,7 @@ const OutputsHeadRow = ({
                         ? Object.entries(outputItem.channels).map(
                               ([channelIndex, channel]) => (
                                   <MappingHeadCell key={channelIndex}>
-                                      <InteractiveTooltip
+                                      <MappingHeadTooltip
                                           title={
                                               <ChannelTooltip
                                                   {...{
@@ -808,7 +1045,7 @@ const OutputsHeadRow = ({
                                                   ) || channel.label
                                               )}
                                           </div>
-                                      </InteractiveTooltip>
+                                      </MappingHeadTooltip>
                                   </MappingHeadCell>
                               )
                           )
@@ -828,6 +1065,7 @@ const InputsRows = ({
     isShow,
     handleMap,
     isMapped,
+    getConstraintWarning,
     truncateValue,
 }) => {
     const { getCustomName } = useCustomNamesContext();
@@ -847,7 +1085,7 @@ const InputsRows = ({
                     }
                     colSpan={isInputExpanded(inputId) ? 1 : 2}
                 >
-                    <InteractiveTooltip
+                    <MappingHeadTooltip
                         title={
                             <InputTooltip
                                 {...{
@@ -866,7 +1104,7 @@ const InputsRows = ({
                                     inputItem.properties.name
                             )}
                         </div>
-                    </InteractiveTooltip>
+                    </MappingHeadTooltip>
                     <CollapseButton
                         onClick={() => onExpandInput(inputId)}
                         isExpanded={isInputExpanded(inputId)}
@@ -894,6 +1132,7 @@ const InputsRows = ({
                         mappingDisabled={isShow}
                         handleMap={handleMap}
                         isMapped={isMapped}
+                        getConstraintWarning={getConstraintWarning}
                         truncateValue={truncateValue}
                     />
                 ) : null}
@@ -914,6 +1153,7 @@ const InputsRows = ({
                                 mappingDisabled={isShow}
                                 handleMap={handleMap}
                                 isMapped={isMapped}
+                                getConstraintWarning={getConstraintWarning}
                                 truncateValue={truncateValue}
                             />
                         </TableRow>
@@ -1014,6 +1254,24 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
     const truncateValue = value => truncateValueAtLength(value, maxLength);
 
     const io = convertChannelsArraysToObjects(get(record, '$io'));
+    const constraintWarnings = channelMappingConstraintWarnings(io, mapping);
+    const getConstraintWarning = (
+        inputId,
+        outputId,
+        inputChannelIndex,
+        outputChannelIndex,
+        outputItem
+    ) => {
+        if (isShow) return;
+        return isMapped(
+            inputId,
+            outputId,
+            inputChannelIndex,
+            outputChannelIndex
+        )
+            ? get(constraintWarnings, [outputId, outputChannelIndex])
+            : routableInputConstraintWarning(outputItem, inputId);
+    };
 
     const getInputAPIName = inputId =>
         get(io, `inputs.${inputId}.properties.name`);
@@ -1097,7 +1355,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                     Clear Custom Names
                 </MenuItem>
             </FilterPanel>
-            <InteractiveTooltipContext.Provider
+            <MappingHeadTooltipContext.Provider
                 value={{ tooltipModal, setTooltipModal }}
             >
                 <Table>
@@ -1126,6 +1384,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                             mappingDisabled={isShow}
                             handleMap={handleMap}
                             isMapped={isMapped}
+                            getConstraintWarning={getConstraintWarning}
                             isOutputExpanded={id => isExpanded('outputs', id)}
                         />
                         <InputsRows
@@ -1137,11 +1396,12 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                             isShow={isShow}
                             handleMap={handleMap}
                             isMapped={isMapped}
+                            getConstraintWarning={getConstraintWarning}
                             truncateValue={truncateValue}
                         />
                     </TableBody>
                 </Table>
-            </InteractiveTooltipContext.Provider>
+            </MappingHeadTooltipContext.Provider>
         </CustomNamesContextProvider>
     );
 };

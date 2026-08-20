@@ -48,7 +48,7 @@ jobs:
       run: |
         yarn run lint-check
         yarn run build
-        yarn test --passWithNoTests --coverage --watchAll=false
+        yarn test --coverage --watchAll=false
 
     - name: install python
       uses: actions/setup-python@v7

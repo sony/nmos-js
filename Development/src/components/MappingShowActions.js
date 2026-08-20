@@ -1,5 +1,11 @@
 import React from 'react';
-import { Button, ListButton, TopToolbar, useRecordContext } from 'react-admin';
+import {
+    Button,
+    EditButton,
+    ListButton,
+    TopToolbar,
+    useRecordContext,
+} from 'react-admin';
 import JsonIcon from '../icons/JsonIcon';
 import { useTheme } from '@material-ui/styles';
 import { concatUrl } from '../settings';
@@ -10,10 +16,15 @@ export default function MappingShowActions({ basePath, id, resource }) {
     const { record } = useRecordContext();
     let json_href;
     const theme = useTheme();
+    const tab = window.location.href.split('/').pop();
     if (record) {
-        const tab = window.location.href.split('/').pop();
         if (tab === 'active_map' && record.$channelmappingAPI) {
             json_href = concatUrl(record.$channelmappingAPI, '/map/active');
+        } else if (tab === 'activations' && record.$channelmappingAPI) {
+            json_href = concatUrl(
+                record.$channelmappingAPI,
+                '/map/activations'
+            );
         } else {
             json_href = resourceUrl(resource, `/${id}`);
         }
@@ -39,6 +50,9 @@ export default function MappingShowActions({ basePath, id, resource }) {
                 >
                     <JsonIcon />
                 </Button>
+            ) : null}
+            {record && tab === 'active_map' && record.$channelmappingAPI ? (
+                <EditButton basePath={basePath} record={record} />
             ) : null}
             <ListButton
                 label={'List'}

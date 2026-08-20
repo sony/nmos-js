@@ -26,7 +26,7 @@ where `href` is taken from the Device resource `controls` entry matching the con
 
 `{api}` is the same path segment as in the advertised `href` (`/x-nmos/{api}/{version}`). The bridge API version (`v1.0`) is independent of the Device API version (`{version}`).
 
-For Connection and Channel Mapping (HTTP), the request:
+For Connection (HTTP), the request:
 
 ```text
 PATCH /x-nmos-bridge/v1.0/devices/{device_id}/connection/v1.1/single/receivers/{receiver_id}/staged
@@ -36,6 +36,18 @@ is proxied to `http://device.example.local` as:
 
 ```text
 PATCH /x-nmos/connection/v1.1/single/receivers/{receiver_id}/staged
+```
+
+For Channel Mapping (HTTP), the request:
+
+```text
+POST /x-nmos-bridge/v1.0/devices/{device_id}/channelmapping/v1.0/map/activations/
+```
+
+is proxied to `http://device.example.local` as:
+
+```text
+POST /x-nmos/channelmapping/v1.0/map/activations/
 ```
 
 Methods are restricted to `GET`, `HEAD`, `POST`, `PATCH`, `DELETE` and `OPTIONS`, the union of the methods the proxied Device APIs use; which methods a given resource actually supports is up to the Device. Query strings, methods and request bodies are preserved. `GET` and `HEAD` requests may be retried; mutating methods are never automatically retried.
@@ -56,7 +68,7 @@ Upgrade: websocket
 Connection: Upgrade
 ```
 
-(`http://device.example.local:7002` coming from the Device control `href`.) Upstream schemes are `ws` only for now (parallel to HTTP-only Connection). Envoy uses TCP health checks for NCP clusters (HTTP probes return `426` Upgrade Required on nmos-cpp's NCP port so a standard HTTP health check doesn't work).
+(`http://device.example.local:7002` coming from the Device control `href`.) Upstream schemes are `ws` only for now (parallel to HTTP-only Connection and Channel Mapping). Envoy uses TCP health checks for NCP clusters (HTTP probes return `426` Upgrade Required on nmos-cpp's NCP port so a standard HTTP health check doesn't work).
 
 `GET /x-nmos-bridge` and `GET /x-nmos-bridge/v1.0` return listings (`["v1.0/"]` and `["devices/","query/"]`). Devices are not listed; the Registry remains the source of truth for which Devices exist. Given a Device ID from the Registry, `GET …/devices/{device_id}` lists the APIs proxied for that Device (e.g. `["channelmapping/","connection/"]`) and `GET …/devices/{device_id}/{api}` lists the versions, so a client can see what became a bridge target without inspecting Envoy configuration.
 

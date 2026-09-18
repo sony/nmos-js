@@ -2,11 +2,11 @@
 
 // NMOS Bridge - Envoy Adapter
 //
-// Converts Registry state into Envoy configuration. Tracks Devices through a
-// Query API WebSocket subscription, extracts their Device controls, and
-// generates Envoy route and cluster configuration files which Envoy reloads
-// via filesystem watch. The adapter does not proxy any traffic itself and
-// does not determine runtime health - Envoy does both.
+// Converts Registry state into Envoy configuration. Tracks Devices and Nodes
+// through Query API WebSocket subscriptions, extracts Node services and
+// Device controls, and generates Envoy route and cluster configuration files
+// which Envoy reloads via filesystem watch. The adapter does not proxy any
+// traffic itself and does not determine runtime health - Envoy does both.
 
 const crypto = require('crypto');
 const fs = require('fs');
@@ -53,6 +53,21 @@ const BRIDGE_ROOT = '/x-nmos-bridge';
 const BRIDGE_VERSION = 'v1.0';
 const BRIDGE_PREFIX = `${BRIDGE_ROOT}/${BRIDGE_VERSION}`;
 
+const COLLECTION_LABEL = { nodes: 'Node', devices: 'Device' };
+const CLUSTER_KIND = { nodes: 'node', devices: 'device' };
+const COLLECTION_ORDER = { nodes: 0, devices: 1 };
+
+// the proxied Node services; each api is the path segment both in the advertised
+// href and in the bridge path. protocols lists the allowed href schemes for
+// that service type (Annotation is HTTP).
+const SERVICE_TYPES = [
+    {
+        pattern: /^urn:x-nmos:service:annotation\/(v\d+\.\d+)$/,
+        api: 'annotation',
+        protocols: ['http:'],
+    },
+];
+
 // the proxied Device APIs; each api is the path segment both in the advertised
 // href and in the bridge path. protocols lists the allowed href schemes for
 // that control type (Connection and Channel Mapping are HTTP; NCP is
@@ -84,7 +99,7 @@ if (!REGISTRY_QUERY_URL) {
 
 const log = (...args) => console.log(new Date().toISOString(), ...args);
 
-// skipped controls are reported once, not on every poll
+// skipped services and controls are reported once, not on every rebuild
 const reported = new Set();
 const logOnce = message => {
     if (reported.has(message)) return;
@@ -92,10 +107,11 @@ const logOnce = message => {
     log(message);
 };
 
-// --- device state ---
+// --- node and device state ---
 
-// authoritative set of Devices, maintained from the Query API WebSocket
-// subscription's sync, added, modified and removed events
+// authoritative sets of Nodes and Devices, maintained from the Query API
+// WebSocket subscriptions' sync, added, modified and removed events
+let nodes = new Map();
 let devices = new Map();
 
 // per-output-file content hashes, so Envoy is only reconfigured on real change
@@ -134,35 +150,36 @@ const priorityFor = host => {
     return 1;
 };
 
-// one bridge target per unique Device ID + API + version
-const collectTargets = devices => {
+// one bridge target per unique collection + resource ID + API + version
+const collectTypedTargets = (resources, types, collection, entriesKey) => {
     const targets = new Map();
-    for (const device of devices) {
-        for (const control of device.controls || []) {
+    const label = COLLECTION_LABEL[collection];
+    for (const resource of resources) {
+        for (const entry of resource[entriesKey] || []) {
             let api;
             let version;
             let protocols;
-            for (const controlType of CONTROL_TYPES) {
-                const match = controlType.pattern.exec(control.type || '');
+            for (const type of types) {
+                const match = type.pattern.exec(entry.type || '');
                 if (!match) continue;
-                api = controlType.api;
+                api = type.api;
                 version = match[1];
-                protocols = controlType.protocols;
+                protocols = type.protocols;
                 break;
             }
             if (!version) continue;
             let href;
             try {
-                href = new URL(control.href);
+                href = new URL(entry.href);
             } catch {
                 logOnce(
-                    `skipping malformed href for Device ${device.id}: ${control.href}`
+                    `skipping malformed href for ${label} ${resource.id}: ${entry.href}`
                 );
                 continue;
             }
             if (!protocols.includes(href.protocol)) {
                 logOnce(
-                    `skipping unsupported scheme for Device ${device.id}: ${control.href}`
+                    `skipping unsupported scheme for ${label} ${resource.id}: ${entry.href}`
                 );
                 continue;
             }
@@ -170,14 +187,15 @@ const collectTargets = devices => {
             const basePath = href.pathname.replace(/\/$/, '');
             if (!basePath.endsWith(`/x-nmos/${api}/${version}`)) {
                 logOnce(
-                    `skipping href inconsistent with ${api} ${version} for Device ${device.id}: ${control.href}`
+                    `skipping href inconsistent with ${api} ${version} for ${label} ${resource.id}: ${entry.href}`
                 );
                 continue;
             }
-            const key = `${device.id}/${api}/${version}`;
+            const key = `${collection}/${resource.id}/${api}/${version}`;
             if (!targets.has(key)) {
                 targets.set(key, {
-                    deviceId: device.id,
+                    collection,
+                    resourceId: resource.id,
                     api,
                     version,
                     candidates: [],
@@ -220,7 +238,7 @@ const collectTargets = devices => {
         for (const c of target.candidates) {
             if (c.scheme !== scheme || c.basePath !== basePath) {
                 logOnce(
-                    `dropping candidate with differing scheme or base path for Device ${target.deviceId} ${target.api} ${target.version}: ${c.scheme}://${c.host}:${c.port}${c.basePath}`
+                    `dropping candidate with differing scheme or base path for ${label} ${target.resourceId} ${target.api} ${target.version}: ${c.scheme}://${c.host}:${c.port}${c.basePath}`
                 );
             }
         }
@@ -230,19 +248,35 @@ const collectTargets = devices => {
         target.scheme = scheme;
         target.basePath = basePath;
     }
-    return [...targets.values()].sort((a, b) =>
-        `${a.deviceId}/${a.api}/${a.version}`.localeCompare(
-            `${b.deviceId}/${b.api}/${b.version}`
-        )
-    );
+    return [...targets.values()];
+};
+
+const collectTargets = (nodeList, deviceList) => {
+    const targets = [
+        ...collectTypedTargets(nodeList, SERVICE_TYPES, 'nodes', 'services'),
+        ...collectTypedTargets(
+            deviceList,
+            CONTROL_TYPES,
+            'devices',
+            'controls'
+        ),
+    ];
+    return targets.sort((a, b) => {
+        const collection =
+            COLLECTION_ORDER[a.collection] - COLLECTION_ORDER[b.collection];
+        if (collection) return collection;
+        return `${a.resourceId}/${a.api}/${a.version}`.localeCompare(
+            `${b.resourceId}/${b.api}/${b.version}`
+        );
+    });
 };
 
 // --- Envoy configuration ---
 
 const clusterName = target =>
-    `nmos_bridge_device_${safeName(target.deviceId)}_${target.api}_${safeName(
-        target.version
-    )}`;
+    `nmos_bridge_${CLUSTER_KIND[target.collection]}_${safeName(
+        target.resourceId
+    )}_${target.api}_${safeName(target.version)}`;
 
 const defaultPortFor = protocol => {
     if (protocol === 'https:' || protocol === 'wss:') return 443;
@@ -363,9 +397,9 @@ const bridgeRoutes = target => {
     // path_separated_prefix matches the version path exactly or with a
     // following '/...' (Envoy 1.22+; compose pins v1.31). That preserves
     // whatever the client sent after the version (nothing, '/', or a
-    // sub-path) when rewriting onto the Device API basePath, so
+    // sub-path) when rewriting onto the upstream API basePath, so
     // trailing-slash handling stays with the upstream per that API.
-    const pathPrefix = `${BRIDGE_PREFIX}/devices/${target.deviceId}/${target.api}/${target.version}`;
+    const pathPrefix = `${BRIDGE_PREFIX}/${target.collection}/${target.resourceId}/${target.api}/${target.version}`;
     if (target.scheme === 'ws' || target.scheme === 'wss') {
         // NCP (and similar): upgrade only; no Location rewrite
         return [
@@ -462,36 +496,40 @@ const bridgeRoutes = target => {
     ];
 };
 
-// what the bridge proxies for one Device, so a client holding a Device ID from
-// the Registry can see which APIs and versions became targets
-const deviceListingRoutes = targets => {
-    const devices = new Map();
+// what the bridge proxies for one Registry resource, so a client holding that
+// ID can see which APIs and versions became targets
+const resourceListingRoutes = (targets, collection) => {
+    const resources = new Map();
     for (const target of targets) {
-        if (!devices.has(target.deviceId)) {
-            devices.set(target.deviceId, new Map());
+        if (target.collection !== collection) continue;
+        if (!resources.has(target.resourceId)) {
+            resources.set(target.resourceId, new Map());
         }
-        const apis = devices.get(target.deviceId);
+        const apis = resources.get(target.resourceId);
         if (!apis.has(target.api)) apis.set(target.api, []);
         apis.get(target.api).push(`${target.version}/`);
     }
     const routes = [];
     // targets are sorted, so the listings are too
-    for (const [deviceId, apis] of devices) {
-        const devicePath = `${BRIDGE_PREFIX}/devices/${deviceId}`;
-        const deviceListing = directResponse(
+    for (const [resourceId, apis] of resources) {
+        const resourcePath = `${BRIDGE_PREFIX}/${collection}/${resourceId}`;
+        const resourceListing = directResponse(
             200,
             [...apis.keys()].map(api => `${api}/`)
         );
-        routes.push({ match: { path: devicePath }, ...deviceListing });
-        routes.push({ match: { path: `${devicePath}/` }, ...deviceListing });
+        routes.push({ match: { path: resourcePath }, ...resourceListing });
+        routes.push({
+            match: { path: `${resourcePath}/` },
+            ...resourceListing,
+        });
         for (const [api, versions] of apis) {
             const apiListing = directResponse(200, versions);
             routes.push({
-                match: { path: `${devicePath}/${api}` },
+                match: { path: `${resourcePath}/${api}` },
                 ...apiListing,
             });
             routes.push({
-                match: { path: `${devicePath}/${api}/` },
+                match: { path: `${resourcePath}/${api}/` },
                 ...apiListing,
             });
         }
@@ -500,6 +538,7 @@ const deviceListingRoutes = targets => {
 };
 
 const DEVICES_NOT_LISTED = `Devices are not listed; request a specific device at ${BRIDGE_PREFIX}/devices/{deviceId}`;
+const NODES_NOT_LISTED = `Nodes are not listed; request a specific node at ${BRIDGE_PREFIX}/nodes/{nodeId}`;
 
 // Query subscription WebSockets on the bridge path (nmos-cpp path template).
 // Separate from /x-nmos/query HTTP so upgrade and long idle timeouts do not
@@ -544,9 +583,18 @@ const routeConfiguration = targets => ({
             },
             routes: [
                 ...targets.flatMap(bridgeRoutes),
-                ...deviceListingRoutes(targets),
-                // the Device collection is not listed, the Registry answers
-                // which Devices exist
+                ...resourceListingRoutes(targets, 'nodes'),
+                ...resourceListingRoutes(targets, 'devices'),
+                // the Node and Device collections are not listed; the Registry
+                // answers which resources exist
+                {
+                    match: { path: `${BRIDGE_PREFIX}/nodes` },
+                    ...directErrorResponse(404, NODES_NOT_LISTED),
+                },
+                {
+                    match: { path: `${BRIDGE_PREFIX}/nodes/` },
+                    ...directErrorResponse(404, NODES_NOT_LISTED),
+                },
                 {
                     match: { path: `${BRIDGE_PREFIX}/devices` },
                     ...directErrorResponse(404, DEVICES_NOT_LISTED),
@@ -566,19 +614,19 @@ const routeConfiguration = targets => ({
                 },
                 {
                     match: { path: BRIDGE_PREFIX },
-                    ...directResponse(200, ['devices/', 'query/']),
+                    ...directResponse(200, ['nodes/', 'devices/', 'query/']),
                 },
                 {
                     match: { path: `${BRIDGE_PREFIX}/` },
-                    ...directResponse(200, ['devices/', 'query/']),
+                    ...directResponse(200, ['nodes/', 'devices/', 'query/']),
                 },
                 // Query subscription WebSocket before the bridge namespace
                 // catch-all
                 ...queryWsRoutes(),
-                // arbitrary URLs are forbidden; only registered Device
-                // controls produce routes. The whole bridge namespace stops
-                // here, including other bridge API versions, so no request
-                // for it reaches the app catch-all below.
+                // arbitrary URLs are forbidden; only registered Node services
+                // and Device controls produce routes. The whole bridge
+                // namespace stops here, including other bridge API versions,
+                // so no request for it reaches the app catch-all below.
                 {
                     match: { path_separated_prefix: BRIDGE_ROOT },
                     ...directErrorResponse(404, 'Unknown bridge target'),
@@ -686,29 +734,27 @@ const apply = (targets, state) => {
 
 // --- discovery via Query API WebSocket subscription ---
 
-let backoffMs = RECONNECT_MIN_MS;
-
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const rebuild = () => {
-    const targets = collectTargets([...devices.values()]);
+    const targets = collectTargets([...nodes.values()], [...devices.values()]);
     if (apply(targets, state)) {
         log(
-            `updated configuration: ${devices.size} Devices, ${targets.length} bridge targets`
+            `updated configuration: ${nodes.size} Nodes, ${devices.size} Devices, ${targets.length} bridge targets`
         );
     }
 };
 
-// create a non-persistent subscription for Devices and return its WebSocket
-// href; the Registry de-duplicates identical subscriptions, so reconnecting
-// reuses the same one
-const createSubscription = async () => {
+// create a non-persistent subscription and return its WebSocket href; the
+// Registry de-duplicates identical subscriptions, so reconnecting reuses the
+// same one
+const createSubscription = async resourcePath => {
     const response = await fetch(`${REGISTRY_QUERY_URL}/subscriptions`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
             max_update_rate_ms: MAX_UPDATE_RATE_MS,
-            resource_path: '/devices',
+            resource_path: resourcePath,
             params: {},
             persist: false,
             secure: false,
@@ -749,28 +795,27 @@ const createSubscription = async () => {
     return wsHref;
 };
 
-// apply one message's data items to the device set. The first message after a
-// (re)connection is the sync of current state, so it replaces the set; this is
-// how reconnecting after an interruption refreshes all mappings, including
-// Devices removed while disconnected.
-const handleMessage = (raw, connection) => {
+// apply one message's data items to one resource set. The first message after
+// a (re)connection is the sync of current state, so it replaces that set; Node
+// and Device subscriptions reconnect independently.
+const handleMessage = (raw, connection, store) => {
     const message = JSON.parse(raw);
     const data = message && message.grain && message.grain.data;
     if (!Array.isArray(data)) return;
     if (!connection.primed) {
-        devices = new Map();
+        store.clear();
         connection.primed = true;
     }
     for (const item of data) {
-        if (item.post) devices.set(item.post.id, item.post);
-        else if (item.pre) devices.delete(item.pre.id);
+        if (item.post) store.set(item.post.id, item.post);
+        else if (item.pre) store.delete(item.pre.id);
     }
     rebuild();
 };
 
 // open the subscription WebSocket and resolve when it closes, so the caller
 // can resubscribe
-const runConnection = wsHref =>
+const runConnection = (wsHref, store, label) =>
     new Promise(resolve => {
         const ws = new WebSocket(wsHref);
         const connection = { primed: false };
@@ -781,12 +826,11 @@ const runConnection = wsHref =>
             resolve();
         };
         ws.addEventListener('open', () => {
-            backoffMs = RECONNECT_MIN_MS;
-            log(`subscribed to Devices via ${wsHref}`);
+            log(`subscribed to ${label} via ${wsHref}`);
         });
         ws.addEventListener('message', event => {
             try {
-                handleMessage(event.data, connection);
+                handleMessage(event.data, connection, store);
             } catch (e) {
                 log(`failed to handle subscription message: ${e.message}`);
             }
@@ -796,40 +840,56 @@ const runConnection = wsHref =>
             settle();
         });
         ws.addEventListener('close', () => {
-            log('websocket closed, will resubscribe');
+            log(`${label} websocket closed, will resubscribe`);
             settle();
         });
     });
 
-const run = async () => {
+const runResource = async (resourcePath, store, label) => {
+    let resourceBackoff = RECONNECT_MIN_MS;
     for (;;) {
         try {
-            const wsHref = await createSubscription();
+            const wsHref = await createSubscription(resourcePath);
             // publish the browser-facing Query WebSocket route once its
             // upstream is known
             rebuild();
-            await runConnection(wsHref);
+            await runConnection(wsHref, store, label);
+            resourceBackoff = RECONNECT_MIN_MS;
         } catch (e) {
-            log(`subscription failed: ${e.message}`);
+            log(`${label} subscription failed: ${e.message}`);
         }
         // the previous non-persistent subscription is dropped on disconnect;
         // a fresh subscribe yields a new sync of current state. The last good
         // configuration keeps being served until that sync arrives.
-        await sleep(backoffMs);
-        backoffMs = Math.min(backoffMs * 2, RECONNECT_MAX_MS);
+        await sleep(resourceBackoff);
+        resourceBackoff = Math.min(resourceBackoff * 2, RECONNECT_MAX_MS);
     }
 };
+
+const run = () =>
+    Promise.all([
+        runResource('/nodes', nodes, 'Nodes'),
+        runResource('/devices', devices, 'Devices'),
+    ]);
 
 const main = () => {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
     // write a baseline configuration immediately so Envoy can serve the
     // Registry and app routes before the first subscription sync
     apply([], state);
-    log(`subscribing to ${REGISTRY_QUERY_URL}/devices`);
+    log(`subscribing to ${REGISTRY_QUERY_URL}/nodes and /devices`);
     return run();
 };
 
-main().catch(e => {
-    console.error(e);
-    process.exit(1);
-});
+if (require.main === module) {
+    main().catch(e => {
+        console.error(e);
+        process.exit(1);
+    });
+}
+
+module.exports = {
+    bridgeCluster,
+    collectTargets,
+    routeConfiguration,
+};

@@ -5,7 +5,8 @@
     "description": "Generates Envoy configuration for the NMOS Bridge from Query API WebSocket events",
     "main": "index.js",
     "scripts": {
-        "start": "node index.js"
+        "start": "node index.js",
+        "test": "node --test"
     },
     "engines": {
         "node": ">=22.4.0"

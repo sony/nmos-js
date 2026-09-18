@@ -9,8 +9,8 @@ services:
     build: ./adapter
     restart: unless-stopped
     environment:
-      # Query API used to discover Devices; also upstream for /x-nmos/query/
-      # (and /x-dns-sd/, /log/ unless overridden below)
+      # Query API used to discover Nodes and Devices; also upstream for
+      # /x-nmos/query/ (and /x-dns-sd/, /log/ unless overridden below)
       REGISTRY_QUERY_URL: http://registry:8870/x-nmos/query/v1.3
       # optional: Query WebSocket scheme/authority when ws_href is not reachable
       # from the adapter or Envoy (also upstream for /x-nmos-bridge/.../query/

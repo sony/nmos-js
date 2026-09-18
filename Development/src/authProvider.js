@@ -39,7 +39,7 @@ const getAuthSettings = () => {
     const client_id = authClientId();
     const server_metadata_endpoint = apiUrl(AUTH_API);
     const redirect_uri = 'http://localhost:3000/login';
-    const scope = 'query connection channelmapping openid';
+    const scope = 'query connection channelmapping annotation openid';
     return {
         client_id,
         server_metadata_endpoint,

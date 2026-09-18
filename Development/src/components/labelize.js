@@ -26,7 +26,7 @@ const abbreviations = {
 const labelize = source => {
     // '/meow.$purr.hiss_yowl_ms' => 'Meow Purr Hiss Yowl (ms)'
     const label = source
-        .replace(/[ /$._]+/g, ' ')
+        .replace(/[ /$._-]+/g, ' ')
         .trim()
         .replace(
             /\S+/g,

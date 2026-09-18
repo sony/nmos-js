@@ -19,10 +19,12 @@ import { useTheme } from '@material-ui/styles';
 import LinkChipField from '../../components/LinkChipField';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
-import ObjectField from '../../components/ObjectField';
+import AnnotationFields, {
+    AnnotationTagsField,
+    AnnotationTextField,
+} from '../../components/AnnotationFields';
 import {
     ParameterField,
-    TAGS,
     TRANSPORTS,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
@@ -123,9 +125,11 @@ const ShowSummaryTab = ({ record, ...props }) => {
             <SimpleShowLayout>
                 <TextField label="ID" source="id" name="id" />
                 <TAIField source="version" />
-                <TextField source="label" name="label" />
-                <TextField source="description" name="description" />
-                <ObjectField register={TAGS} source="tags" />
+                <AnnotationFields>
+                    <AnnotationTextField source="label" />
+                    <AnnotationTextField source="description" />
+                    <AnnotationTagsField />
+                </AnnotationFields>
                 <SanitizedDivider />
                 <ParameterField source="transport" register={TRANSPORTS} />
                 <UrlField

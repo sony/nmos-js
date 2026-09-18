@@ -11,15 +11,20 @@ import {
     TableFooter,
     TableHead,
     TableRow,
+    Tooltip,
     withStyles,
 } from '@material-ui/core';
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
 
-const TableInput = withStyles(() => {
+export const TableInput = withStyles(() => {
     return {
         input: {
             padding: '6px 10px',
+        },
+        // when multiline, MUI also pads the root, on top of the textarea
+        multiline: {
+            padding: 0,
         },
     };
 })(FilledInput);
@@ -138,15 +143,15 @@ const ObjectInput = ({
                                         />
                                     </TableCell>
                                     <TableCell>
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => removeKey(index)}
-                                        >
-                                            <RemoveCircleOutlineIcon
-                                                color="error"
-                                                fontSize="small"
-                                            />
-                                        </IconButton>
+                                        <Tooltip title="Remove param">
+                                            <IconButton
+                                                aria-label="Remove param"
+                                                size="small"
+                                                onClick={() => removeKey(index)}
+                                            >
+                                                <RemoveCircleOutlineIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -154,12 +159,15 @@ const ObjectInput = ({
                         <TableFooter>
                             <TableRow>
                                 <TableCell>
-                                    <IconButton size="small" onClick={addKey}>
-                                        <AddCircleOutlineIcon
-                                            color="primary"
-                                            fontSize="small"
-                                        />
-                                    </IconButton>
+                                    <Tooltip title="Add param">
+                                        <IconButton
+                                            aria-label="Add param"
+                                            size="small"
+                                            onClick={addKey}
+                                        >
+                                            <AddCircleOutlineIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
                                 </TableCell>
                                 <TableCell />
                                 <TableCell />

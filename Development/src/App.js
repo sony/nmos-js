@@ -8,6 +8,7 @@ import {
     SettingsContextProvider,
     useAuthContext,
 } from './settings';
+import { EditingContextProvider } from './components/EditingContext';
 import AdminMenu from './pages/menu';
 import AppBar from './pages/appbar';
 import About from './pages/about';
@@ -99,7 +100,9 @@ const AppAdmin = () => {
 export const App = () => (
     <SettingsContextProvider>
         <AuthContextProvider>
-            <AppAdmin />
+            <EditingContextProvider>
+                <AppAdmin />
+            </EditingContextProvider>
         </AuthContextProvider>
     </SettingsContextProvider>
 );

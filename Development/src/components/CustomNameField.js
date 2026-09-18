@@ -4,6 +4,7 @@ import CreateIcon from '@material-ui/icons/Create';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ClearIcon from '@material-ui/icons/Clear';
 import DoneIcon from '@material-ui/icons/Done';
+import { useEditingField } from './EditingContext';
 import useCustomNamesContext from './useCustomNamesContext';
 
 export const CustomNameField = ({
@@ -21,6 +22,7 @@ export const CustomNameField = ({
     const [value, setValue] = useState(
         getCustomName(source) || defaultValue || ''
     );
+    useEditingField(editing);
 
     const inputRef = useRef();
     useEffect(() => {

@@ -4,11 +4,13 @@ import {
     Create,
     ListButton,
     NumberInput,
+    SaveButton,
     SelectInput,
     SimpleForm,
     Toolbar,
     TopToolbar,
 } from 'react-admin';
+import PublishIcon from '@material-ui/icons/Publish';
 import ObjectInput from '../../components/ObjectInput';
 import RawButton from '../../components/RawButton';
 
@@ -22,7 +24,11 @@ const SubscriptionsCreateActions = ({ basePath, data, resource }) => (
 const SubscriptionsCreate = props => (
     <Create actions={<SubscriptionsCreateActions />} {...props}>
         <SimpleForm
-            toolbar={<Toolbar alwaysEnableSaveButton />}
+            toolbar={
+                <Toolbar alwaysEnableSaveButton>
+                    <SaveButton icon={<PublishIcon />} />
+                </Toolbar>
+            }
             redirect="show"
         >
             <SelectInput

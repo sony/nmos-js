@@ -14,7 +14,10 @@ import {
 } from 'react-admin';
 import { get, has } from 'lodash';
 import LinkChipField from '../../components/LinkChipField';
-import ObjectField from '../../components/ObjectField';
+import AnnotationFields, {
+    AnnotationTagsField,
+    AnnotationTextField,
+} from '../../components/AnnotationFields';
 import { FORMATS, ParameterField } from '../../components/ParameterRegisters';
 import RateField from '../../components/RateField';
 import ResourceShowActions from '../../components/ResourceShowActions';
@@ -44,9 +47,11 @@ const FlowsShowView = props => {
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
                 <TAIField source="version" />
-                <TextField source="label" />
-                <TextField source="description" />
-                <ObjectField source="tags" />
+                <AnnotationFields>
+                    <AnnotationTextField source="label" />
+                    <AnnotationTextField source="description" />
+                    <AnnotationTagsField />
+                </AnnotationFields>
                 <SanitizedDivider />
                 {queryVersion() >= 'v1.1' && (
                     <RateField label="Grain Rate" source="grain_rate" />

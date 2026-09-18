@@ -32,12 +32,14 @@ import { Link, Route } from 'react-router-dom';
 import { get, isEmpty, map } from 'lodash';
 import { useTheme } from '@material-ui/styles';
 import LinkChipField from '../../components/LinkChipField';
-import ObjectField from '../../components/ObjectField';
+import AnnotationFields, {
+    AnnotationTagsField,
+    AnnotationTextField,
+} from '../../components/AnnotationFields';
 import {
     CONTROL_TYPES,
     DEVICE_TYPES,
     ParameterField,
-    TAGS,
     unversionedParameter,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
@@ -222,11 +224,13 @@ const ShowSummaryTab = ({ record, ...props }) => {
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
                 <TAIField source="version" />
-                <TextField source="label" />
-                {queryVersion() >= 'v1.1' && <TextField source="description" />}
-                {queryVersion() >= 'v1.1' && (
-                    <ObjectField register={TAGS} source="tags" />
-                )}
+                <AnnotationFields>
+                    <AnnotationTextField source="label" />
+                    {queryVersion() >= 'v1.1' && (
+                        <AnnotationTextField source="description" />
+                    )}
+                    {queryVersion() >= 'v1.1' && <AnnotationTagsField />}
+                </AnnotationFields>
                 <SanitizedDivider />
                 <ParameterField source="type" register={DEVICE_TYPES} />
                 {queryVersion() >= 'v1.1' && (

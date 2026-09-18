@@ -1,10 +1,10 @@
 # NMOS Bridge
 
-![NMOS Bridge](images/nmos-bridge-river.png)
-
 Provides browser-accessible proxy access to [AMWA IS-13](https://specs.amwa.tv/is-13/) Annotation APIs exposed by Nodes, and [AMWA IS-05](https://specs.amwa.tv/is-05/) Connection APIs, [AMWA IS-08](https://specs.amwa.tv/is-08/) Channel Mapping APIs, and [AMWA IS-12](https://specs.amwa.tv/is-12/) / [BCP-008](https://specs.amwa.tv/bcp-008-01/) Device Control Protocol (NCP) WebSockets exposed by Devices registered in an NMOS Registry, where the browser may not have network access to the Node service APIs and Device control APIs directly.
 
-The bridge must not behave as an open proxy. Targets originate exclusively from registered Node `services` and Device `controls` entries; public requests use Node or Device IDs only and arbitrary URLs are forbidden. The Registry remains the source of truth and requires no changes.
+![NMOS Bridge](images/nmos-bridge-river.png)
+
+The bridge does not behave as an open proxy. Targets originate exclusively from registered Node `services` and Device `controls` entries; public requests use Node or Device IDs only and arbitrary URLs are forbidden. The Registry remains the source of truth and requires no changes.
 
 ## Public Bridge API
 
@@ -191,11 +191,22 @@ npm test
 
 ## Running
 
+`docker-compose.yml` is an example, not a working default: **always** set `REGISTRY_QUERY_URL`
+to a Query API the adapter (and Envoy's `/x-nmos/query/` routes) can reach. The
+sample `http://registry:8870/...` only works if a service named `registry` is on
+this Compose network. A Registry on the Docker host needs a reachable hostname
+(see commented `host.docker.internal` / `extra_hosts` in the file) and often
+`REGISTRY_QUERY_WS_URL` when the advertised Query `ws_href` is not reachable
+from the containers.
+
+`APP_URL` is optional. Set it only if Envoy should serve the UI; leave it unset
+when nmos-js is opened on its own origin (for example `yarn start` on port 3000).
+
 ```bash
 docker compose up --build
 ```
 
-Edit `docker-compose.yml` first to point the adapter at the deployment:
+Environment variables (compose `environment:` or the process environment):
 
 | Variable | Description | Default |
 | --- | --- | --- |

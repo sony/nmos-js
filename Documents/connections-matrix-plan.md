@@ -1,7 +1,7 @@
 # Design plan: Connections matrix in nmos-js
 
-Status: in progress. Steps 0–2 are done. The Connections matrix
-(steps 3–7) is not started.
+Status: in progress. Steps 0–3 are done. Compatibility and actions
+(steps 4–7) are not started.
 
 ## Decisions (agreed)
 
@@ -488,7 +488,7 @@ Hover / focus a sender row header or receiver column header:
 plus each panel's own format filters are the way to spend the cap.
 
 Sticky headings already landed on IS-08 in step 1; Connections copies that
-CSS. Horizontal + vertical scroll around the table is v1.
+CSS in step 3. Horizontal + vertical scroll around the table is v1.
 
 ## Data loading (v1)
 
@@ -534,11 +534,11 @@ basic query returned.
 | 0 | **Done.** Cap = global Paging Limit per axis (no `next`); collapsed cells not clickable; no list paging; Unlink disables the receiver; heading match writes the opposite axis only |
 | 1 | **Done.** IS-08 extract: overflow, fixed-size leaf columns, swap axes, parent/source heading visibility, sticky `thead` and left columns, per-axis Clear All |
 | 2 | **Done.** Page shell: nav **Connections**, icon, independent FilterPanels with per-axis clear, two capped `GET_LIST`s, truncation banner |
-| 3 | Table with Device grouping, collapse, overflow scroll, IS-04 active dots only (read-only) |
+| 3 | **Done.** Table with Device grouping, collapse, overflow scroll, sticky headings, IS-04 active dots only (read-only) |
 | 4 | Compatibility ranks + hover dim + cell tooltips (no constraint_sets) |
 | 5 | Heading match writes **opposite** axis only; FilterPanel shows the chips |
 | 6 | Click unused expanded cell → `makeConnection`; click checked → Unlink; stay on page; refresh IS-04 |
-| 7 | Polish: reuse IS-08 sticky CSS, constraint_sets, live grains — only if v1 is used |
+| 7 | Polish: constraint_sets, live grains — only if v1 is used |
 
 ## Acceptance (v1)
 

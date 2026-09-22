@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, Divider } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
 import { Loading, Title } from 'react-admin';
+import get from 'lodash/get';
 
 import FilterPanel, {
     AutocompleteFilter,
@@ -20,6 +21,7 @@ import {
     queryVersion,
     useJSONSetting,
 } from '../../settings';
+import ConnectionsMatrix from './ConnectionsMatrix';
 
 // the Query API always offers a 'next' cursor, so only a full page indicates
 // that this axis may be showing just some of the matching resources
@@ -97,6 +99,13 @@ const ConnectionsList = () => {
     const [receiverFilter, setReceiverFilter] = useJSONSetting(
         'Connections Receiver Filter'
     );
+    const [settingsFilter, setSettingsFilter] = useJSONSetting(
+        'Connections Settings'
+    );
+    const [expanded, setExpanded] = useJSONSetting('Connections Expanded', {
+        senders: [],
+        receivers: [],
+    });
     const senders = useGetList({
         basePath: '/senders',
         filter: senderFilter,
@@ -139,6 +148,25 @@ const ConnectionsList = () => {
                     count={receivers.data.length}
                     label="receivers"
                     pagingLimit={pagingLimit}
+                />
+                <Divider light style={{ margin: '8px 0' }} />
+                <FilterPanel
+                    filter={settingsFilter}
+                    setFilter={setSettingsFilter}
+                    filterButtonLabel="settings"
+                    allFilters={false}
+                >
+                    <BooleanFilter source="auto sort" />
+                    <BooleanFilter source="swap axes" />
+                </FilterPanel>
+                <ConnectionsMatrix
+                    autoSort={get(settingsFilter, 'auto sort') || false}
+                    expanded={expanded}
+                    receivers={receivers.data}
+                    senders={senders.data}
+                    setExpanded={setExpanded}
+                    supportsActive={queryVersion() >= 'v1.2'}
+                    swapAxes={get(settingsFilter, 'swap axes') || false}
                 />
             </CardContent>
         </Card>

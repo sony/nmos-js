@@ -974,6 +974,7 @@ const convertHTTPResponseToDataProvider = async (
                 }
                 // just return IS-04 data if no Connection API endpoints
                 if (Object.keys(connectionAddresses).length === 0) {
+                    set(json, '$connectionAPI', null);
                     return { url, data: json };
                 }
 
@@ -1077,6 +1078,7 @@ const convertHTTPResponseToDataProvider = async (
                 }
                 // just return IS-04 data if no Channel Mapping API endpoints
                 if (Object.keys(channelmappingAddresses).length === 0) {
+                    set(json, '$channelmappingAPI', null);
                     return { url, data: json };
                 }
 

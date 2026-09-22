@@ -18,6 +18,8 @@ import { useTheme } from '@material-ui/styles';
 import emphasizedPaper from '../../theme/emphasizedPaper';
 import LinkChipField from '../../components/LinkChipField';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
+import HintedTab from '../../components/HintedTab';
+import { CONNECTION_API_NOT_AVAILABLE } from '../../components/controlApiMessages';
 import ItemArrayField from '../../components/ItemArrayField';
 import AnnotationFields, {
     AnnotationTagsField,
@@ -73,6 +75,11 @@ const ReceiversShowView = props => {
         }
     }, [basePath, record]);
 
+    const disabledHint =
+        get(record, '$connectionAPI') === null
+            ? CONNECTION_API_NOT_AVAILABLE
+            : '';
+
     const theme = useTheme();
     const tabBackgroundColor = emphasizedPaper(theme);
     return (
@@ -96,8 +103,9 @@ const ReceiversShowView = props => {
                             to={`${props.basePath}/${props.id}/show/`}
                         />
                         {['active', 'staged'].map(key => (
-                            <Tab
+                            <HintedTab
                                 key={key}
+                                hint={disabledHint}
                                 label={labelize(key)}
                                 value={`${props.match.url}/${key}`}
                                 component={Link}
@@ -108,7 +116,8 @@ const ReceiversShowView = props => {
                                 name={key}
                             />
                         ))}
-                        <Tab
+                        <HintedTab
+                            hint={disabledHint}
                             label="Connect"
                             value={`${props.match.url}/connect`}
                             component={Link}

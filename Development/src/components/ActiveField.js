@@ -4,6 +4,7 @@ import { useNotify } from 'react-admin';
 import get from 'lodash/get';
 import dataProvider from '../dataProvider';
 import sanitizeRestProps from './sanitizeRestProps';
+import { CONNECTION_API_NOT_AVAILABLE } from './controlApiMessages';
 
 const toggleMasterEnable = (record, resource) => {
     return new Promise((resolve, reject) =>
@@ -12,7 +13,7 @@ const toggleMasterEnable = (record, resource) => {
         })
             .then(({ data }) => {
                 if (!data.hasOwnProperty('$staged')) {
-                    throw new Error('No Connection API found');
+                    throw new Error(CONNECTION_API_NOT_AVAILABLE);
                 }
                 const params = {
                     id: get(data, 'id'),

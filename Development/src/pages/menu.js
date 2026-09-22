@@ -8,6 +8,7 @@ import {
     MenuList,
 } from '@material-ui/core';
 import HomeIcon from '@material-ui/icons/Home';
+import GridOnIcon from '@material-ui/icons/GridOn';
 import SettingsIcon from '@material-ui/icons/Settings';
 import { makeStyles } from '@material-ui/styles';
 
@@ -87,6 +88,7 @@ const CustomMenu = () => {
             <CustomMenuItem to={'/flows'} icon={<FlowIcon />} />
             <CustomMenuItem to={'/senders'} icon={<SenderIcon />} />
             <CustomMenuItem to={'/receivers'} icon={<ReceiverIcon />} />
+            <CustomMenuItem to={'/connections'} icon={<GridOnIcon />} />
             <CustomMenuItem to={'/subscriptions'} icon={<SubscriptionIcon />} />
             <Divider />
             <CustomMenuItem

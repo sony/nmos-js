@@ -1,7 +1,7 @@
 # Design plan: Connections matrix in nmos-js
 
-Status: in progress. Steps 0 and 1 are done. The Connections page
-(steps 2–7) is not started.
+Status: in progress. Steps 0–2 are done. The Connections matrix
+(steps 3–7) is not started.
 
 ## Decisions (agreed)
 
@@ -11,7 +11,7 @@ Status: in progress. Steps 0 and 1 are done. The Connections page
 | Collapse | Devices default collapsed. Ellipsis cells are not clickable (no Activate, no Unlink, no heading match). Expand both sides to a real sender × receiver cell. |
 | List paging | No next/prev on this page. Filter + cap is the window. |
 | Unlink | Checked expanded cell PATCHes that receiver `master_enable: false`, immediate. Do not also clear `sender_id`. No extra confirm. Stay on the matrix. |
-| Heading match | Filter icon on expanded port headings only. Writes essence filters on the **opposite** axis only (not label / description / id / tags). Sender match waits for Flow. |
+| Heading match | Filter icon on expanded port headings only. Writes essence filters on the **opposite** axis only (not label / description / id / tags). Sender match waits for Flow. Replace same-kind essence chips on that panel (`format`, `transport`, Flow media type / event type, receiver caps); keep any other chips (label, description, id, tags, device). |
 | First visit | No default format (or other) chips. Empty FilterPanels; persist last-used JSON after the operator has set some. Try it in use. |
 | Click policy | Incompatible expanded cells stay clickable. Same distinction as IS-08: warning colour on the control and an infotip naming the first failing rank. Unlink stays available on a checked cell even if the pair would now rank incompatible. |
 | Nav icon | Material `GridOn` first. Custom SVG in `Development/src/icons` only if that looks wrong next to Sender / Receiver. |
@@ -392,8 +392,15 @@ mixed ports, no single caps vector.
 
 One click writes essence filters on the **opposite** axis only, then that
 axis's capped Query reloads. The clicked axis is left as it is. Do not copy
-label, description, or id onto the other axis. Whether leftover chips on
-the opposite panel stay or are replaced is still open (see Open questions).
+label, description, or id onto the other axis.
+
+On the opposite panel, **replace** chips of the same kind as the match
+writes (`format`, `transport`, `$flow.format` / `$flow.media_type` /
+`$flow.event_type`, receiver `caps` / media types). Do not intersect two
+format filters or two transport filters — the heading is a single caps
+vector, so the new values overwrite. **Keep** chips that heading match
+never writes (label, description, id, tags, `device_id`). That
+intersection may be empty. Clear this axis is undo.
 
 From a **sender** heading (needs Flow; disable the button until Flow is
 loaded) → **receiver** panel:
@@ -520,21 +527,13 @@ basic query returned.
 - Making this a replacement for Receiver Connect tab.
 - Confirm dialogs on Activate / Unlink.
 
-## Open questions
-
-1. **Heading match vs leftover opposite-axis label / device chips.** After a
-   match writes essence filters onto the opposite panel, leave any label /
-   description / id / Device chips that were already there (intersection;
-   may be empty; Clear this axis is undo) vs replace that panel's chips
-   entirely. Not decided.
-
 ## Sequencing
 
 | Step | Work |
 | --- | --- |
 | 0 | **Done.** Cap = global Paging Limit per axis (no `next`); collapsed cells not clickable; no list paging; Unlink disables the receiver; heading match writes the opposite axis only |
 | 1 | **Done.** IS-08 extract: overflow, fixed-size leaf columns, swap axes, parent/source heading visibility, sticky `thead` and left columns, per-axis Clear All |
-| 2 | Page shell: nav **Connections**, icon, independent FilterPanels with per-axis clear, two capped `GET_LIST`s, truncation banner |
+| 2 | **Done.** Page shell: nav **Connections**, icon, independent FilterPanels with per-axis clear, two capped `GET_LIST`s, truncation banner |
 | 3 | Table with Device grouping, collapse, overflow scroll, IS-04 active dots only (read-only) |
 | 4 | Compatibility ranks + hover dim + cell tooltips (no constraint_sets) |
 | 5 | Heading match writes **opposite** axis only; FilterPanel shows the chips |

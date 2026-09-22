@@ -147,15 +147,20 @@ export const MatrixRowHeadCell = withStyles({
 // with the button below it, just as it shares a row heading's width with the
 // button beside it, and a collapsed heading spans the section below it too,
 // so its content can be as long as one spanning two row headings
-export const gridEdgeColumnHeadStyle = ({ content, frame, inset }) => ({
+export const gridEdgeColumnHeadStyle = ({
+    content,
+    frame,
+    inset,
+    button = COLLAPSE_BUTTON_SIZE,
+}) => ({
     // the button's own height, less the inset the content already has
-    paddingBottom: COLLAPSE_BUTTON_SIZE - inset,
+    paddingBottom: button - inset,
     position: 'relative',
     [`& > ${content}`]: {
-        maxHeight: HEADING_EXTENT - frame - (COLLAPSE_BUTTON_SIZE - inset),
+        maxHeight: HEADING_EXTENT - frame - (button - inset),
     },
     [`&[rowspan="2"] > ${content}`]: {
-        maxHeight: 2 * HEADING_EXTENT - frame - (COLLAPSE_BUTTON_SIZE - inset),
+        maxHeight: 2 * HEADING_EXTENT - frame - (button - inset),
     },
     '& > button': {
         bottom: 0,

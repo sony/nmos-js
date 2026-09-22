@@ -1,7 +1,7 @@
 # Design plan: Connections matrix in nmos-js
 
-Status: in progress. Steps 0–4 are done. Heading match and
-actions (steps 5–7) are not started.
+Status: in progress. Steps 0–5 are done. Activate / Unlink and
+polish (steps 6–7) are not started.
 
 ## Decisions (agreed)
 
@@ -417,8 +417,8 @@ From a **receiver** heading → **sender** panel:
 
 The opposite FilterPanel must show the written chips so they can be edited
 or cleared chip-by-chip or with clear-this-axis. Tooltip: "Filter receivers
-to this sender's format and transport" / "Filter senders to this receiver's
-format, transport, and caps."
+to this sender's transport and format." / "Filter senders to this receiver's
+transport, format, and caps."
 
 Same-axis fill (other senders like this one) is a second, less important
 action and not v1. The operator already has that axis on screen; the missing
@@ -531,7 +531,7 @@ basic query returned.
 | 2 | **Done.** Page shell: nav **Connections**, icon, independent FilterPanels with per-axis clear, two capped `GET_LIST`s, truncation banner |
 | 3 | **Done.** Table with Device grouping, collapse, overflow scroll, sticky headings, IS-04 active dots only (read-only) |
 | 4 | **Done.** Compatibility ranks + warning colour + cell tooltips (no constraint_sets) |
-| 5 | Heading match writes **opposite** axis only; FilterPanel shows the chips |
+| 5 | **Done.** Heading match writes **opposite** axis only; FilterPanel shows the chips |
 | 6 | Click unused expanded cell → `makeConnection`; click checked → Unlink; stay on page; refresh IS-04 |
 | 7 | Polish: constraint_sets, live grains — only if v1 is used |
 

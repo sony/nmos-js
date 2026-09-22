@@ -10,6 +10,12 @@ import {
     rankConnection,
     transportsCompatible,
 } from './connectionRank';
+import {
+    RECEIVER_ESSENCE_KEYS,
+    applyHeadingMatch,
+    receiverEssenceFromSender,
+    senderEssenceFromReceiver,
+} from './connectionHeadingMatch';
 
 describe('isConnectionsAxisTruncated', () => {
     it('reports a full page as possibly truncated', () => {
@@ -209,5 +215,103 @@ describe('connection rank', () => {
         expect(connectionRankMessage(ConnectionRank.IncompatibleFormat)).toBe(
             'Incompatible format.'
         );
+    });
+});
+
+describe('heading match', () => {
+    const rtpMcast = 'urn:x-nmos:transport:rtp.mcast';
+    const video = 'urn:x-nmos:format:video';
+    const sender = {
+        id: 's',
+        transport: rtpMcast,
+        flow_id: 'f',
+    };
+    const flow = {
+        id: 'f',
+        format: video,
+        media_type: 'video/raw',
+        event_type: 'number',
+    };
+    const receiver = {
+        id: 'r',
+        transport: rtpMcast,
+        format: video,
+        caps: {
+            media_types: ['video/raw'],
+            event_types: ['number'],
+        },
+    };
+
+    it('replaces essence chips and keeps the rest', () => {
+        expect(
+            applyHeadingMatch(
+                {
+                    label: 'Cam',
+                    transport: 'urn:x-nmos:transport:websocket',
+                    format: 'urn:x-nmos:format:audio',
+                },
+                {
+                    transport: rtpMcast,
+                    format: video,
+                },
+                RECEIVER_ESSENCE_KEYS
+            )
+        ).toEqual({
+            label: 'Cam',
+            transport: rtpMcast,
+            format: video,
+        });
+    });
+
+    it('writes Connect-tab sender filters from a receiver', () => {
+        expect(
+            senderEssenceFromReceiver(receiver, {
+                usingRql: true,
+                version: 'v1.3',
+            })
+        ).toEqual({
+            transport: `${rtpMcast}|urn:x-nmos:transport:rtp$`,
+            '$flow.format': video,
+            '$flow.media_type': ['video/raw'],
+            '$flow.event_type': ['number'],
+        });
+        expect(
+            senderEssenceFromReceiver(receiver, {
+                usingRql: false,
+                version: 'v1.3',
+            })
+        ).toEqual({
+            transport: rtpMcast,
+            '$flow.format': video,
+        });
+    });
+
+    it('writes receiver filters from a sender Flow and waits for Flow', () => {
+        expect(
+            receiverEssenceFromSender(sender, null, {
+                usingRql: true,
+                version: 'v1.3',
+            })
+        ).toBe(null);
+        expect(
+            receiverEssenceFromSender(sender, flow, {
+                usingRql: true,
+                version: 'v1.3',
+            })
+        ).toEqual({
+            format: video,
+            transport: `${rtpMcast}|urn:x-nmos:transport:rtp$`,
+            'caps.media_types': 'video/raw',
+            'caps.event_types': 'number',
+        });
+        expect(
+            receiverEssenceFromSender(sender, flow, {
+                usingRql: false,
+                version: 'v1.3',
+            })
+        ).toEqual({
+            format: video,
+            transport: rtpMcast,
+        });
     });
 });

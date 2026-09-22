@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, Divider } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
 import { Loading, Title } from 'react-admin';
@@ -22,6 +22,11 @@ import {
     useJSONSetting,
 } from '../../settings';
 import ConnectionsMatrix from './ConnectionsMatrix';
+import {
+    RECEIVER_ESSENCE_KEYS,
+    SENDER_ESSENCE_KEYS,
+    applyHeadingMatch,
+} from './connectionHeadingMatch';
 
 // the Query API always offers a 'next' cursor, so only a full page indicates
 // that this axis may be showing just some of the matching resources
@@ -106,6 +111,8 @@ const ConnectionsList = () => {
         senders: [],
         receivers: [],
     });
+    const [senderFilterEpoch, setSenderFilterEpoch] = useState(0);
+    const [receiverFilterEpoch, setReceiverFilterEpoch] = useState(0);
     const senders = useGetList({
         basePath: '/senders',
         filter: senderFilter,
@@ -127,6 +134,7 @@ const ConnectionsList = () => {
             <Title title="Connections" />
             <CardContent>
                 <AxisFilters
+                    key={`senders-${senderFilterEpoch}`}
                     filter={senderFilter}
                     setFilter={setSenderFilter}
                     filterButtonLabel={'Sender filters'}
@@ -139,6 +147,7 @@ const ConnectionsList = () => {
                 />
                 <Divider light style={{ margin: '8px 0' }} />
                 <AxisFilters
+                    key={`receivers-${receiverFilterEpoch}`}
                     filter={receiverFilter}
                     setFilter={setReceiverFilter}
                     filterButtonLabel={'Receiver filters'}
@@ -162,6 +171,26 @@ const ConnectionsList = () => {
                 <ConnectionsMatrix
                     autoSort={get(settingsFilter, 'auto sort') || false}
                     expanded={expanded}
+                    onMatchReceivers={essence => {
+                        setReceiverFilter(current =>
+                            applyHeadingMatch(
+                                current,
+                                essence,
+                                RECEIVER_ESSENCE_KEYS
+                            )
+                        );
+                        setReceiverFilterEpoch(epoch => epoch + 1);
+                    }}
+                    onMatchSenders={essence => {
+                        setSenderFilter(current =>
+                            applyHeadingMatch(
+                                current,
+                                essence,
+                                SENDER_ESSENCE_KEYS
+                            )
+                        );
+                        setSenderFilterEpoch(epoch => epoch + 1);
+                    }}
                     receivers={receivers.data}
                     senders={senders.data}
                     setExpanded={setExpanded}

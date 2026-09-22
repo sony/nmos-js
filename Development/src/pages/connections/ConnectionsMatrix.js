@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     Divider,
+    IconButton,
     Table,
     TableBody,
     TableRow,
@@ -8,6 +9,7 @@ import {
     Typography,
     withStyles,
 } from '@material-ui/core';
+import FilterListIcon from '@material-ui/icons/FilterList';
 import { Link } from 'react-router-dom';
 import { linkToRecord, useDataProvider, useNotify } from 'react-admin';
 import get from 'lodash/get';
@@ -19,6 +21,10 @@ import {
     connectionRankMessage,
     rankConnection,
 } from './connectionRank';
+import {
+    receiverEssenceFromSender,
+    senderEssenceFromReceiver,
+} from './connectionHeadingMatch';
 
 import CollapseButton from '../../components/CollapseButton';
 import MappingButton from '../../components/MappingButton';
@@ -49,6 +55,13 @@ import {
     matrixTableStyle,
     stickyHeadingStyle,
 } from '../../components/matrixLayout';
+import { QUERY_API, apiUsingRql, queryVersion } from '../../settings';
+
+// the match button is smaller than the collapse arrow, so the port name
+// stays the subject of the heading
+const MATCH_ICON_SIZE = 16;
+const MATCH_ICON_PADDING = 2;
+const MATCH_BUTTON_SIZE = MATCH_ICON_SIZE + 2 * MATCH_ICON_PADDING;
 
 // the chip is inset by its own margin
 const ConnectionsDeviceColumnHeadCell = withStyles({
@@ -59,7 +72,14 @@ const ConnectionsDeviceColumnHeadCell = withStyles({
     }),
 })(MatrixColumnHeadCell);
 
-const ConnectionsResourceColumnHeadCell = MatrixColumnHeadCell;
+const ConnectionsResourceColumnHeadCell = withStyles({
+    root: gridEdgeColumnHeadStyle({
+        button: MATCH_BUTTON_SIZE,
+        content: 'a > div',
+        frame: CHIP_INSET,
+        inset: CHIP_MARGIN,
+    }),
+})(MatrixColumnHeadCell);
 
 const ConnectionsDeviceRowHeadCell = withStyles(theme => ({
     root: {
@@ -102,7 +122,25 @@ const ConnectionsDeviceRowHeadCell = withStyles(theme => ({
 }))(MatrixRowHeadCell);
 
 const ConnectionsResourceRowHeadCell = withStyles(theme => ({
-    root: stickyHeadingStyle(theme, HEADING_EXTENT),
+    root: {
+        ...stickyHeadingStyle(theme, HEADING_EXTENT),
+        '& > div': {
+            alignItems: 'center',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            overflow: 'hidden',
+        },
+        '& > div > a': {
+            minWidth: 0,
+        },
+        '& > div > button': {
+            marginLeft: -CHIP_MARGIN,
+        },
+        '& > div > a > div': {
+            maxWidth:
+                HEADING_EXTENT - CHIP_INSET - (MATCH_BUTTON_SIZE - CHIP_MARGIN),
+        },
+    },
 }))(MatrixRowHeadCell);
 
 const ConnectionsCornerCell = withStyles(theme => ({
@@ -201,15 +239,18 @@ const useConnectionFlows = senders => {
         [senders]
     );
     const [flows, setFlows] = useState({});
+    const [flowsLoaded, setFlowsLoaded] = useState(false);
 
     useEffect(() => {
         let active = true;
         if (ids.length === 0) {
             setFlows({});
+            setFlowsLoaded(true);
             return () => {
                 active = false;
             };
         }
+        setFlowsLoaded(false);
         dataProvider
             .getMany('flows', { ids })
             .then(({ data }) => {
@@ -217,11 +258,13 @@ const useConnectionFlows = senders => {
                     setFlows(
                         Object.fromEntries(data.map(flow => [flow.id, flow]))
                     );
+                    setFlowsLoaded(true);
                 }
             })
             .catch(error => {
                 if (active) {
                     notify(error.message || 'Unable to load Flows', 'warning');
+                    setFlowsLoaded(true);
                 }
             });
         return () => {
@@ -229,13 +272,48 @@ const useConnectionFlows = senders => {
         };
     }, [dataProvider, ids, notify]);
 
-    return flows;
+    return { flows, flowsLoaded };
 };
 
 // linkToRecord rather than ReferenceField, which would make a new
 // unnecessary network request for a record the matrix already has
 const ResourceLink = ({ resource, id, children }) => (
     <Link to={`${linkToRecord(`/${resource}`, id)}/show`}>{children}</Link>
+);
+
+const headingMatchTitle = (fromResource, usingRql) => {
+    const base =
+        fromResource === 'senders'
+            ? "Filter receivers to this sender's transport and format."
+            : "Filter senders to this receiver's transport, format, and caps.";
+    return usingRql
+        ? base
+        : `${base} Media-type and transport subclass matching need RQL.`;
+};
+
+// the heading's own name is the subject; match is an aside so the glyph
+// is smaller than the collapse arrow, in the same ink as other actions
+const MatchIconButton = withStyles(theme => ({
+    root: {
+        color: theme.palette.action.active,
+        fontSize: MATCH_ICON_SIZE,
+        padding: MATCH_ICON_PADDING,
+    },
+}))(IconButton);
+
+const HeadingMatchButton = ({ disabled, onClick, title }) => (
+    <MatchIconButton
+        disabled={disabled}
+        onClick={event => {
+            event.preventDefault();
+            event.stopPropagation();
+            onClick();
+        }}
+        size="small"
+        title={title}
+    >
+        <FilterListIcon fontSize="inherit" />
+    </MatchIconButton>
 );
 
 export const getConnectionsTableColumns = groups =>
@@ -334,6 +412,8 @@ const MatrixDot = ({ column, flows, row, senderRows, supportsActive }) => {
 const ConnectionsMatrix = ({
     autoSort,
     expanded,
+    onMatchReceivers,
+    onMatchSenders,
     receivers,
     senders,
     setExpanded,
@@ -343,7 +423,7 @@ const ConnectionsMatrix = ({
     const matrixTableRef = useRef(null);
     const matrixTableMaxHeight = useTableMaxHeight(matrixTableRef);
     const devices = useConnectionDevices(senders, receivers);
-    const flows = useConnectionFlows(senders);
+    const { flows, flowsLoaded } = useConnectionFlows(senders);
     const senderGroups = renderedGroups(
         groupConnectionsResources(senders, devices, autoSort),
         expanded.senders
@@ -366,6 +446,24 @@ const ConnectionsMatrix = ({
                 ? current[resource].filter(expandedId => expandedId !== id)
                 : current[resource].concat(id),
         }));
+
+    const matchOpts = {
+        usingRql: apiUsingRql(QUERY_API),
+        version: queryVersion(),
+    };
+
+    const matchFromPort = resource => port => {
+        if (resource === 'senders') {
+            const flow = port.flow_id ? flows[port.flow_id] : null;
+            const essence = receiverEssenceFromSender(port, flow, matchOpts);
+            if (essence) onMatchReceivers(essence);
+            return;
+        }
+        onMatchSenders(senderEssenceFromReceiver(port, matchOpts));
+    };
+
+    const senderMatchDisabled = port =>
+        !(port.flow_id && flowsLoaded && flows[port.flow_id]);
 
     return (
         <MatrixTableContainer
@@ -442,6 +540,23 @@ const ConnectionsMatrix = ({
                                                 record={unit.resource}
                                             />
                                         </ResourceLink>
+                                        <HeadingMatchButton
+                                            disabled={
+                                                columnResource === 'senders' &&
+                                                senderMatchDisabled(
+                                                    unit.resource
+                                                )
+                                            }
+                                            onClick={() =>
+                                                matchFromPort(columnResource)(
+                                                    unit.resource
+                                                )
+                                            }
+                                            title={headingMatchTitle(
+                                                columnResource,
+                                                matchOpts.usingRql
+                                            )}
+                                        />
                                     </ConnectionsResourceColumnHeadCell>
                                 ))
                         )}
@@ -501,14 +616,33 @@ const ConnectionsMatrix = ({
                                             row.resource.id
                                         }
                                     >
-                                        <ResourceLink
-                                            resource={rowResource}
-                                            id={row.resource.id}
-                                        >
-                                            <HorizontalLinkChipField
-                                                record={row.resource}
+                                        <div>
+                                            <ResourceLink
+                                                resource={rowResource}
+                                                id={row.resource.id}
+                                            >
+                                                <HorizontalLinkChipField
+                                                    record={row.resource}
+                                                />
+                                            </ResourceLink>
+                                            <HeadingMatchButton
+                                                disabled={
+                                                    rowResource === 'senders' &&
+                                                    senderMatchDisabled(
+                                                        row.resource
+                                                    )
+                                                }
+                                                onClick={() =>
+                                                    matchFromPort(rowResource)(
+                                                        row.resource
+                                                    )
+                                                }
+                                                title={headingMatchTitle(
+                                                    rowResource,
+                                                    matchOpts.usingRql
+                                                )}
                                             />
-                                        </ResourceLink>
+                                        </div>
                                     </ConnectionsResourceRowHeadCell>
                                 )}
                                 {columnGroups.flatMap(columnGroup =>

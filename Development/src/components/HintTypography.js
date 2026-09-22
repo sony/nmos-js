@@ -8,7 +8,7 @@ export const InlineTypography = forwardRef(({ style, ...props }, ref) => (
 export const hintStyle = theme => ({
     textDecorationLine: 'underline',
     textDecorationStyle: 'dotted',
-    textDecorationColor: theme.palette.type === 'dark' ? '#696969' : '#c8c8c8',
+    textDecorationColor: theme.palette.text.hint,
 });
 
 const HintTypography = withStyles(theme => ({

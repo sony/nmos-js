@@ -23,6 +23,7 @@ import {
 } from 'react-admin';
 import { Link, useHistory } from 'react-router-dom';
 import ResourceTitle from '../../components/ResourceTitle';
+import emphasizedPaper from '../../theme/emphasizedPaper';
 import { ActivateImmediateIcon, ActivateScheduledIcon } from '../../icons';
 import dataProvider from '../../dataProvider';
 import ChannelMappingMatrix from './ChannelMappingMatrix';
@@ -149,10 +150,7 @@ const DevicesEditView = props => {
         }
     };
 
-    const tabBackgroundColor =
-        theme.palette.type === 'light'
-            ? theme.palette.grey[100]
-            : theme.palette.grey[900];
+    const tabBackgroundColor = emphasizedPaper(theme);
 
     return (
         <>

@@ -1,7 +1,7 @@
 # Design plan: Connections matrix in nmos-js
 
-Status: draft. Not implemented. This note is to decide what is honestly
-workable before any UI work.
+Status: in progress. Steps 0 and 1 are done. The Connections page
+(steps 2–7) is not started.
 
 ## Decisions (agreed)
 
@@ -71,10 +71,9 @@ header is hovered.
   failure. nmos-js is also a Node-testing client; Connect-tab / IS-08 already
   do not hard-block.
 
-The IS-08 table is not a scrollable viewport yet; it grows with the Device.
-Both matrices need an overflow wrapper (both axes). Sticky
-row and column headings would help IS-08 as much as Connections: once a few
-inputs and outputs are expanded you lose the names while scrolling.
+The IS-08 table now has an overflow viewport and sticky headings, which
+Connections will copy. Once a few inputs and outputs are expanded you
+would otherwise lose the names while scrolling.
 
 Implementing that does **not** mean leaving the HTML table. The conceptual
 model stays one `<Table>`. Sticky is CSS (`position: sticky` on heading
@@ -106,11 +105,11 @@ transpose/scroll pass as swap axes rather than only on the new page.
 
 ### Fixed-size columns (IS-08 and Connections)
 
-IS-08 columns follow auto table layout: width is the widest heading
+IS-08 columns used to follow auto table layout: width was the widest heading
 in that column (output name, channel label, source chip), so a long "Left
-AES" next to a short "1" makes a striped grid. The MappingButton cells would
-all be happy at one size. **Label length** only caps character count; it
-still leaves `WWW` vs `iii` uneven.
+AES" next to a short "1" made a striped grid. The MappingButton cells are
+now all the same size. The former **Label length** setting only capped
+character count; it still left `WWW` vs `iii` uneven.
 
 Improve this on IS-08 in the same transpose/scroll pass (Connections
 inherits it):
@@ -123,7 +122,7 @@ inherits it):
 - CSS `overflow: hidden; text-overflow: ellipsis; white-space: nowrap` on
   heading text. Full name already lives in the tooltip; stop relying on
   character-count truncate to make columns match.
-- Drop **Label length** once CSS ellipsis and fixed extents govern the
+- Remove **Label length** now that CSS ellipsis and fixed extents govern the
   available space. Do not size every column to the longest name in the table.
 - Row-heading columns (parent / input name, or Device / sender) can use a
   max-width + ellipsis so sticky `left` offsets are stable. They do not
@@ -481,7 +480,7 @@ Hover / focus a sender row header or receiver column header:
 `hide incompatible` in settings: skip in v1. Opposite-axis heading match
 plus each panel's own format filters are the way to spend the cap.
 
-Sticky headings should land on IS-08 in step 1; Connections copies that
+Sticky headings already landed on IS-08 in step 1; Connections copies that
 CSS. Horizontal + vertical scroll around the table is v1.
 
 ## Data loading (v1)
@@ -533,8 +532,8 @@ basic query returned.
 
 | Step | Work |
 | --- | --- |
-| 0 | Cap = global Paging Limit per axis (no `next`); collapsed cells not clickable; no list paging; Unlink disables the receiver; heading match writes the opposite axis only |
-| 1 | IS-08 extract: overflow, fixed-size leaf columns, swap axes, parent/source heading visibility, sticky `thead` and left columns, per-axis Clear All |
+| 0 | **Done.** Cap = global Paging Limit per axis (no `next`); collapsed cells not clickable; no list paging; Unlink disables the receiver; heading match writes the opposite axis only |
+| 1 | **Done.** IS-08 extract: overflow, fixed-size leaf columns, swap axes, parent/source heading visibility, sticky `thead` and left columns, per-axis Clear All |
 | 2 | Page shell: nav **Connections**, icon, independent FilterPanels with per-axis clear, two capped `GET_LIST`s, truncation banner |
 | 3 | Table with Device grouping, collapse, overflow scroll, IS-04 active dots only (read-only) |
 | 4 | Compatibility ranks + hover dim + cell tooltips (no constraint_sets) |

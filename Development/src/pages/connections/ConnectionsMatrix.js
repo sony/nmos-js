@@ -1,10 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Table, TableBody, TableRow, withStyles } from '@material-ui/core';
+import {
+    Divider,
+    Table,
+    TableBody,
+    TableRow,
+    Tooltip,
+    Typography,
+    withStyles,
+} from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import { linkToRecord, useDataProvider, useNotify } from 'react-admin';
 import get from 'lodash/get';
 import groupBy from 'lodash/groupBy';
 import uniq from 'lodash/uniq';
+
+import {
+    ConnectionRank,
+    connectionRankMessage,
+    rankConnection,
+} from './connectionRank';
 
 import CollapseButton from '../../components/CollapseButton';
 import MappingButton from '../../components/MappingButton';
@@ -179,6 +193,45 @@ const useConnectionDevices = (senders, receivers) => {
     return devices;
 };
 
+const useConnectionFlows = senders => {
+    const dataProvider = useDataProvider();
+    const notify = useNotify();
+    const ids = useMemo(
+        () => uniq(senders.map(sender => sender.flow_id).filter(Boolean)),
+        [senders]
+    );
+    const [flows, setFlows] = useState({});
+
+    useEffect(() => {
+        let active = true;
+        if (ids.length === 0) {
+            setFlows({});
+            return () => {
+                active = false;
+            };
+        }
+        dataProvider
+            .getMany('flows', { ids })
+            .then(({ data }) => {
+                if (active) {
+                    setFlows(
+                        Object.fromEntries(data.map(flow => [flow.id, flow]))
+                    );
+                }
+            })
+            .catch(error => {
+                if (active) {
+                    notify(error.message || 'Unable to load Flows', 'warning');
+                }
+            });
+        return () => {
+            active = false;
+        };
+    }, [dataProvider, ids, notify]);
+
+    return flows;
+};
+
 // linkToRecord rather than ReferenceField, which would make a new
 // unnecessary network request for a record the matrix already has
 const ResourceLink = ({ resource, id, children }) => (
@@ -204,7 +257,40 @@ const renderedGroups = (groups, expanded) =>
             : [{ group, type: 'group' }],
     }));
 
-const MatrixDot = ({ column, row, senderRows, supportsActive }) => {
+const TooltipDivider = withStyles({
+    root: {
+        marginTop: 4,
+        marginBottom: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    },
+})(Divider);
+
+const ConstraintWarning = withStyles(theme => ({
+    root: {
+        color:
+            theme.palette.type === 'light'
+                ? theme.palette.warning.dark
+                : theme.palette.warning.light,
+    },
+}))(Typography);
+
+const ConnectionsCellTooltip = ({ sender, receiver, warning }) => (
+    <>
+        {'Sender'}
+        <Typography variant="body2">{sender.label || sender.id}</Typography>
+        {'Receiver'}
+        <Typography variant="body2">{receiver.label || receiver.id}</Typography>
+        {warning && (
+            <>
+                <TooltipDivider />
+                {'Expected Constraint Violation'}
+                <ConstraintWarning variant="body2">{warning}</ConstraintWarning>
+            </>
+        )}
+    </>
+);
+
+const MatrixDot = ({ column, flows, row, senderRows, supportsActive }) => {
     if (row.type === 'group' && column.type === 'group') {
         return <DiagonalEllipsisButton disabled />;
     }
@@ -213,14 +299,35 @@ const MatrixDot = ({ column, row, senderRows, supportsActive }) => {
 
     const sender = senderRows ? row.resource : column.resource;
     const receiver = senderRows ? column.resource : row.resource;
+    const flow = sender.flow_id ? flows[sender.flow_id] || null : null;
+    const rank = rankConnection(sender, receiver, flow);
+    const warning =
+        rank < ConnectionRank.Compatible ? connectionRankMessage(rank) : null;
+
     return (
-        <MappingButton
-            checked={isActiveConnection(sender, receiver, supportsActive)}
-            disabled
-            title={`${sender.label || sender.id} \u2192 ${
-                receiver.label || receiver.id
-            }`}
-        />
+        <Tooltip
+            arrow
+            placement="bottom-start"
+            title={
+                <ConnectionsCellTooltip
+                    receiver={receiver}
+                    sender={sender}
+                    warning={warning}
+                />
+            }
+        >
+            <div>
+                <MappingButton
+                    checked={isActiveConnection(
+                        sender,
+                        receiver,
+                        supportsActive
+                    )}
+                    constraintWarning={Boolean(warning)}
+                    disabled
+                />
+            </div>
+        </Tooltip>
     );
 };
 
@@ -236,6 +343,7 @@ const ConnectionsMatrix = ({
     const matrixTableRef = useRef(null);
     const matrixTableMaxHeight = useTableMaxHeight(matrixTableRef);
     const devices = useConnectionDevices(senders, receivers);
+    const flows = useConnectionFlows(senders);
     const senderGroups = renderedGroups(
         groupConnectionsResources(senders, devices, autoSort),
         expanded.senders
@@ -414,6 +522,7 @@ const ConnectionsMatrix = ({
                                         >
                                             <MatrixDot
                                                 column={column}
+                                                flows={flows}
                                                 row={row}
                                                 senderRows={!swapAxes}
                                                 supportsActive={supportsActive}

@@ -1,7 +1,7 @@
 # Design plan: Connections matrix in nmos-js
 
-Status: in progress. Steps 0–3 are done. Compatibility and actions
-(steps 4–7) are not started.
+Status: in progress. Steps 0–4 are done. Heading match and
+actions (steps 5–7) are not started.
 
 ## Decisions (agreed)
 
@@ -30,8 +30,7 @@ nmos-js already has several connection-related surfaces:
 None of these is a facility-style matrix. The IS-08 Channel Mapping matrix on
 Device Show/Edit is the closest layout (table, dual FilterPanels, collapse,
 cell buttons, constraint warnings). Connections adds ranked IS-05
-compatibility on cells and dims unlikely partners while a row or column
-header is hovered.
+compatibility on cells so unlikely partners stay visible and explained.
 
 ## Layout, Connect tab, and ranking
 
@@ -174,12 +173,9 @@ Walk order, lowest first (higher is a better bet IS-05 will succeed):
 7. `CompatibleConstraintSets` (reserved)
 
 On a sender x receiver matrix there is **no same-direction pair**, so
-`IncompatibleDirection` never appears. Dimming is transport / format /
-media type (and later constraint sets). Hover a row or column header to
-preview: dim cells whose rank vs that port is `< Compatible`; restore a
-cell on hover if it is still a legal attempt (`> IncompatibleDirection`).
-Click is still allowed on dimmed cells (soft warning), matching IS-08
-`routable_inputs`.
+`IncompatibleDirection` never appears. Idle warning colour (and later
+constraint sets) covers transport / format / media type. Click is still
+allowed on those cells (soft warning), matching IS-08 `routable_inputs`.
 
 Keep this helper in nmos-js beside the Connections page; Connect-tab Query
 filters stay a separate, stricter hide of unlikely senders.
@@ -193,7 +189,7 @@ filters stay a separate, stricter hide of unlikely senders.
   and PATCHes IS-05. Matrix clicks should call that, not invent a second
   connect path.
 - Connect tab **hides** incompatible senders. The matrix should **show** them
-  and dim / warn, otherwise it is just Connect tab in 2D.
+  and warn, otherwise it is just Connect tab in 2D.
 - The Connect tab's `baseFilter` (built from the open receiver) is the
   mapping to reuse when a heading control asks to match a receiver. The
   inverse mapping (from a sender + its Flow onto receiver Query fields) is
@@ -299,7 +295,9 @@ must either:
 First cut should batch Flow lookups for the loaded sender window (not the
 whole registry). Without RQL, Connect-tab constraint-set filtering is already
 limited; matrix v1 can skip `constraint_sets` entirely (ranks reserved, not
-evaluated). Tooltip: "constraint sets not checked."
+evaluated). When they are evaluated, fold the result into the existing
+Expected Constraint Violation infotip rather than a separate "not checked"
+line.
 
 Heading match from a sender needs that Flow too; disable the heading button
 until the Flow batch has returned.
@@ -461,7 +459,7 @@ banner if truncated: Showing 100 of many senders matching filters.
 | SENDERS RECEIVERS|  (ellipsis column)                 | Rx 1 [filter] | Rx 2    |
 | Device X [>]     |  diagonal ellipsis                 | vert ellipsis | vert ellipsis |
 | Device Y [v]     |                                    |               |         |
-|   Sender 1 [f]   |  horiz ellipsis                    |  ○ dim        |  ●      |
+|   Sender 1 [f]   |  horiz ellipsis                    |  ○ warn       |  ●      |
 |   Sender 2 [f]   |  horiz ellipsis                    |  ○            |  ○ warn |
 ```
 
@@ -475,14 +473,11 @@ Idle:
 - Incompatible unused: hollow in the mapping warning colour, infotip naming
   the first failing rank (`IncompatibleTransport`, …); still clickable.
 
-Hover / focus a sender row header or receiver column header:
-
-- Dim all cells whose rank vs that port is `< Compatible`.
-- Do not dim the hovered row/column headers themselves.
-- Click remains allowed on dimmed cells. The warning colour and infotip are
-  the "you probably do not want this" signal, not a lock, matching IS-08
-  `routable_inputs`. Unlink stays available on the checked cell even if the
-  pair would now rank as incompatible (caps changed under us).
+Hover / focus a sender row header or receiver column header does not
+change cell appearance: the warning colour and infotip already mark a bad
+pair. Click remains allowed on those cells, matching IS-08
+`routable_inputs`. Unlink stays available on the checked cell even if the
+pair would now rank as incompatible (caps changed under us).
 
 `hide incompatible` in settings: skip in v1. Opposite-axis heading match
 plus each panel's own format filters are the way to spend the cap.
@@ -535,7 +530,7 @@ basic query returned.
 | 1 | **Done.** IS-08 extract: overflow, fixed-size leaf columns, swap axes, parent/source heading visibility, sticky `thead` and left columns, per-axis Clear All |
 | 2 | **Done.** Page shell: nav **Connections**, icon, independent FilterPanels with per-axis clear, two capped `GET_LIST`s, truncation banner |
 | 3 | **Done.** Table with Device grouping, collapse, overflow scroll, sticky headings, IS-04 active dots only (read-only) |
-| 4 | Compatibility ranks + hover dim + cell tooltips (no constraint_sets) |
+| 4 | **Done.** Compatibility ranks + warning colour + cell tooltips (no constraint_sets) |
 | 5 | Heading match writes **opposite** axis only; FilterPanel shows the chips |
 | 6 | Click unused expanded cell → `makeConnection`; click checked → Unlink; stay on page; refresh IS-04 |
 | 7 | Polish: constraint_sets, live grains — only if v1 is used |

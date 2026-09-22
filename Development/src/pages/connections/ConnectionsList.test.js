@@ -4,6 +4,12 @@ import {
     groupConnectionsResources,
     isActiveConnection,
 } from './ConnectionsMatrix';
+import {
+    ConnectionRank,
+    connectionRankMessage,
+    rankConnection,
+    transportsCompatible,
+} from './connectionRank';
 
 describe('isConnectionsAxisTruncated', () => {
     it('reports a full page as possibly truncated', () => {
@@ -113,5 +119,95 @@ describe('Connections matrix', () => {
             rows: 'RECEIVERS',
             columns: 'SENDERS',
         });
+    });
+});
+
+describe('connection rank', () => {
+    const rtp = 'urn:x-nmos:transport:rtp';
+    const rtpMcast = 'urn:x-nmos:transport:rtp.mcast';
+    const rtpUcast = 'urn:x-nmos:transport:rtp.ucast';
+    const video = 'urn:x-nmos:format:video';
+    const audio = 'urn:x-nmos:format:audio';
+    const sender = (transport = rtp) => ({ id: 's', transport });
+    const receiver = (overrides = {}) => ({
+        id: 'r',
+        transport: rtp,
+        format: video,
+        ...overrides,
+    });
+    const flow = (overrides = {}) => ({
+        id: 'f',
+        format: video,
+        media_type: 'video/raw',
+        ...overrides,
+    });
+
+    it('matches a transport base with any subclassification', () => {
+        expect(transportsCompatible(rtp, rtpMcast)).toBe(true);
+        expect(transportsCompatible(rtpMcast, rtp)).toBe(true);
+        expect(transportsCompatible(rtpMcast, rtpUcast)).toBe(false);
+        expect(
+            transportsCompatible(rtp, 'urn:x-nmos:transport:websocket')
+        ).toBe(false);
+    });
+
+    it('walks transport then format then media type', () => {
+        expect(
+            rankConnection(
+                sender(rtpMcast),
+                receiver({ transport: rtpUcast }),
+                flow()
+            )
+        ).toBe(ConnectionRank.IncompatibleTransport);
+        expect(
+            rankConnection(sender(), receiver({ format: audio }), flow())
+        ).toBe(ConnectionRank.IncompatibleFormat);
+        expect(rankConnection(sender(), receiver(), null)).toBe(
+            ConnectionRank.IncompatibleFormat
+        );
+        expect(
+            rankConnection(
+                sender(),
+                receiver({ caps: { media_types: ['video/jxsv'] } }),
+                flow()
+            )
+        ).toBe(ConnectionRank.IncompatibleMediaType);
+        expect(
+            rankConnection(
+                sender(),
+                receiver({ caps: { media_types: ['video/raw'] } }),
+                flow()
+            )
+        ).toBe(ConnectionRank.Compatible);
+        expect(rankConnection(sender(), receiver(), flow())).toBe(
+            ConnectionRank.Compatible
+        );
+    });
+
+    it('does not evaluate constraint sets', () => {
+        expect(
+            rankConnection(
+                sender(),
+                receiver({
+                    caps: {
+                        media_types: ['video/raw'],
+                        constraint_sets: [
+                            {
+                                'urn:x-nmos:cap:format:frame_width': {
+                                    enum: [1920],
+                                },
+                            },
+                        ],
+                    },
+                }),
+                flow()
+            )
+        ).toBe(ConnectionRank.Compatible);
+        expect(
+            connectionRankMessage(ConnectionRank.IncompatibleTransport)
+        ).toBe('Incompatible transport.');
+        expect(connectionRankMessage(ConnectionRank.IncompatibleFormat)).toBe(
+            'Incompatible format.'
+        );
     });
 });

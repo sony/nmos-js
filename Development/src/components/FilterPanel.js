@@ -64,7 +64,7 @@ export const FilterMode = ({
     return (
         <TextField
             label={label}
-            color="secondary"
+            color="primary"
             variant="filled"
             margin="dense"
             value={value}
@@ -123,7 +123,7 @@ export const BooleanFilter = ({
         <div style={{ display: 'flex' }}>
             <Typography style={{ alignSelf: 'center' }}>{label}</Typography>
             <Switch
-                color="secondary"
+                color="primary"
                 checked={checked}
                 onChange={() => setChecked(!checked)}
                 inputRef={inputRef}
@@ -196,7 +196,7 @@ export const NumberFilter = ({
         <TextField
             type="number"
             label={label}
-            color="secondary"
+            color="primary"
             variant="filled"
             margin="dense"
             value={value}
@@ -251,7 +251,7 @@ export const StringFilter = ({
     return (
         <TextField
             label={label}
-            color="secondary"
+            color="primary"
             variant="filled"
             margin="dense"
             value={value}
@@ -324,7 +324,7 @@ export const RateFilter = ({
                 type="number"
                 label={label}
                 helperText="Numerator"
-                color="secondary"
+                color="primary"
                 variant="filled"
                 margin="dense"
                 value={value.numerator}
@@ -343,7 +343,7 @@ export const RateFilter = ({
             <TextField
                 type="number"
                 helperText="Denominator"
-                color="secondary"
+                color="primary"
                 variant="filled"
                 margin="dense"
                 value={value.denominator}
@@ -416,7 +416,7 @@ export const AutocompleteFilter = ({
                 <TextField
                     {...params}
                     label={label}
-                    color="secondary"
+                    color="primary"
                     variant="filled"
                     margin="dense"
                     onFocus={event => event.target.select()}

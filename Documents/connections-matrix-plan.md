@@ -1,7 +1,7 @@
 # Design plan: Connections matrix in nmos-js
 
-Status: in progress. Steps 0–5 are done. Activate / Unlink and
-polish (steps 6–7) are not started.
+Status: in progress. Steps 0–6 are done. Polish (step 7) is not
+started.
 
 ## Decisions (agreed)
 
@@ -439,8 +439,9 @@ IS-05 write as `ActiveField` turning a receiver off.
 
 Do not clear `sender_id` in a separate step; disabling the receiver is
 enough. Do not fire Unlink on collapsed cells. No extra confirm dialog
-beyond what Activate already lacks. Tooltip on a checked cell: sender label
-and "Unlink".
+beyond what Activate already lacks. The cell infotip names the pair (and a
+rank or that the Connection API is not available); it does not say Unlink.
+The checked icon is the affordance.
 
 ## UI sketch
 
@@ -532,7 +533,7 @@ basic query returned.
 | 3 | **Done.** Table with Device grouping, collapse, overflow scroll, sticky headings, IS-04 active dots only (read-only) |
 | 4 | **Done.** Compatibility ranks + warning colour + cell tooltips (no constraint_sets) |
 | 5 | **Done.** Heading match writes **opposite** axis only; FilterPanel shows the chips |
-| 6 | Click unused expanded cell → `makeConnection`; click checked → Unlink; stay on page; refresh IS-04 |
+| 6 | **Done.** Click unused expanded cell → `makeConnection`; click checked → Unlink; stay on page; refresh IS-04 |
 | 7 | Polish: constraint_sets, live grains — only if v1 is used |
 
 ## Acceptance (v1)

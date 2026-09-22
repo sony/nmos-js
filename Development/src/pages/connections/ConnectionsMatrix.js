@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     Divider,
     IconButton,
+    Menu,
+    MenuItem,
     Table,
     TableBody,
     TableRow,
@@ -11,7 +13,12 @@ import {
 } from '@material-ui/core';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import { Link } from 'react-router-dom';
-import { linkToRecord, useDataProvider, useNotify } from 'react-admin';
+import {
+    linkToRecord,
+    useDataProvider,
+    useNotify,
+    useRefresh,
+} from 'react-admin';
 import get from 'lodash/get';
 import groupBy from 'lodash/groupBy';
 import uniq from 'lodash/uniq';
@@ -28,7 +35,10 @@ import {
 
 import CollapseButton from '../../components/CollapseButton';
 import MappingButton from '../../components/MappingButton';
+import makeConnection from '../../components/makeConnection';
+import dataProvider from '../../dataProvider';
 import useTableMaxHeight from '../../components/useTableMaxHeight';
+import { CONNECTION_API_NOT_AVAILABLE } from '../../components/controlApiMessages';
 import {
     CELL_EXTENT,
     CHIP_INSET,
@@ -352,7 +362,12 @@ const ConstraintWarning = withStyles(theme => ({
     },
 }))(Typography);
 
-const ConnectionsCellTooltip = ({ sender, receiver, warning }) => (
+const ConnectionsCellTooltip = ({
+    noConnectionApi,
+    receiver,
+    sender,
+    warning,
+}) => (
     <>
         {'Sender'}
         <Typography variant="body2">{sender.label || sender.id}</Typography>
@@ -365,10 +380,62 @@ const ConnectionsCellTooltip = ({ sender, receiver, warning }) => (
                 <ConstraintWarning variant="body2">{warning}</ConstraintWarning>
             </>
         )}
+        {noConnectionApi && (
+            <>
+                <TooltipDivider />
+                {'Connection API'}
+                <Typography variant="body2">Not available.</Typography>
+            </>
+        )}
     </>
 );
 
-const MatrixDot = ({ column, flows, row, senderRows, supportsActive }) => {
+const notifyConnectionError = (notify, error) => {
+    if (error && error.hasOwnProperty('body')) {
+        notify(
+            get(error.body, 'error') +
+                ' - ' +
+                get(error.body, 'code') +
+                ' - ' +
+                get(error.body, 'debug'),
+            'warning'
+        );
+    }
+    notify(error.toString(), 'warning');
+};
+
+const unlinkReceiver = receiverId =>
+    dataProvider('GET_ONE', 'receivers', { id: receiverId }).then(
+        ({ data }) => {
+            if (!data.hasOwnProperty('$staged')) {
+                throw new Error(CONNECTION_API_NOT_AVAILABLE);
+            }
+            return dataProvider('UPDATE', 'receivers', {
+                id: data.id,
+                data: {
+                    ...data,
+                    $staged: {
+                        ...get(data, '$staged'),
+                        master_enable: false,
+                        activation: { mode: 'activate_immediate' },
+                    },
+                },
+                previousData: data,
+            });
+        }
+    );
+
+const MatrixDot = ({
+    busy,
+    column,
+    flows,
+    noConnectionApi,
+    onActivate,
+    onUnlink,
+    row,
+    senderRows,
+    supportsActive,
+}) => {
     if (row.type === 'group' && column.type === 'group') {
         return <DiagonalEllipsisButton disabled />;
     }
@@ -381,6 +448,7 @@ const MatrixDot = ({ column, flows, row, senderRows, supportsActive }) => {
     const rank = rankConnection(sender, receiver, flow);
     const warning =
         rank < ConnectionRank.Compatible ? connectionRankMessage(rank) : null;
+    const checked = isActiveConnection(sender, receiver, supportsActive);
 
     return (
         <Tooltip
@@ -388,6 +456,7 @@ const MatrixDot = ({ column, flows, row, senderRows, supportsActive }) => {
             placement="bottom-start"
             title={
                 <ConnectionsCellTooltip
+                    noConnectionApi={noConnectionApi}
                     receiver={receiver}
                     sender={sender}
                     warning={warning}
@@ -396,13 +465,14 @@ const MatrixDot = ({ column, flows, row, senderRows, supportsActive }) => {
         >
             <div>
                 <MappingButton
-                    checked={isActiveConnection(
-                        sender,
-                        receiver,
-                        supportsActive
-                    )}
+                    checked={checked}
                     constraintWarning={Boolean(warning)}
-                    disabled
+                    disabled={busy || noConnectionApi}
+                    onClick={event =>
+                        checked
+                            ? onUnlink(receiver)
+                            : onActivate(sender, receiver, event)
+                    }
                 />
             </div>
         </Tooltip>
@@ -424,6 +494,11 @@ const ConnectionsMatrix = ({
     const matrixTableMaxHeight = useTableMaxHeight(matrixTableRef);
     const devices = useConnectionDevices(senders, receivers);
     const { flows, flowsLoaded } = useConnectionFlows(senders);
+    const refresh = useRefresh();
+    const notify = useNotify();
+    const [busy, setBusy] = useState(false);
+    const [noConnectionApi, setNoConnectionApi] = useState({});
+    const [legMenu, setLegMenu] = useState(null);
     const senderGroups = renderedGroups(
         groupConnectionsResources(senders, devices, autoSort),
         expanded.senders
@@ -465,211 +540,349 @@ const ConnectionsMatrix = ({
     const senderMatchDisabled = port =>
         !(port.flow_id && flowsLoaded && flows[port.flow_id]);
 
+    const finishWrite = () => {
+        notify('Element updated', 'info');
+        refresh();
+        setBusy(false);
+        setLegMenu(null);
+    };
+
+    const failWrite = (receiverId, error) => {
+        setBusy(false);
+        setLegMenu(null);
+        if (error && error.message === CONNECTION_API_NOT_AVAILABLE) {
+            setNoConnectionApi(current => ({
+                ...current,
+                [receiverId]: true,
+            }));
+        }
+        notifyConnectionError(notify, error);
+    };
+
+    const connectPair = (senderId, receiverId, senderLeg) => {
+        setBusy(true);
+        const options =
+            senderLeg === undefined
+                ? undefined
+                : { singleSenderLeg: senderLeg };
+        makeConnection(senderId, receiverId, 'active', options)
+            .then(finishWrite)
+            .catch(error => failWrite(receiverId, error));
+    };
+
+    const onActivate = (sender, receiver, event) => {
+        const ref = event.currentTarget;
+        setBusy(true);
+        Promise.all([
+            dataProvider('GET_ONE', 'senders', { id: sender.id }),
+            dataProvider('GET_ONE', 'receivers', { id: receiver.id }),
+        ])
+            .then(([{ data: senderData }, { data: receiverData }]) => {
+                if (!receiverData.hasOwnProperty('$staged')) {
+                    throw new Error(CONNECTION_API_NOT_AVAILABLE);
+                }
+                const receiverLegs = get(
+                    receiverData,
+                    '$staged.transport_params.length'
+                );
+                const senderLegs = get(
+                    senderData,
+                    '$staged.transport_params.length'
+                );
+                if (receiverLegs === 1 && senderLegs > 1) {
+                    setBusy(false);
+                    setLegMenu({
+                        anchorEl: ref,
+                        legs: senderLegs,
+                        receiverId: receiver.id,
+                        senderId: sender.id,
+                    });
+                    return;
+                }
+                return makeConnection(sender.id, receiver.id, 'active').then(
+                    finishWrite
+                );
+            })
+            .catch(error => failWrite(receiver.id, error));
+    };
+
+    const onUnlink = receiver => {
+        setBusy(true);
+        unlinkReceiver(receiver.id)
+            .then(finishWrite)
+            .catch(error => failWrite(receiver.id, error));
+    };
+
     return (
-        <MatrixTableContainer
-            ref={matrixTableRef}
-            style={{ maxHeight: matrixTableMaxHeight }}
-        >
-            <Table
-                style={matrixTableStyle(
-                    2 * HEADING_EXTENT + columns.length * CELL_EXTENT
-                )}
+        <>
+            <MatrixTableContainer
+                ref={matrixTableRef}
+                style={{ maxHeight: matrixTableMaxHeight }}
             >
-                <colgroup>
-                    <col style={{ width: HEADING_EXTENT }} />
-                    <col style={{ width: HEADING_EXTENT }} />
-                    {columns.map(key => (
-                        <col key={key} style={{ width: CELL_EXTENT }} />
-                    ))}
-                </colgroup>
-                <MatrixTableHead>
-                    <TableRow>
-                        <ConnectionsCornerCell rowSpan={2} colSpan={2}>
-                            <span style={cornerRowsLabelStyle}>
-                                {labels.rows}
-                            </span>
-                            <span style={cornerColumnsLabelStyle}>
-                                {labels.columns}
-                            </span>
-                        </ConnectionsCornerCell>
-                        {columnGroups.map(group => (
-                            <ConnectionsDeviceColumnHeadCell
-                                key={group.id}
-                                colSpan={group.units.length}
-                                rowSpan={
-                                    group.units[0].type === 'group' ? 2 : 1
-                                }
-                                title={group.label}
-                            >
-                                <ResourceLink resource="devices" id={group.id}>
-                                    <VerticalLinkChipField
-                                        record={{ label: group.label }}
-                                    />
-                                </ResourceLink>
-                                <CollapseButton
-                                    isExpanded={group.units[0].type !== 'group'}
-                                    onClick={() =>
-                                        toggleExpanded(columnResource, group.id)
-                                    }
-                                    title={
-                                        group.units[0].type === 'group'
-                                            ? `View ${columnResource}`
-                                            : `Hide ${columnResource}`
-                                    }
-                                />
-                            </ConnectionsDeviceColumnHeadCell>
+                <Table
+                    style={matrixTableStyle(
+                        2 * HEADING_EXTENT + columns.length * CELL_EXTENT
+                    )}
+                >
+                    <colgroup>
+                        <col style={{ width: HEADING_EXTENT }} />
+                        <col style={{ width: HEADING_EXTENT }} />
+                        {columns.map(key => (
+                            <col key={key} style={{ width: CELL_EXTENT }} />
                         ))}
-                    </TableRow>
-                    <TableRow>
-                        {columnGroups.flatMap(group =>
-                            group.units
-                                .filter(unit => unit.type === 'resource')
-                                .map(unit => (
-                                    <ConnectionsResourceColumnHeadCell
-                                        key={unit.resource.id}
-                                        title={
-                                            unit.resource.label ||
-                                            unit.resource.id
-                                        }
+                    </colgroup>
+                    <MatrixTableHead>
+                        <TableRow>
+                            <ConnectionsCornerCell rowSpan={2} colSpan={2}>
+                                <span style={cornerRowsLabelStyle}>
+                                    {labels.rows}
+                                </span>
+                                <span style={cornerColumnsLabelStyle}>
+                                    {labels.columns}
+                                </span>
+                            </ConnectionsCornerCell>
+                            {columnGroups.map(group => (
+                                <ConnectionsDeviceColumnHeadCell
+                                    key={group.id}
+                                    colSpan={group.units.length}
+                                    rowSpan={
+                                        group.units[0].type === 'group' ? 2 : 1
+                                    }
+                                    title={group.label}
+                                >
+                                    <ResourceLink
+                                        resource="devices"
+                                        id={group.id}
                                     >
-                                        <ResourceLink
-                                            resource={columnResource}
-                                            id={unit.resource.id}
-                                        >
-                                            <VerticalLinkChipField
-                                                record={unit.resource}
-                                            />
-                                        </ResourceLink>
-                                        <HeadingMatchButton
-                                            disabled={
-                                                columnResource === 'senders' &&
-                                                senderMatchDisabled(
-                                                    unit.resource
-                                                )
-                                            }
-                                            onClick={() =>
-                                                matchFromPort(columnResource)(
-                                                    unit.resource
-                                                )
-                                            }
-                                            title={headingMatchTitle(
-                                                columnResource,
-                                                matchOpts.usingRql
-                                            )}
+                                        <VerticalLinkChipField
+                                            record={{ label: group.label }}
                                         />
-                                    </ConnectionsResourceColumnHeadCell>
-                                ))
-                        )}
-                    </TableRow>
-                </MatrixTableHead>
-                <TableBody>
-                    {rowGroups.flatMap(group =>
-                        group.units.map((row, rowIndex) => (
-                            <TableRow
-                                key={
-                                    row.type === 'group'
-                                        ? group.id
-                                        : row.resource.id
-                                }
-                            >
-                                {rowIndex === 0 && (
-                                    <ConnectionsDeviceRowHeadCell
-                                        rowSpan={group.units.length}
-                                        colSpan={row.type === 'group' ? 2 : 1}
-                                        title={group.label}
-                                    >
-                                        <div>
-                                            <ResourceLink
-                                                resource="devices"
-                                                id={group.id}
-                                            >
-                                                <HorizontalLinkChipField
-                                                    record={{
-                                                        label: group.label,
-                                                    }}
-                                                />
-                                            </ResourceLink>
-                                            <CollapseButton
-                                                direction="horizontal"
-                                                isExpanded={
-                                                    row.type !== 'group'
-                                                }
-                                                onClick={() =>
-                                                    toggleExpanded(
-                                                        rowResource,
-                                                        group.id
-                                                    )
-                                                }
-                                                title={
-                                                    row.type === 'group'
-                                                        ? `View ${rowResource}`
-                                                        : `Hide ${rowResource}`
-                                                }
-                                            />
-                                        </div>
-                                    </ConnectionsDeviceRowHeadCell>
-                                )}
-                                {row.type === 'resource' && (
-                                    <ConnectionsResourceRowHeadCell
-                                        title={
-                                            row.resource.label ||
-                                            row.resource.id
+                                    </ResourceLink>
+                                    <CollapseButton
+                                        isExpanded={
+                                            group.units[0].type !== 'group'
                                         }
-                                    >
-                                        <div>
+                                        onClick={() =>
+                                            toggleExpanded(
+                                                columnResource,
+                                                group.id
+                                            )
+                                        }
+                                        title={
+                                            group.units[0].type === 'group'
+                                                ? `View ${columnResource}`
+                                                : `Hide ${columnResource}`
+                                        }
+                                    />
+                                </ConnectionsDeviceColumnHeadCell>
+                            ))}
+                        </TableRow>
+                        <TableRow>
+                            {columnGroups.flatMap(group =>
+                                group.units
+                                    .filter(unit => unit.type === 'resource')
+                                    .map(unit => (
+                                        <ConnectionsResourceColumnHeadCell
+                                            key={unit.resource.id}
+                                            title={
+                                                unit.resource.label ||
+                                                unit.resource.id
+                                            }
+                                        >
                                             <ResourceLink
-                                                resource={rowResource}
-                                                id={row.resource.id}
+                                                resource={columnResource}
+                                                id={unit.resource.id}
                                             >
-                                                <HorizontalLinkChipField
-                                                    record={row.resource}
+                                                <VerticalLinkChipField
+                                                    record={unit.resource}
                                                 />
                                             </ResourceLink>
                                             <HeadingMatchButton
                                                 disabled={
-                                                    rowResource === 'senders' &&
+                                                    columnResource ===
+                                                        'senders' &&
                                                     senderMatchDisabled(
-                                                        row.resource
+                                                        unit.resource
                                                     )
                                                 }
                                                 onClick={() =>
-                                                    matchFromPort(rowResource)(
-                                                        row.resource
-                                                    )
+                                                    matchFromPort(
+                                                        columnResource
+                                                    )(unit.resource)
                                                 }
                                                 title={headingMatchTitle(
-                                                    rowResource,
+                                                    columnResource,
                                                     matchOpts.usingRql
                                                 )}
                                             />
-                                        </div>
-                                    </ConnectionsResourceRowHeadCell>
-                                )}
-                                {columnGroups.flatMap(columnGroup =>
-                                    columnGroup.units.map(column => (
-                                        <MatrixCell
-                                            key={
-                                                column.type === 'group'
-                                                    ? column.group.id
-                                                    : column.resource.id
+                                        </ConnectionsResourceColumnHeadCell>
+                                    ))
+                            )}
+                        </TableRow>
+                    </MatrixTableHead>
+                    <TableBody>
+                        {rowGroups.flatMap(group =>
+                            group.units.map((row, rowIndex) => (
+                                <TableRow
+                                    key={
+                                        row.type === 'group'
+                                            ? group.id
+                                            : row.resource.id
+                                    }
+                                >
+                                    {rowIndex === 0 && (
+                                        <ConnectionsDeviceRowHeadCell
+                                            rowSpan={group.units.length}
+                                            colSpan={
+                                                row.type === 'group' ? 2 : 1
+                                            }
+                                            title={group.label}
+                                        >
+                                            <div>
+                                                <ResourceLink
+                                                    resource="devices"
+                                                    id={group.id}
+                                                >
+                                                    <HorizontalLinkChipField
+                                                        record={{
+                                                            label: group.label,
+                                                        }}
+                                                    />
+                                                </ResourceLink>
+                                                <CollapseButton
+                                                    direction="horizontal"
+                                                    isExpanded={
+                                                        row.type !== 'group'
+                                                    }
+                                                    onClick={() =>
+                                                        toggleExpanded(
+                                                            rowResource,
+                                                            group.id
+                                                        )
+                                                    }
+                                                    title={
+                                                        row.type === 'group'
+                                                            ? `View ${rowResource}`
+                                                            : `Hide ${rowResource}`
+                                                    }
+                                                />
+                                            </div>
+                                        </ConnectionsDeviceRowHeadCell>
+                                    )}
+                                    {row.type === 'resource' && (
+                                        <ConnectionsResourceRowHeadCell
+                                            title={
+                                                row.resource.label ||
+                                                row.resource.id
                                             }
                                         >
-                                            <MatrixDot
-                                                column={column}
-                                                flows={flows}
-                                                row={row}
-                                                senderRows={!swapAxes}
-                                                supportsActive={supportsActive}
-                                            />
-                                        </MatrixCell>
-                                    ))
-                                )}
-                            </TableRow>
-                        ))
-                    )}
-                </TableBody>
-            </Table>
-        </MatrixTableContainer>
+                                            <div>
+                                                <ResourceLink
+                                                    resource={rowResource}
+                                                    id={row.resource.id}
+                                                >
+                                                    <HorizontalLinkChipField
+                                                        record={row.resource}
+                                                    />
+                                                </ResourceLink>
+                                                <HeadingMatchButton
+                                                    disabled={
+                                                        rowResource ===
+                                                            'senders' &&
+                                                        senderMatchDisabled(
+                                                            row.resource
+                                                        )
+                                                    }
+                                                    onClick={() =>
+                                                        matchFromPort(
+                                                            rowResource
+                                                        )(row.resource)
+                                                    }
+                                                    title={headingMatchTitle(
+                                                        rowResource,
+                                                        matchOpts.usingRql
+                                                    )}
+                                                />
+                                            </div>
+                                        </ConnectionsResourceRowHeadCell>
+                                    )}
+                                    {columnGroups.flatMap(columnGroup =>
+                                        columnGroup.units.map(column => (
+                                            <MatrixCell
+                                                key={
+                                                    column.type === 'group'
+                                                        ? column.group.id
+                                                        : column.resource.id
+                                                }
+                                            >
+                                                <MatrixDot
+                                                    busy={busy}
+                                                    column={column}
+                                                    flows={flows}
+                                                    noConnectionApi={Boolean(
+                                                        column.type ===
+                                                            'resource' &&
+                                                            row.type ===
+                                                                'resource' &&
+                                                            noConnectionApi[
+                                                                swapAxes
+                                                                    ? row
+                                                                          .resource
+                                                                          .id
+                                                                    : column
+                                                                          .resource
+                                                                          .id
+                                                            ]
+                                                    )}
+                                                    onActivate={onActivate}
+                                                    onUnlink={onUnlink}
+                                                    row={row}
+                                                    senderRows={!swapAxes}
+                                                    supportsActive={
+                                                        supportsActive
+                                                    }
+                                                />
+                                            </MatrixCell>
+                                        ))
+                                    )}
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </MatrixTableContainer>
+            <Menu
+                anchorEl={legMenu && legMenu.anchorEl}
+                keepMounted
+                onClose={() => setLegMenu(null)}
+                open={Boolean(legMenu)}
+                anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left',
+                }}
+                transformOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                }}
+            >
+                {legMenu &&
+                    [...Array(legMenu.legs).keys()].map(leg => (
+                        <MenuItem
+                            key={leg}
+                            onClick={() =>
+                                connectPair(
+                                    legMenu.senderId,
+                                    legMenu.receiverId,
+                                    leg
+                                )
+                            }
+                            style={{ fontSize: '0.875rem' }}
+                        >
+                            Leg {leg + 1}
+                        </MenuItem>
+                    ))}
+            </Menu>
+        </>
     );
 };
 

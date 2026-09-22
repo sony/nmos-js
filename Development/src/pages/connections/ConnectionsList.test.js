@@ -3,6 +3,7 @@ import {
     connectionsCornerLabels,
     groupConnectionsResources,
     isActiveConnection,
+    labelledParameter,
 } from './ConnectionsMatrix';
 import {
     ConnectionRank,
@@ -17,6 +18,7 @@ import {
     senderEssenceFromReceiver,
 } from './connectionHeadingMatch';
 import { transportFileHint } from '../../components/controlApiMessages';
+import { FORMATS, TRANSPORTS } from '../../components/ParameterRegisters';
 
 describe('isConnectionsAxisTruncated', () => {
     it('reports a full page as possibly truncated', () => {
@@ -126,6 +128,16 @@ describe('Connections matrix', () => {
             rows: 'RECEIVERS',
             columns: 'SENDERS',
         });
+    });
+
+    it('labels transport and format from the parameter register', () => {
+        expect(
+            labelledParameter(TRANSPORTS, 'urn:x-nmos:transport:rtp.mcast')
+        ).toBe('RTP Multicast');
+        expect(labelledParameter(FORMATS, 'urn:x-nmos:format:video')).toBe(
+            'Video'
+        );
+        expect(labelledParameter(TRANSPORTS, undefined)).toBe('');
     });
 });
 

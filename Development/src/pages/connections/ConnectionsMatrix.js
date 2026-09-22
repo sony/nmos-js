@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import {
     Divider,
     IconButton,
@@ -11,6 +11,8 @@ import {
     Typography,
     withStyles,
 } from '@material-ui/core';
+import ClearIcon from '@material-ui/icons/Clear';
+import DoneIcon from '@material-ui/icons/Done';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import { Link } from 'react-router-dom';
 import {
@@ -65,6 +67,7 @@ import {
     matrixTableStyle,
     stickyHeadingStyle,
 } from '../../components/matrixLayout';
+import { FORMATS, TRANSPORTS } from '../../components/ParameterRegisters';
 import { QUERY_API, apiUsingRql, queryVersion } from '../../settings';
 
 // the match button is smaller than the collapse arrow, so the port name
@@ -192,6 +195,11 @@ export const connectionsCornerLabels = swapAxes =>
         ? { rows: 'RECEIVERS', columns: 'SENDERS' }
         : { rows: 'SENDERS', columns: 'RECEIVERS' };
 
+export const labelledParameter = (register, urn) =>
+    (urn && get(register, [urn, 'label'])) || urn || '';
+
+const ActiveMark = ({ on }) => (on ? <DoneIcon /> : <ClearIcon />);
+
 const useConnectionDevices = (senders, receivers) => {
     const dataProvider = useDataProvider();
     const notify = useNotify();
@@ -287,8 +295,73 @@ const useConnectionFlows = senders => {
 
 // linkToRecord rather than ReferenceField, which would make a new
 // unnecessary network request for a record the matrix already has
-const ResourceLink = ({ resource, id, children }) => (
-    <Link to={`${linkToRecord(`/${resource}`, id)}/show`}>{children}</Link>
+const ResourceLink = forwardRef(({ resource, id, children, ...props }, ref) => (
+    <Link ref={ref} to={`${linkToRecord(`/${resource}`, id)}/show`} {...props}>
+        {children}
+    </Link>
+));
+
+const PortTooltip = ({ flow, resource, supportsActive }) => {
+    const transport = labelledParameter(TRANSPORTS, resource.transport);
+    const format = labelledParameter(
+        FORMATS,
+        (flow && flow.format) || resource.format
+    );
+    return (
+        <>
+            {'Label'}
+            <Typography variant="body2">
+                {resource.label || resource.id}
+            </Typography>
+            {(transport || format) && <TooltipDivider />}
+            {format && (
+                <>
+                    {'Format'}
+                    <Typography variant="body2">{format}</Typography>
+                </>
+            )}
+            {transport && (
+                <>
+                    {'Transport'}
+                    <Typography variant="body2">{transport}</Typography>
+                </>
+            )}
+            {supportsActive && (
+                <>
+                    <TooltipDivider />
+                    {'Active'}
+                    <Typography variant="body2">
+                        <ActiveMark on={get(resource, 'subscription.active')} />
+                    </Typography>
+                </>
+            )}
+        </>
+    );
+};
+
+const PortHeading = ({
+    Chip,
+    flow,
+    id,
+    resource,
+    resourceName,
+    supportsActive,
+}) => (
+    <Tooltip
+        arrow
+        placement="bottom-start"
+        title={
+            <PortTooltip
+                flow={flow}
+                resource={resource}
+                supportsActive={supportsActive}
+            />
+        }
+    >
+        <ResourceLink resource={resourceName} id={id}>
+            <Chip record={resource} />
+        </ResourceLink>
+    </Tooltip>
 );
 
 const headingMatchTitle = (fromResource, usingRql) => {
@@ -684,19 +757,17 @@ const ConnectionsMatrix = ({
                                     .map(unit => (
                                         <ConnectionsResourceColumnHeadCell
                                             key={unit.resource.id}
-                                            title={
-                                                unit.resource.label ||
-                                                unit.resource.id
-                                            }
                                         >
-                                            <ResourceLink
-                                                resource={columnResource}
+                                            <PortHeading
+                                                Chip={VerticalLinkChipField}
+                                                flow={
+                                                    flows[unit.resource.flow_id]
+                                                }
                                                 id={unit.resource.id}
-                                            >
-                                                <VerticalLinkChipField
-                                                    record={unit.resource}
-                                                />
-                                            </ResourceLink>
+                                                resource={unit.resource}
+                                                resourceName={columnResource}
+                                                supportsActive={supportsActive}
+                                            />
                                             <HeadingMatchButton
                                                 disabled={
                                                     columnResource ===
@@ -770,21 +841,24 @@ const ConnectionsMatrix = ({
                                         </ConnectionsDeviceRowHeadCell>
                                     )}
                                     {row.type === 'resource' && (
-                                        <ConnectionsResourceRowHeadCell
-                                            title={
-                                                row.resource.label ||
-                                                row.resource.id
-                                            }
-                                        >
+                                        <ConnectionsResourceRowHeadCell>
                                             <div>
-                                                <ResourceLink
-                                                    resource={rowResource}
+                                                <PortHeading
+                                                    Chip={
+                                                        HorizontalLinkChipField
+                                                    }
+                                                    flow={
+                                                        flows[
+                                                            row.resource.flow_id
+                                                        ]
+                                                    }
                                                     id={row.resource.id}
-                                                >
-                                                    <HorizontalLinkChipField
-                                                        record={row.resource}
-                                                    />
-                                                </ResourceLink>
+                                                    resource={row.resource}
+                                                    resourceName={rowResource}
+                                                    supportsActive={
+                                                        supportsActive
+                                                    }
+                                                />
                                                 <HeadingMatchButton
                                                     disabled={
                                                         rowResource ===

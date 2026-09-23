@@ -3,7 +3,6 @@ import {
     connectionsCornerLabels,
     groupConnectionsResources,
     isActiveConnection,
-    labelledParameter,
 } from './ConnectionsMatrix';
 import {
     ConnectionRank,
@@ -18,7 +17,11 @@ import {
     senderEssenceFromReceiver,
 } from './connectionHeadingMatch';
 import { transportFileHint } from '../../components/controlApiMessages';
-import { FORMATS, TRANSPORTS } from '../../components/ParameterRegisters';
+import {
+    FORMATS,
+    TRANSPORTS,
+    parameterLabel,
+} from '../../components/ParameterRegisters';
 
 describe('isConnectionsAxisTruncated', () => {
     it('reports a full page as possibly truncated', () => {
@@ -130,14 +133,21 @@ describe('Connections matrix', () => {
         });
     });
 
-    it('labels transport and format from the parameter register', () => {
+    it('labels transport and format as the list views do', () => {
         expect(
-            labelledParameter(TRANSPORTS, 'urn:x-nmos:transport:rtp.mcast')
+            parameterLabel(TRANSPORTS, 'urn:x-nmos:transport:rtp.mcast', true)
         ).toBe('RTP Multicast');
-        expect(labelledParameter(FORMATS, 'urn:x-nmos:format:video')).toBe(
+        expect(
+            parameterLabel(TRANSPORTS, 'urn:x-nmos:transport:rtp.mcast', false)
+        ).toBe('urn:x-nmos:transport:rtp.mcast');
+        expect(parameterLabel(FORMATS, 'urn:x-nmos:format:video', true)).toBe(
             'Video'
         );
-        expect(labelledParameter(TRANSPORTS, undefined)).toBe('');
+        // an unknown URN has no friendly name to show
+        expect(parameterLabel(TRANSPORTS, 'urn:x-vendor:transport', true)).toBe(
+            'urn:x-vendor:transport'
+        );
+        expect(parameterLabel(TRANSPORTS, undefined, true)).toBe('');
     });
 });
 
@@ -245,13 +255,18 @@ describe('heading match', () => {
         media_type: 'video/raw',
         event_type: 'number',
     };
+    const constraintSets = [
+        { 'urn:x-nmos:cap:format:frame_width': { enum: [1920] } },
+    ];
     const receiver = {
         id: 'r',
+        label: 'Cam 1',
         transport: rtpMcast,
         format: video,
         caps: {
             media_types: ['video/raw'],
             event_types: ['number'],
+            constraint_sets: constraintSets,
         },
     };
 
@@ -287,6 +302,8 @@ describe('heading match', () => {
             '$flow.format': video,
             '$flow.media_type': ['video/raw'],
             '$flow.event_type': ['number'],
+            $constraint_sets: constraintSets,
+            $constraint_sets_active: 'r',
         });
         expect(
             senderEssenceFromReceiver(receiver, {
@@ -295,6 +312,18 @@ describe('heading match', () => {
             })
         ).toEqual({
             transport: rtpMcast,
+            '$flow.format': video,
+        });
+    });
+
+    it('leaves out constraint sets a receiver does not have', () => {
+        expect(
+            senderEssenceFromReceiver(
+                { id: 'r', transport: rtpMcast, format: video },
+                { usingRql: true, version: 'v1.3' }
+            )
+        ).toEqual({
+            transport: `${rtpMcast}|urn:x-nmos:transport:rtp$`,
             '$flow.format': video,
         });
     });

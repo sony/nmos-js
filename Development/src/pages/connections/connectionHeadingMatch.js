@@ -1,4 +1,5 @@
 import get from 'lodash/get';
+import isEmpty from 'lodash/isEmpty';
 
 // Essence fields heading match may write. Other chips (label, description,
 // id, tags, device_id, active) stay on that panel.
@@ -7,6 +8,8 @@ export const SENDER_ESSENCE_KEYS = [
     '$flow.format',
     '$flow.media_type',
     '$flow.event_type',
+    '$constraint_sets',
+    '$constraint_sets_active',
 ];
 
 export const RECEIVER_ESSENCE_KEYS = [
@@ -40,12 +43,15 @@ const omitEmpty = essence => {
     return next;
 };
 
+// the essence comes from one of the functions below, which have already left
+// out what the receiver or sender doesn't have, and null is a value here:
+// it's what the Constraint Sets filter sets
 export const applyHeadingMatch = (current = {}, essence, keys) => {
     const next = { ...current };
     for (const key of keys) {
         delete next[key];
     }
-    return { ...next, ...omitEmpty(essence) };
+    return { ...next, ...essence };
 };
 
 // Sender heading → receiver panel. Needs the sender's Flow.
@@ -68,8 +74,7 @@ export const receiverEssenceFromSender = (
     return omitEmpty(essence);
 };
 
-// Receiver heading → sender panel. Connect-tab baseFilter without
-// constraint_sets.
+// Receiver heading → sender panel, the Connect tab's baseFilter.
 export const senderEssenceFromReceiver = (receiver, { usingRql, version }) => {
     const essence = {
         transport: connectTabTransportQuery(receiver.transport, usingRql),
@@ -81,5 +86,14 @@ export const senderEssenceFromReceiver = (receiver, { usingRql, version }) => {
     if (usingRql && version >= 'v1.3') {
         essence['$flow.event_type'] = get(receiver, 'caps.event_types');
     }
-    return omitEmpty(essence);
+    const matched = omitEmpty(essence);
+    // the receiver's own constraint sets, which only RQL can match; the flag
+    // the Connect tab sets to apply them is the receiver id here, the same
+    // sort of API value the other chips show
+    const constraintSets = get(receiver, 'caps.constraint_sets');
+    if (usingRql && !isEmpty(constraintSets)) {
+        matched['$constraint_sets'] = constraintSets;
+        matched['$constraint_sets_active'] = receiver.id;
+    }
+    return matched;
 };

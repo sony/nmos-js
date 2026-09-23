@@ -7,6 +7,7 @@ import get from 'lodash/get';
 import FilterPanel, {
     AutocompleteFilter,
     BooleanFilter,
+    ConstFilter,
     StringFilter,
 } from '../../components/FilterPanel';
 import {
@@ -86,6 +87,17 @@ const AxisFilters = ({ filter, setFilter, filterButtonLabel, resource }) => (
             <BooleanFilter source="subscription.active" label="Active" />
         )}
         <StringFilter source="id" />
+        {
+            // only a receiver heading match writes the constraint sets to
+            // match against, so removing the filter takes them away too
+            get(filter, '$constraint_sets') && (
+                <ConstFilter
+                    source="$constraint_sets_active"
+                    clearSource="$constraint_sets"
+                    label="Constraint Sets"
+                />
+            )
+        }
     </FilterPanel>
 );
 

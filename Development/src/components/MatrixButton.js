@@ -1,5 +1,5 @@
-import React, { forwardRef } from 'react';
-import { withStyles } from '@material-ui/core';
+import React, { forwardRef, useImperativeHandle, useState } from 'react';
+import { Tooltip, withStyles } from '@material-ui/core';
 import {
     decomposeColor,
     fade,
@@ -107,7 +107,7 @@ const styles = theme => {
     };
 };
 
-const MappingButton = forwardRef(
+const MatrixButton = forwardRef(
     ({ checked, classes, constraintWarning, ...props }, ref) => {
         const warningClass = checked
             ? classes.constraintWarning
@@ -130,6 +130,37 @@ const MappingButton = forwardRef(
 );
 
 // forwardRef leaves the generated class names anonymous otherwise
-MappingButton.displayName = 'MappingButton';
+MatrixButton.displayName = 'MatrixButton';
 
-export default withStyles(styles)(MappingButton);
+export default withStyles(styles)(MatrixButton);
+
+// a Tooltip around each of tens of thousands of cells is as costly as the
+// button was, and hover state on a cell re-renders the matrix around it, so
+// a matrix has one of these beside its table and the cells open it
+export const MatrixCellTip = forwardRef(({ disabled }, ref) => {
+    const [tip, setTip] = useState(null);
+
+    useImperativeHandle(ref, () => ({
+        open: (anchorEl, title) => setTip({ anchorEl, open: true, title }),
+        // Material-UI closes an empty tooltip at once, so clearing the title
+        // here would draw a bare arrow for the length of the fade out
+        close: () => setTip(tip => tip && { ...tip, open: false }),
+    }));
+
+    return (
+        <Tooltip
+            arrow
+            disableFocusListener
+            disableHoverListener
+            disableTouchListener
+            open={Boolean(tip && tip.open) && !disabled}
+            placement="bottom-start"
+            PopperProps={{ anchorEl: tip && tip.anchorEl }}
+            title={tip ? tip.title : ''}
+        >
+            <span />
+        </Tooltip>
+    );
+});
+
+MatrixCellTip.displayName = 'MatrixCellTip';

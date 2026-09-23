@@ -43,7 +43,7 @@ import {
 
 import CollapseButton from '../../components/CollapseButton';
 import ActiveField from '../../components/ActiveField';
-import MappingButton from '../../components/MappingButton';
+import MatrixButton, { MatrixCellTip } from '../../components/MatrixButton';
 import makeConnection from '../../components/makeConnection';
 import dataProvider, { getConnectionResource } from '../../dataProvider';
 import useTableMaxHeight from '../../components/useTableMaxHeight';
@@ -545,6 +545,7 @@ const unlinkReceiver = (receiver, device) =>
     );
 
 const MatrixDot = ({
+    cellTip,
     column,
     flows,
     noConnectionApi,
@@ -554,22 +555,6 @@ const MatrixDot = ({
     senderRows,
     supportsActive,
 }) => {
-    const [hovered, setHovered] = useState(false);
-    const cellRef = useRef(null);
-
-    // mounting the Tooltip replaces the node the pointer entered. A pointer
-    // that has already moved on then leaves that old node, not this cell, so
-    // without watching mousemove a tooltip can stay after a fast sweep
-    useEffect(() => {
-        if (!hovered) return undefined;
-        const close = event => {
-            const cell = cellRef.current && cellRef.current.closest('td');
-            if (cell && !cell.contains(event.target)) setHovered(false);
-        };
-        document.addEventListener('mousemove', close);
-        return () => document.removeEventListener('mousemove', close);
-    }, [hovered]);
-
     if (row.type === 'group' && column.type === 'group') {
         return <DiagonalEllipsisButton disabled />;
     }
@@ -584,16 +569,24 @@ const MatrixDot = ({
         rank < ConnectionRank.Compatible ? connectionRankMessage(rank) : null;
     const checked = isActiveConnection(sender, receiver, supportsActive);
 
-    // this div keeps enter/leave across that remount, and takes the pointer
-    // when the button is disabled, as Material-UI asks of a tooltip on a
-    // disabled control
-    const cell = (
+    // the disabled button does not take pointer events, so this div does,
+    // as Material-UI asks of a tooltip on a disabled control
+    return (
         <div
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            ref={cellRef}
+            onPointerEnter={event =>
+                cellTip.current.open(
+                    event.currentTarget,
+                    <ConnectionsCellTooltip
+                        noConnectionApi={noConnectionApi}
+                        receiver={receiver}
+                        sender={sender}
+                        warning={warning}
+                    />
+                )
+            }
+            onPointerLeave={() => cellTip.current.close()}
         >
-            <MappingButton
+            <MatrixButton
                 checked={checked}
                 constraintWarning={Boolean(warning)}
                 disabled={noConnectionApi}
@@ -604,28 +597,6 @@ const MatrixDot = ({
                 }
             />
         </div>
-    );
-
-    // wrapping every cell in Tooltip would be tens of thousands of them, so
-    // a cell makes one when the pointer arrives
-    return hovered ? (
-        <Tooltip
-            arrow
-            open
-            placement="bottom-start"
-            title={
-                <ConnectionsCellTooltip
-                    noConnectionApi={noConnectionApi}
-                    receiver={receiver}
-                    sender={sender}
-                    warning={warning}
-                />
-            }
-        >
-            {cell}
-        </Tooltip>
-    ) : (
-        cell
     );
 };
 
@@ -697,6 +668,7 @@ const ConnectionsMatrix = ({
     // per click
     const busy = useRef(false);
     const [noConnectionApi, setNoConnectionApi] = useState({});
+    const cellTip = useRef(null);
     const legMenu = useRef(null);
     const senderGroups = renderedGroups(
         groupConnectionsResources(senders, devices, autoSort),
@@ -1065,6 +1037,7 @@ const ConnectionsMatrix = ({
                                                 }
                                             >
                                                 <MatrixDot
+                                                    cellTip={cellTip}
                                                     column={column}
                                                     flows={flows}
                                                     noConnectionApi={Boolean(
@@ -1099,6 +1072,7 @@ const ConnectionsMatrix = ({
                     </TableBody>
                 </Table>
             </MatrixTableContainer>
+            <MatrixCellTip ref={cellTip} />
             <ConnectionsLegMenu onSelectLeg={connectPair} ref={legMenu} />
         </>
     );

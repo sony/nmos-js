@@ -537,6 +537,22 @@ const MatrixDot = ({
     senderRows,
     supportsActive,
 }) => {
+    const [hovered, setHovered] = useState(false);
+    const cellRef = useRef(null);
+
+    // mounting the Tooltip replaces the node the pointer entered. A pointer
+    // that has already moved on then leaves that old node, not this cell, so
+    // without watching mousemove a tooltip can stay after a fast sweep
+    useEffect(() => {
+        if (!hovered) return undefined;
+        const close = event => {
+            const cell = cellRef.current && cellRef.current.closest('td');
+            if (cell && !cell.contains(event.target)) setHovered(false);
+        };
+        document.addEventListener('mousemove', close);
+        return () => document.removeEventListener('mousemove', close);
+    }, [hovered]);
+
     if (row.type === 'group' && column.type === 'group') {
         return <DiagonalEllipsisButton disabled />;
     }
@@ -551,9 +567,34 @@ const MatrixDot = ({
         rank < ConnectionRank.Compatible ? connectionRankMessage(rank) : null;
     const checked = isActiveConnection(sender, receiver, supportsActive);
 
-    return (
+    // this div keeps enter/leave across that remount, and takes the pointer
+    // when the button is disabled, as Material-UI asks of a tooltip on a
+    // disabled control
+    const cell = (
+        <div
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            ref={cellRef}
+        >
+            <MappingButton
+                checked={checked}
+                constraintWarning={Boolean(warning)}
+                disabled={noConnectionApi}
+                onClick={event =>
+                    checked
+                        ? onUnlink(receiver)
+                        : onActivate(sender, receiver, event)
+                }
+            />
+        </div>
+    );
+
+    // wrapping every cell in Tooltip would be tens of thousands of them, so
+    // a cell makes one when the pointer arrives
+    return hovered ? (
         <Tooltip
             arrow
+            open
             placement="bottom-start"
             title={
                 <ConnectionsCellTooltip
@@ -564,19 +605,10 @@ const MatrixDot = ({
                 />
             }
         >
-            <div>
-                <MappingButton
-                    checked={checked}
-                    constraintWarning={Boolean(warning)}
-                    disabled={noConnectionApi}
-                    onClick={event =>
-                        checked
-                            ? onUnlink(receiver)
-                            : onActivate(sender, receiver, event)
-                    }
-                />
-            </div>
+            {cell}
         </Tooltip>
+    ) : (
+        cell
     );
 };
 

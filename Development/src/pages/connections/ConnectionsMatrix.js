@@ -650,7 +650,13 @@ const ConnectionsLegMenu = forwardRef(({ onSelectLeg }, ref) => {
                     <MenuItem
                         key={leg}
                         onClick={() =>
-                            onSelectLeg(menu.senderId, menu.receiverId, leg)
+                            onSelectLeg(
+                                menu.senderId,
+                                menu.receiverId,
+                                leg,
+                                menu.sender,
+                                menu.receiver
+                            )
                         }
                         style={{ fontSize: '0.875rem' }}
                     >
@@ -754,12 +760,20 @@ const ConnectionsMatrix = ({
         });
     };
 
-    const connectPair = (senderId, receiverId, senderLeg) => {
+    const connectPair = (
+        senderId,
+        receiverId,
+        senderLeg,
+        senderData,
+        receiverData
+    ) => {
         busy.current = true;
-        const options =
-            senderLeg === undefined
-                ? undefined
-                : { singleSenderLeg: senderLeg };
+        const options = {
+            ...(senderLeg === undefined ? {} : { singleSenderLeg: senderLeg }),
+            ...(senderData && receiverData
+                ? { sender: senderData, receiver: receiverData }
+                : {}),
+        };
         makeConnection(senderId, receiverId, 'active', options)
             .then(finishWrite)
             .catch(error => failWrite(receiverId, error));
@@ -790,14 +804,17 @@ const ConnectionsMatrix = ({
                     legMenu.current.open({
                         anchorEl: ref,
                         legs: senderLegs,
+                        receiver: receiverData,
                         receiverId: receiver.id,
+                        sender: senderData,
                         senderId: sender.id,
                     });
                     return;
                 }
-                return makeConnection(sender.id, receiver.id, 'active').then(
-                    finishWrite
-                );
+                return makeConnection(sender.id, receiver.id, 'active', {
+                    sender: senderData,
+                    receiver: receiverData,
+                }).then(finishWrite);
             })
             .catch(error => failWrite(receiver.id, error));
     };

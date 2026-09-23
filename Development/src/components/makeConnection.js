@@ -162,20 +162,24 @@ const makeConnection = (senderID, receiverID, endpoint, options) => {
             return reject('Invalid endpoint');
         }
 
-        const getSenderDataPromise = new Promise(resolve =>
-            dataProvider('GET_ONE', 'senders', {
-                id: senderID,
-            }).then(response =>
-                resolve({ resource: 'sender', data: response.data })
-            )
-        );
-        const getReceiverDataPromise = new Promise(resolve =>
-            dataProvider('GET_ONE', 'receivers', {
-                id: receiverID,
-            }).then(response =>
-                resolve({ resource: 'receiver', data: response.data })
-            )
-        );
+        // Connections already GET_ONE both sides to count legs; fetching
+        // them again here would double the Query and Node requests
+        const getSenderDataPromise = get(options, 'sender')
+            ? Promise.resolve({
+                  resource: 'sender',
+                  data: get(options, 'sender'),
+              })
+            : dataProvider('GET_ONE', 'senders', { id: senderID }).then(
+                  response => ({ resource: 'sender', data: response.data })
+              );
+        const getReceiverDataPromise = get(options, 'receiver')
+            ? Promise.resolve({
+                  resource: 'receiver',
+                  data: get(options, 'receiver'),
+              })
+            : dataProvider('GET_ONE', 'receivers', { id: receiverID }).then(
+                  response => ({ resource: 'receiver', data: response.data })
+              );
 
         Promise.all([getSenderDataPromise, getReceiverDataPromise])
             .then(response => {

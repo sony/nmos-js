@@ -7,31 +7,33 @@ import sanitizeRestProps from './sanitizeRestProps';
 import { CONNECTION_API_NOT_AVAILABLE } from './controlApiMessages';
 
 const toggleMasterEnable = (record, resource) => {
-    return new Promise((resolve, reject) =>
-        dataProvider('GET_ONE', resource, {
-            id: record.id,
-        })
-            .then(({ data }) => {
-                if (!data.hasOwnProperty('$staged')) {
-                    throw new Error(CONNECTION_API_NOT_AVAILABLE);
-                }
-                const params = {
-                    id: get(data, 'id'),
-                    data: {
-                        ...data,
-                        $staged: {
-                            ...get(data, '$staged'),
-                            master_enable: !get(data, '$active.master_enable'),
-                            activation: { mode: 'activate_immediate' },
-                        },
-                    },
-                    previousData: data,
-                };
-                return dataProvider('UPDATE', resource, params);
-            })
-            .then(response => resolve(response))
-            .catch(error => reject(error))
-    );
+    const patch = data => {
+        if (!data.hasOwnProperty('$staged')) {
+            throw new Error(CONNECTION_API_NOT_AVAILABLE);
+        }
+        const params = {
+            id: get(data, 'id'),
+            data: {
+                ...data,
+                $staged: {
+                    ...get(data, '$staged'),
+                    master_enable: !get(data, '$active.master_enable'),
+                    activation: { mode: 'activate_immediate' },
+                },
+            },
+            previousData: data,
+        };
+        return dataProvider('UPDATE', resource, params);
+    };
+    // the Sender and Receiver Show pages already GET_ONE'd every endpoint;
+    // the Connections page headings and the list page rows are IS-04 only,
+    // so they still need a fetch
+    if (record.hasOwnProperty('$staged') && record.hasOwnProperty('$active')) {
+        return patch(record);
+    }
+    return dataProvider('GET_ONE', resource, {
+        id: record.id,
+    }).then(({ data }) => patch(data));
 };
 
 const ActiveField = ({ className, source, record = {}, resource, ...rest }) => {

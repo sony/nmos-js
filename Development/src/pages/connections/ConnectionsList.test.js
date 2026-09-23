@@ -17,6 +17,7 @@ import {
     senderEssenceFromReceiver,
 } from './connectionHeadingMatch';
 import { transportFileHint } from '../../components/controlApiMessages';
+import { parseTransportUrn } from '../../transportUrn';
 import {
     FORMATS,
     TRANSPORTS,
@@ -402,5 +403,15 @@ describe('control API messages', () => {
         expect(transportFileHint('urn:x-nmos:transport:rtp.ucast')).toBe(
             'Transport file is not available.'
         );
+    });
+
+    it('takes the URN-base of a versioned or subclassified transport', () => {
+        expect(parseTransportUrn('urn:x-nmos:transport:rtp.mcast').base).toBe(
+            'urn:x-nmos:transport:rtp'
+        );
+        expect(
+            parseTransportUrn('urn:x-nmos:transport:websocket/v1.0').base
+        ).toBe('urn:x-nmos:transport:websocket');
+        expect(parseTransportUrn(undefined)).toBeNull();
     });
 });

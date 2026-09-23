@@ -45,9 +45,12 @@ import CollapseButton from '../../components/CollapseButton';
 import ActiveField from '../../components/ActiveField';
 import MappingButton from '../../components/MappingButton';
 import makeConnection from '../../components/makeConnection';
-import dataProvider from '../../dataProvider';
+import dataProvider, { getConnectionResource } from '../../dataProvider';
 import useTableMaxHeight from '../../components/useTableMaxHeight';
-import { CONNECTION_API_NOT_AVAILABLE } from '../../components/controlApiMessages';
+import {
+    CONNECTION_API_NOT_AVAILABLE,
+    transportUsesTransportFile,
+} from '../../components/controlApiMessages';
 import {
     CELL_EXTENT,
     CHIP_INSET,
@@ -515,9 +518,14 @@ const notifyConnectionError = (notify, error) => {
     notify(error.toString(), 'warning');
 };
 
-const unlinkReceiver = receiverId =>
-    dataProvider('GET_ONE', 'receivers', { id: receiverId }).then(
-        ({ data }) => {
+const connectionEndpointsForSender = sender =>
+    transportUsesTransportFile(sender.transport)
+        ? ['active/', 'transportfile/']
+        : ['active/'];
+
+const unlinkReceiver = (receiver, device) =>
+    getConnectionResource(receiver, 'receivers', device, ['staged/']).then(
+        data => {
             if (!data.hasOwnProperty('$staged')) {
                 throw new Error(CONNECTION_API_NOT_AVAILABLE);
             }
@@ -767,6 +775,7 @@ const ConnectionsMatrix = ({
         senderData,
         receiverData
     ) => {
+        if (busy.current) return;
         busy.current = true;
         const options = {
             ...(senderLeg === undefined ? {} : { singleSenderLeg: senderLeg }),
@@ -781,13 +790,34 @@ const ConnectionsMatrix = ({
 
     const onActivate = (sender, receiver, event) => {
         if (busy.current) return;
+        // the Devices carry the Connection API addresses, so a click before
+        // getMany answers says nothing about whether there is one
+        if (!devices[sender.device_id] || !devices[receiver.device_id]) {
+            notify('Devices are still loading', 'warning');
+            return;
+        }
         const ref = event.currentTarget;
         busy.current = true;
+        // the Connections page already has the IS-04 rows and Devices.
+        // GET_ONE would load them from Query again, and every Connection
+        // API endpoint the Show pages need; activating only needs the
+        // sender's active (and its transport file when the transport is
+        // RTP) and the receiver's staged
         Promise.all([
-            dataProvider('GET_ONE', 'senders', { id: sender.id }),
-            dataProvider('GET_ONE', 'receivers', { id: receiver.id }),
+            getConnectionResource(
+                sender,
+                'senders',
+                devices[sender.device_id],
+                connectionEndpointsForSender(sender)
+            ),
+            getConnectionResource(
+                receiver,
+                'receivers',
+                devices[receiver.device_id],
+                ['staged/']
+            ),
         ])
-            .then(([{ data: senderData }, { data: receiverData }]) => {
+            .then(([senderData, receiverData]) => {
                 if (!receiverData.hasOwnProperty('$staged')) {
                     throw new Error(CONNECTION_API_NOT_AVAILABLE);
                 }
@@ -797,7 +827,7 @@ const ConnectionsMatrix = ({
                 );
                 const senderLegs = get(
                     senderData,
-                    '$staged.transport_params.length'
+                    '$active.transport_params.length'
                 );
                 if (receiverLegs === 1 && senderLegs > 1) {
                     busy.current = false;
@@ -821,8 +851,12 @@ const ConnectionsMatrix = ({
 
     const onUnlink = receiver => {
         if (busy.current) return;
+        if (!devices[receiver.device_id]) {
+            notify('Devices are still loading', 'warning');
+            return;
+        }
         busy.current = true;
-        unlinkReceiver(receiver.id)
+        unlinkReceiver(receiver, devices[receiver.device_id])
             .then(finishWrite)
             .catch(error => failWrite(receiver.id, error));
     };

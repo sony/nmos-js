@@ -162,8 +162,9 @@ const makeConnection = (senderID, receiverID, endpoint, options) => {
             return reject('Invalid endpoint');
         }
 
-        // Connections already GET_ONE both sides to count legs; fetching
-        // them again here would double the Query and Node requests
+        // the Connections page and the Receiver Connect tab already hold
+        // the sender and receiver with the Connection API endpoints used
+        // below; fetching them again would double the Node requests
         const getSenderDataPromise = get(options, 'sender')
             ? Promise.resolve({
                   resource: 'sender',

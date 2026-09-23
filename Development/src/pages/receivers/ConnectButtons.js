@@ -11,13 +11,23 @@ const ConnectButtons = ({ senderData, receiverData }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [senderLegs, setSenderLegs] = useState(0);
     const [endpoint, setEndpoint] = useState('');
+    // the sender the leg menu is open for, with its Connection API endpoints
+    const [menuSender, setMenuSender] = useState(null);
 
     const history = useHistory();
     const notify = useNotify();
     const refresh = useRefresh();
 
-    const connect = (endpoint, senderLeg) => {
-        const options = { singleSenderLeg: senderLeg };
+    const connect = (endpoint, senderLeg, sender) => {
+        const options = {
+            singleSenderLeg: senderLeg,
+            // the Receiver Connect tab is on the Receiver Show page, which
+            // already loaded every Connection API endpoint
+            receiver: receiverData.hasOwnProperty('$staged')
+                ? receiverData
+                : undefined,
+            ...(sender ? { sender } : {}),
+        };
         makeConnection(senderData.id, receiverData.id, endpoint, options)
             .then(() => {
                 notify('Element updated', 'info');
@@ -44,14 +54,15 @@ const ConnectButtons = ({ senderData, receiverData }) => {
             const ref = event.currentTarget;
             dataProvider('GET_ONE', 'senders', {
                 id: senderData.id,
-            }).then(({ data: senderData }) => {
-                if (get(senderData, '$staged.transport_params').length > 1) {
+            }).then(({ data: sender }) => {
+                if (get(sender, '$staged.transport_params').length > 1) {
+                    setMenuSender(sender);
                     setSenderLegs(
-                        get(senderData, '$staged.transport_params').length
+                        get(sender, '$staged.transport_params').length
                     );
                     setAnchorEl(ref);
                 } else {
-                    connect(endpoint);
+                    connect(endpoint, undefined, sender);
                 }
             });
         } else {
@@ -93,7 +104,7 @@ const ConnectButtons = ({ senderData, receiverData }) => {
                 {[...Array(senderLegs).keys()].map(leg => (
                     <MenuItem
                         key={leg}
-                        onClick={() => connect(endpoint, leg)}
+                        onClick={() => connect(endpoint, leg, menuSender)}
                         style={{ fontSize: '0.875rem' }}
                     >
                         Leg {leg + 1}

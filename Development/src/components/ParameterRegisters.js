@@ -37,11 +37,12 @@ export const parameterAutocompleteProps = register => ({
     },
 });
 
-export const Parameter = ({ register, value }) => {
-    const [friendlyFirst] = useJSONSetting(FRIENDLY_PARAMETERS, false);
+// the register's label or the URN itself, for somewhere a Parameter and its
+// own tooltip don't fit, like inside another tooltip
+export const parameterLabel = (register, value, friendly) => {
+    if (!value) return '';
     const unversioned = unversionedParameter(value);
     const version = parameterVersion(value);
-    const unfriendly = unversioned + (version ? '/' + version : '');
     const info = get(register, unversioned);
     // a register entry ending with ':' is a namespace which must be followed
     // by a user-assigned name, e.g. 'urn:x-nmos:tag:user:favourite-colour'
@@ -51,11 +52,21 @@ export const Parameter = ({ register, value }) => {
         info || !name
             ? undefined
             : get(register, unversioned.substring(0, lastColon + 1));
-    if (info || namespace) {
+    if (friendly && (info || namespace)) {
         const label = info
             ? info.label
             : namespace.label + ' ' + labelize(name);
-        const friendly = label + (version ? ' ' + version : '');
+        return label + (version ? ' ' + version : '');
+    }
+    return unversioned + (version ? '/' + version : '');
+};
+
+export const Parameter = ({ register, value }) => {
+    const [friendlyFirst] = useJSONSetting(FRIENDLY_PARAMETERS, false);
+    const unversioned = unversionedParameter(value);
+    const friendly = parameterLabel(register, value, true);
+    const unfriendly = parameterLabel(register, value, false);
+    if (friendly !== unfriendly) {
         return (
             <div key={unversioned}>
                 <Tooltip

@@ -52,28 +52,33 @@ export const transportsCompatible = (senderTransport, receiverTransport) => {
 
 const mediaTypesInclude = (mediaTypes, mediaType) => {
     if (mediaTypes == null) return true;
-    if (!mediaType) return false;
     if (Array.isArray(mediaTypes)) {
         return mediaTypes.length === 0 ? false : mediaTypes.includes(mediaType);
     }
     return mediaTypes === mediaType;
 };
 
-// flow is the IS-04 Flow for sender.flow_id, or null when that lookup has
-// finished and found nothing. Until the batch returns, the caller should not
-// treat a format-unchecked pair as Compatible.
+// flow is the IS-04 Flow for sender.flow_id, or null while that lookup is
+// outstanding or if it found nothing. Only the records themselves make a pair
+// Incompatible; what is missing from them is not evidence of a mismatch.
 export const rankConnection = (sender, receiver, flow) => {
-    if (!transportsCompatible(sender.transport, receiver.transport)) {
+    if (
+        sender.transport &&
+        receiver.transport &&
+        !transportsCompatible(sender.transport, receiver.transport)
+    ) {
         return ConnectionRank.IncompatibleTransport;
     }
     const format = flow && flow.format;
-    if (!format || format !== receiver.format) {
+    if (format && receiver.format && format !== receiver.format) {
         return ConnectionRank.IncompatibleFormat;
     }
+    const mediaType = flow && flow.media_type;
     if (
+        mediaType &&
         !mediaTypesInclude(
             receiver.caps && receiver.caps.media_types,
-            flow.media_type
+            mediaType
         )
     ) {
         return ConnectionRank.IncompatibleMediaType;

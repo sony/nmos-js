@@ -191,9 +191,6 @@ describe('connection rank', () => {
         expect(
             rankConnection(sender(), receiver({ format: audio }), flow())
         ).toBe(ConnectionRank.IncompatibleFormat);
-        expect(rankConnection(sender(), receiver(), null)).toBe(
-            ConnectionRank.IncompatibleFormat
-        );
         expect(
             rankConnection(
                 sender(),
@@ -211,6 +208,33 @@ describe('connection rank', () => {
         expect(rankConnection(sender(), receiver(), flow())).toBe(
             ConnectionRank.Compatible
         );
+    });
+
+    it('warns only about what the records say', () => {
+        // the sender's Flow may still be loading, or may not be in the
+        // registry at all
+        expect(rankConnection(sender(), receiver(), null)).toBe(
+            ConnectionRank.Compatible
+        );
+        // a Flow with no media type cannot contradict the receiver's caps
+        expect(
+            rankConnection(
+                sender(),
+                receiver({ caps: { media_types: ['video/jxsv'] } }),
+                flow({ media_type: undefined })
+            )
+        ).toBe(ConnectionRank.Compatible);
+        expect(rankConnection({ id: 's' }, receiver(), flow())).toBe(
+            ConnectionRank.Compatible
+        );
+        // an empty list of media types is a capability, not a gap
+        expect(
+            rankConnection(
+                sender(),
+                receiver({ caps: { media_types: [] } }),
+                flow()
+            )
+        ).toBe(ConnectionRank.IncompatibleMediaType);
     });
 
     it('does not evaluate constraint sets', () => {

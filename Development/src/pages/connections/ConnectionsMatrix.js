@@ -731,7 +731,11 @@ const ConnectionsMatrix = ({
         busy.current = false;
         unstable_batchedUpdates(() => {
             legMenu.current.close();
-            if (error && error.message === CONNECTION_API_NOT_AVAILABLE) {
+            if (
+                error &&
+                error.message === CONNECTION_API_NOT_AVAILABLE &&
+                error.resource !== 'senders'
+            ) {
                 setNoConnectionApi(current => ({
                     ...current,
                     [receiverId]: true,

@@ -1,5 +1,6 @@
 import { cloneDeep, get, set } from 'lodash';
 import dataProvider from '../dataProvider';
+import { CONNECTION_API_NOT_AVAILABLE } from './controlApiMessages';
 
 // keys for parameters to be copied directly from sender to receiver
 const oneToOneTransportParams = {
@@ -196,6 +197,18 @@ const makeConnection = (senderID, receiverID, endpoint, options) => {
                 // default filter in the ConnectionManagementTab, but users
                 // may choose to override that and rely on checking of
                 // transport parameters at the receiver itself
+
+                // GET_ONE stamps $connectionAPI: null when the Device has no
+                // Connection API or none of them answered; that is not the
+                // same as a sender whose master_enable is actually false
+                if (get(data, 'sender.$connectionAPI') === null) {
+                    const error = new Error(CONNECTION_API_NOT_AVAILABLE);
+                    error.resource = 'senders';
+                    return reject(error);
+                }
+                if (get(data, 'receiver.$connectionAPI') === null) {
+                    return reject(new Error(CONNECTION_API_NOT_AVAILABLE));
+                }
 
                 if (
                     endpoint === 'active' &&

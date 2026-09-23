@@ -11,8 +11,6 @@ import {
     Typography,
     withStyles,
 } from '@material-ui/core';
-import ClearIcon from '@material-ui/icons/Clear';
-import DoneIcon from '@material-ui/icons/Done';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import { Link } from 'react-router-dom';
 import {
@@ -36,6 +34,7 @@ import {
 } from './connectionHeadingMatch';
 
 import CollapseButton from '../../components/CollapseButton';
+import ActiveField from '../../components/ActiveField';
 import MappingButton from '../../components/MappingButton';
 import makeConnection from '../../components/makeConnection';
 import dataProvider from '../../dataProvider';
@@ -67,8 +66,18 @@ import {
     matrixTableStyle,
     stickyHeadingStyle,
 } from '../../components/matrixLayout';
-import { FORMATS, TRANSPORTS } from '../../components/ParameterRegisters';
-import { QUERY_API, apiUsingRql, queryVersion } from '../../settings';
+import {
+    FORMATS,
+    TRANSPORTS,
+    parameterLabel,
+} from '../../components/ParameterRegisters';
+import {
+    FRIENDLY_PARAMETERS,
+    QUERY_API,
+    apiUsingRql,
+    queryVersion,
+    useJSONSetting,
+} from '../../settings';
 
 // the match button is smaller than the collapse arrow, so the port name
 // stays the subject of the heading
@@ -195,11 +204,6 @@ export const connectionsCornerLabels = swapAxes =>
         ? { rows: 'RECEIVERS', columns: 'SENDERS' }
         : { rows: 'SENDERS', columns: 'RECEIVERS' };
 
-export const labelledParameter = (register, urn) =>
-    (urn && get(register, [urn, 'label'])) || urn || '';
-
-const ActiveMark = ({ on }) => (on ? <DoneIcon /> : <ClearIcon />);
-
 const useConnectionDevices = (senders, receivers) => {
     const dataProvider = useDataProvider();
     const notify = useNotify();
@@ -301,18 +305,24 @@ const ResourceLink = forwardRef(({ resource, id, children, ...props }, ref) => (
     </Link>
 ));
 
-const PortTooltip = ({ flow, resource, supportsActive }) => {
-    const transport = labelledParameter(TRANSPORTS, resource.transport);
-    const format = labelledParameter(
+const PortTooltip = ({ flow, resource, resourceName, supportsActive }) => {
+    const [friendly] = useJSONSetting(FRIENDLY_PARAMETERS, false);
+    const transport = parameterLabel(TRANSPORTS, resource.transport, friendly);
+    const format = parameterLabel(
         FORMATS,
-        (flow && flow.format) || resource.format
+        (flow && flow.format) || resource.format,
+        friendly
     );
     return (
         <>
-            {'Label'}
-            <Typography variant="body2">
-                {resource.label || resource.id}
-            </Typography>
+            {'ID'}
+            <Typography variant="body2">{resource.id}</Typography>
+            {resource.label && (
+                <>
+                    {'Label'}
+                    <Typography variant="body2">{resource.label}</Typography>
+                </>
+            )}
             {(transport || format) && <TooltipDivider />}
             {format && (
                 <>
@@ -328,11 +338,18 @@ const PortTooltip = ({ flow, resource, supportsActive }) => {
             )}
             {supportsActive && (
                 <>
-                    <TooltipDivider />
                     {'Active'}
-                    <Typography variant="body2">
-                        <ActiveMark on={get(resource, 'subscription.active')} />
-                    </Typography>
+                    {
+                        // the switch is the value here, so it belongs under
+                        // the name like the other values, not beside it
+                    }
+                    <div>
+                        <ActiveField
+                            record={resource}
+                            resource={resourceName}
+                            size="small"
+                        />
+                    </div>
                 </>
             )}
         </>
@@ -349,11 +366,15 @@ const PortHeading = ({
 }) => (
     <Tooltip
         arrow
+        // the Active switch is in here, so the pointer has to be able to
+        // reach it, as on the Channel Mapping headings
+        interactive
         placement="bottom-start"
         title={
             <PortTooltip
                 flow={flow}
                 resource={resource}
+                resourceName={resourceName}
                 supportsActive={supportsActive}
             />
         }

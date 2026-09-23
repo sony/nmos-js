@@ -16,6 +16,7 @@ import {
 import get from 'lodash/get';
 import { useTheme } from '@material-ui/styles';
 import emphasizedPaper from '../../theme/emphasizedPaper';
+import ActiveField from '../../components/ActiveField';
 import LinkChipField from '../../components/LinkChipField';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import HintedTab from '../../components/HintedTab';
@@ -195,9 +196,10 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 )}
                 <ParameterField source="format" register={FORMATS} />
                 {queryVersion() >= 'v1.2' && (
-                    <BooleanField
+                    <ActiveField
                         label="Active"
-                        source="subscription.active"
+                        record={record}
+                        resource="receivers"
                         name="active"
                     />
                 )}

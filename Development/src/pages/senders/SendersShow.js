@@ -17,6 +17,7 @@ import { get, has } from 'lodash';
 import copy from 'clipboard-copy';
 import { useTheme } from '@material-ui/styles';
 import emphasizedPaper from '../../theme/emphasizedPaper';
+import ActiveField from '../../components/ActiveField';
 import LinkChipField from '../../components/LinkChipField';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import HintedTab from '../../components/HintedTab';
@@ -162,7 +163,11 @@ const ShowSummaryTab = ({ record, ...props }) => {
                     />
                 )}
                 {queryVersion() >= 'v1.2' && (
-                    <BooleanField label="Active" source="subscription.active" />
+                    <ActiveField
+                        label="Active"
+                        record={record}
+                        resource="senders"
+                    />
                 )}
                 {
                     // BCP-006-01 NMOS With JPEG XS requires some additional Sender attributes

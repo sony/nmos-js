@@ -472,7 +472,6 @@ const OutputTooltip = ({ outputId, outputItem, getInputAPIName }) => {
         <>
             {'ID'}
             <Typography variant="body2">{outputId}</Typography>
-            <TooltipDivider />
             {'Name'}
             <TooltipCustomNameField
                 {...{
@@ -523,7 +522,6 @@ const InputTooltip = ({ inputId, inputItem }) => {
         <>
             {'ID'}
             <Typography variant="body2">{inputId}</Typography>
-            <TooltipDivider />
             {'Name'}
             <TooltipCustomNameField
                 {...{

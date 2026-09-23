@@ -821,7 +821,7 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
     });
 };
 
-const getChannelMappingEndPoints = (addresses, endpoints) => {
+const getChannelMappingEndpoints = (addresses, endpoints) => {
     const endpointData = [];
     let channelmappingAPI;
     const controller = new AbortController();
@@ -1150,7 +1150,7 @@ const convertHTTPResponseToDataProvider = async (
                     }
                     for (const [path, addresses] of attempts) {
                         try {
-                            endpointData = await getChannelMappingEndPoints(
+                            endpointData = await getChannelMappingEndpoints(
                                 addresses,
                                 ['io', 'map/active', 'map/activations']
                             );

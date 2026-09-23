@@ -79,7 +79,7 @@ POST/PATCH for Connection), consistent with "mutating methods are logged."
 ## Client changes (nmos-js)
 
 Channel Mapping in `dataProvider` currently gathers control hrefs and fetches
-them directly (`getChannelMappingEndPoints`). It does not consult Connection
+them directly (`getChannelMappingEndpoints`). It does not consult Connection
 Bridge Mode.
 
 - When Bridge Mode is **Forced**, use

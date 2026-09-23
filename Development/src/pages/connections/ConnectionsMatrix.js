@@ -1,4 +1,11 @@
-import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+    forwardRef,
+    useEffect,
+    useImperativeHandle,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import {
     Divider,
     IconButton,
@@ -12,6 +19,7 @@ import {
     withStyles,
 } from '@material-ui/core';
 import FilterListIcon from '@material-ui/icons/FilterList';
+import { unstable_batchedUpdates } from 'react-dom';
 import { Link } from 'react-router-dom';
 import {
     linkToRecord,
@@ -520,7 +528,6 @@ const unlinkReceiver = receiverId =>
     );
 
 const MatrixDot = ({
-    busy,
     column,
     flows,
     noConnectionApi,
@@ -561,7 +568,7 @@ const MatrixDot = ({
                 <MappingButton
                     checked={checked}
                     constraintWarning={Boolean(warning)}
-                    disabled={busy || noConnectionApi}
+                    disabled={noConnectionApi}
                     onClick={event =>
                         checked
                             ? onUnlink(receiver)
@@ -572,6 +579,46 @@ const MatrixDot = ({
         </Tooltip>
     );
 };
+
+// useState for this menu on the matrix re-renders every cell when it opens
+const ConnectionsLegMenu = forwardRef(({ onSelectLeg }, ref) => {
+    const [menu, setMenu] = useState(null);
+
+    useImperativeHandle(ref, () => ({
+        open: setMenu,
+        close: () => setMenu(null),
+    }));
+
+    return (
+        <Menu
+            anchorEl={menu && menu.anchorEl}
+            keepMounted
+            onClose={() => setMenu(null)}
+            open={Boolean(menu)}
+            anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'left',
+            }}
+            transformOrigin={{
+                vertical: 'bottom',
+                horizontal: 'left',
+            }}
+        >
+            {menu &&
+                [...Array(menu.legs).keys()].map(leg => (
+                    <MenuItem
+                        key={leg}
+                        onClick={() =>
+                            onSelectLeg(menu.senderId, menu.receiverId, leg)
+                        }
+                        style={{ fontSize: '0.875rem' }}
+                    >
+                        Leg {leg + 1}
+                    </MenuItem>
+                ))}
+        </Menu>
+    );
+});
 
 const ConnectionsMatrix = ({
     autoSort,
@@ -590,9 +637,12 @@ const ConnectionsMatrix = ({
     const { flows, flowsLoaded } = useConnectionFlows(senders);
     const refresh = useRefresh();
     const notify = useNotify();
-    const [busy, setBusy] = useState(false);
+    // a write in flight must not be joined by another. useState for that,
+    // passed into every cell as disabled, re-renders the whole matrix twice
+    // per click
+    const busy = useRef(false);
     const [noConnectionApi, setNoConnectionApi] = useState({});
-    const [legMenu, setLegMenu] = useState(null);
+    const legMenu = useRef(null);
     const senderGroups = renderedGroups(
         groupConnectionsResources(senders, devices, autoSort),
         expanded.senders
@@ -634,27 +684,33 @@ const ConnectionsMatrix = ({
     const senderMatchDisabled = port =>
         !(port.flow_id && flowsLoaded && flows[port.flow_id]);
 
+    // React 17 does not batch updates from a promise, so notify, refresh and
+    // closing the menu would each re-render the matrix in turn
     const finishWrite = () => {
-        notify('Element updated', 'info');
-        refresh();
-        setBusy(false);
-        setLegMenu(null);
+        busy.current = false;
+        unstable_batchedUpdates(() => {
+            notify('Element updated', 'info');
+            refresh();
+            legMenu.current.close();
+        });
     };
 
     const failWrite = (receiverId, error) => {
-        setBusy(false);
-        setLegMenu(null);
-        if (error && error.message === CONNECTION_API_NOT_AVAILABLE) {
-            setNoConnectionApi(current => ({
-                ...current,
-                [receiverId]: true,
-            }));
-        }
-        notifyConnectionError(notify, error);
+        busy.current = false;
+        unstable_batchedUpdates(() => {
+            legMenu.current.close();
+            if (error && error.message === CONNECTION_API_NOT_AVAILABLE) {
+                setNoConnectionApi(current => ({
+                    ...current,
+                    [receiverId]: true,
+                }));
+            }
+            notifyConnectionError(notify, error);
+        });
     };
 
     const connectPair = (senderId, receiverId, senderLeg) => {
-        setBusy(true);
+        busy.current = true;
         const options =
             senderLeg === undefined
                 ? undefined
@@ -665,8 +721,9 @@ const ConnectionsMatrix = ({
     };
 
     const onActivate = (sender, receiver, event) => {
+        if (busy.current) return;
         const ref = event.currentTarget;
-        setBusy(true);
+        busy.current = true;
         Promise.all([
             dataProvider('GET_ONE', 'senders', { id: sender.id }),
             dataProvider('GET_ONE', 'receivers', { id: receiver.id }),
@@ -684,8 +741,8 @@ const ConnectionsMatrix = ({
                     '$staged.transport_params.length'
                 );
                 if (receiverLegs === 1 && senderLegs > 1) {
-                    setBusy(false);
-                    setLegMenu({
+                    busy.current = false;
+                    legMenu.current.open({
                         anchorEl: ref,
                         legs: senderLegs,
                         receiverId: receiver.id,
@@ -701,7 +758,8 @@ const ConnectionsMatrix = ({
     };
 
     const onUnlink = receiver => {
-        setBusy(true);
+        if (busy.current) return;
+        busy.current = true;
         unlinkReceiver(receiver.id)
             .then(finishWrite)
             .catch(error => failWrite(receiver.id, error));
@@ -911,7 +969,6 @@ const ConnectionsMatrix = ({
                                                 }
                                             >
                                                 <MatrixDot
-                                                    busy={busy}
                                                     column={column}
                                                     flows={flows}
                                                     noConnectionApi={Boolean(
@@ -946,37 +1003,7 @@ const ConnectionsMatrix = ({
                     </TableBody>
                 </Table>
             </MatrixTableContainer>
-            <Menu
-                anchorEl={legMenu && legMenu.anchorEl}
-                keepMounted
-                onClose={() => setLegMenu(null)}
-                open={Boolean(legMenu)}
-                anchorOrigin={{
-                    vertical: 'top',
-                    horizontal: 'left',
-                }}
-                transformOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'left',
-                }}
-            >
-                {legMenu &&
-                    [...Array(legMenu.legs).keys()].map(leg => (
-                        <MenuItem
-                            key={leg}
-                            onClick={() =>
-                                connectPair(
-                                    legMenu.senderId,
-                                    legMenu.receiverId,
-                                    leg
-                                )
-                            }
-                            style={{ fontSize: '0.875rem' }}
-                        >
-                            Leg {leg + 1}
-                        </MenuItem>
-                    ))}
-            </Menu>
+            <ConnectionsLegMenu onSelectLeg={connectPair} ref={legMenu} />
         </>
     );
 };

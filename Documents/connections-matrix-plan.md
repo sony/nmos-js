@@ -1,7 +1,7 @@
 # Design plan: Connections matrix in nmos-js
 
-Status: in progress. Steps 0–6 are done. Polish (step 7) is not
-started.
+Status: v1 landed (steps 0–6b). After-v1 work is listed below; none of it
+is required for the acceptance list.
 
 ## Decisions (agreed)
 
@@ -11,7 +11,7 @@ started.
 | Collapse | Devices default collapsed. Ellipsis cells are not clickable (no Activate, no Unlink, no heading match). Expand both sides to a real sender × receiver cell. |
 | List paging | No next/prev on this page. Filter + cap is the window. |
 | Unlink | Checked expanded cell PATCHes that receiver `master_enable: false`, immediate. Do not also clear `sender_id`. No extra confirm. Stay on the matrix. |
-| Heading match | Filter icon on expanded port headings only. Writes essence filters on the **opposite** axis only (not label / description / id / tags). Sender match waits for Flow. Replace same-kind essence chips on that panel (`format`, `transport`, Flow media type / event type, receiver caps); keep any other chips (label, description, id, tags, device). |
+| Heading match | Filter icon on expanded port headings only. Writes essence filters on the **opposite** axis only (not label / description / id / tags). Sender match waits for Flow. Replace same-kind essence chips on that panel (`format`, `transport`, Flow media type / event type, receiver caps including constraint-set chips when the receiver has them); keep any other chips (label, description, id, tags, device). |
 | First visit | No default format (or other) chips. Empty FilterPanels; persist last-used JSON after the operator has set some. Try it in use. |
 | Click policy | Incompatible expanded cells stay clickable. Same distinction as IS-08: warning colour on the control and an infotip naming the first failing rank. Unlink stays available on a checked cell even if the pair would now rank incompatible. |
 | Nav icon | Material `GridOn` first. Custom SVG in `Development/src/icons` only if that looks wrong next to Sender / Receiver. |
@@ -216,10 +216,10 @@ Two separate problems:
 - **Fetch.** Registries are allowed to be large. `GET_MANY` already uses
   `paging.limit=1000` as a one-shot cap. Walking every `next` link for both
   collections is possible but slow, races with updates (`paging.order=update`),
-  and still needs a cap. nmos-js lists do not live-subscribe today; this page
-  should not be the first to invent Query WebSocket grains.
-- **Render.** A fully expanded matrix is `O(senders x receivers)` cells, each
-  an `IconButton`. IS-08 already feels heavy on a Device with many channels.
+  and still needs a cap. nmos-js lists do not subscribe to the Query API
+  WebSocket today; this page should not be the first to do so (see After v1).
+- **Render.** A fully expanded matrix is `O(senders x receivers)` cells.
+  IS-08 already feels heavy on a Device with many channels.
   50 x 50 is 2 500 buttons; 200 x 200 is 40 000. Browsers will not enjoy that
   even if the Query API would return the data.
 
@@ -289,15 +289,19 @@ must either:
 
 - attach Flow `format` / `media_type` onto each loaded sender (reference
   fetch, batched), or
-- only rank transport until Flows are loaded, which would over-claim
-  `Compatible`.
+- leave format and media type unknown until that batch returns.
+
+Missing Flow, transport, or media type is not a mismatch: only paint amber
+when both sides of a comparison are known and disagree.
 
 First cut should batch Flow lookups for the loaded sender window (not the
 whole registry). Without RQL, Connect-tab constraint-set filtering is already
-limited; matrix v1 can skip `constraint_sets` entirely (ranks reserved, not
-evaluated). When they are evaluated, fold the result into the existing
-Expected Constraint Violation infotip rather than a separate "not checked"
-line.
+limited; matrix v1 does not evaluate `caps.constraint_sets` on cells (ranks
+reserved). Heading match from a receiver may still write constraint-set
+chips onto the sender FilterPanel so Query can hide unlikely senders.
+When cells do evaluate constraint sets (After v1), fold the result into the
+existing Expected Constraint Violation infotip rather than a separate
+"not checked" line.
 
 Heading match from a sender needs that Flow too; disable the heading button
 until the Flow batch has returned.
@@ -372,12 +376,11 @@ does not copy label, description, id, or tags.
 FilterPanel already removes **one chip** with the small Clear icon on that
 chip. That is not enough after a heading match, which writes several essence
 fields at once. Each Connections FilterPanel also needs **clear this axis**:
-a control that drops every filter on that panel only (`setFilter({})` /
-empty object) and collapses the chips. Put it on the panel — a `MenuItem`
-in that panel's add-filter menu ("Clear sender filters" / "Clear receiver
-filters"), same pattern as IS-08 "Clear Custom Names". Do not add a global
-clear that wipes both axes in one click; independence means undo is per
-axis. Auto-sort and swap axes stay on that page's settings
+**None** in that panel's add-filter menu (next to **All**), which drops
+every filter on that panel only (`setFilter({})`) and collapses the chips.
+The prop that offers it is `noFilters`, next to `allFilters`. Do not add a
+global clear that wipes both axes in one click; independence means undo is
+per axis. Auto-sort and swap axes stay on that page's settings
 FilterPanel (same pattern as Channel Mapping settings) and are not cleared
 by either axis. They do not belong on the global Settings page.
 
@@ -385,8 +388,8 @@ by either axis. They do not belong on the global Settings page.
 
 The FilterPanels are enough for power users and not enough for "I am looking
 at this sender; show me who can take it." Put a small `FilterList` icon
-button on **expanded port headings only**. Not on collapsed Device headings:
-mixed ports, no single caps vector.
+button on **expanded port headings only**. Not on collapsed Device headings
+in v1 (see Non-goals).
 
 One click writes essence filters on the **opposite** axis only, then that
 axis's capped Query reloads. The clicked axis is left as it is. Do not copy
@@ -394,7 +397,7 @@ label, description, or id onto the other axis.
 
 On the opposite panel, **replace** chips of the same kind as the match
 writes (`format`, `transport`, `$flow.format` / `$flow.media_type` /
-`$flow.event_type`, receiver `caps` / media types). Do not intersect two
+`$flow.event_type`, receiver `caps` / media types / constraint sets). Do not intersect two
 format filters or two transport filters — the heading is a single caps
 vector, so the new values overwrite. **Keep** chips that heading match
 never writes (label, description, id, tags, `device_id`). That
@@ -412,8 +415,9 @@ From a **receiver** heading → **sender** panel:
 
 - The Connect tab `baseFilter`: `transport` with the RQL `|base$`
   alternative, `$flow.format`, `$flow.media_type` from `caps.media_types`,
-  `$flow.event_type` from `caps.event_types` when present. Skip
-  `$constraint_sets` in v1.
+  `$flow.event_type` from `caps.event_types` when present. Write
+  `$constraint_sets` chips from `caps.constraint_sets` when present (Query
+  filter only; cells still do not evaluate those sets).
 
 The opposite FilterPanel must show the written chips so they can be edited
 or cleared chip-by-chip or with clear-this-axis. Tooltip: "Filter receivers
@@ -438,21 +442,26 @@ Unchecking a checked expanded cell is Unlink: PATCH that **receiver**
 IS-05 write as `ActiveField` turning a receiver off.
 
 Do not clear `sender_id` in a separate step; disabling the receiver is
-enough. Do not fire Unlink on collapsed cells. No extra confirm dialog
-beyond what Activate already lacks. The cell infotip names the pair (and a
-rank or that the Connection API is not available); it does not say Unlink.
-The checked icon is the affordance.
+enough. Do not fire Unlink on collapsed cells. v1 has no extra confirm
+dialog beyond what Activate already lacks (same as Receiver Connect). The
+cell infotip names the pair (and a rank or that the Connection API is not
+available); it does not say Unlink. The checked icon is the affordance.
+
+Whether Activate / Unlink should instead sit behind a Show vs Edit mode
+(Channel Mapping already splits Device Show from Device Edit) is After v1,
+not a confirm dialog. The Connections page is a list, not a resource Show:
+a toggle or a pair of routes would be a new product choice, not a small
+copy of IS-08.
 
 ## UI sketch
 
 ```
 [ Sender filters ]          [ Receiver filters ]        [ Settings ]
-  chips… Clear axis           chips… Clear axis           auto sort
+  chips… None                  chips… None                   auto sort
   Add sender filter           Add receiver filter         swap axes
   (label, description, id,    (label, description, id,
    tags, format, transport,    tags, format, transport,
    $flow.*, device_id, active) caps / media types)
-```
 
 banner if truncated: Showing 100 of many senders matching filters.
 
@@ -510,31 +519,60 @@ basic query returned.
 
 ## Non-goals (v1)
 
+The matrix is **complementary** to Receiver Connect, not a replacement.
+Connect remains the per-receiver list that hides unlikely senders and can
+Stage. The matrix is a facility overview: both collections at once, mismatches
+visible, Activate / Unlink immediate. Keep both.
+
 - Literally all senders and receivers with no cap.
 - List-style next/prev on either axis.
-- Query WebSocket live grains.
-- Evaluating `caps.constraint_sets` (keep ranks reserved).
 - Prefetching IS-05 for every port.
 - Stage / scheduled activation from the cell.
 - Click-to-connect or Unlink on collapsed Device cells.
-- Heading match on collapsed Device headings.
-- Virtualized cell rendering (revisit if axis cap 100 x 100 is still too
-  heavy once expanded).
-- Making this a replacement for Receiver Connect tab.
-- Confirm dialogs on Activate / Unlink.
+- Heading match from a collapsed Device heading. Match is per expanded port
+  (one essence vector). A Device heading is only the Device chip and
+  collapse; there is no single transport/format/caps to write. Expand and
+  match from a port.
+
+## After v1
+
+- **Evaluate `caps.constraint_sets` on cells.** Heading match already writes
+  those chips as Query filters. Ranking them in the grid needs more
+  client-side code (reserved ranks `IncompatibleConstraintSets` /
+  `CompatibleConstraintSets`). Keep the result in the existing Expected
+  Constraint Violation infotip.
+- **Virtualize cells** only if users say a full Paging Limit × Paging
+  Limit expansion is still too heavy. After the one-element cell, a 100 ×
+  100 grid is usable; do not virtualize speculatively.
+- **Query API WebSocket.** After Activate the page already refreshes from
+  Query. A Query API WebSocket subscription (the same mechanism nmos-js
+  does not use on list pages today) would keep the matrix in step
+  when another controller changes IS-04 records, without waiting for refresh
+  or a later click. This page should not be the first list in nmos-js to
+  subscribe unless list pages do too, or Connections is deliberately the
+  place to start.
+- **Show vs Edit for Activate / Unlink.** Channel Mapping disables mapping
+  on Device Show and allows it on Device Edit. Connections is a nav list,
+  always writable, with no confirm. A page-level Show / Edit toggle, or a
+  pair of routes, would be a new choice (safer accidental clicks vs an extra
+  click on every intended connect). Confirm dialogs are the weaker form of
+  the same question; prefer deciding Show / Edit if the page feels too hot,
+  rather than adding dialogs on top of always-on cells.
 
 ## Sequencing
 
 | Step | Work |
 | --- | --- |
 | 0 | **Done.** Cap = global Paging Limit per axis (no `next`); collapsed cells not clickable; no list paging; Unlink disables the receiver; heading match writes the opposite axis only |
-| 1 | **Done.** IS-08 extract: overflow, fixed-size leaf columns, swap axes, parent/source heading visibility, sticky `thead` and left columns, per-axis Clear All |
+| 1 | **Done.** IS-08 extract: overflow, fixed-size leaf columns, swap axes, parent/source heading visibility, sticky `thead` and left columns, per-axis **None** (with **All**) |
 | 2 | **Done.** Page shell: nav **Connections**, icon, independent FilterPanels with per-axis clear, two capped `GET_LIST`s, truncation banner |
-| 3 | **Done.** Table with Device grouping, collapse, overflow scroll, sticky headings, IS-04 active dots only (read-only) |
-| 4 | **Done.** Compatibility ranks + warning colour + cell tooltips (no constraint_sets) |
+| 3 | **Done.** Table with Device grouping, collapse, overflow scroll, sticky headings, IS-04 active on cells |
+| 4 | **Done.** Compatibility ranks + warning colour + cell tooltips (no constraint_sets on cells); warn only when both sides of a comparison are known and disagree |
 | 5 | **Done.** Heading match writes **opposite** axis only; FilterPanel shows the chips |
 | 6 | **Done.** Click unused expanded cell → `makeConnection`; click checked → Unlink; stay on page; refresh IS-04 |
-| 7 | Polish: constraint_sets, live grains — only if v1 is used |
+| 6a | **Done.** Extra v1 features after the click path: heading infotips (id, label, format, transport; Active switch); the same interactive Active on Sender and Receiver Show; heading match from a receiver writes constraint-set chips; FilterPanel **All** / **None** and compact fields |
+| 6b | **Done.** Usable at Paging Limit scale: in-flight write and the sender-leg menu must not re-render every cell; each cell is one button (mask-image glyph) and creates its tooltip only when hovered |
+| 7 | After v1: constraint sets on cells, Query WebSocket, virtualize only if needed — see After v1 |
 
 ## Acceptance (v1)
 

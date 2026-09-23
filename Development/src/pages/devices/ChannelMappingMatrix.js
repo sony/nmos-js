@@ -1814,7 +1814,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                 filter={outputsFilter}
                 setFilter={setOutputsFilter}
                 filterButtonLabel={'Output filters'}
-                clearAllFilters
+                noFilters
             >
                 <StringFilter source="output id" />
                 <StringFilter source="output name" />
@@ -1826,7 +1826,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                 filter={inputsFilter}
                 setFilter={setInputsFilter}
                 filterButtonLabel={'Input filters'}
-                clearAllFilters
+                noFilters
             >
                 <StringFilter source="input id" />
                 <StringFilter source="input name" />

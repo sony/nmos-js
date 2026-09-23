@@ -38,7 +38,7 @@ const AxisFilters = ({ filter, setFilter, filterButtonLabel, resource }) => (
         filter={filter}
         setFilter={setFilter}
         filterButtonLabel={filterButtonLabel}
-        clearAllFilters
+        noFilters
     >
         <StringFilter source="label" />
         <StringFilter source="description" />

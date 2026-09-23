@@ -2,7 +2,6 @@ import React, {
     forwardRef,
     useEffect,
     useImperativeHandle,
-    useMemo,
     useRef,
     useState,
 } from 'react';
@@ -26,6 +25,7 @@ import {
     useDataProvider,
     useNotify,
     useRefresh,
+    useVersion,
 } from 'react-admin';
 import get from 'lodash/get';
 import groupBy from 'lodash/groupBy';
@@ -215,19 +215,24 @@ export const connectionsCornerLabels = swapAxes =>
 const useConnectionDevices = (senders, receivers) => {
     const dataProvider = useDataProvider();
     const notify = useNotify();
-    const ids = useMemo(
-        () =>
-            uniq(
-                [...senders, ...receivers]
-                    .map(resource => resource.device_id)
-                    .filter(Boolean)
-            ),
-        [senders, receivers]
-    );
+    const version = useVersion();
+    // senders/receivers are a new array every parent render, so a useMemo
+    // on those would still be a new ids array; getMany only when the set
+    // of ids or a page refresh actually changed
+    const idsKey = [
+        ...uniq(
+            [...senders, ...receivers]
+                .map(resource => resource.device_id)
+                .filter(Boolean)
+        ),
+    ]
+        .sort()
+        .join(',');
     const [devices, setDevices] = useState({});
 
     useEffect(() => {
         let active = true;
+        const ids = idsKey ? idsKey.split(',') : [];
         if (ids.length === 0) {
             setDevices({});
             return () => {
@@ -256,7 +261,7 @@ const useConnectionDevices = (senders, receivers) => {
         return () => {
             active = false;
         };
-    }, [dataProvider, ids, notify]);
+    }, [dataProvider, idsKey, notify, version]);
 
     return devices;
 };
@@ -264,15 +269,19 @@ const useConnectionDevices = (senders, receivers) => {
 const useConnectionFlows = senders => {
     const dataProvider = useDataProvider();
     const notify = useNotify();
-    const ids = useMemo(
-        () => uniq(senders.map(sender => sender.flow_id).filter(Boolean)),
-        [senders]
-    );
+    const version = useVersion();
+    // same as devices: senders is a new array every parent render
+    const idsKey = [
+        ...uniq(senders.map(sender => sender.flow_id).filter(Boolean)),
+    ]
+        .sort()
+        .join(',');
     const [flows, setFlows] = useState({});
     const [flowsLoaded, setFlowsLoaded] = useState(false);
 
     useEffect(() => {
         let active = true;
+        const ids = idsKey ? idsKey.split(',') : [];
         if (ids.length === 0) {
             setFlows({});
             setFlowsLoaded(true);
@@ -300,7 +309,7 @@ const useConnectionFlows = senders => {
         return () => {
             active = false;
         };
-    }, [dataProvider, ids, notify]);
+    }, [dataProvider, idsKey, notify, version]);
 
     return { flows, flowsLoaded };
 };

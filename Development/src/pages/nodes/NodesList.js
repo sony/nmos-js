@@ -11,8 +11,15 @@ import {
 } from '@material-ui/core';
 import { Loading, ShowButton, Title } from 'react-admin';
 import { get } from 'lodash';
-import FilterPanel, { StringFilter } from '../../components/FilterPanel';
+import FilterPanel, {
+    AutocompleteFilter,
+    StringFilter,
+} from '../../components/FilterPanel';
 import ListActions from '../../components/ListActions';
+import {
+    SERVICE_TYPES,
+    parameterAutocompleteProps,
+} from '../../components/ParameterRegisters';
 import PaginationButtons from '../../components/PaginationButtons';
 import useGetList from '../../components/useGetList';
 import {
@@ -97,6 +104,11 @@ const NodesList = props => {
                                 label="Interface Port ID"
                             />
                         )}
+                        <AutocompleteFilter
+                            label="Service Types"
+                            source="services.type"
+                            {...parameterAutocompleteProps(SERVICE_TYPES)}
+                        />
                         <StringFilter source="id" />
                     </FilterPanel>
                     <Table>

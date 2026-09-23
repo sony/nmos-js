@@ -41,6 +41,10 @@ import {
 
 // which access path, direct or bridge, most recently worked for each Device
 const deviceAccessPaths = new Map();
+// the Connection API address that answered first successfully for this
+// Device last time. The next request tries it alone, and only races all
+// the advertised addresses again if it fails
+const deviceConnectionAddresses = new Map();
 
 const apiResource = resource => {
     let api;
@@ -747,6 +751,7 @@ const firstOf = ps => {
 const getConnectionResourceEndpoints = (addresses, resource, id) => {
     const endpointData = [];
     let connectionAPI;
+    let connectionAddress;
     const controller = new AbortController();
     const signal = controller.signal;
     const fetchOptions = isAuth()
@@ -761,11 +766,12 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
                     fetch(
                         concatUrl(address, `/single/${resource}/${id}`),
                         fetchOptions
-                    )
+                    ).then(response => ({ address, response }))
                 );
             })
         )
-            .then(response => {
+            .then(({ address, response }) => {
+                connectionAddress = address;
                 connectionAPI = response.url;
                 return response.json();
             })
@@ -805,7 +811,7 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
                 ).then(() => {
                     endpointData.push({ $connectionAPI: connectionAPI });
                     controller.abort();
-                    resolve(endpointData);
+                    resolve({ connectionAddress, endpointData });
                 });
             })
             .catch(errors => {
@@ -1019,15 +1025,31 @@ const convertHTTPResponseToDataProvider = async (
                     ) {
                         attempts.reverse();
                     }
+                    // the address that answered last time is worth trying on
+                    // its own before racing every one the Device advertises
+                    const rememberedAddress =
+                        deviceConnectionAddresses.get(deviceId);
+                    if (
+                        mode !== BRIDGE_FORCED &&
+                        connectionAddresses[version].includes(rememberedAddress)
+                    ) {
+                        attempts.unshift(['direct', [rememberedAddress]]);
+                    }
                     for (const [path, addresses] of attempts) {
+                        let connectionAddress;
                         try {
-                            endpointData = await getConnectionResourceEndpoints(
-                                addresses,
-                                resource,
-                                params.id
-                            );
+                            ({ connectionAddress, endpointData } =
+                                await getConnectionResourceEndpoints(
+                                    addresses,
+                                    resource,
+                                    params.id
+                                ));
                         } catch (e) {}
                         if (endpointData) {
+                            deviceConnectionAddresses.set(
+                                deviceId,
+                                connectionAddress
+                            );
                             accessPath = path;
                             break;
                         }
@@ -1038,6 +1060,7 @@ const convertHTTPResponseToDataProvider = async (
                     deviceAccessPaths.set(deviceId, accessPath);
                 } else {
                     deviceAccessPaths.delete(deviceId);
+                    deviceConnectionAddresses.delete(deviceId);
                 }
 
                 // just return IS-04 data if no Connection API was able to connect

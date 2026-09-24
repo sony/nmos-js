@@ -24,6 +24,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import Brightness7Icon from '@material-ui/icons/Brightness7';
 import Brightness4Icon from '@material-ui/icons/Brightness4';
+import { useEditingContext } from '../components/EditingContext';
 import ThemeContext from '../theme/ThemeContext';
 import { useTheme } from '@material-ui/styles';
 import { disabledSetting, hiddenSetting, useJSONSetting } from '../settings';
@@ -93,10 +94,13 @@ const RefreshSelector = () => {
     const refresh = useRefresh();
     const version = useVersion();
     const location = useLocation();
+    const [editingCount] = useEditingContext();
     useEffect(() => {
         setPercentage(0);
     }, [location]);
     const disable = (() => {
+        // fields being edited in place, e.g. annotations on a show view
+        if (editingCount) return true;
         const url = location.pathname.split('/');
         // #/{resourceType} is a list view
         // #/{resourceType}/create is (obviously enough) a create view

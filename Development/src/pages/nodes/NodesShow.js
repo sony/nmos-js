@@ -14,8 +14,14 @@ import {
 import LinkIcon from '@material-ui/icons/Link';
 import LinkChipField from '../../components/LinkChipField';
 import ItemArrayField from '../../components/ItemArrayField';
-import ObjectField from '../../components/ObjectField';
-import { TAGS } from '../../components/ParameterRegisters';
+import AnnotationFields, {
+    AnnotationTagsField,
+    AnnotationTextField,
+} from '../../components/AnnotationFields';
+import {
+    ParameterField,
+    SERVICE_TYPES,
+} from '../../components/ParameterRegisters';
 import ResourceShowActions from '../../components/ResourceShowActions';
 import ResourceTitle from '../../components/ResourceTitle';
 import TAIField from '../../components/TAIField';
@@ -47,11 +53,13 @@ const NodesShowView = props => {
             <SimpleShowLayout>
                 <TextField label="ID" source="id" />
                 <TAIField source="version" />
-                <TextField source="label" />
-                {queryVersion() >= 'v1.1' && <TextField source="description" />}
-                {queryVersion() >= 'v1.1' && (
-                    <ObjectField register={TAGS} source="tags" />
-                )}
+                <AnnotationFields>
+                    <AnnotationTextField source="label" />
+                    {queryVersion() >= 'v1.1' && (
+                        <AnnotationTextField source="description" />
+                    )}
+                    {queryVersion() >= 'v1.1' && <AnnotationTagsField />}
+                </AnnotationFields>
                 <SanitizedDivider />
                 <UrlField source="href" label="Address" />
                 <TextField source="hostname" />
@@ -98,7 +106,10 @@ const NodesShowView = props => {
                 <ArrayField source="services">
                     <UnsortableDatagrid>
                         <UrlField source="href" label="Address" />
-                        <TextField source="type" />
+                        <ParameterField
+                            source="type"
+                            register={SERVICE_TYPES}
+                        />
                         {queryVersion() >= 'v1.3' && (
                             <BooleanField source="authorization" />
                         )}

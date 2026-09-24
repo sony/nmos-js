@@ -1,6 +1,7 @@
 import { Tooltip, Typography } from '@material-ui/core';
 import { get, map } from 'lodash';
 import HintTypography from './HintTypography';
+import labelize from './labelize';
 import { FRIENDLY_PARAMETERS, useJSONSetting } from '../settings';
 
 // const SOME_PARAMETER_REGISTER = {
@@ -42,8 +43,19 @@ export const Parameter = ({ register, value }) => {
     const version = parameterVersion(value);
     const unfriendly = unversioned + (version ? '/' + version : '');
     const info = get(register, unversioned);
-    if (info) {
-        const friendly = info.label + (version ? ' ' + version : '');
+    // a register entry ending with ':' is a namespace which must be followed
+    // by a user-assigned name, e.g. 'urn:x-nmos:tag:user:favourite-colour'
+    const lastColon = unversioned.lastIndexOf(':');
+    const name = unversioned.substring(lastColon + 1);
+    const namespace =
+        info || !name
+            ? undefined
+            : get(register, unversioned.substring(0, lastColon + 1));
+    if (info || namespace) {
+        const label = info
+            ? info.label
+            : namespace.label + ' ' + labelize(name);
+        const friendly = label + (version ? ' ' + version : '');
         return (
             <div key={unversioned}>
                 <Tooltip
@@ -91,7 +103,7 @@ export const CONTROL_TYPES = {
     // IS-05
     'urn:x-nmos:control:sr-ctrl': {
         label: 'Connection API',
-        versions: ['v1.1', 'v1.0'],
+        versions: ['v1.2', 'v1.1', 'v1.0'],
     },
     // IS-07
     'urn:x-nmos:control:events': {
@@ -105,12 +117,27 @@ export const CONTROL_TYPES = {
     },
     // IS-12
     'urn:x-nmos:control:ncp': {
-        label: 'Device Control Protocol',
+        label: 'Control Protocol',
+        versions: ['v1.0'],
+    },
+    // IS-14
+    'urn:x-nmos:control:configuration': {
+        label: 'Configuration API',
         versions: ['v1.0'],
     },
     // Manifest Base
     'urn:x-nmos:control:manifest-base': {
         label: 'Manifest Base',
+        versions: ['v1.0'],
+    },
+};
+
+// Node Service Types in the NMOS Parameter Registers
+// see https://github.com/AMWA-TV/nmos-parameter-registers/tree/master/node-service-types
+export const SERVICE_TYPES = {
+    // IS-13
+    'urn:x-nmos:service:annotation': {
+        label: 'Annotation API',
         versions: ['v1.0'],
     },
 };
@@ -138,6 +165,10 @@ export const TAGS = {
     'urn:x-nmos:tag:grouphint': {
         label: 'Group Hint',
         versions: ['v1.0'],
+    },
+    // IS-13 requires tags in the user namespace to be writable
+    'urn:x-nmos:tag:user:': {
+        label: 'User-Assigned Tag',
     },
     // Work-in-progress BCP-002-02 Asset Distinguishing Information
     // See https://specs.amwa.tv/bcp-002-02/

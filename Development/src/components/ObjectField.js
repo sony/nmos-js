@@ -16,7 +16,11 @@ export const ObjectField = ({ register, record, source }) =>
             <TableHead>
                 <TableRow>
                     <TableCell>Name</TableCell>
-                    <TableCell>Value(s)</TableCell>
+                    <TableCell>
+                        {map(get(record, source)).some(Array.isArray)
+                            ? 'Values'
+                            : 'Value'}
+                    </TableCell>
                 </TableRow>
             </TableHead>
             <TableBody>
@@ -26,7 +30,9 @@ export const ObjectField = ({ register, record, source }) =>
                             <Parameter register={register} value={key} />
                         </TableCell>
                         {Array.isArray(value) ? (
-                            <TableCell>{value.join(', ')}</TableCell>
+                            <TableCell style={{ whiteSpace: 'pre-line' }}>
+                                {value.join('\n')}
+                            </TableCell>
                         ) : (
                             <TableCell>{value}</TableCell>
                         )}

@@ -17,6 +17,7 @@ import {
     withStyles,
 } from '@material-ui/core';
 import { useTheme } from '@material-ui/styles';
+import emphasizedPaper from '../theme/emphasizedPaper';
 import { Title } from 'react-admin';
 import {
     AUTH_API,
@@ -118,10 +119,7 @@ const Settings = () => {
     const [tab, setTab] = useState(selectedTab);
 
     const theme = useTheme();
-    const tabBackgroundColor =
-        theme.palette.type === 'light'
-            ? theme.palette.grey[100]
-            : theme.palette.grey[900];
+    const tabBackgroundColor = emphasizedPaper(theme);
 
     const handleTextChange = name => event => {
         setValues({ ...values, [name]: event.target.value });

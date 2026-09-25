@@ -16,14 +16,12 @@ import { useTheme } from '@material-ui/styles';
 import ConnectionEditActions from '../../components/ConnectionEditActions';
 import ConnectionEditToolbar from '../../components/ConnectionEditToolbar';
 import ResourceTitle from '../../components/ResourceTitle';
+import emphasizedPaper from '../../theme/emphasizedPaper';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
 
 const ReceiversEdit = props => {
     const theme = useTheme();
-    const tabBackgroundColor =
-        theme.palette.type === 'light'
-            ? theme.palette.grey[100]
-            : theme.palette.grey[900];
+    const tabBackgroundColor = emphasizedPaper(theme);
     return (
         <>
             <div style={{ display: 'flex' }}>

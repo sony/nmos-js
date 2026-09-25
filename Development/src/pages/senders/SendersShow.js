@@ -16,6 +16,7 @@ import {
 import { get, has } from 'lodash';
 import copy from 'clipboard-copy';
 import { useTheme } from '@material-ui/styles';
+import emphasizedPaper from '../../theme/emphasizedPaper';
 import LinkChipField from '../../components/LinkChipField';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
 import ItemArrayField from '../../components/ItemArrayField';
@@ -59,10 +60,7 @@ const SendersShowView = props => {
     }, [record]);
 
     const theme = useTheme();
-    const tabBackgroundColor =
-        theme.palette.type === 'light'
-            ? theme.palette.grey[100]
-            : theme.palette.grey[900];
+    const tabBackgroundColor = emphasizedPaper(theme);
     return (
         <>
             <div style={{ display: 'flex' }}>

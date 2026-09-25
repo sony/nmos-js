@@ -1,7 +1,54 @@
 import {
     channelMappingConstraintWarnings,
+    channelMappingCornerLabels,
+    getMappingTableColumns,
     isRoutableInput,
+    showMappingAssociations,
 } from './ChannelMappingMatrix';
+
+describe('matrix layout', () => {
+    const inputs = [
+        ['input0', { channels: [{}, {}] }],
+        ['input1', { channels: [{}] }],
+    ];
+    const outputs = [
+        ['output0', { channels: [{}, {}, {}] }],
+        ['output1', { channels: [{}] }],
+    ];
+    const isExpanded = (resource, id) =>
+        (resource === 'inputs' && id === 'input0') ||
+        (resource === 'outputs' && id === 'output0');
+
+    it('uses output leaves as columns in the default orientation', () => {
+        expect(
+            getMappingTableColumns(inputs, outputs, isExpanded, false)
+        ).toEqual(['output0.0', 'output0.1', 'output0.2', 'output1']);
+        expect(channelMappingCornerLabels(false)).toEqual({
+            rows: 'INPUTS',
+            columns: 'OUTPUTS',
+        });
+    });
+
+    it('uses unrouted and input leaves as columns when axes are swapped', () => {
+        expect(
+            getMappingTableColumns(inputs, outputs, isExpanded, true)
+        ).toEqual(['unrouted', 'input0.0', 'input0.1', 'input1']);
+        expect(channelMappingCornerLabels(true)).toEqual({
+            rows: 'OUTPUTS',
+            columns: 'INPUTS',
+        });
+    });
+
+    it('shows parent and source headings unless explicitly hidden', () => {
+        expect(showMappingAssociations()).toBe(true);
+        expect(
+            showMappingAssociations({ 'parent/source headings': true })
+        ).toBe(true);
+        expect(
+            showMappingAssociations({ 'parent/source headings': false })
+        ).toBe(false);
+    });
+});
 
 describe('isRoutableInput', () => {
     it('allows any input when routable_inputs is null', () => {

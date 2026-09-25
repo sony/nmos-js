@@ -6,27 +6,18 @@ import {
     Menu,
     MenuItem,
     Switch,
-    Table,
-    TableBody,
-    TableCell,
-    TableRow,
     TextField,
     Typography,
     withStyles,
 } from '@material-ui/core';
 import { Autocomplete } from '@material-ui/lab';
 import get from 'lodash/get';
+import isEmpty from 'lodash/isEmpty';
 
 import ClearIcon from '@material-ui/icons/Clear';
 import FilterListIcon from '@material-ui/icons/FilterList';
 
 import labelize from './labelize';
-
-const StyledTableCell = withStyles({
-    root: {
-        borderBottom: 'none',
-    },
-})(TableCell);
 
 export const AllFilters = ({ label = 'All' }) => <Fragment />;
 
@@ -443,8 +434,9 @@ const FilterPanel = ({
     defaultFilter,
     filter,
     setFilter,
-    filterButtonLabel = 'Add filter',
+    filterButtonLabel = 'Filters',
     allFilters = true,
+    clearAllFilters = false,
 }) => {
     const cloneFilter = (child, autoFocus = false) =>
         React.cloneElement(child, {
@@ -525,31 +517,46 @@ const FilterPanel = ({
         });
     };
 
+    const clearFilters = () => {
+        handleClose();
+        setDisplayedFilters({});
+        setFilter({});
+    };
+
+    // nothing to clear until this panel has a filter
+    const showClearAllFilters = clearAllFilters && !isEmpty(displayedFilters);
+
     const open = Boolean(anchorEl);
 
     return (
         <div style={{ display: 'flex', width: '100%' }}>
-            <Table style={{ display: 'inline', flex: 1 }}>
-                <TableBody>
-                    <TableRow>
-                        {Object.keys(displayedFilters).map(key => (
-                            <Fragment key={key}>
-                                <StyledTableCell>
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => removeFilter(key)}
-                                    >
-                                        <ClearIcon />
-                                    </IconButton>
-                                </StyledTableCell>
-                                <StyledTableCell padding="none">
-                                    {displayedFilters[key]}
-                                </StyledTableCell>
-                            </Fragment>
-                        ))}
-                    </TableRow>
-                </TableBody>
-            </Table>
+            <div
+                style={{
+                    display: 'flex',
+                    flex: 1,
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                }}
+            >
+                {Object.keys(displayedFilters).map(key => (
+                    <div
+                        key={key}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            marginRight: '16px',
+                        }}
+                    >
+                        <IconButton
+                            size="small"
+                            onClick={() => removeFilter(key)}
+                        >
+                            <ClearIcon />
+                        </IconButton>
+                        {displayedFilters[key]}
+                    </div>
+                ))}
+            </div>
             <Button
                 size="small"
                 onClick={handleClick}
@@ -579,6 +586,10 @@ const FilterPanel = ({
                 {React.Children.map(children, addMenuItem)}
                 {allFilters && <Divider />}
                 {allFilters && addMenuItem(<AllFilters />)}
+                {showClearAllFilters && <Divider />}
+                {showClearAllFilters && (
+                    <MenuItem onClick={clearFilters}>{'Clear All'}</MenuItem>
+                )}
             </Menu>
         </div>
     );

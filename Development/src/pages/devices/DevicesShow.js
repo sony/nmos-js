@@ -31,6 +31,7 @@ import {
 import { Link, Route } from 'react-router-dom';
 import { get, isEmpty, map } from 'lodash';
 import { useTheme } from '@material-ui/styles';
+import emphasizedPaper from '../../theme/emphasizedPaper';
 import LinkChipField from '../../components/LinkChipField';
 import AnnotationFields, {
     AnnotationTagsField,
@@ -93,10 +94,7 @@ const DevicesShowView = props => {
         };
     }, []);
     const theme = useTheme();
-    const tabBackgroundColor =
-        theme.palette.type === 'light'
-            ? theme.palette.grey[100]
-            : theme.palette.grey[900];
+    const tabBackgroundColor = emphasizedPaper(theme);
     return (
         <>
             <div style={{ display: 'flex' }}>

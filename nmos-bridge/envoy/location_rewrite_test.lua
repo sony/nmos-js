@@ -414,6 +414,38 @@ test("handle_location_channelmapping_target", function()
     )
 end)
 
+-- Annotation uses the same HTTP Location policy, but its bridge identifier is
+-- a Node service rather than a Device control.
+local ANNOTATION_BASE = "/x-nmos/annotation/v1.0"
+local ANNOTATION_BRIDGE =
+    "/x-nmos-bridge/v1.0/nodes/n1/annotation/v1.0"
+local ANNOTATION = {
+    base_path = ANNOTATION_BASE,
+    bridge_path = ANNOTATION_BRIDGE,
+    downstream_path = ANNOTATION_BRIDGE .. "/node/senders/s1",
+    upstream_authorities = "node.local:80",
+}
+
+test("handle_location_annotation_target", function()
+    assert_eq(
+        ANNOTATION_BRIDGE .. "/node/senders/s1",
+        handle(ANNOTATION_BASE .. "/node/senders/s1", ANNOTATION),
+        "root-relative resource -> bridge path"
+    )
+    assert_eq(
+        "http://controller.example:8080"
+            .. ANNOTATION_BRIDGE
+            .. "/node/senders/s1",
+        handle(
+            "http://node.local"
+                .. ANNOTATION_BASE
+                .. "/node/senders/s1",
+            ANNOTATION
+        ),
+        "absolute candidate resource -> bridge absolute"
+    )
+end)
+
 -- ---------------------------------------------------------------------------
 -- Envoy entry points (mock handles)
 -- ---------------------------------------------------------------------------

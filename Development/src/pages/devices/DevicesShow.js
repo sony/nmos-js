@@ -53,8 +53,8 @@ import dataProvider from '../../dataProvider';
 import {
     BRIDGE_FORCED,
     bridgeMode,
-    bridgeUrl,
     buildIs12BrowserLaunchUrl,
+    deviceBridgeUrl,
     is12BrowserUrl,
     queryVersion,
 } from '../../settings';
@@ -171,7 +171,9 @@ const ControlAddressField = ({
             const version = (get(record, 'type') || '').split('/').pop();
             if (version) {
                 try {
-                    const url = new URL(bridgeUrl(deviceId, 'ncp', version));
+                    const url = new URL(
+                        deviceBridgeUrl(deviceId, 'ncp', version)
+                    );
                     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
                     ncpHref = url.toString();
                 } catch (e) {

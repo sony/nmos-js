@@ -34,8 +34,8 @@ import {
     apiUsingRql,
     apiVersion,
     bridgeMode,
-    bridgeUrl,
     concatUrl,
+    deviceBridgeUrl,
     usingAuth,
 } from './settings';
 
@@ -1004,7 +1004,7 @@ const convertHTTPResponseToDataProvider = async (
                         attempts.push([
                             'bridge',
                             [
-                                bridgeUrl(
+                                deviceBridgeUrl(
                                     deviceId,
                                     'connection',
                                     connectionVersion
@@ -1109,7 +1109,7 @@ const convertHTTPResponseToDataProvider = async (
                         attempts.push([
                             'bridge',
                             [
-                                bridgeUrl(
+                                deviceBridgeUrl(
                                     deviceId,
                                     'channelmapping',
                                     channelmappingVersion

@@ -35,11 +35,21 @@ import { TableInput } from './ObjectInput';
 import { useEditingField } from './EditingContext';
 import labelize from './labelize';
 import { resourceUrl } from '../dataProvider';
-import { concatUrl, usingAuth } from '../settings';
+import {
+    BRIDGE_API,
+    BRIDGE_AUTO,
+    BRIDGE_FORCED,
+    apiUrl,
+    bridgeMode,
+    concatUrl,
+    nodeBridgeUrl,
+    usingAuth,
+} from '../settings';
 
 const ANNOTATION_SERVICE_TYPE = 'urn:x-nmos:service:annotation/';
 // the only namespace which must be read-write
 const USER_TAG_PREFIX = 'urn:x-nmos:tag:user:';
+const annotationAccessPaths = new Map();
 
 const requestHeaders = () => {
     const headers = new Headers({ Accept: 'application/json' });
@@ -87,10 +97,42 @@ export const annotationResourceUrl = async (resource, record) => {
     if (!service) return null;
 
     const path =
-        resource === 'nodes'
-            ? '/node/self/'
-            : `/node/${resource}/${record.id}/`;
-    return concatUrl(service.href, path);
+        resource === 'nodes' ? '/node/self' : `/node/${resource}/${record.id}`;
+    const directUrl = concatUrl(service.href, path);
+    const mode = bridgeMode();
+    if (mode !== BRIDGE_AUTO && mode !== BRIDGE_FORCED) return directUrl;
+
+    const version = service.type.slice(ANNOTATION_SERVICE_TYPE.length);
+    const bridgeResource = nodeBridgeUrl(node.id, 'annotation', version);
+    const bridgeUrl = concatUrl(bridgeResource, path);
+    if (mode === BRIDGE_FORCED) return bridgeUrl;
+
+    const attempts = [
+        ['direct', directUrl],
+        ['bridge', bridgeUrl],
+    ];
+    if (annotationAccessPaths.get(node.id) === 'bridge') attempts.reverse();
+
+    for (const [accessPath, url] of attempts) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        try {
+            const response = await fetch(url, {
+                headers: requestHeaders(),
+                signal: controller.signal,
+            });
+            if (response.ok) {
+                annotationAccessPaths.set(node.id, accessPath);
+                return url;
+            }
+        } catch {
+            // try the other access path
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+    annotationAccessPaths.delete(node.id);
+    return null;
 };
 
 // each field gets the wrapper that SimpleShowLayout gives its own children,
@@ -495,7 +537,9 @@ const AnnotationFields = ({ children, register = TAGS }) => {
     const { record } = useRecordContext();
     const resource = useResourceContext();
     const notify = useNotify();
-    const key = record && `${resource}/${record.id}`;
+    const key =
+        record &&
+        `${resource}/${record.id}/${bridgeMode()}/${apiUrl(BRIDGE_API)}`;
     const [url, setUrl] = useState(() => annotationUrls.get(key));
     const [annotation, setAnnotation] = useState(record);
 

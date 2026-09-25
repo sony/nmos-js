@@ -813,6 +813,12 @@ const ChannelMappingCell = ({
         outputChannelIndex,
         outputItem
     );
+    const checked = isMapped(
+        inputId,
+        outputId,
+        inputChannelIndex,
+        outputChannelIndex
+    );
 
     return (
         <MatrixCell>
@@ -866,13 +872,9 @@ const ChannelMappingCell = ({
                             outputChannelIndex
                         )
                     }
-                    checked={isMapped(
-                        inputId,
-                        outputId,
-                        inputChannelIndex,
-                        outputChannelIndex
-                    )}
+                    checked={checked}
                     constraintWarning={constraintWarning}
+                    showOnHover={Boolean(constraintWarning) && !checked}
                 />
             </div>
         </MatrixCell>
@@ -1741,7 +1743,6 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
         outputChannelIndex,
         outputItem
     ) => {
-        if (isShow) return;
         return isMapped(
             inputId,
             outputId,

@@ -69,6 +69,11 @@ export const MatrixCell = withStyles(theme => ({
     root: {
         ...matrixCellStyle(theme),
         height: CELL_EXTENT,
+        // the whole square reveals a control the matrix draws only on hover,
+        // so the pointer does not have to find an invisible circle
+        '&:hover button': {
+            opacity: 1,
+        },
     },
 }))(TableCell);
 

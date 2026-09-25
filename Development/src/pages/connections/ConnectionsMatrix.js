@@ -590,6 +590,7 @@ const MatrixDot = ({
                 checked={checked}
                 constraintWarning={Boolean(warning)}
                 disabled={noConnectionApi}
+                showOnHover={Boolean(warning) && !checked}
                 onClick={event =>
                     checked
                         ? onUnlink(receiver)

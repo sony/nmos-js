@@ -50,9 +50,12 @@ const styles = theme => {
             margin: 0,
             padding: BUTTON_PADDING,
             verticalAlign: 'middle',
-            transition: theme.transitions.create('background-color', {
-                duration: theme.transitions.duration.shortest,
-            }),
+            transition: theme.transitions.create(
+                ['background-color', 'opacity'],
+                {
+                    duration: theme.transitions.duration.shortest,
+                }
+            ),
             '&::before': {
                 backgroundColor: 'currentColor',
                 content: '""',
@@ -104,11 +107,20 @@ const styles = theme => {
                 color: warningAt(divider),
             },
         },
+        // a pair the records rule out is a ring to look past on every row.
+        // Draw it once the pointer is on its cell, or the keyboard is on the
+        // control, so it can still be tried
+        showOnHover: {
+            opacity: 0,
+            '&:focus': {
+                opacity: 1,
+            },
+        },
     };
 };
 
 const MatrixButton = forwardRef(
-    ({ checked, classes, constraintWarning, ...props }, ref) => {
+    ({ checked, classes, constraintWarning, showOnHover, ...props }, ref) => {
         const warningClass = checked
             ? classes.constraintWarning
             : classes.constraintWarningUnchecked;
@@ -118,6 +130,7 @@ const MatrixButton = forwardRef(
                     classes.root,
                     checked ? classes.checked : classes.unchecked,
                     constraintWarning && warningClass,
+                    showOnHover && classes.showOnHover,
                 ]
                     .filter(Boolean)
                     .join(' ')}

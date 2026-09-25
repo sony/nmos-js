@@ -26,6 +26,10 @@ const UNCHECKED_GLYPH = glyph(CIRCLE);
 const ICON_EXTENT = 24;
 const BUTTON_PADDING = 3;
 
+// Material-UI fades a hover by 0.04 in light and 0.08 in dark. A control this
+// small on a grid this busy needs the stronger of the two in either theme
+const HOVER_OPACITY = 0.08;
+
 // a control reads one step weaker for each thing that makes it less of an
 // action to take: unchecked rather than checked, and disabled in Show. The
 // steps are Material-UI's own action.active, action.disabled and divider.
@@ -50,12 +54,9 @@ const styles = theme => {
             margin: 0,
             padding: BUTTON_PADDING,
             verticalAlign: 'middle',
-            transition: theme.transitions.create(
-                ['background-color', 'opacity'],
-                {
-                    duration: theme.transitions.duration.shortest,
-                }
-            ),
+            transition: theme.transitions.create('background-color', {
+                duration: theme.transitions.duration.shortest,
+            }),
             '&::before': {
                 backgroundColor: 'currentColor',
                 content: '""',
@@ -68,7 +69,7 @@ const styles = theme => {
                 borderStyle: 'none',
             },
             '&:hover': {
-                backgroundColor: fade(text.primary, action.hoverOpacity),
+                backgroundColor: fade(text.primary, HOVER_OPACITY),
                 '@media (hover: none)': {
                     backgroundColor: 'transparent',
                 },
@@ -112,8 +113,16 @@ const styles = theme => {
         // control, so it can still be tried
         showOnHover: {
             opacity: 0,
+            // leave slower than enter so a sweep leaves a short trail of rings
+            transition: [
+                theme.transitions.create('background-color', {
+                    duration: theme.transitions.duration.shortest,
+                }),
+                theme.transitions.create('opacity', { duration: 600 }),
+            ].join(','),
             '&:focus': {
                 opacity: 1,
+                transitionDuration: `${theme.transitions.duration.shorter}ms`,
             },
         },
     };

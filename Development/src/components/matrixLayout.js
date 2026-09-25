@@ -73,6 +73,7 @@ export const MatrixCell = withStyles(theme => ({
         // so the pointer does not have to find an invisible circle
         '&:hover button': {
             opacity: 1,
+            transitionDuration: `${theme.transitions.duration.shorter}ms`,
         },
     },
 }))(TableCell);

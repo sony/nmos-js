@@ -18,6 +18,7 @@ import { SourcesList, SourcesShow } from './pages/sources';
 import { FlowsList, FlowsShow } from './pages/flows';
 import { ReceiversEdit, ReceiversList, ReceiversShow } from './pages/receivers';
 import { SendersEdit, SendersList, SendersShow } from './pages/senders';
+import { ConnectionsList } from './pages/connections';
 import { LogsList, LogsShow } from './pages/logs';
 import {
     SubscriptionsCreate,
@@ -80,6 +81,7 @@ const AppAdmin = () => {
                 show={ReceiversShow}
                 edit={ReceiversEdit}
             />
+            <Resource name="connections" list={ConnectionsList} />
             <Resource
                 name="subscriptions"
                 list={SubscriptionsList}

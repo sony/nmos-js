@@ -59,6 +59,8 @@ import {
     is12BrowserUrl,
     queryVersion,
 } from '../../settings';
+import HintedTab from '../../components/HintedTab';
+import { CHANNEL_MAPPING_API_NOT_AVAILABLE } from '../../components/controlApiMessages';
 import MappingShowActions from '../../components/MappingShowActions';
 import ChannelMappingMatrix from './ChannelMappingMatrix';
 
@@ -88,11 +90,11 @@ const DevicesShowView = props => {
         }
     }, [record]);
 
-    useEffect(() => {
-        return function cleanup() {
-            window.localStorage.removeItem('Channel Mapping Expanded');
-        };
-    }, []);
+    const disabledHint =
+        get(record, '$channelmappingAPI') === null
+            ? CHANNEL_MAPPING_API_NOT_AVAILABLE
+            : '';
+
     const theme = useTheme();
     const tabBackgroundColor = emphasizedPaper(theme);
     return (
@@ -117,8 +119,9 @@ const DevicesShowView = props => {
                         />
                         {Object.entries(channelMappingTabs).map(
                             ([key, source]) => (
-                                <Tab
+                                <HintedTab
                                     key={key}
+                                    hint={disabledHint}
                                     label={labelize(key)}
                                     value={`${props.match.url}/${key}`}
                                     component={Link}

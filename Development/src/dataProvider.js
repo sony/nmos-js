@@ -38,9 +38,14 @@ import {
     deviceBridgeUrl,
     usingAuth,
 } from './settings';
+import { parseTransportUrn } from './transportUrn';
 
 // which access path, direct or bridge, most recently worked for each Device
 const deviceAccessPaths = new Map();
+// the Connection API address that answered first successfully for this
+// Device last time. The next request tries it alone, and only races all
+// the advertised addresses again if it fails
+const deviceConnectionAddresses = new Map();
 
 const apiResource = resource => {
     let api;
@@ -744,9 +749,15 @@ const firstOf = ps => {
     return invertPromise(Promise.all(ps.map(invertPromise)));
 };
 
-const getConnectionResourceEndpoints = (addresses, resource, id) => {
+const getConnectionResourceEndpoints = (
+    addresses,
+    resource,
+    id,
+    endpointNames
+) => {
     const endpointData = [];
     let connectionAPI;
+    let connectionAddress;
     const controller = new AbortController();
     const signal = controller.signal;
     const fetchOptions = isAuth()
@@ -761,11 +772,12 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
                     fetch(
                         concatUrl(address, `/single/${resource}/${id}`),
                         fetchOptions
-                    )
+                    ).then(response => ({ address, response }))
                 );
             })
         )
-            .then(response => {
+            .then(({ address, response }) => {
+                connectionAddress = address;
                 connectionAPI = response.url;
                 return response.json();
             })
@@ -775,8 +787,13 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
                     reject(new Error(`${endpoints.error} - ${endpoints.code}`));
                     return;
                 }
+                const listed = endpointNames
+                    ? endpoints.filter(endpoint =>
+                          endpointNames.includes(endpoint)
+                      )
+                    : endpoints;
                 Promise.all(
-                    endpoints.map(endpoint =>
+                    listed.map(endpoint =>
                         fetch(
                             concatUrl(connectionAPI, `/${endpoint}`),
                             fetchOptions
@@ -805,7 +822,7 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
                 ).then(() => {
                     endpointData.push({ $connectionAPI: connectionAPI });
                     controller.abort();
-                    resolve(endpointData);
+                    resolve({ connectionAddress, endpointData });
                 });
             })
             .catch(errors => {
@@ -815,7 +832,143 @@ const getConnectionResourceEndpoints = (addresses, resource, id) => {
     });
 };
 
-const getChannelMappingEndPoints = (addresses, endpoints) => {
+const connectionAddressesFromDevice = device => {
+    const connectionAddresses = {};
+    if (has(device, 'controls')) {
+        device.controls.forEach(control => {
+            const type = control.type.replace('.', '_');
+            if (type.startsWith('urn:x-nmos:control:sr-ctrl')) {
+                if (!has(connectionAddresses, type)) {
+                    set(connectionAddresses, type, [control.href]);
+                } else {
+                    connectionAddresses[type].push(control.href);
+                }
+            }
+        });
+    }
+    return connectionAddresses;
+};
+
+const fetchConnectionFromDevice = async (
+    device,
+    resource,
+    id,
+    endpointNames
+) => {
+    const connectionAddresses = connectionAddressesFromDevice(device);
+    if (Object.keys(connectionAddresses).length === 0) {
+        return undefined;
+    }
+
+    const versions = Object.keys(connectionAddresses).sort().reverse();
+    const deviceId = device.id;
+    const mode = bridgeMode();
+
+    let endpointData;
+    let accessPath;
+    for (let version of versions) {
+        // e.g. 'urn:x-nmos:control:sr-ctrl/v1_1' -> 'v1.1'
+        const connectionVersion = version
+            .split('/')
+            .slice(-1)[0]
+            .replace('_', '.');
+        // preferred access sequence: use the Device control hrefs
+        // directly, and only fall back to the bridge if they are
+        // inaccessible; start with whichever worked last time,
+        // unless the bridge is forced
+        const attempts = [];
+        if (mode !== BRIDGE_FORCED) {
+            attempts.push(['direct', connectionAddresses[version]]);
+        }
+        if (mode === BRIDGE_AUTO || mode === BRIDGE_FORCED) {
+            attempts.push([
+                'bridge',
+                [deviceBridgeUrl(deviceId, 'connection', connectionVersion)],
+            ]);
+        }
+        if (
+            mode === BRIDGE_AUTO &&
+            deviceAccessPaths.get(deviceId) === 'bridge'
+        ) {
+            attempts.reverse();
+        }
+        // the address that answered last time is worth trying on
+        // its own before racing every one the Device advertises
+        const rememberedAddress = deviceConnectionAddresses.get(deviceId);
+        if (
+            mode !== BRIDGE_FORCED &&
+            connectionAddresses[version].includes(rememberedAddress)
+        ) {
+            attempts.unshift(['direct', [rememberedAddress]]);
+        }
+        for (const [path, addresses] of attempts) {
+            let connectionAddress;
+            try {
+                ({ connectionAddress, endpointData } =
+                    await getConnectionResourceEndpoints(
+                        addresses,
+                        resource,
+                        id,
+                        endpointNames
+                    ));
+            } catch (e) {}
+            if (endpointData) {
+                deviceConnectionAddresses.set(deviceId, connectionAddress);
+                accessPath = path;
+                break;
+            }
+        }
+        if (endpointData) break;
+    }
+    if (endpointData) {
+        deviceAccessPaths.set(deviceId, accessPath);
+    } else {
+        deviceAccessPaths.delete(deviceId);
+        deviceConnectionAddresses.delete(deviceId);
+    }
+    return endpointData;
+};
+
+// IS-04 record plus the Connection API endpoints named in endpointNames.
+// Does not go through GET_ONE, so Show pages cannot pick up a half-filled
+// sender or receiver from the store
+export const getConnectionResource = async (
+    record,
+    resource,
+    device,
+    endpointNames
+) => {
+    const data = { ...record };
+    if (!device) {
+        data.$connectionAPI = null;
+        return data;
+    }
+    const endpointData = await fetchConnectionFromDevice(
+        device,
+        resource,
+        record.id,
+        endpointNames
+    );
+    if (endpointData === undefined) {
+        data.$connectionAPI = null;
+        return data;
+    }
+    for (const i of endpointData) {
+        assign(data, i);
+    }
+    if (!has(data, '$transporttype')) {
+        // The /transporttype endpoint is the URN-base of the IS-04 transport
+        // so where it wasn't fetched, use that. Receivers had no transport
+        // before IS-04 v1.1 so default to RTP.
+        const transport = parseTransportUrn(record.transport);
+        data.$transporttype = transport
+            ? transport.base
+            : 'urn:x-nmos:transport:rtp';
+    }
+    return data;
+};
+
+const getChannelMappingEndpoints = (addresses, endpoints) => {
     const endpointData = [];
     let channelmappingAPI;
     const controller = new AbortController();
@@ -958,86 +1111,11 @@ const convertHTTPResponseToDataProvider = async (
                     return { url, data: json };
                 }
 
-                let connectionAddresses = {};
-                // Device.controls was added in v1.1
-                if (has(deviceJSONData, 'controls')) {
-                    deviceJSONData.controls.forEach(control => {
-                        const type = control.type.replace('.', '_');
-                        if (type.startsWith('urn:x-nmos:control:sr-ctrl')) {
-                            if (!has(connectionAddresses, type)) {
-                                set(connectionAddresses, type, [control.href]);
-                            } else {
-                                connectionAddresses[type].push(control.href);
-                            }
-                        }
-                    });
-                }
-                // just return IS-04 data if no Connection API endpoints
-                if (Object.keys(connectionAddresses).length === 0) {
-                    return { url, data: json };
-                }
-
-                const versions = Object.keys(connectionAddresses)
-                    .sort()
-                    .reverse();
-
-                const deviceId = resourceJSONData.device_id;
-                const mode = bridgeMode();
-
-                let endpointData;
-                let accessPath;
-                for (let version of versions) {
-                    // e.g. 'urn:x-nmos:control:sr-ctrl/v1_1' -> 'v1.1'
-                    const connectionVersion = version
-                        .split('/')
-                        .slice(-1)[0]
-                        .replace('_', '.');
-                    // preferred access sequence: use the Device control hrefs
-                    // directly, and only fall back to the bridge if they are
-                    // inaccessible; start with whichever worked last time,
-                    // unless the bridge is forced
-                    const attempts = [];
-                    if (mode !== BRIDGE_FORCED) {
-                        attempts.push(['direct', connectionAddresses[version]]);
-                    }
-                    if (mode === BRIDGE_AUTO || mode === BRIDGE_FORCED) {
-                        attempts.push([
-                            'bridge',
-                            [
-                                deviceBridgeUrl(
-                                    deviceId,
-                                    'connection',
-                                    connectionVersion
-                                ),
-                            ],
-                        ]);
-                    }
-                    if (
-                        mode === BRIDGE_AUTO &&
-                        deviceAccessPaths.get(deviceId) === 'bridge'
-                    ) {
-                        attempts.reverse();
-                    }
-                    for (const [path, addresses] of attempts) {
-                        try {
-                            endpointData = await getConnectionResourceEndpoints(
-                                addresses,
-                                resource,
-                                params.id
-                            );
-                        } catch (e) {}
-                        if (endpointData) {
-                            accessPath = path;
-                            break;
-                        }
-                    }
-                    if (endpointData) break;
-                }
-                if (endpointData) {
-                    deviceAccessPaths.set(deviceId, accessPath);
-                } else {
-                    deviceAccessPaths.delete(deviceId);
-                }
+                const endpointData = await fetchConnectionFromDevice(
+                    deviceJSONData,
+                    resource,
+                    params.id
+                );
 
                 // just return IS-04 data if no Connection API was able to connect
                 if (endpointData === undefined) {
@@ -1077,6 +1155,7 @@ const convertHTTPResponseToDataProvider = async (
                 }
                 // just return IS-04 data if no Channel Mapping API endpoints
                 if (Object.keys(channelmappingAddresses).length === 0) {
+                    set(json, '$channelmappingAPI', null);
                     return { url, data: json };
                 }
 
@@ -1125,7 +1204,7 @@ const convertHTTPResponseToDataProvider = async (
                     }
                     for (const [path, addresses] of attempts) {
                         try {
-                            endpointData = await getChannelMappingEndPoints(
+                            endpointData = await getChannelMappingEndpoints(
                                 addresses,
                                 ['io', 'map/active', 'map/activations']
                             );

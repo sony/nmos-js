@@ -19,6 +19,50 @@ import FilterListIcon from '@material-ui/icons/FilterList';
 
 import labelize from './labelize';
 
+const CompactTextField = React.forwardRef(
+    ({ classes, InputLabelProps = {}, InputProps = {}, ...props }, ref) => (
+        <TextField
+            {...props}
+            ref={ref}
+            InputLabelProps={{
+                ...InputLabelProps,
+                classes: {
+                    ...InputLabelProps.classes,
+                    root: `${classes.label} ${
+                        get(InputLabelProps, 'classes.root') || ''
+                    }`,
+                },
+            }}
+            InputProps={{
+                ...InputProps,
+                classes: {
+                    ...InputProps.classes,
+                    input: `${classes.input} ${
+                        get(InputProps, 'classes.input') || ''
+                    }`,
+                },
+            }}
+        />
+    )
+);
+
+// a filter should not shout louder than the list or matrix it filters
+const FILTER_FONT_SIZE = 14;
+const FILTER_INPUT_PADDING_TOP = 20;
+const FILTER_INPUT_PADDING_BOTTOM = 4;
+const FILTER_INPUT_PADDING_X = 12;
+
+const FilterTextField = withStyles({
+    input: {
+        fontSize: FILTER_FONT_SIZE,
+        paddingTop: FILTER_INPUT_PADDING_TOP,
+        paddingBottom: FILTER_INPUT_PADDING_BOTTOM,
+    },
+    label: {
+        fontSize: FILTER_FONT_SIZE,
+    },
+})(CompactTextField);
+
 export const AllFilters = ({ label = 'All' }) => <Fragment />;
 
 export const FilterMode = ({
@@ -62,11 +106,12 @@ export const FilterMode = ({
         };
     }, [value, setFilter, source]);
     return (
-        <TextField
+        <FilterTextField
             label={label}
-            color="secondary"
+            color="primary"
             variant="filled"
             margin="dense"
+            size="small"
             value={value}
             onChange={event => setValue(event.target.value)}
             onFocus={event => event.target.select()}
@@ -76,7 +121,7 @@ export const FilterMode = ({
         >
             <MenuItem value="and">Match All</MenuItem>
             <MenuItem value="or">Match Any</MenuItem>
-        </TextField>
+        </FilterTextField>
     );
 };
 
@@ -121,9 +166,12 @@ export const BooleanFilter = ({
     }, [checked, setFilter, source]);
     return (
         <div style={{ display: 'flex' }}>
-            <Typography style={{ alignSelf: 'center' }}>{label}</Typography>
+            <Typography variant="body2" style={{ alignSelf: 'center' }}>
+                {label}
+            </Typography>
             <Switch
-                color="secondary"
+                color="primary"
+                size="small"
                 checked={checked}
                 onChange={() => setChecked(!checked)}
                 inputRef={inputRef}
@@ -132,23 +180,51 @@ export const BooleanFilter = ({
     );
 };
 
-export const ConstFilter = ({ label, source, filter, setFilter }) => {
+// clearSource names another key this filter owns, such as the value it
+// matches against, which is removed along with it
+export const ConstFilter = ({
+    label,
+    source,
+    clearSource,
+    filter,
+    setFilter,
+}) => {
     if (!label) label = labelize(source);
 
     useEffect(() => {
-        setFilter(f => ({ ...f, [source]: null }));
+        setFilter(f => ({
+            ...f,
+            [source]: f[source] !== undefined ? f[source] : null,
+        }));
         return function cleanup() {
             setFilter(f => {
                 let newFilter = { ...f };
                 delete newFilter[source];
+                if (clearSource) delete newFilter[clearSource];
                 return newFilter;
             });
         };
-    }, [setFilter, source]);
-    return (
+    }, [clearSource, setFilter, source]);
+    const value = get(filter, source);
+    // the page sets this filter's value, so show it like the fields the user
+    // can type in, or just name the filter when it has no value to show
+    return value == null ? (
         <div style={{ display: 'flex' }}>
-            <Typography style={{ alignSelf: 'center' }}>{label}</Typography>
+            <Typography variant="body2" style={{ alignSelf: 'center' }}>
+                {label}
+            </Typography>
         </div>
+    ) : (
+        <FilterTextField
+            label={label}
+            color="primary"
+            variant="filled"
+            margin="dense"
+            size="small"
+            value={value}
+            // no underline, since there is nothing to type in
+            InputProps={{ readOnly: true, disableUnderline: true }}
+        />
     );
 };
 
@@ -193,12 +269,13 @@ export const NumberFilter = ({
         };
     }, [value, setFilter, source]);
     return (
-        <TextField
+        <FilterTextField
             type="number"
             label={label}
-            color="secondary"
+            color="primary"
             variant="filled"
             margin="dense"
+            size="small"
             value={value}
             onChange={event => setValue(event.target.value)}
             onFocus={event => event.target.select()}
@@ -249,11 +326,12 @@ export const StringFilter = ({
         };
     }, [value, setFilter, source]);
     return (
-        <TextField
+        <FilterTextField
             label={label}
-            color="secondary"
+            color="primary"
             variant="filled"
             margin="dense"
+            size="small"
             value={value}
             onChange={event => setValue(event.target.value)}
             onFocus={event => event.target.select()}
@@ -320,13 +398,14 @@ export const RateFilter = ({
     }, [value, setFilter, source]);
     return (
         <>
-            <TextField
+            <FilterTextField
                 type="number"
                 label={label}
                 helperText="Numerator"
-                color="secondary"
+                color="primary"
                 variant="filled"
                 margin="dense"
+                size="small"
                 value={value.numerator}
                 onChange={event =>
                     setValue(v => ({ ...v, numerator: event.target.value }))
@@ -340,12 +419,13 @@ export const RateFilter = ({
                 }}
                 {...props}
             />
-            <TextField
+            <FilterTextField
                 type="number"
                 helperText="Denominator"
-                color="secondary"
+                color="primary"
                 variant="filled"
                 margin="dense"
+                size="small"
                 value={value.denominator}
                 onChange={event =>
                     setValue(v => ({ ...v, denominator: event.target.value }))
@@ -365,6 +445,24 @@ export const RateFilter = ({
 const StyledAutocomplete = withStyles({
     input: {
         width: '100% !important',
+    },
+    inputRoot: {
+        // Autocomplete pads the input as well as the box around it, which
+        // makes the field wider and its value lower than a filter the user
+        // just types in; both rules have to be as specific as the ones they
+        // replace
+        '&[class*="MuiFilledInput-root"][class*="MuiFilledInput-marginDense"]':
+            {
+                paddingTop: FILTER_INPUT_PADDING_TOP,
+                paddingBottom: FILTER_INPUT_PADDING_BOTTOM,
+                paddingLeft: FILTER_INPUT_PADDING_X,
+                '& $input': {
+                    padding: 0,
+                },
+            },
+    },
+    option: {
+        fontSize: FILTER_FONT_SIZE,
     },
 })(Autocomplete);
 
@@ -410,15 +508,17 @@ export const AutocompleteFilter = ({
     }, [value, setFilter, source]);
     return (
         <StyledAutocomplete
+            size="small"
             value={value}
             onInputChange={(event, value) => setValue(value)}
             renderInput={params => (
-                <TextField
+                <FilterTextField
                     {...params}
                     label={label}
-                    color="secondary"
+                    color="primary"
                     variant="filled"
                     margin="dense"
+                    size="small"
                     onFocus={event => event.target.select()}
                     inputRef={inputRef}
                 />
@@ -436,7 +536,7 @@ const FilterPanel = ({
     setFilter,
     filterButtonLabel = 'Filters',
     allFilters = true,
-    clearAllFilters = false,
+    noFilters = false,
 }) => {
     const cloneFilter = (child, autoFocus = false) =>
         React.cloneElement(child, {
@@ -523,8 +623,8 @@ const FilterPanel = ({
         setFilter({});
     };
 
-    // nothing to clear until this panel has a filter
-    const showClearAllFilters = clearAllFilters && !isEmpty(displayedFilters);
+    // None is only a choice once this panel has a filter up
+    const showNoFilters = noFilters && !isEmpty(displayedFilters);
 
     const open = Boolean(anchorEl);
 
@@ -551,7 +651,7 @@ const FilterPanel = ({
                             size="small"
                             onClick={() => removeFilter(key)}
                         >
-                            <ClearIcon />
+                            <ClearIcon fontSize="small" />
                         </IconButton>
                         {displayedFilters[key]}
                     </div>
@@ -584,11 +684,10 @@ const FilterPanel = ({
                 keepMounted
             >
                 {React.Children.map(children, addMenuItem)}
-                {allFilters && <Divider />}
+                {(allFilters || showNoFilters) && <Divider />}
                 {allFilters && addMenuItem(<AllFilters />)}
-                {showClearAllFilters && <Divider />}
-                {showClearAllFilters && (
-                    <MenuItem onClick={clearFilters}>{'Clear All'}</MenuItem>
+                {showNoFilters && (
+                    <MenuItem onClick={clearFilters}>{'None'}</MenuItem>
                 )}
             </Menu>
         </div>

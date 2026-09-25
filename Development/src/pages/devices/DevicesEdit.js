@@ -79,13 +79,6 @@ const DevicesEditView = props => {
         }
     }, [activeMap, draftMap]);
 
-    useEffect(
-        () => () => {
-            window.localStorage.removeItem('Channel Mapping Expanded');
-        },
-        []
-    );
-
     const changed = useMemo(
         () => !isEqual(activeMap, draftMap),
         [activeMap, draftMap]

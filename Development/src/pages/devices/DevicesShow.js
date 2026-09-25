@@ -90,12 +90,6 @@ const DevicesShowView = props => {
         }
     }, [record]);
 
-    useEffect(() => {
-        return function cleanup() {
-            window.localStorage.removeItem('Channel Mapping Expanded');
-        };
-    }, []);
-
     const disabledHint =
         get(record, '$channelmappingAPI') === null
             ? CHANNEL_MAPPING_API_NOT_AVAILABLE

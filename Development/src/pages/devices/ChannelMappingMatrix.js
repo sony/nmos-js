@@ -1654,15 +1654,24 @@ export const showMappingAssociations = settings =>
     get(settings, 'parent/source headings') !== false;
 
 const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
+    const deviceId = get(record, 'id');
+
+    // Input and Output ids are only unique within a Device, so remember
+    // which Device the expansion is for and start the next one collapsed
     const [expanded, setExpanded] = useJSONSetting('Channel Mapping Expanded', {
+        device: deviceId,
         inputs: [],
         outputs: [],
     });
     const isExpanded = (ioResource, id) =>
+        get(expanded, 'device') === deviceId &&
         get(expanded, ioResource).includes(id);
     const toggleExpanded = (ioResource, id) => {
         setExpanded(expanded => {
-            let newExpanded = { ...expanded };
+            let newExpanded =
+                get(expanded, 'device') === deviceId
+                    ? { ...expanded }
+                    : { device: deviceId, inputs: [], outputs: [] };
             const expandedIoResource = get(newExpanded, ioResource);
             const isExpanded = expandedIoResource.includes(id);
             const newExpandedIoResource = isExpanded
@@ -1701,8 +1710,6 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
     const [settingsFilter, setSettingsFilter] = useJSONSetting(
         'Channel Mapping Settings'
     );
-
-    const deviceId = get(record, 'id');
 
     const [customNames, setCustomNames] = useJSONSetting(
         'Channel Mapping Custom Names'

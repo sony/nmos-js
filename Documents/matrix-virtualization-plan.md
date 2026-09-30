@@ -45,6 +45,13 @@ matrix must bound the number of cells in the DOM to the size of the viewport.
 - Preserve the existing filters, sorting, axis swap, expansion state, cell
   warnings, edits and activations. Virtualization is a rendering concern.
 
+The green outline is what is on screen, including the sticky corner and the
+headings in view. Overscan is one built margin around it. Spacer columns and
+the single-cell spacer rows occupy everything else, so the table stays full
+size.
+
+![Spacer-table viewport](matrix-viewport.svg)
+
 ## Performance invariant
 
 The number of mounted body cells is bounded by:

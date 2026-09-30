@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="640" viewBox="0 0 1040 640">
+  <style>
+    text { font-family: "Segoe UI", Helvetica, Arial, sans-serif; fill: #1c2430; }
+    .title { font-size: 20px; font-weight: 650; }
+    .label { font-size: 13px; font-weight: 650; }
+    .small { font-size: 12px; }
+    .tiny { font-size: 11px; fill: #3d4a5c; }
+    .on-dark { fill: #f7f4ee; }
+  </style>
+  <rect width="1040" height="640" fill="#f6f7f9"/>
+  <text class="title" x="32" y="38">The table stays full size. Only the window is built.</text>
+  <text class="small" x="32" y="60">Spacers occupy the rows and columns that are not mounted, so the built cells stay in the right place.</text>
+
+  <defs>
+    <pattern id="spacer" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <rect width="8" height="8" fill="#e7e1d6"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#c4b8a4" stroke-width="3"/>
+    </pattern>
+    <pattern id="overscan" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="#d9e6f5"/>
+    </pattern>
+    <pattern id="headingOverscan" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="#3d5c78"/>
+    </pattern>
+  </defs>
+
+  <!-- table -->
+  <g transform="translate(32,84)">
+    <!-- corner -->
+    <rect x="0" y="0" width="128" height="78" fill="#2f3a46" stroke="#2f6f4e" stroke-width="2"/>
+    <text class="on-dark label" x="64" y="34" text-anchor="middle">corner</text>
+    <text class="on-dark tiny" x="64" y="52" text-anchor="middle">visible, sticky</text>
+
+    <!-- column headings: spacers, overscan, then the visible columns -->
+    <rect x="128" y="0" width="92" height="78" fill="url(#spacer)" stroke="#b7ab98"/>
+    <rect x="220" y="0" width="48" height="78" fill="url(#headingOverscan)" stroke="#8eafd4"/>
+    <text class="on-dark tiny" x="244" y="46" text-anchor="middle" transform="rotate(-90 244 46)">overscan</text>
+    <rect x="268" y="0" width="292" height="78" fill="#4c5b6b" stroke="#2f6f4e" stroke-width="2"/>
+    <rect x="560" y="0" width="48" height="78" fill="url(#headingOverscan)" stroke="#8eafd4"/>
+    <text class="on-dark tiny" x="584" y="46" text-anchor="middle" transform="rotate(-90 584 46)">overscan</text>
+    <rect x="608" y="0" width="140" height="78" fill="url(#spacer)" stroke="#b7ab98"/>
+    <text class="on-dark label" x="414" y="34" text-anchor="middle">visible column headings</text>
+    <text class="on-dark tiny" x="414" y="54" text-anchor="middle">sticky, same columns as the cells below</text>
+
+    <!-- row headings: overscan, then the visible rows -->
+    <rect x="0" y="130" width="128" height="56" fill="url(#headingOverscan)" stroke="#8eafd4"/>
+    <text class="on-dark tiny" x="64" y="163" text-anchor="middle">overscan</text>
+    <rect x="0" y="186" width="128" height="124" fill="#4c5b6b" stroke="#2f6f4e" stroke-width="2"/>
+    <rect x="0" y="310" width="128" height="56" fill="url(#headingOverscan)" stroke="#8eafd4"/>
+    <text class="on-dark tiny" x="64" y="343" text-anchor="middle">overscan</text>
+    <text class="on-dark label" x="64" y="232" text-anchor="middle">visible</text>
+    <text class="on-dark label" x="64" y="250" text-anchor="middle">row headings</text>
+    <text class="on-dark tiny" x="64" y="268" text-anchor="middle">sticky</text>
+
+    <!-- top spacer: one cell spanning the row headings and every column -->
+    <rect x="0" y="78" width="748" height="52" fill="url(#spacer)" stroke="#b7ab98"/>
+    <text class="label" x="374" y="102" text-anchor="middle">top spacer row</text>
+    <text class="tiny" x="374" y="118" text-anchor="middle">height = skipped rows x 45px</text>
+
+    <!-- body band: left spacer | overscan | viewport | overscan | right spacer -->
+    <rect x="128" y="130" width="92" height="236" fill="url(#spacer)" stroke="#b7ab98"/>
+    <text class="label" x="162" y="248" text-anchor="middle" transform="rotate(-90 162 248)">left spacer column</text>
+    <text class="tiny" x="184" y="248" text-anchor="middle" transform="rotate(-90 184 248)">width = skipped columns x 45px</text>
+
+    <rect x="220" y="130" width="388" height="236" fill="url(#overscan)"/>
+    <text class="tiny" x="244" y="252" text-anchor="middle" transform="rotate(-90 244 252)">overscan</text>
+    <text class="tiny" x="414" y="164" text-anchor="middle">overscan</text>
+    <text class="tiny" x="414" y="342" text-anchor="middle">overscan</text>
+    <text class="tiny" x="584" y="252" text-anchor="middle" transform="rotate(-90 584 252)">overscan</text>
+
+    <rect x="268" y="186" width="292" height="124" fill="#ffffff" stroke="#2f6f4e" stroke-width="2"/>
+    <text class="label" x="414" y="242" text-anchor="middle">viewport</text>
+    <text class="tiny" x="414" y="260" text-anchor="middle">cells the user can see</text>
+
+    <rect x="608" y="130" width="140" height="236" fill="url(#spacer)" stroke="#b7ab98"/>
+    <text class="label" x="666" y="248" text-anchor="middle" transform="rotate(-90 666 248)">right spacer column</text>
+    <text class="tiny" x="690" y="248" text-anchor="middle" transform="rotate(-90 690 248)">width = skipped columns x 45px</text>
+
+    <!-- bottom spacer: one cell spanning the row headings and every column -->
+    <rect x="0" y="366" width="748" height="104" fill="url(#spacer)" stroke="#b7ab98"/>
+    <text class="label" x="374" y="412" text-anchor="middle">bottom spacer row</text>
+    <text class="tiny" x="374" y="430" text-anchor="middle">height = rows still below the built range x 45px</text>
+
+    <!-- outer stroke -->
+    <rect x="0" y="0" width="748" height="470" fill="none" stroke="#1c2430" stroke-width="2"/>
+  </g>
+
+  <!-- legend -->
+  <g transform="translate(812,84)">
+    <text class="label" x="0" y="16">Legend</text>
+    <rect x="0" y="32" width="22" height="22" fill="#4c5b6b" stroke="#1c2430"/>
+    <text class="small" x="32" y="48">sticky headings</text>
+    <rect x="0" y="64" width="22" height="22" fill="#ffffff" stroke="#2f6f4e" stroke-width="2"/>
+    <text class="small" x="32" y="80">visible cells</text>
+    <rect x="0" y="96" width="22" height="22" fill="url(#overscan)" stroke="#8eafd4"/>
+    <text class="small" x="32" y="112">body overscan, built</text>
+    <rect x="0" y="128" width="22" height="22" fill="url(#headingOverscan)" stroke="#8eafd4"/>
+    <text class="small" x="32" y="144">heading overscan, built</text>
+    <rect x="0" y="160" width="22" height="22" fill="url(#spacer)" stroke="#b7ab98"/>
+    <text class="small" x="32" y="176">spacer, not built</text>
+    <text class="tiny" x="0" y="216">Five extra cells are built</text>
+    <text class="tiny" x="0" y="232">on each side, headings and</text>
+    <text class="tiny" x="0" y="248">body alike, so a small scroll</text>
+    <text class="tiny" x="0" y="264">does not wait for the next</text>
+    <text class="tiny" x="0" y="280">range.</text>
+  </g>
+
+  <text class="small" x="32" y="590">left spacer column + built columns + right spacer column = every logical column.</text>
+  <text class="small" x="32" y="610">top spacer row + built rows + bottom spacer row = every logical row. Each built body cell is 45px square.</text>
+</svg>

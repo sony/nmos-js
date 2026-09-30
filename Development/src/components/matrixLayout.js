@@ -4,6 +4,7 @@ import {
     TableCell,
     TableContainer,
     TableHead,
+    TableRow,
     withStyles,
 } from '@material-ui/core';
 
@@ -22,11 +23,9 @@ export const CELL_FRAME = 2 * CELL_PADDING + CELL_BORDER;
 // as far across a row heading as down a column heading, so the matrix looks
 // the same either way round
 export const HEADING_EXTENT = 120;
-// as far down a grid cell as across it, so the cells are square whatever
-// their content; a little more than a chip in a row heading, so those rows
-// are even with the rest and the control is not hard against the cell's own
-// frame
-export const CELL_EXTENT = 40;
+// as far down a grid cell as across it, so the cells are square. A chip and
+// its margin fit inside the cell's own frame, with a pixel to spare.
+export const CELL_EXTENT = 45;
 // as far in from either end of the heading as the arrow on the headings
 // which have one
 export const HEADING_INSET = 8;
@@ -35,6 +34,8 @@ export const COLLAPSE_BUTTON_SIZE = 30;
 // a chip's own margin, which spaces it from the heading's edges and from the
 // collapse button beside or below it
 export const CHIP_MARGIN = 4;
+// a horizontal chip's height; the width of a vertical one
+export const CHIP_EXTENT = 32;
 // a chip is inset by its own margin as well as the heading cell's frame, so
 // cap it short of the heading and the label ellipsizes inside the cell
 export const CHIP_INSET = CELL_FRAME + 2 * CHIP_MARGIN;
@@ -91,6 +92,29 @@ export const MatrixHeadCell = withStyles(theme => ({
         },
     },
 }))(TableHeadCell);
+
+// the columns and rows outside the viewport. Their fixed size keeps the
+// mounted cells aligned with the headings of the whole matrix.
+export const MatrixColumnSpacer = ({ heading, rowSpan, width }) => {
+    if (!width) return null;
+    const Cell = heading ? MatrixHeadCell : MatrixCell;
+    return (
+        <Cell
+            rowSpan={rowSpan}
+            style={{ padding: 0, width }}
+            aria-hidden={true}
+        />
+    );
+};
+
+export const MatrixRowSpacer = ({ colSpan, height }) => {
+    if (!height) return null;
+    return (
+        <TableRow style={{ height }} aria-hidden={true}>
+            <MatrixCell colSpan={colSpan} style={{ height, padding: 0 }} />
+        </TableRow>
+    );
+};
 
 // square, spanning every heading section each way, so collapsing everything
 // does not shrink the headings it spans; the card behind, rather than a
@@ -215,7 +239,7 @@ export const VerticalLinkChipField = withStyles({
     chip: {
         height: 'auto',
         maxHeight: HEADING_EXTENT - CHIP_INSET,
-        width: 32,
+        width: CHIP_EXTENT,
         writingMode: 'vertical-rl',
         // the label's side padding would squeeze the vertical text
         '& > span': {

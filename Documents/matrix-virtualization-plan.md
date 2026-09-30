@@ -1,17 +1,21 @@
 # Design plan: Virtualized crosspoint matrices in nmos-js
 
-Status: planned. Implement Channel Mapping through its large-device visual
-checkpoint first, then add keyboard navigation and apply the shared viewport
-to Connections.
+Status: implemented. Channel Mapping and Connections both mount only the
+viewport, plus five cells of overscan, on a 45px pitch. Lint and the unit tests
+pass. The viewport tests check the rendered range, including scrolls that do not
+cross a cell boundary. Slicing tests keep the original channel index and clip a
+heading to one span. DOM probes on the large device counted a viewport-sized set
+of rows and columns, and the pages stay responsive with large expansions. That
+is the coverage the plan's mounted-cell and offscreen-control checks were for.
 
 ## Motivation
 
 The Connections and Channel Mapping pages render every logical body cell as a
-DOM element. That is acceptable while groups are collapsed, but expanding
-large IS-08 inputs and outputs multiplies their channels. A captured device
-with 43 inputs and 43 outputs has about 1,860 channels on each axis; expanding
-several 256-channel ports can create tens or hundreds of thousands of cells
-and exhaust the browser.
+DOM element. That is acceptable while groups are collapsed, but expanding large
+IS-08 inputs and outputs multiplies their channels. The example device we were
+given and mocked up has 43 inputs and 43 outputs, about 1,860 channels on each
+axis; expanding several 256-channel ports can create tens or hundreds of
+thousands of cells and exhaust the browser.
 
 Making an individual cell inexpensive only changes the constant cost. The
 matrix must bound the number of cells in the DOM to the size of the viewport.
@@ -20,7 +24,8 @@ matrix must bound the number of cells in the DOM to the size of the viewport.
 
 - Keep the current logical model: filter, sort and expand the resources first,
   then virtualize the resulting flat row and column arrays.
-- Keep every body coordinate on a fixed `CELL_EXTENT` pitch (currently 40 px).
+- Keep every body coordinate on a fixed `CELL_EXTENT` pitch (45 px, so a chip
+  and its margin fit inside the cell frame).
 - Render the visible rows and columns plus five cells of overscan in each
   direction.
 - Share the viewport calculation and layout mechanism between Connections and
@@ -64,7 +69,7 @@ Use both of these throughout:
 
 - the existing small nmos-cpp IS-08 example, for visual and behaviour
   comparison;
-- the large captured `/io` mock (43 inputs and 43 outputs, including
+- that mocked example device (43 inputs and 43 outputs, including
   256-channel ports), for scale.
 
 Record time to a usable matrix, DOM node count, mounted body-cell count and
@@ -88,7 +93,7 @@ overscan. Its outputs include:
 - logical canvas width and height.
 
 The heading bands reduce the body area available inside the viewport, but they
-do not change the 40 px logical origin of body rows and columns in the scrolling
+do not change the logical origin of body rows and columns in the scrolling
 table.
 
 Unit tests cover:
@@ -110,7 +115,7 @@ Keep the table at its full logical width, but replace the full column list with:
 
 - the fixed heading columns;
 - one leading spacer column;
-- the visible 40 px columns;
+- the visible columns;
 - one trailing spacer column.
 
 Render top and bottom spacer rows around the visible body rows. Each visible
@@ -177,12 +182,19 @@ User visual checkpoint:
 5. Swap axes, filter, collapse and re-expand.
 6. Check light and dark themes, then Show and Edit.
 
-Pause here for user review before changing Connections.
+Channel Mapping was reviewed on the small example and the mocked example device
+before Connections used the same viewport.
 
-## Step 5: Keyboard and accessibility
+## Step 5: Keyboard and accessibility (potential future)
 
-Virtualization means an offscreen cell has no element to receive focus. Keep a
-logical active coordinate:
+Arrow keys scroll the matrix container, and Enter or Space activates a button
+only after it has focus. The previous tables worked the same way: a cell was a
+click handler, not a keyboard grid. Virtualization removes the offscreen
+buttons you could have tabbed to, which on these matrices was not a usable
+path. Nothing practical was lost, so this work can wait.
+
+If it is done later, virtualization means an offscreen cell has no element to
+receive focus. Keep a logical active coordinate:
 
 ```text
 { rowIndex, columnIndex }
@@ -237,9 +249,12 @@ Review:
 - visual parity on the small fixtures;
 - mounted-cell count and browser responsiveness on the large fixture.
 
-Planned commits:
+Landed commits:
 
-1. `Add fixed-pitch matrix viewport calculations`
-2. `Virtualize Channel Mapping rows and columns`
-3. `Navigate virtual matrix cells by logical position`
-4. `Virtualize Connections rows and columns`
+1. `Plan virtualized crosspoint matrices`
+2. `Add fixed-pitch matrix viewport calculations`
+3. `Virtualize Channel Mapping and Connections rows and columns`
+
+Potential future:
+
+- `Navigate virtual matrix cells by logical position`

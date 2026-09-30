@@ -1,9 +1,16 @@
 import {
+    CELL_EXTENT,
+    CHIP_EXTENT,
+    CHIP_MARGIN,
+} from '../../components/matrixLayout';
+import { renderedSpanCentre } from '../../components/matrixViewport';
+import {
     channelMappingConstraintWarnings,
     channelMappingCornerLabels,
     getMappingTableColumns,
     isRoutableInput,
     showMappingAssociations,
+    sliceRenderedIO,
 } from './ChannelMappingMatrix';
 
 describe('matrix layout', () => {
@@ -47,6 +54,68 @@ describe('matrix layout', () => {
         expect(
             showMappingAssociations({ 'parent/source headings': false })
         ).toBe(false);
+    });
+
+    it('slices expanded channels without repeating a clipped heading', () => {
+        expect(sliceRenderedIO('inputs', inputs, isExpanded, 1, 3)).toEqual([
+            ['input0', { channels: { 1: {} } }, 0],
+            ['input1', { channels: [{}] }, CELL_EXTENT / 2],
+        ]);
+    });
+
+    it('keeps a heading centred on its whole span', () => {
+        const wide = [['wide', { channels: [{}, {}, {}, {}] }]];
+        const expanded = () => true;
+
+        expect(renderedSpanCentre(0, 4, 4)).toBe(2 * CELL_EXTENT);
+        expect(sliceRenderedIO('inputs', wide, expanded, 1, 3)[0][2]).toBe(
+            CELL_EXTENT
+        );
+        expect(sliceRenderedIO('inputs', wide, expanded, 3, 4)[0][2]).toBe(
+            null
+        );
+    });
+
+    it('pins a heading to the viewport edge when its centre is off screen', () => {
+        const contentExtent = CHIP_EXTENT + 2 * CHIP_MARGIN;
+        const onScreen = {
+            gridOrigin: 0,
+            offset: 0,
+            scrollVar: '--matrix-scroll-left',
+            sizeVar: '--matrix-view-width',
+            viewStart: 0,
+            viewEnd: 4 * CELL_EXTENT,
+        };
+        const half = contentExtent / 2;
+        const centre = 2 * CELL_EXTENT;
+
+        const leading = `max(0px, var(--matrix-scroll-left)) + ${half}px`;
+        const trailing = `min(${4 * CELL_EXTENT}px, var(--matrix-scroll-left) + var(--matrix-view-width)) - ${half}px`;
+
+        expect(renderedSpanCentre(0, 4, 4, onScreen)).toBe(
+            `calc(clamp(min(${leading}, ${trailing}), ${centre}px, max(${leading}, ${trailing})) - 0px)`
+        );
+        expect(
+            renderedSpanCentre(0, 4, 1, {
+                ...onScreen,
+                viewEnd: CELL_EXTENT,
+            })
+        ).toContain('var(--matrix-scroll-left)');
+        expect(
+            renderedSpanCentre(0, 4, 1, {
+                ...onScreen,
+                viewEnd: contentExtent - 1,
+            })
+        ).toBe(null);
+    });
+
+    it('keeps the original channel indexes when slicing', () => {
+        expect(
+            Object.keys(
+                sliceRenderedIO('outputs', outputs, isExpanded, 1, 3)[0][1]
+                    .channels
+            )
+        ).toEqual(['1', '2']);
     });
 });
 

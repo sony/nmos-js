@@ -1,8 +1,10 @@
 import { isConnectionsAxisTruncated } from './ConnectionsList';
+import { CELL_EXTENT } from '../../components/matrixLayout';
 import {
     connectionsCornerLabels,
     groupConnectionsResources,
     isActiveConnection,
+    sliceRenderedGroups,
 } from './ConnectionsMatrix';
 import {
     ConnectionRank,
@@ -263,6 +265,28 @@ describe('connection rank', () => {
         expect(connectionRankMessage(ConnectionRank.IncompatibleFormat)).toBe(
             'Incompatible format.'
         );
+    });
+});
+
+describe('sliceRenderedGroups', () => {
+    const groups = [
+        {
+            id: 'device-a',
+            label: 'A',
+            units: [{ type: 'group' }, { type: 'group' }, { type: 'group' }],
+        },
+        {
+            id: 'device-b',
+            label: 'B',
+            units: [{ resource: { id: 'port' }, type: 'resource' }],
+        },
+    ];
+
+    it('keeps a device heading centred on its whole span', () => {
+        const [device] = sliceRenderedGroups(groups, 1, 3);
+
+        expect(device.units).toHaveLength(2);
+        expect(device.centre).toBe(CELL_EXTENT / 2);
     });
 });
 

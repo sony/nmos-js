@@ -48,6 +48,10 @@ import makeConnection from '../../components/makeConnection';
 import dataProvider, { getConnectionResource } from '../../dataProvider';
 import useTableMaxHeight from '../../components/useTableMaxHeight';
 import {
+    renderedSpanCentre,
+    useMatrixViewport,
+} from '../../components/matrixViewport';
+import {
     CONNECTION_API_NOT_AVAILABLE,
     transportUsesTransportFile,
 } from '../../components/controlApiMessages';
@@ -62,7 +66,9 @@ import {
     HorizontalLinkChipField,
     MatrixCell,
     MatrixColumnHeadCell,
+    MatrixColumnSpacer,
     MatrixRowHeadCell,
+    MatrixRowSpacer,
     MatrixTableContainer,
     MatrixTableHead,
     TableHeadCell,
@@ -447,6 +453,53 @@ export const getConnectionsTableColumns = groups =>
         )
     );
 
+export const sliceRenderedGroups = (groups, first, last, view) => {
+    let offset = 0;
+    const sliced = [];
+
+    for (const group of groups) {
+        const extent = group.units.length;
+        const sliceFirst = Math.max(first, offset);
+        const sliceLast = Math.min(last, offset + extent);
+
+        if (sliceFirst < sliceLast) {
+            sliced.push({
+                ...group,
+                units: group.units.slice(
+                    sliceFirst - offset,
+                    sliceLast - offset
+                ),
+                centre: renderedSpanCentre(
+                    sliceFirst - offset,
+                    extent,
+                    sliceLast - sliceFirst,
+                    view && { ...view, offset }
+                ),
+            });
+        }
+        offset += extent;
+    }
+
+    return sliced;
+};
+
+const columnDeviceAnchor = centre => ({
+    bottom: COLLAPSE_BUTTON_SIZE - CHIP_MARGIN,
+    left: centre,
+    marginLeft: 0,
+    marginRight: 0,
+    position: 'absolute',
+    transform: 'translateX(-50%)',
+});
+
+const rowDeviceAnchor = centre => ({
+    left: CHIP_MARGIN,
+    position: 'absolute',
+    right: CHIP_MARGIN,
+    top: centre,
+    transform: 'translateY(-50%)',
+});
+
 const renderedGroups = (groups, expanded) =>
     groups.map(group => ({
         ...group,
@@ -685,6 +738,55 @@ const ConnectionsMatrix = ({
     const columnResource = swapAxes ? 'senders' : 'receivers';
     const labels = connectionsCornerLabels(swapAxes);
     const columns = getConnectionsTableColumns(columnGroups);
+    const rows = getConnectionsTableColumns(rowGroups);
+    const matrixViewport = useMatrixViewport({
+        columnCount: columns.length,
+        containerRef: matrixTableRef,
+        headingHeight: 2 * HEADING_EXTENT,
+        headingWidth: 2 * HEADING_EXTENT,
+        onScroll: () => {
+            if (cellTip.current) cellTip.current.close();
+        },
+        rowCount: rows.length,
+    });
+    const anchorView = (scrollVar, sizeVar, firstVisible, lastVisible) => ({
+        gridOrigin: 0,
+        scrollVar,
+        sizeVar,
+        viewStart: firstVisible * CELL_EXTENT,
+        viewEnd: lastVisible * CELL_EXTENT,
+    });
+    const visibleColumnGroups = sliceRenderedGroups(
+        columnGroups,
+        matrixViewport.firstColumn,
+        matrixViewport.lastColumn,
+        anchorView(
+            '--matrix-scroll-left',
+            '--matrix-view-width',
+            matrixViewport.firstVisibleColumn,
+            matrixViewport.lastVisibleColumn
+        )
+    );
+    const visibleRowGroups = sliceRenderedGroups(
+        rowGroups,
+        matrixViewport.firstRow,
+        matrixViewport.lastRow,
+        anchorView(
+            '--matrix-scroll-top',
+            '--matrix-view-height',
+            matrixViewport.firstVisibleRow,
+            matrixViewport.lastVisibleRow
+        )
+    );
+    const visibleColumnCount = visibleColumnGroups.reduce(
+        (count, group) => count + group.units.length,
+        0
+    );
+    const bodyColumnSpan =
+        2 +
+        visibleColumnCount +
+        (matrixViewport.left ? 1 : 0) +
+        (matrixViewport.right ? 1 : 0);
 
     const toggleExpanded = (resource, id) =>
         setExpanded(current => ({
@@ -848,9 +950,24 @@ const ConnectionsMatrix = ({
                     <colgroup>
                         <col style={{ width: HEADING_EXTENT }} />
                         <col style={{ width: HEADING_EXTENT }} />
-                        {columns.map(key => (
-                            <col key={key} style={{ width: CELL_EXTENT }} />
-                        ))}
+                        {matrixViewport.left > 0 && (
+                            <col style={{ width: matrixViewport.left }} />
+                        )}
+                        {visibleColumnGroups.flatMap(group =>
+                            group.units.map(unit => (
+                                <col
+                                    key={
+                                        unit.type === 'group'
+                                            ? group.id
+                                            : unit.resource.id
+                                    }
+                                    style={{ width: CELL_EXTENT }}
+                                />
+                            ))
+                        )}
+                        {matrixViewport.right > 0 && (
+                            <col style={{ width: matrixViewport.right }} />
+                        )}
                     </colgroup>
                     <MatrixTableHead>
                         <TableRow>
@@ -862,7 +979,12 @@ const ConnectionsMatrix = ({
                                     {labels.columns}
                                 </span>
                             </ConnectionsCornerCell>
-                            {columnGroups.map(group => (
+                            <MatrixColumnSpacer
+                                heading
+                                rowSpan={2}
+                                width={matrixViewport.left}
+                            />
+                            {visibleColumnGroups.map(group => (
                                 <ConnectionsDeviceColumnHeadCell
                                     key={group.id}
                                     colSpan={group.units.length}
@@ -871,35 +993,48 @@ const ConnectionsMatrix = ({
                                     }
                                     title={group.label}
                                 >
-                                    <ResourceLink
-                                        resource="devices"
-                                        id={group.id}
-                                    >
-                                        <VerticalLinkChipField
-                                            record={{ label: group.label }}
+                                    {group.centre !== null && (
+                                        <ResourceLink
+                                            resource="devices"
+                                            id={group.id}
+                                            style={columnDeviceAnchor(
+                                                group.centre
+                                            )}
+                                        >
+                                            <VerticalLinkChipField
+                                                record={{ label: group.label }}
+                                            />
+                                        </ResourceLink>
+                                    )}
+                                    {group.centre !== null && (
+                                        <CollapseButton
+                                            isExpanded={
+                                                group.units[0].type !== 'group'
+                                            }
+                                            onClick={() =>
+                                                toggleExpanded(
+                                                    columnResource,
+                                                    group.id
+                                                )
+                                            }
+                                            style={{ left: group.centre }}
+                                            title={
+                                                group.units[0].type === 'group'
+                                                    ? `View ${columnResource}`
+                                                    : `Hide ${columnResource}`
+                                            }
                                         />
-                                    </ResourceLink>
-                                    <CollapseButton
-                                        isExpanded={
-                                            group.units[0].type !== 'group'
-                                        }
-                                        onClick={() =>
-                                            toggleExpanded(
-                                                columnResource,
-                                                group.id
-                                            )
-                                        }
-                                        title={
-                                            group.units[0].type === 'group'
-                                                ? `View ${columnResource}`
-                                                : `Hide ${columnResource}`
-                                        }
-                                    />
+                                    )}
                                 </ConnectionsDeviceColumnHeadCell>
                             ))}
+                            <MatrixColumnSpacer
+                                heading
+                                rowSpan={2}
+                                width={matrixViewport.right}
+                            />
                         </TableRow>
                         <TableRow>
-                            {columnGroups.flatMap(group =>
+                            {visibleColumnGroups.flatMap(group =>
                                 group.units
                                     .filter(unit => unit.type === 'resource')
                                     .map(unit => (
@@ -940,7 +1075,11 @@ const ConnectionsMatrix = ({
                         </TableRow>
                     </MatrixTableHead>
                     <TableBody>
-                        {rowGroups.flatMap(group =>
+                        <MatrixRowSpacer
+                            colSpan={bodyColumnSpan}
+                            height={matrixViewport.top}
+                        />
+                        {visibleRowGroups.flatMap(group =>
                             group.units.map((row, rowIndex) => (
                                 <TableRow
                                     key={
@@ -957,35 +1096,41 @@ const ConnectionsMatrix = ({
                                             }
                                             title={group.label}
                                         >
-                                            <div>
-                                                <ResourceLink
-                                                    resource="devices"
-                                                    id={group.id}
+                                            {group.centre !== null && (
+                                                <div
+                                                    style={rowDeviceAnchor(
+                                                        group.centre
+                                                    )}
                                                 >
-                                                    <HorizontalLinkChipField
-                                                        record={{
-                                                            label: group.label,
-                                                        }}
+                                                    <ResourceLink
+                                                        resource="devices"
+                                                        id={group.id}
+                                                    >
+                                                        <HorizontalLinkChipField
+                                                            record={{
+                                                                label: group.label,
+                                                            }}
+                                                        />
+                                                    </ResourceLink>
+                                                    <CollapseButton
+                                                        direction="horizontal"
+                                                        isExpanded={
+                                                            row.type !== 'group'
+                                                        }
+                                                        onClick={() =>
+                                                            toggleExpanded(
+                                                                rowResource,
+                                                                group.id
+                                                            )
+                                                        }
+                                                        title={
+                                                            row.type === 'group'
+                                                                ? `View ${rowResource}`
+                                                                : `Hide ${rowResource}`
+                                                        }
                                                     />
-                                                </ResourceLink>
-                                                <CollapseButton
-                                                    direction="horizontal"
-                                                    isExpanded={
-                                                        row.type !== 'group'
-                                                    }
-                                                    onClick={() =>
-                                                        toggleExpanded(
-                                                            rowResource,
-                                                            group.id
-                                                        )
-                                                    }
-                                                    title={
-                                                        row.type === 'group'
-                                                            ? `View ${rowResource}`
-                                                            : `Hide ${rowResource}`
-                                                    }
-                                                />
-                                            </div>
+                                                </div>
+                                            )}
                                         </ConnectionsDeviceRowHeadCell>
                                     )}
                                     {row.type === 'resource' && (
@@ -1028,7 +1173,10 @@ const ConnectionsMatrix = ({
                                             </div>
                                         </ConnectionsResourceRowHeadCell>
                                     )}
-                                    {columnGroups.flatMap(columnGroup =>
+                                    <MatrixColumnSpacer
+                                        width={matrixViewport.left}
+                                    />
+                                    {visibleColumnGroups.flatMap(columnGroup =>
                                         columnGroup.units.map(column => (
                                             <MatrixCell
                                                 key={
@@ -1067,9 +1215,16 @@ const ConnectionsMatrix = ({
                                             </MatrixCell>
                                         ))
                                     )}
+                                    <MatrixColumnSpacer
+                                        width={matrixViewport.right}
+                                    />
                                 </TableRow>
                             ))
                         )}
+                        <MatrixRowSpacer
+                            colSpan={bodyColumnSpan}
+                            height={matrixViewport.bottom}
+                        />
                     </TableBody>
                 </Table>
             </MatrixTableContainer>

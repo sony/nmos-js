@@ -241,17 +241,7 @@ export const bindMatrixCrosshair = container => {
             clear();
         }, 100);
     };
-    const onOver = event => {
-        const cell = event.target.closest('td, th');
-        if (!cell || !container.contains(cell) || isSpacer(cell)) {
-            if (current) clear();
-            return;
-        }
-        if (clearTimer !== null) {
-            window.clearTimeout(clearTimer);
-            clearTimer = null;
-        }
-        if (cell === current) return;
+    const paint = cell => {
         const table = cell.closest('table');
         if (!table) return;
         const resolved = resolveCrosshair(table, cell);
@@ -275,6 +265,19 @@ export const bindMatrixCrosshair = container => {
             resolved.cells
         );
     };
+    const onOver = event => {
+        const cell = event.target.closest('td, th');
+        if (!cell || !container.contains(cell) || isSpacer(cell)) {
+            if (current) clear();
+            return;
+        }
+        if (clearTimer !== null) {
+            window.clearTimeout(clearTimer);
+            clearTimer = null;
+        }
+        if (cell === current) return;
+        paint(cell);
+    };
     const onLeave = event => {
         if (event.relatedTarget == null) clear();
     };
@@ -289,6 +292,20 @@ export const bindMatrixCrosshair = container => {
         }
         scheduleClear();
     };
+    // a wheel scroll mounts cells without moving the pointer, so the wash is
+    // applied again once those cells exist
+    let frame = null;
+    const refresh = () => {
+        frame = null;
+        if (current && current.isConnected) paint(current);
+    };
+    const scheduleRefresh = () => {
+        if (frame !== null) return;
+        frame = window.requestAnimationFrame(refresh);
+    };
+    const observer = new MutationObserver(scheduleRefresh);
+    const table = container.querySelector('table');
+    if (table) observer.observe(table, { childList: true, subtree: true });
     container.addEventListener('mouseover', onOver);
     container.addEventListener('mouseleave', onLeave);
     document.addEventListener('mouseover', onDocumentOver);
@@ -296,6 +313,8 @@ export const bindMatrixCrosshair = container => {
         container.removeEventListener('mouseover', onOver);
         container.removeEventListener('mouseleave', onLeave);
         document.removeEventListener('mouseover', onDocumentOver);
+        observer.disconnect();
+        if (frame !== null) window.cancelAnimationFrame(frame);
         clear();
         columnBand.remove();
         rowBand.remove();

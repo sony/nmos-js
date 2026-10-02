@@ -1,5 +1,6 @@
 import {
     MATRIX_CROSSHAIR_BAND_CLASS,
+    MATRIX_CROSSHAIR_CLASS,
     bindMatrixCrosshair,
     crosshairTargets,
 } from './matrixCrosshair';
@@ -118,6 +119,40 @@ it('lights the body rows an expanded row heading covers', () => {
 it('does not light anything from the corner', () => {
     const grid = table();
     expect(crosshairTargets(grid, grid.querySelector('#corner'))).toEqual([]);
+});
+
+it('lights a heading mounted while the pointer stays on the cell', async () => {
+    document.body.innerHTML = `
+        <div id="matrix">
+            <table>
+                <tr><th id="corner"></th><th id="col"></th></tr>
+                <tr><th id="row"></th><td id="a"></td></tr>
+            </table>
+        </div>
+    `;
+    const matrix = document.getElementById('matrix');
+    const unbind = bindMatrixCrosshair(matrix);
+    const frames = [];
+    const spy = jest
+        .spyOn(window, 'requestAnimationFrame')
+        .mockImplementation(callback => {
+            frames.push(callback);
+            return frames.length;
+        });
+    document
+        .getElementById('a')
+        .dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    const fresh = document.createElement('th');
+    fresh.id = 'col-next';
+    matrix
+        .querySelector('tr')
+        .replaceChild(fresh, document.getElementById('col'));
+    await Promise.resolve();
+    expect(frames).toHaveLength(1);
+    frames[0]();
+    expect(fresh.classList.contains(MATRIX_CROSSHAIR_CLASS)).toBe(true);
+    spy.mockRestore();
+    unbind();
 });
 
 it('keeps the crosshair while the pointer is on the tip', () => {

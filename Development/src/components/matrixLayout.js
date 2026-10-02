@@ -7,6 +7,12 @@ import {
     TableRow,
     withStyles,
 } from '@material-ui/core';
+import { fade } from '@material-ui/core/styles/colorManipulator';
+
+import {
+    MATRIX_CROSSHAIR_BAND_CLASS,
+    MATRIX_CROSSHAIR_CLASS,
+} from './matrixCrosshair';
 
 import LinkChipField from './LinkChipField';
 import emphasizedPaper from '../theme/emphasizedPaper';
@@ -202,13 +208,34 @@ export const gridEdgeColumnHeadStyle = ({
 
 // the scroll viewport the sticky headings stick within; the zero width stops
 // the table widening the page, the minimum width fills the space available
-export const MatrixTableContainer = withStyles({
-    root: {
-        marginTop: 8,
-        minWidth: '100%',
-        overflow: 'auto',
-        width: 0,
-    },
+// weaker than a matrix button's 0.08 hover wash: this covers a whole row and
+// column, so the two strengths are chosen separately
+const CROSSHAIR_OPACITY = 0.04;
+
+export const MatrixTableContainer = withStyles(theme => {
+    const crosshairWash = fade(theme.palette.text.primary, CROSSHAIR_OPACITY);
+    return {
+        root: {
+            marginTop: 8,
+            minWidth: '100%',
+            overflow: 'auto',
+            position: 'relative',
+            width: 0,
+            [`& .${MATRIX_CROSSHAIR_CLASS}`]: {
+                backgroundImage: `linear-gradient(${crosshairWash}, ${crosshairWash})`,
+            },
+            // the body wash, one rectangle per axis, above the cells and
+            // below the sticky headings
+            [`& .${MATRIX_CROSSHAIR_BAND_CLASS}`]: {
+                backgroundColor: crosshairWash,
+                left: 0,
+                pointerEvents: 'none',
+                position: 'absolute',
+                top: 0,
+                zIndex: 1,
+            },
+        },
+    };
 })(TableContainer);
 
 export const MatrixTableHead = withStyles(theme => ({

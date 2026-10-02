@@ -64,6 +64,7 @@ import {
     renderedSpanCentre,
     useMatrixViewport,
 } from '../../components/matrixViewport';
+import { useMatrixCrosshair } from '../../components/matrixCrosshair';
 import { useJSONSetting } from '../../settings';
 import labelize from '../../components/labelize';
 import { getFilteredInputs, getFilteredOutputs } from './FilterMatrix';
@@ -1993,6 +1994,7 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
     const mappingTableWidth =
         headingSections * HEADING_EXTENT + mappingColumns.length * CELL_EXTENT;
     const mappingTableRef = useRef(null);
+    useMatrixCrosshair(mappingTableRef);
     const mappingTableMaxHeight = useTableMaxHeight(mappingTableRef);
     const matrixViewport = useMatrixViewport({
         columnCount: mappingColumns.length,

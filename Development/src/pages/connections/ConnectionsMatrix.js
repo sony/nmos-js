@@ -51,6 +51,7 @@ import {
     renderedSpanCentre,
     useMatrixViewport,
 } from '../../components/matrixViewport';
+import { useMatrixCrosshair } from '../../components/matrixCrosshair';
 import {
     CONNECTION_API_NOT_AVAILABLE,
     transportUsesTransportFile,
@@ -712,6 +713,7 @@ const ConnectionsMatrix = ({
     swapAxes,
 }) => {
     const matrixTableRef = useRef(null);
+    useMatrixCrosshair(matrixTableRef);
     const matrixTableMaxHeight = useTableMaxHeight(matrixTableRef);
     const devices = useConnectionDevices(senders, receivers);
     const { flows, flowsLoaded } = useConnectionFlows(senders);

@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import {
     Divider,
-    IconButton,
     Menu,
     MenuItem,
     Table,
@@ -17,7 +16,6 @@ import {
     Typography,
     withStyles,
 } from '@material-ui/core';
-import FilterListIcon from '@material-ui/icons/FilterList';
 import { unstable_batchedUpdates } from 'react-dom';
 import { Link } from 'react-router-dom';
 import {
@@ -42,27 +40,36 @@ import {
 } from './connectionHeadingMatch';
 
 import CollapseButton from '../../components/CollapseButton';
+import MatchButton from '../../components/MatchButton';
 import ActiveField from '../../components/ActiveField';
 import MatrixButton, { MatrixCellTip } from '../../components/MatrixButton';
 import makeConnection from '../../components/makeConnection';
 import dataProvider, { getConnectionResource } from '../../dataProvider';
 import useTableMaxHeight from '../../components/useTableMaxHeight';
 import {
+    renderedSpanCentre,
+    useMatrixViewport,
+} from '../../components/matrixViewport';
+import { useMatrixCrosshair } from '../../components/matrixCrosshair';
+import {
     CONNECTION_API_NOT_AVAILABLE,
     transportUsesTransportFile,
 } from '../../components/controlApiMessages';
 import {
     CELL_EXTENT,
-    CHIP_INSET,
     CHIP_MARGIN,
     COLLAPSE_BUTTON_SIZE,
     DiagonalEllipsisButton,
     HEADING_EXTENT,
     HorizontalEllipsisButton,
     HorizontalLinkChipField,
+    MATCH_BUTTON_SIZE,
     MatrixCell,
     MatrixColumnHeadCell,
+    MatrixColumnSpacer,
+    MatrixRow,
     MatrixRowHeadCell,
+    MatrixRowSpacer,
     MatrixTableContainer,
     MatrixTableHead,
     TableHeadCell,
@@ -72,6 +79,8 @@ import {
     cornerColumnsLabelStyle,
     cornerRowsLabelStyle,
     gridEdgeColumnHeadStyle,
+    gridEdgeRowAnchor,
+    gridEdgeRowHeadStyle,
     matrixCornerCellStyle,
     matrixCornerStickyStyle,
     matrixTableStyle,
@@ -90,18 +99,12 @@ import {
     useJSONSetting,
 } from '../../settings';
 
-// the match button is smaller than the collapse arrow, so the port name
-// stays the subject of the heading
-const MATCH_ICON_SIZE = 16;
-const MATCH_ICON_PADDING = 2;
-const MATCH_BUTTON_SIZE = MATCH_ICON_SIZE + 2 * MATCH_ICON_PADDING;
-
 // the chip is inset by its own margin
 const ConnectionsDeviceColumnHeadCell = withStyles({
     root: gridEdgeColumnHeadStyle({
         content: 'a > div',
-        frame: CHIP_INSET,
         inset: CHIP_MARGIN,
+        margin: CHIP_MARGIN,
     }),
 })(MatrixColumnHeadCell);
 
@@ -109,8 +112,8 @@ const ConnectionsResourceColumnHeadCell = withStyles({
     root: gridEdgeColumnHeadStyle({
         button: MATCH_BUTTON_SIZE,
         content: 'a > div',
-        frame: CHIP_INSET,
         inset: CHIP_MARGIN,
+        margin: CHIP_MARGIN,
     }),
 })(MatrixColumnHeadCell);
 
@@ -120,59 +123,23 @@ const ConnectionsDeviceRowHeadCell = withStyles(theme => ({
         // likewise the Device headings are the first cell of each row group,
         // so they draw the table's left edge
         borderLeft: cellLine(theme),
-        // chip then collapse button, in the reading direction
-        '& > div': {
-            alignItems: 'center',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            overflow: 'hidden',
-        },
-        '& > div > a': {
-            minWidth: 0,
-        },
-        // the chip's own margin spaces it from the button, as it does below
-        // the chip in a column heading
-        '& > div > button': {
-            marginLeft: -CHIP_MARGIN,
-        },
-        // the chip shares the heading's width with the button beside it,
-        // just as it shares a column heading with the button below it
-        '& > div > a > div': {
-            maxWidth:
-                HEADING_EXTENT -
-                CHIP_INSET -
-                (COLLAPSE_BUTTON_SIZE - CHIP_MARGIN),
-        },
-        // a collapsed Device spans the resource heading too, so its chip can
-        // be as wide as one spanning two row headings
-        '&[colspan="2"] > div > a > div': {
-            maxWidth:
-                2 * HEADING_EXTENT -
-                CHIP_INSET -
-                (COLLAPSE_BUTTON_SIZE - CHIP_MARGIN),
-        },
+        ...gridEdgeRowHeadStyle({
+            content: 'a > div',
+            inset: CHIP_MARGIN,
+            margin: CHIP_MARGIN,
+        }),
     },
 }))(MatrixRowHeadCell);
 
 const ConnectionsResourceRowHeadCell = withStyles(theme => ({
     root: {
         ...stickyHeadingStyle(theme, HEADING_EXTENT),
-        '& > div': {
-            alignItems: 'center',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            overflow: 'hidden',
-        },
-        '& > div > a': {
-            minWidth: 0,
-        },
-        '& > div > button': {
-            marginLeft: -CHIP_MARGIN,
-        },
-        '& > div > a > div': {
-            maxWidth:
-                HEADING_EXTENT - CHIP_INSET - (MATCH_BUTTON_SIZE - CHIP_MARGIN),
-        },
+        ...gridEdgeRowHeadStyle({
+            button: MATCH_BUTTON_SIZE,
+            content: 'a > div',
+            inset: CHIP_MARGIN,
+            margin: CHIP_MARGIN,
+        }),
     },
 }))(MatrixRowHeadCell);
 
@@ -408,37 +375,12 @@ const PortHeading = ({
 const headingMatchTitle = (fromResource, usingRql) => {
     const base =
         fromResource === 'senders'
-            ? "Filter receivers to this sender's transport and format."
-            : "Filter senders to this receiver's transport, format, and caps.";
+            ? "Show receivers that match this sender's transport and format."
+            : "Show senders that match this receiver's transport, format, and caps.";
     return usingRql
         ? base
         : `${base} Media-type and transport subclass matching need RQL.`;
 };
-
-// the heading's own name is the subject; match is an aside so the glyph
-// is smaller than the collapse arrow, in the same ink as other actions
-const MatchIconButton = withStyles(theme => ({
-    root: {
-        color: theme.palette.action.active,
-        fontSize: MATCH_ICON_SIZE,
-        padding: MATCH_ICON_PADDING,
-    },
-}))(IconButton);
-
-const HeadingMatchButton = ({ disabled, onClick, title }) => (
-    <MatchIconButton
-        disabled={disabled}
-        onClick={event => {
-            event.preventDefault();
-            event.stopPropagation();
-            onClick();
-        }}
-        size="small"
-        title={title}
-    >
-        <FilterListIcon fontSize="inherit" />
-    </MatchIconButton>
-);
 
 export const getConnectionsTableColumns = groups =>
     groups.flatMap(group =>
@@ -446,6 +388,45 @@ export const getConnectionsTableColumns = groups =>
             unit.type === 'group' ? group.id : unit.resource.id
         )
     );
+
+export const sliceRenderedGroups = (groups, first, last, view) => {
+    let offset = 0;
+    const sliced = [];
+
+    for (const group of groups) {
+        const extent = group.units.length;
+        const sliceFirst = Math.max(first, offset);
+        const sliceLast = Math.min(last, offset + extent);
+
+        if (sliceFirst < sliceLast) {
+            sliced.push({
+                ...group,
+                units: group.units.slice(
+                    sliceFirst - offset,
+                    sliceLast - offset
+                ),
+                centre: renderedSpanCentre(
+                    sliceFirst - offset,
+                    extent,
+                    sliceLast - sliceFirst,
+                    view && { ...view, offset }
+                ),
+            });
+        }
+        offset += extent;
+    }
+
+    return sliced;
+};
+
+const columnDeviceAnchor = centre => ({
+    bottom: COLLAPSE_BUTTON_SIZE - CHIP_MARGIN,
+    left: centre,
+    marginLeft: 0,
+    marginRight: 0,
+    position: 'absolute',
+    transform: 'translateX(-50%)',
+});
 
 const renderedGroups = (groups, expanded) =>
     groups.map(group => ({
@@ -659,6 +640,7 @@ const ConnectionsMatrix = ({
     swapAxes,
 }) => {
     const matrixTableRef = useRef(null);
+    useMatrixCrosshair(matrixTableRef);
     const matrixTableMaxHeight = useTableMaxHeight(matrixTableRef);
     const devices = useConnectionDevices(senders, receivers);
     const { flows, flowsLoaded } = useConnectionFlows(senders);
@@ -685,6 +667,55 @@ const ConnectionsMatrix = ({
     const columnResource = swapAxes ? 'senders' : 'receivers';
     const labels = connectionsCornerLabels(swapAxes);
     const columns = getConnectionsTableColumns(columnGroups);
+    const rows = getConnectionsTableColumns(rowGroups);
+    const matrixViewport = useMatrixViewport({
+        columnCount: columns.length,
+        containerRef: matrixTableRef,
+        headingHeight: 2 * HEADING_EXTENT,
+        headingWidth: 2 * HEADING_EXTENT,
+        onScroll: () => {
+            if (cellTip.current) cellTip.current.close();
+        },
+        rowCount: rows.length,
+    });
+    const anchorView = (scrollVar, sizeVar, firstVisible, lastVisible) => ({
+        gridOrigin: 0,
+        scrollVar,
+        sizeVar,
+        viewStart: firstVisible * CELL_EXTENT,
+        viewEnd: lastVisible * CELL_EXTENT,
+    });
+    const visibleColumnGroups = sliceRenderedGroups(
+        columnGroups,
+        matrixViewport.firstColumn,
+        matrixViewport.lastColumn,
+        anchorView(
+            '--matrix-scroll-left',
+            '--matrix-view-width',
+            matrixViewport.firstVisibleColumn,
+            matrixViewport.lastVisibleColumn
+        )
+    );
+    const visibleRowGroups = sliceRenderedGroups(
+        rowGroups,
+        matrixViewport.firstRow,
+        matrixViewport.lastRow,
+        anchorView(
+            '--matrix-scroll-top',
+            '--matrix-view-height',
+            matrixViewport.firstVisibleRow,
+            matrixViewport.lastVisibleRow
+        )
+    );
+    const visibleColumnCount = visibleColumnGroups.reduce(
+        (count, group) => count + group.units.length,
+        0
+    );
+    const bodyColumnSpan =
+        2 +
+        visibleColumnCount +
+        (matrixViewport.left ? 1 : 0) +
+        (matrixViewport.right ? 1 : 0);
 
     const toggleExpanded = (resource, id) =>
         setExpanded(current => ({
@@ -848,9 +879,24 @@ const ConnectionsMatrix = ({
                     <colgroup>
                         <col style={{ width: HEADING_EXTENT }} />
                         <col style={{ width: HEADING_EXTENT }} />
-                        {columns.map(key => (
-                            <col key={key} style={{ width: CELL_EXTENT }} />
-                        ))}
+                        {matrixViewport.left > 0 && (
+                            <col style={{ width: matrixViewport.left }} />
+                        )}
+                        {visibleColumnGroups.flatMap(group =>
+                            group.units.map(unit => (
+                                <col
+                                    key={
+                                        unit.type === 'group'
+                                            ? group.id
+                                            : unit.resource.id
+                                    }
+                                    style={{ width: CELL_EXTENT }}
+                                />
+                            ))
+                        )}
+                        {matrixViewport.right > 0 && (
+                            <col style={{ width: matrixViewport.right }} />
+                        )}
                     </colgroup>
                     <MatrixTableHead>
                         <TableRow>
@@ -862,7 +908,12 @@ const ConnectionsMatrix = ({
                                     {labels.columns}
                                 </span>
                             </ConnectionsCornerCell>
-                            {columnGroups.map(group => (
+                            <MatrixColumnSpacer
+                                heading
+                                rowSpan={2}
+                                width={matrixViewport.left}
+                            />
+                            {visibleColumnGroups.map(group => (
                                 <ConnectionsDeviceColumnHeadCell
                                     key={group.id}
                                     colSpan={group.units.length}
@@ -871,35 +922,48 @@ const ConnectionsMatrix = ({
                                     }
                                     title={group.label}
                                 >
-                                    <ResourceLink
-                                        resource="devices"
-                                        id={group.id}
-                                    >
-                                        <VerticalLinkChipField
-                                            record={{ label: group.label }}
+                                    {group.centre !== null && (
+                                        <ResourceLink
+                                            resource="devices"
+                                            id={group.id}
+                                            style={columnDeviceAnchor(
+                                                group.centre
+                                            )}
+                                        >
+                                            <VerticalLinkChipField
+                                                record={{ label: group.label }}
+                                            />
+                                        </ResourceLink>
+                                    )}
+                                    {group.centre !== null && (
+                                        <CollapseButton
+                                            isExpanded={
+                                                group.units[0].type !== 'group'
+                                            }
+                                            onClick={() =>
+                                                toggleExpanded(
+                                                    columnResource,
+                                                    group.id
+                                                )
+                                            }
+                                            style={{ left: group.centre }}
+                                            title={
+                                                group.units[0].type === 'group'
+                                                    ? `View ${columnResource}`
+                                                    : `Hide ${columnResource}`
+                                            }
                                         />
-                                    </ResourceLink>
-                                    <CollapseButton
-                                        isExpanded={
-                                            group.units[0].type !== 'group'
-                                        }
-                                        onClick={() =>
-                                            toggleExpanded(
-                                                columnResource,
-                                                group.id
-                                            )
-                                        }
-                                        title={
-                                            group.units[0].type === 'group'
-                                                ? `View ${columnResource}`
-                                                : `Hide ${columnResource}`
-                                        }
-                                    />
+                                    )}
                                 </ConnectionsDeviceColumnHeadCell>
                             ))}
+                            <MatrixColumnSpacer
+                                heading
+                                rowSpan={2}
+                                width={matrixViewport.right}
+                            />
                         </TableRow>
                         <TableRow>
-                            {columnGroups.flatMap(group =>
+                            {visibleColumnGroups.flatMap(group =>
                                 group.units
                                     .filter(unit => unit.type === 'resource')
                                     .map(unit => (
@@ -916,7 +980,7 @@ const ConnectionsMatrix = ({
                                                 resourceName={columnResource}
                                                 supportsActive={supportsActive}
                                             />
-                                            <HeadingMatchButton
+                                            <MatchButton
                                                 disabled={
                                                     columnResource ===
                                                         'senders' &&
@@ -940,9 +1004,13 @@ const ConnectionsMatrix = ({
                         </TableRow>
                     </MatrixTableHead>
                     <TableBody>
-                        {rowGroups.flatMap(group =>
+                        <MatrixRowSpacer
+                            colSpan={bodyColumnSpan}
+                            height={matrixViewport.top}
+                        />
+                        {visibleRowGroups.flatMap(group =>
                             group.units.map((row, rowIndex) => (
-                                <TableRow
+                                <MatrixRow
                                     key={
                                         row.type === 'group'
                                             ? group.id
@@ -957,35 +1025,41 @@ const ConnectionsMatrix = ({
                                             }
                                             title={group.label}
                                         >
-                                            <div>
-                                                <ResourceLink
-                                                    resource="devices"
-                                                    id={group.id}
+                                            {group.centre !== null && (
+                                                <div
+                                                    style={gridEdgeRowAnchor(
+                                                        group.centre
+                                                    )}
                                                 >
-                                                    <HorizontalLinkChipField
-                                                        record={{
-                                                            label: group.label,
-                                                        }}
+                                                    <ResourceLink
+                                                        resource="devices"
+                                                        id={group.id}
+                                                    >
+                                                        <HorizontalLinkChipField
+                                                            record={{
+                                                                label: group.label,
+                                                            }}
+                                                        />
+                                                    </ResourceLink>
+                                                    <CollapseButton
+                                                        direction="horizontal"
+                                                        isExpanded={
+                                                            row.type !== 'group'
+                                                        }
+                                                        onClick={() =>
+                                                            toggleExpanded(
+                                                                rowResource,
+                                                                group.id
+                                                            )
+                                                        }
+                                                        title={
+                                                            row.type === 'group'
+                                                                ? `View ${rowResource}`
+                                                                : `Hide ${rowResource}`
+                                                        }
                                                     />
-                                                </ResourceLink>
-                                                <CollapseButton
-                                                    direction="horizontal"
-                                                    isExpanded={
-                                                        row.type !== 'group'
-                                                    }
-                                                    onClick={() =>
-                                                        toggleExpanded(
-                                                            rowResource,
-                                                            group.id
-                                                        )
-                                                    }
-                                                    title={
-                                                        row.type === 'group'
-                                                            ? `View ${rowResource}`
-                                                            : `Hide ${rowResource}`
-                                                    }
-                                                />
-                                            </div>
+                                                </div>
+                                            )}
                                         </ConnectionsDeviceRowHeadCell>
                                     )}
                                     {row.type === 'resource' && (
@@ -1007,7 +1081,7 @@ const ConnectionsMatrix = ({
                                                         supportsActive
                                                     }
                                                 />
-                                                <HeadingMatchButton
+                                                <MatchButton
                                                     disabled={
                                                         rowResource ===
                                                             'senders' &&
@@ -1028,7 +1102,10 @@ const ConnectionsMatrix = ({
                                             </div>
                                         </ConnectionsResourceRowHeadCell>
                                     )}
-                                    {columnGroups.flatMap(columnGroup =>
+                                    <MatrixColumnSpacer
+                                        width={matrixViewport.left}
+                                    />
+                                    {visibleColumnGroups.flatMap(columnGroup =>
                                         columnGroup.units.map(column => (
                                             <MatrixCell
                                                 key={
@@ -1067,9 +1144,16 @@ const ConnectionsMatrix = ({
                                             </MatrixCell>
                                         ))
                                     )}
-                                </TableRow>
+                                    <MatrixColumnSpacer
+                                        width={matrixViewport.right}
+                                    />
+                                </MatrixRow>
                             ))
                         )}
+                        <MatrixRowSpacer
+                            colSpan={bodyColumnSpan}
+                            height={matrixViewport.bottom}
+                        />
                     </TableBody>
                 </Table>
             </MatrixTableContainer>

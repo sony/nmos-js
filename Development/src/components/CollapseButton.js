@@ -9,8 +9,9 @@ const CollapseButton = ({
     isExpanded,
     direction = 'vertical',
     title,
+    style,
 }) => (
-    <IconButton size="small" title={title} onClick={onClick}>
+    <IconButton size="small" title={title} onClick={onClick} style={style}>
         {direction === 'horizontal' ? (
             isExpanded ? (
                 <KeyboardArrowLeftIcon />

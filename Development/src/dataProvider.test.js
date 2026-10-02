@@ -188,3 +188,50 @@ describe('DELETE devices', () => {
         );
     });
 });
+
+describe('UPDATE receivers', () => {
+    const record = {
+        id: '22222222-2222-4222-8222-222222222222',
+        $connectionAPI:
+            'http://node/x-nmos/connection/v1.2/single/receivers/22222222-2222-4222-8222-222222222222',
+        $staged: {
+            master_enable: true,
+            transport_params: [{ channel_name: null }],
+        },
+    };
+    const data = {
+        ...record,
+        $staged: {
+            master_enable: true,
+            transport_params: [{ channel_name: '11' }],
+        },
+    };
+
+    const patchBody = async params => {
+        const fetchJson = jest
+            .spyOn(fetchUtils, 'fetchJson')
+            .mockResolvedValue({ json: { id: record.id } });
+        await dataProvider('UPDATE', 'receivers', {
+            id: record.id,
+            data,
+            previousData: record,
+            ...params,
+        });
+        const [url, options] = fetchJson.mock.calls.pop();
+        expect(url).toBe(`${record.$connectionAPI}/staged`);
+        expect(options.method).toBe('PATCH');
+        return JSON.parse(options.body);
+    };
+
+    it('takes a number entered as text to be a number', async () => {
+        expect(await patchBody({})).toEqual({
+            transport_params: [{ channel_name: 11 }],
+        });
+    });
+
+    it('leaves a verbatim string as it is', async () => {
+        expect(await patchBody({ verbatim: true })).toEqual({
+            transport_params: [{ channel_name: '11' }],
+        });
+    });
+});

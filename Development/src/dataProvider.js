@@ -631,7 +631,7 @@ const convertDataProviderRequestToHTTP = (
                                 rhs: null,
                             });
                         }
-                    } else if (typeof d.rhs === 'string') {
+                    } else if (typeof d.rhs === 'string' && !params.verbatim) {
                         // ideally, if and only if the user enters a number without any extraneous cruft
                         // (consider e.g. '233.252.0.0'),  set the param to the number
                         // note that with the following implementation, we avoid e.g. ' ' being coerced to 0,

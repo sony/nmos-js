@@ -5,6 +5,12 @@ import {
 } from '../../components/matrixLayout';
 import { renderedSpanCentre } from '../../components/matrixViewport';
 import {
+    filterRoutableToOutput,
+    getFilteredInputs,
+    getFilteredOutputs,
+    routableInputsQuery,
+} from './FilterMatrix';
+import {
     channelMappingConstraintWarnings,
     channelMappingCornerLabels,
     getMappingTableColumns,
@@ -160,6 +166,109 @@ describe('isRoutableInput', () => {
         expect(
             isRoutableInput({ caps: { routable_inputs: 'input0' } }, 'input1')
         ).toBe(true);
+    });
+});
+
+describe('routable heading filters', () => {
+    const input = channels => ({
+        properties: { name: 'Mic' },
+        channels,
+        caps: {},
+    });
+    const inputs = {
+        'in-1': input({ 0: { label: 'a' } }),
+        'in-10': input({ 0: { label: 'b' } }),
+    };
+    const outputs = {
+        listed: {
+            properties: { name: 'Out' },
+            channels: { 0: { label: 'c' } },
+            caps: { routable_inputs: ['in-1'] },
+        },
+        other: {
+            properties: { name: 'Other' },
+            channels: { 0: { label: 'd' } },
+            caps: { routable_inputs: ['in-10'] },
+        },
+        open: {
+            properties: { name: 'Open' },
+            channels: { 0: { label: 'e' } },
+            caps: { routable_inputs: null },
+        },
+    };
+    const names = () => '';
+
+    it('matches an input id without matching a longer id', () => {
+        const filtered = getFilteredOutputs(
+            { 'routable inputs': routableInputsQuery('in-1') },
+            outputs,
+            () => 'Mic',
+            names
+        );
+
+        expect(Object.keys(filtered)).toEqual(['listed', 'open']);
+    });
+
+    it('matches Unrouted and outputs with no constraints', () => {
+        const filtered = getFilteredOutputs(
+            { 'routable inputs': routableInputsQuery('Unrouted') },
+            {
+                ...outputs,
+                clearable: {
+                    properties: { name: 'Clear' },
+                    channels: { 0: { label: 'f' } },
+                    caps: { routable_inputs: ['in-1', null] },
+                },
+            },
+            () => 'Mic',
+            names
+        );
+
+        expect(Object.keys(filtered)).toEqual(['open', 'clearable']);
+    });
+
+    it('keeps every input that can route to the output', () => {
+        expect(
+            Object.keys(
+                getFilteredInputs(
+                    { 'routable to output': 'listed' },
+                    inputs,
+                    names,
+                    outputs
+                )
+            )
+        ).toEqual(['in-1']);
+        expect(
+            Object.keys(
+                getFilteredInputs(
+                    { 'routable to output': 'open' },
+                    inputs,
+                    names,
+                    outputs
+                )
+            )
+        ).toEqual(['in-1', 'in-10']);
+        expect(
+            Object.keys(
+                getFilteredInputs(
+                    { 'routable to output': 'missing' },
+                    inputs,
+                    names,
+                    outputs
+                )
+            )
+        ).toEqual([]);
+    });
+
+    it('includes Unrouted only when the output allows it', () => {
+        expect(filterRoutableToOutput('open', null, outputs)).toBe(true);
+        expect(
+            filterRoutableToOutput('listed', null, {
+                listed: { caps: { routable_inputs: ['in-1', null] } },
+            })
+        ).toBe(true);
+        expect(filterRoutableToOutput('listed', null, outputs)).toBe(false);
+        expect(filterRoutableToOutput('missing', null, outputs)).toBe(false);
     });
 });
 

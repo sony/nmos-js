@@ -1,4 +1,17 @@
-import { cloneDeep, get, has } from 'lodash';
+import { cloneDeep, escapeRegExp, get, has } from 'lodash';
+
+// an input heading writes this into the existing routable-inputs filter, so
+// the match is that id and not another id that merely contains it, and an
+// output with no constraints matches "No Constraints"
+export const routableInputsQuery = inputId =>
+    `^(?:${escapeRegExp(inputId)}|No Constraints)$`;
+
+export const isRoutableInput = (outputItem, inputId) => {
+    const routableInputs = get(outputItem, 'caps.routable_inputs');
+    // null means that the Output has no routing restrictions. If the field is
+    // absent or malformed, leave validation to the Node.
+    return !Array.isArray(routableInputs) || routableInputs.includes(inputId);
+};
 
 const channelIncludes = (label, channelLabelReg) =>
     RegExp(channelLabelReg, 'i').test(label);
@@ -22,7 +35,8 @@ const routableInputsIncludes = (
 ) =>
     inputId === null
         ? RegExp(routableInputsReg, 'i').test('Unrouted')
-        : RegExp(routableInputsReg, 'i').test(getInputAPIName(inputId)) ||
+        : RegExp(routableInputsReg, 'i').test(inputId) ||
+          RegExp(routableInputsReg, 'i').test(getInputAPIName(inputId)) ||
           RegExp(routableInputsReg, 'i').test(getInputName(inputId));
 
 const filterRoutableInputs = (
@@ -90,12 +104,20 @@ const filterIOByChannels = (
     }
 };
 
+export const filterRoutableToOutput = (outputId, inputId, outputs) => {
+    if (!outputId) return true;
+    const outputItem = get(outputs, outputId);
+    if (!outputItem) return false;
+    return isRoutableInput(outputItem, inputId);
+};
+
 const hasInputFilters = filter =>
     has(filter, 'input name') ||
     has(filter, 'input id') ||
     has(filter, 'block size') ||
     has(filter, 'reordering') ||
-    has(filter, 'input channel label');
+    has(filter, 'input channel label') ||
+    has(filter, 'routable to output');
 
 const hasOutputFilters = filter =>
     has(filter, 'output name') ||
@@ -103,7 +125,7 @@ const hasOutputFilters = filter =>
     has(filter, 'routable inputs') ||
     has(filter, 'output channel label');
 
-export const getFilteredInputs = (filter, inputs, getCustomName) => {
+export const getFilteredInputs = (filter, inputs, getCustomName, outputs) => {
     let filteredInputs = inputs;
     if (filter && hasInputFilters(filter)) {
         let inputIdReg = get(filter, 'input id');
@@ -111,6 +133,7 @@ export const getFilteredInputs = (filter, inputs, getCustomName) => {
         let blockSizeVal = get(filter, 'block size');
         let reorderingVal = get(filter, 'reordering');
         let inputChannelLabelReg = get(filter, 'input channel label');
+        let routableToOutput = get(filter, 'routable to output');
         filteredInputs = Object.fromEntries(
             Object.entries(filteredInputs).filter(
                 ([inputId, inputItem]) =>
@@ -122,6 +145,11 @@ export const getFilteredInputs = (filter, inputs, getCustomName) => {
                     ) &&
                     filterBlockSize(blockSizeVal, inputItem) &&
                     filterReordering(reorderingVal, inputItem) &&
+                    filterRoutableToOutput(
+                        routableToOutput,
+                        inputId,
+                        outputs
+                    ) &&
                     filterChannelLabel(
                         inputChannelLabelReg,
                         inputItem,

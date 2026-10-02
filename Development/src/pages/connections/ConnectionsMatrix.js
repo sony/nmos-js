@@ -375,8 +375,8 @@ const PortHeading = ({
 const headingMatchTitle = (fromResource, usingRql) => {
     const base =
         fromResource === 'senders'
-            ? "Filter receivers to this sender's transport and format."
-            : "Filter senders to this receiver's transport, format, and caps.";
+            ? "Show receivers that match this sender's transport and format."
+            : "Show senders that match this receiver's transport, format, and caps.";
     return usingRql
         ? base
         : `${base} Media-type and transport subclass matching need RQL.`;

@@ -78,9 +78,15 @@ export const matrixHeadStyle = theme => ({
 // passing variant="head" doesn't seem to work inside TableBody
 export const TableHeadCell = props => <TableCell component="th" {...props} />;
 
-// every row of the grid has these cells, so they set how tall a row is, just
-// as the column widths set how wide one is; a heading beside them can be a
-// chip or a line of text without the rows coming out uneven
+// one cell tall, as a column is one cell wide, even when a filter leaves the
+// row with only its headings; the cell matches that height so a heading
+// beside it does not change the row
+export const MatrixRow = withStyles({
+    root: {
+        height: CELL_EXTENT,
+    },
+})(TableRow);
+
 export const MatrixCell = withStyles(theme => ({
     root: {
         ...matrixCellStyle(theme),

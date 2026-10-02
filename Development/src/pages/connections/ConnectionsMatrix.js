@@ -67,6 +67,7 @@ import {
     MatrixCell,
     MatrixColumnHeadCell,
     MatrixColumnSpacer,
+    MatrixRow,
     MatrixRowHeadCell,
     MatrixRowSpacer,
     MatrixTableContainer,
@@ -1009,7 +1010,7 @@ const ConnectionsMatrix = ({
                         />
                         {visibleRowGroups.flatMap(group =>
                             group.units.map((row, rowIndex) => (
-                                <TableRow
+                                <MatrixRow
                                     key={
                                         row.type === 'group'
                                             ? group.id
@@ -1146,7 +1147,7 @@ const ConnectionsMatrix = ({
                                     <MatrixColumnSpacer
                                         width={matrixViewport.right}
                                     />
-                                </TableRow>
+                                </MatrixRow>
                             ))
                         )}
                         <MatrixRowSpacer

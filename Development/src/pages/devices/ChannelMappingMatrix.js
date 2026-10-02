@@ -35,6 +35,7 @@ import {
     MatrixColumnHeadCell,
     MatrixColumnSpacer,
     MatrixHeadCell,
+    MatrixRow,
     MatrixRowHeadCell,
     MatrixRowSpacer,
     MatrixTableContainer,
@@ -1020,7 +1021,7 @@ const UnroutedRow = ({
     isOutputExpanded,
 }) => {
     return (
-        <TableRow>
+        <MatrixRow>
             <MappingRowHeadCell colSpan={headingSections}>
                 {'Unrouted'}
             </MappingRowHeadCell>
@@ -1055,7 +1056,7 @@ const UnroutedRow = ({
                 )
             )}
             {afterColumns}
-        </TableRow>
+        </MatrixRow>
     );
 };
 
@@ -1180,7 +1181,7 @@ const InputsRows = ({
     const { getCustomName } = useCustomNamesContext();
     return inputs.map(([inputId, inputItem, centre = CELL_EXTENT / 2]) => (
         <Fragment key={inputId}>
-            <TableRow>
+            <MatrixRow>
                 {showAssociations && (
                     <InputParentAssociation
                         isInputExpanded={isInputExpanded(inputId)}
@@ -1255,13 +1256,13 @@ const InputsRows = ({
                         getConstraintWarning={getConstraintWarning}
                     />
                 ) : null}
-            </TableRow>
+            </MatrixRow>
             {isInputExpanded(inputId) &&
                 Object.keys(inputItem.channels).length > 1 &&
                 Object.entries(inputItem.channels)
                     .slice(1)
                     .map(([inputChannelIndex, inputChannel]) => (
-                        <TableRow key={inputChannelIndex}>
+                        <MatrixRow key={inputChannelIndex}>
                             <InputChannelMappingCells
                                 afterColumns={afterColumns}
                                 beforeColumns={beforeColumns}
@@ -1277,7 +1278,7 @@ const InputsRows = ({
                                 isMapped={isMapped}
                                 getConstraintWarning={getConstraintWarning}
                             />
-                        </TableRow>
+                        </MatrixRow>
                     ))}
         </Fragment>
     ));
@@ -1584,7 +1585,7 @@ const OutputsRows = ({
     const { getCustomName } = useCustomNamesContext();
     return outputs.map(([outputId, outputItem, centre = CELL_EXTENT / 2]) => (
         <Fragment key={outputId}>
-            <TableRow>
+            <MatrixRow>
                 {showAssociations && (
                     <OutputSourceAssociationCell
                         isOutputExpanded={isOutputExpanded(outputId)}
@@ -1702,12 +1703,12 @@ const OutputsRows = ({
                         />
                     </>
                 ) : null}
-            </TableRow>
+            </MatrixRow>
             {isOutputExpanded(outputId) &&
                 Object.entries(outputItem.channels)
                     .slice(1)
                     .map(([outputChannelIndex, outputChannel]) => (
-                        <TableRow key={outputChannelIndex}>
+                        <MatrixRow key={outputChannelIndex}>
                             <MappingChannelHeadCell>
                                 <MappingHeadTooltip
                                     title={
@@ -1747,7 +1748,7 @@ const OutputsRows = ({
                                 }}
                                 showUnrouted={showUnrouted}
                             />
-                        </TableRow>
+                        </MatrixRow>
                     ))}
         </Fragment>
     ));

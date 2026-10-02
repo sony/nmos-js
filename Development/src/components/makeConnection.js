@@ -52,6 +52,16 @@ const getExtParams = transportParams => {
     });
 };
 
+// get parameters that both the sender and the receiver have, for a transport
+// with no list of its own above
+const getSharedParams = (senderParams, patchParams) => {
+    const senderKeys = new Set(senderParams.flatMap(Object.keys));
+    const receiverKeys = new Set(patchParams.flatMap(Object.keys));
+    return [...senderKeys].filter(
+        x => receiverKeys.has(x) && !x.startsWith('ext_')
+    );
+};
+
 // copy params from sender to receiver of the matching legs
 const copyTransportParams = (senderParams, params, patchParams, legMap) => {
     legMap.forEach((senderLeg, receiverLeg) => {
@@ -88,7 +98,8 @@ const makePatchDataWithTransportParams = (data, options) => {
     // do the easy ones
     copyTransportParams(
         senderParams,
-        oneToOneTransportParams[get(data.sender, '$transporttype')],
+        oneToOneTransportParams[get(data.sender, '$transporttype')] ||
+            getSharedParams(senderParams, patchParams),
         patchParams,
         legMap
     );

@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import {
     Divider,
-    IconButton,
     Menu,
     MenuItem,
     Table,
@@ -17,7 +16,6 @@ import {
     Typography,
     withStyles,
 } from '@material-ui/core';
-import FilterListIcon from '@material-ui/icons/FilterList';
 import { unstable_batchedUpdates } from 'react-dom';
 import { Link } from 'react-router-dom';
 import {
@@ -42,6 +40,7 @@ import {
 } from './connectionHeadingMatch';
 
 import CollapseButton from '../../components/CollapseButton';
+import MatchButton from '../../components/MatchButton';
 import ActiveField from '../../components/ActiveField';
 import MatrixButton, { MatrixCellTip } from '../../components/MatrixButton';
 import makeConnection from '../../components/makeConnection';
@@ -58,13 +57,13 @@ import {
 } from '../../components/controlApiMessages';
 import {
     CELL_EXTENT,
-    CHIP_INSET,
     CHIP_MARGIN,
     COLLAPSE_BUTTON_SIZE,
     DiagonalEllipsisButton,
     HEADING_EXTENT,
     HorizontalEllipsisButton,
     HorizontalLinkChipField,
+    MATCH_BUTTON_SIZE,
     MatrixCell,
     MatrixColumnHeadCell,
     MatrixColumnSpacer,
@@ -79,6 +78,8 @@ import {
     cornerColumnsLabelStyle,
     cornerRowsLabelStyle,
     gridEdgeColumnHeadStyle,
+    gridEdgeRowAnchor,
+    gridEdgeRowHeadStyle,
     matrixCornerCellStyle,
     matrixCornerStickyStyle,
     matrixTableStyle,
@@ -97,18 +98,12 @@ import {
     useJSONSetting,
 } from '../../settings';
 
-// the match button is smaller than the collapse arrow, so the port name
-// stays the subject of the heading
-const MATCH_ICON_SIZE = 16;
-const MATCH_ICON_PADDING = 2;
-const MATCH_BUTTON_SIZE = MATCH_ICON_SIZE + 2 * MATCH_ICON_PADDING;
-
 // the chip is inset by its own margin
 const ConnectionsDeviceColumnHeadCell = withStyles({
     root: gridEdgeColumnHeadStyle({
         content: 'a > div',
-        frame: CHIP_INSET,
         inset: CHIP_MARGIN,
+        margin: CHIP_MARGIN,
     }),
 })(MatrixColumnHeadCell);
 
@@ -116,8 +111,8 @@ const ConnectionsResourceColumnHeadCell = withStyles({
     root: gridEdgeColumnHeadStyle({
         button: MATCH_BUTTON_SIZE,
         content: 'a > div',
-        frame: CHIP_INSET,
         inset: CHIP_MARGIN,
+        margin: CHIP_MARGIN,
     }),
 })(MatrixColumnHeadCell);
 
@@ -127,59 +122,23 @@ const ConnectionsDeviceRowHeadCell = withStyles(theme => ({
         // likewise the Device headings are the first cell of each row group,
         // so they draw the table's left edge
         borderLeft: cellLine(theme),
-        // chip then collapse button, in the reading direction
-        '& > div': {
-            alignItems: 'center',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            overflow: 'hidden',
-        },
-        '& > div > a': {
-            minWidth: 0,
-        },
-        // the chip's own margin spaces it from the button, as it does below
-        // the chip in a column heading
-        '& > div > button': {
-            marginLeft: -CHIP_MARGIN,
-        },
-        // the chip shares the heading's width with the button beside it,
-        // just as it shares a column heading with the button below it
-        '& > div > a > div': {
-            maxWidth:
-                HEADING_EXTENT -
-                CHIP_INSET -
-                (COLLAPSE_BUTTON_SIZE - CHIP_MARGIN),
-        },
-        // a collapsed Device spans the resource heading too, so its chip can
-        // be as wide as one spanning two row headings
-        '&[colspan="2"] > div > a > div': {
-            maxWidth:
-                2 * HEADING_EXTENT -
-                CHIP_INSET -
-                (COLLAPSE_BUTTON_SIZE - CHIP_MARGIN),
-        },
+        ...gridEdgeRowHeadStyle({
+            content: 'a > div',
+            inset: CHIP_MARGIN,
+            margin: CHIP_MARGIN,
+        }),
     },
 }))(MatrixRowHeadCell);
 
 const ConnectionsResourceRowHeadCell = withStyles(theme => ({
     root: {
         ...stickyHeadingStyle(theme, HEADING_EXTENT),
-        '& > div': {
-            alignItems: 'center',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            overflow: 'hidden',
-        },
-        '& > div > a': {
-            minWidth: 0,
-        },
-        '& > div > button': {
-            marginLeft: -CHIP_MARGIN,
-        },
-        '& > div > a > div': {
-            maxWidth:
-                HEADING_EXTENT - CHIP_INSET - (MATCH_BUTTON_SIZE - CHIP_MARGIN),
-        },
+        ...gridEdgeRowHeadStyle({
+            button: MATCH_BUTTON_SIZE,
+            content: 'a > div',
+            inset: CHIP_MARGIN,
+            margin: CHIP_MARGIN,
+        }),
     },
 }))(MatrixRowHeadCell);
 
@@ -422,31 +381,6 @@ const headingMatchTitle = (fromResource, usingRql) => {
         : `${base} Media-type and transport subclass matching need RQL.`;
 };
 
-// the heading's own name is the subject; match is an aside so the glyph
-// is smaller than the collapse arrow, in the same ink as other actions
-const MatchIconButton = withStyles(theme => ({
-    root: {
-        color: theme.palette.action.active,
-        fontSize: MATCH_ICON_SIZE,
-        padding: MATCH_ICON_PADDING,
-    },
-}))(IconButton);
-
-const HeadingMatchButton = ({ disabled, onClick, title }) => (
-    <MatchIconButton
-        disabled={disabled}
-        onClick={event => {
-            event.preventDefault();
-            event.stopPropagation();
-            onClick();
-        }}
-        size="small"
-        title={title}
-    >
-        <FilterListIcon fontSize="inherit" />
-    </MatchIconButton>
-);
-
 export const getConnectionsTableColumns = groups =>
     groups.flatMap(group =>
         group.units.map(unit =>
@@ -491,14 +425,6 @@ const columnDeviceAnchor = centre => ({
     marginRight: 0,
     position: 'absolute',
     transform: 'translateX(-50%)',
-});
-
-const rowDeviceAnchor = centre => ({
-    left: CHIP_MARGIN,
-    position: 'absolute',
-    right: CHIP_MARGIN,
-    top: centre,
-    transform: 'translateY(-50%)',
 });
 
 const renderedGroups = (groups, expanded) =>
@@ -1053,7 +979,7 @@ const ConnectionsMatrix = ({
                                                 resourceName={columnResource}
                                                 supportsActive={supportsActive}
                                             />
-                                            <HeadingMatchButton
+                                            <MatchButton
                                                 disabled={
                                                     columnResource ===
                                                         'senders' &&
@@ -1100,7 +1026,7 @@ const ConnectionsMatrix = ({
                                         >
                                             {group.centre !== null && (
                                                 <div
-                                                    style={rowDeviceAnchor(
+                                                    style={gridEdgeRowAnchor(
                                                         group.centre
                                                     )}
                                                 >
@@ -1154,7 +1080,7 @@ const ConnectionsMatrix = ({
                                                         supportsActive
                                                     }
                                                 />
-                                                <HeadingMatchButton
+                                                <MatchButton
                                                     disabled={
                                                         rowResource ===
                                                             'senders' &&

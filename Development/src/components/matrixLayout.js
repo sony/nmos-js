@@ -24,27 +24,36 @@ import emphasizedPaper from '../theme/emphasizedPaper';
 // the same either way round
 export const CELL_PADDING = 1;
 export const CELL_BORDER = 1;
-// each cell's own padding and single border, within its fixed extent
-export const CELL_FRAME = 2 * CELL_PADDING + CELL_BORDER;
+// padding at both ends plus the one border a cell draws. The content box is
+// the extent minus this.
+export const CELL_PADDING_BORDER = 2 * CELL_PADDING + CELL_BORDER;
 // as far across a row heading as down a column heading, so the matrix looks
 // the same either way round
 export const HEADING_EXTENT = 120;
-// as far down a grid cell as across it, so the cells are square. A chip and
-// its margin fit inside the cell's own frame, with a pixel to spare.
+// as far down a grid cell as across it, so the cells are square
 export const CELL_EXTENT = 45;
-// as far in from either end of the heading as the arrow on the headings
-// which have one
-export const HEADING_INSET = 8;
-// the collapse button's own size, as a small icon button
-export const COLLAPSE_BUTTON_SIZE = 30;
-// a chip's own margin, which spaces it from the heading's edges and from the
-// collapse button beside or below it
+// padding around a heading name, the same across a row heading as down a
+// column heading
+export const HEADING_PADDING = 8;
+// CollapseButton is an IconButton size="small" around a default SvgIcon.
+// size="small" sets the button font size to 18, but the arrow does not
+// inherit it: the icon stays the SvgIcon default, and the button padding is
+// the size="small" padding.
+const SVG_ICON_SIZE = 24;
+const ICON_BUTTON_SMALL_PADDING = 3;
+export const COLLAPSE_BUTTON_SIZE =
+    SVG_ICON_SIZE + 2 * ICON_BUTTON_SMALL_PADDING;
+// the heading match button. Smaller than the collapse arrow, and neither of
+// Material's icon sizes: SvgIcon small is 20, and size="small" padding is 3.
+export const MATCH_ICON_SIZE = 16;
+export const MATCH_ICON_PADDING = 2;
+export const MATCH_BUTTON_SIZE = MATCH_ICON_SIZE + 2 * MATCH_ICON_PADDING;
+// the margin react-admin's ChipField sets on a Chip
 export const CHIP_MARGIN = 4;
-// a horizontal chip's height; the width of a vertical one
+// a Chip's own height, which is the width of one standing on end
 export const CHIP_EXTENT = 32;
-// a chip is inset by its own margin as well as the heading cell's frame, so
-// cap it short of the heading and the label ellipsizes inside the cell
-export const CHIP_INSET = CELL_FRAME + 2 * CHIP_MARGIN;
+// the padding a Chip gives its label, on both ends of the long axis
+export const CHIP_LABEL_PADDING = 12;
 
 export const cellLine = theme =>
     `solid ${CELL_BORDER}px ${theme.palette.divider}`;
@@ -178,25 +187,33 @@ export const MatrixRowHeadCell = withStyles({
     },
 })(MatrixHeadCell);
 
+// `inset` is the padding or margin the content already has at the button, so
+// it is not counted again. `margin` is a chip's own margin, counted at both
+// ends. The cell's padding and border come off as well.
+const gridEdgeContentLimit = (span, { button, inset, margin }) =>
+    span * HEADING_EXTENT - CELL_PADDING_BORDER - 2 * margin - (button - inset);
+
 // the collapse button at the grid edge, like the row headings, with the
 // heading's content ending just above it; the content shares the heading
 // with the button below it, just as it shares a row heading's width with the
 // button beside it, and a collapsed heading spans the section below it too,
 // so its content can be as long as one spanning two row headings
+
 export const gridEdgeColumnHeadStyle = ({
     content,
-    frame,
     inset,
+    margin = 0,
     button = COLLAPSE_BUTTON_SIZE,
 }) => ({
-    // the button's own height, less the inset the content already has
+    // the button's own height, less the padding or margin the content already
+    // has against it
     paddingBottom: button - inset,
     position: 'relative',
     [`& > ${content}`]: {
-        maxHeight: HEADING_EXTENT - frame - (button - inset),
+        maxHeight: gridEdgeContentLimit(1, { button, inset, margin }),
     },
     [`&[rowspan="2"] > ${content}`]: {
-        maxHeight: 2 * HEADING_EXTENT - frame - (button - inset),
+        maxHeight: gridEdgeContentLimit(2, { button, inset, margin }),
     },
     '& > button': {
         bottom: 0,
@@ -204,6 +221,45 @@ export const gridEdgeColumnHeadStyle = ({
         position: 'absolute',
         transform: 'translateX(-50%)',
     },
+});
+
+// the same, across a row heading: the content then the button beside it, in
+// the reading direction, the content's inset closed up against the button
+export const gridEdgeRowHeadStyle = ({
+    content,
+    inset,
+    margin = 0,
+    button = COLLAPSE_BUTTON_SIZE,
+}) => ({
+    '& > div': {
+        alignItems: 'center',
+        display: 'flex',
+        justifyContent: 'flex-end',
+        overflow: 'hidden',
+    },
+    '& > div > *': {
+        minWidth: 0,
+    },
+    [`& > div > ${content}`]: {
+        maxWidth: gridEdgeContentLimit(1, { button, inset, margin }),
+    },
+    [`&[colspan="2"] > div > ${content}`]: {
+        maxWidth: gridEdgeContentLimit(2, { button, inset, margin }),
+    },
+    '& > div > button:first-of-type': {
+        marginLeft: -inset,
+    },
+});
+
+// a row heading's content starts where it would in the cell's flow, after
+// the cell's padding, and its button meets the grid edge, as the button
+// along the bottom of a column heading does
+export const gridEdgeRowAnchor = centre => ({
+    left: CELL_PADDING,
+    position: 'absolute',
+    right: 0,
+    top: centre,
+    transform: 'translateY(-50%)',
 });
 
 // the scroll viewport the sticky headings stick within; the zero width stops
@@ -216,7 +272,7 @@ export const MatrixTableContainer = withStyles(theme => {
     const crosshairWash = fade(theme.palette.text.primary, CROSSHAIR_OPACITY);
     return {
         root: {
-            marginTop: 8,
+            marginTop: theme.spacing(1),
             minWidth: '100%',
             overflow: 'auto',
             position: 'relative',
@@ -265,12 +321,13 @@ export const matrixTableStyle = width => ({
 export const VerticalLinkChipField = withStyles({
     chip: {
         height: 'auto',
-        maxHeight: HEADING_EXTENT - CHIP_INSET,
+        maxHeight: HEADING_EXTENT - CELL_PADDING_BORDER - 2 * CHIP_MARGIN,
         width: CHIP_EXTENT,
         writingMode: 'vertical-rl',
-        // the label's side padding would squeeze the vertical text
+        // the label padding moved to the long axis; the cross-axis padding
+        // would squeeze the vertical text
         '& > span': {
-            padding: '12px 0',
+            padding: `${CHIP_LABEL_PADDING}px 0`,
         },
     },
 })(({ classes, className, ...props }) => (
@@ -282,7 +339,7 @@ export const VerticalLinkChipField = withStyles({
 
 export const HorizontalLinkChipField = withStyles({
     chip: {
-        maxWidth: HEADING_EXTENT - CHIP_INSET,
+        maxWidth: HEADING_EXTENT - CELL_PADDING_BORDER - 2 * CHIP_MARGIN,
     },
 })(({ classes, className, ...props }) => (
     <LinkChipField

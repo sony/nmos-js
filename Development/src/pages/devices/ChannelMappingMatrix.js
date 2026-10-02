@@ -24,11 +24,11 @@ import CollapseButton from '../../components/CollapseButton';
 import {
     CELL_BORDER,
     CELL_EXTENT,
-    CELL_FRAME,
+    CELL_PADDING_BORDER,
     COLLAPSE_BUTTON_SIZE,
     DiagonalEllipsisButton,
     HEADING_EXTENT,
-    HEADING_INSET,
+    HEADING_PADDING,
     HorizontalEllipsisButton,
     HorizontalLinkChipField,
     MatrixCell,
@@ -46,6 +46,8 @@ import {
     cornerColumnsLabelStyle,
     cornerRowsLabelStyle,
     gridEdgeColumnHeadStyle,
+    gridEdgeRowAnchor,
+    gridEdgeRowHeadStyle,
     matrixCornerCellStyle,
     matrixCornerStickyStyle,
     matrixTableStyle,
@@ -104,19 +106,27 @@ const MappingIOHeadCell = withStyles(theme => ({
     root: {
         ...stickyHeadingStyle(theme, `var(${PARENT_HEADING_OFFSET})`),
         borderLeft: `solid var(${IO_HEADING_EDGE}) ${theme.palette.divider}`,
-        paddingLeft: HEADING_INSET,
-        // name then collapse button, in the reading direction
-        '& > div': {
-            display: 'flex',
-            alignItems: 'center',
-            overflow: 'hidden',
-        },
+        ...gridEdgeRowHeadStyle({
+            content: 'div',
+            inset: HEADING_PADDING,
+        }),
+        // the name is inset by its own padding, as in a column heading
         '& > div > div': {
-            flex: 1,
-            minWidth: 0,
+            boxSizing: 'border-box',
+            maxWidth:
+                HEADING_EXTENT -
+                CELL_PADDING_BORDER -
+                (COLLAPSE_BUTTON_SIZE - HEADING_PADDING),
             overflow: 'hidden',
+            padding: `0 ${HEADING_PADDING}px`,
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+        },
+        '&[colspan="2"] > div > div': {
+            maxWidth:
+                2 * HEADING_EXTENT -
+                CELL_PADDING_BORDER -
+                (COLLAPSE_BUTTON_SIZE - HEADING_PADDING),
         },
     },
 }))(MatrixRowHeadCell);
@@ -127,8 +137,8 @@ const MappingChannelHeadCell = withStyles(theme => ({
             theme,
             `calc(var(${PARENT_HEADING_OFFSET}) + ${HEADING_EXTENT}px)`
         ),
-        paddingLeft: HEADING_INSET,
-        paddingRight: HEADING_INSET,
+        paddingLeft: HEADING_PADDING,
+        paddingRight: HEADING_PADDING,
     },
 }))(MatrixRowHeadCell);
 
@@ -138,8 +148,8 @@ const MappingRowHeadCell = withStyles(theme => ({
         // a row heading spanning the heading sections likewise begins its
         // row, so it draws the left edge too
         borderLeft: cellLine(theme),
-        paddingLeft: HEADING_INSET,
-        paddingRight: HEADING_INSET,
+        paddingLeft: HEADING_PADDING,
+        paddingRight: HEADING_PADDING,
     },
 }))(MatrixRowHeadCell);
 
@@ -151,8 +161,8 @@ const MappingColumnHeadCell = withStyles({
             boxSizing: 'border-box',
             display: 'block',
             margin: '0 auto',
-            maxHeight: HEADING_EXTENT - CELL_FRAME,
-            padding: `${HEADING_INSET}px 0`,
+            maxHeight: HEADING_EXTENT - CELL_PADDING_BORDER,
+            padding: `${HEADING_PADDING}px 0`,
             width: 'fit-content',
             writingMode: 'vertical-rl',
         },
@@ -170,12 +180,10 @@ const MappingParentColumnHeadCell = withStyles({
     },
 })(MappingColumnHeadCell);
 
-// the name is inset by the heading's own padding
 const MappingIOColumnHeadCell = withStyles({
     root: gridEdgeColumnHeadStyle({
         content: 'div',
-        frame: CELL_FRAME,
-        inset: HEADING_INSET,
+        inset: HEADING_PADDING,
     }),
 })(MappingColumnHeadCell);
 
@@ -233,7 +241,7 @@ const ConstraintWarning = withStyles(theme => ({
 // calc() that keeps the label on the viewport edge once that centre has
 // scrolled away.
 const columnHeadingAnchor = centre => ({
-    bottom: COLLAPSE_BUTTON_SIZE - HEADING_INSET,
+    bottom: COLLAPSE_BUTTON_SIZE - HEADING_PADDING,
     left: centre,
     marginLeft: 0,
     marginRight: 0,
@@ -248,14 +256,6 @@ const columnAssociationAnchor = centre => ({
     position: 'absolute',
     top: '50%',
     transform: 'translate(-50%, -50%)',
-});
-
-const rowHeadingAnchor = centre => ({
-    left: HEADING_INSET,
-    position: 'absolute',
-    right: HEADING_INSET,
-    top: centre,
-    transform: 'translateY(-50%)',
 });
 
 const rowAssociationAnchor = centre => ({
@@ -1197,7 +1197,7 @@ const InputsRows = ({
                     colSpan={isInputExpanded(inputId) ? 1 : 2}
                 >
                     {centre !== null && (
-                        <div style={rowHeadingAnchor(centre)}>
+                        <div style={gridEdgeRowAnchor(centre)}>
                             <MappingHeadTooltip
                                 title={
                                     <InputTooltip
@@ -1601,7 +1601,7 @@ const OutputsRows = ({
                     colSpan={isOutputExpanded(outputId) ? 1 : 2}
                 >
                     {centre !== null && (
-                        <div style={rowHeadingAnchor(centre)}>
+                        <div style={gridEdgeRowAnchor(centre)}>
                             <MappingHeadTooltip
                                 title={
                                     <OutputTooltip

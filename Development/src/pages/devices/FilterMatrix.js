@@ -1,7 +1,30 @@
-import { cloneDeep, get, has } from 'lodash';
+import { cloneDeep, escapeRegExp, get, has } from 'lodash';
+
+// an input heading writes this into the existing routable-inputs filter, so
+// the match is that id and not another id that merely contains it, and an
+// output with no constraints matches "No Constraints"
+export const routableInputsQuery = inputId =>
+    `^(?:${escapeRegExp(inputId)}|No Constraints)$`;
+
+export const isRoutableInput = (outputItem, inputId) => {
+    const routableInputs = get(outputItem, 'caps.routable_inputs');
+    // null means that the Output has no routing restrictions. If the field is
+    // absent or malformed, leave validation to the Node.
+    return !Array.isArray(routableInputs) || routableInputs.includes(inputId);
+};
+
+// a pattern is compiled while the matrix renders, so a mistyped one must
+// match nothing instead of throwing
+const matchesPattern = (pattern, value) => {
+    try {
+        return RegExp(pattern, 'i').test(value);
+    } catch (exception) {
+        return false;
+    }
+};
 
 const channelIncludes = (label, channelLabelReg) =>
-    RegExp(channelLabelReg, 'i').test(label);
+    matchesPattern(channelLabelReg, label);
 
 const filterChannelLabel = (channelLabelReg, item, getCustomChannelLabel) =>
     !channelLabelReg ||
@@ -21,9 +44,10 @@ const routableInputsIncludes = (
     getInputName
 ) =>
     inputId === null
-        ? RegExp(routableInputsReg, 'i').test('Unrouted')
-        : RegExp(routableInputsReg, 'i').test(getInputAPIName(inputId)) ||
-          RegExp(routableInputsReg, 'i').test(getInputName(inputId));
+        ? matchesPattern(routableInputsReg, 'Unrouted')
+        : matchesPattern(routableInputsReg, inputId) ||
+          matchesPattern(routableInputsReg, getInputAPIName(inputId)) ||
+          matchesPattern(routableInputsReg, getInputName(inputId));
 
 const filterRoutableInputs = (
     routableInputsReg,
@@ -41,14 +65,14 @@ const filterRoutableInputs = (
                   getInputName
               )
           )
-        : RegExp(routableInputsReg, 'i').test('No Constraints'));
+        : matchesPattern(routableInputsReg, 'No Constraints'));
 
 const filterName = (nameReg, apiName, name) =>
     !nameReg ||
-    RegExp(nameReg, 'i').test(apiName) ||
-    RegExp(nameReg, 'i').test(name);
+    matchesPattern(nameReg, apiName) ||
+    matchesPattern(nameReg, name);
 
-const filterId = (idReg, itemId) => !idReg || RegExp(idReg, 'i').test(itemId);
+const filterId = (idReg, itemId) => !idReg || matchesPattern(idReg, itemId);
 
 const filterBlockSize = (blockSizeVal, item) =>
     blockSizeVal === undefined ||
@@ -90,12 +114,20 @@ const filterIOByChannels = (
     }
 };
 
+export const filterRoutableToOutput = (outputId, inputId, outputs) => {
+    if (!outputId) return true;
+    const outputItem = get(outputs, outputId);
+    if (!outputItem) return false;
+    return isRoutableInput(outputItem, inputId);
+};
+
 const hasInputFilters = filter =>
     has(filter, 'input name') ||
     has(filter, 'input id') ||
     has(filter, 'block size') ||
     has(filter, 'reordering') ||
-    has(filter, 'input channel label');
+    has(filter, 'input channel label') ||
+    has(filter, 'routable to output');
 
 const hasOutputFilters = filter =>
     has(filter, 'output name') ||
@@ -103,7 +135,7 @@ const hasOutputFilters = filter =>
     has(filter, 'routable inputs') ||
     has(filter, 'output channel label');
 
-export const getFilteredInputs = (filter, inputs, getCustomName) => {
+export const getFilteredInputs = (filter, inputs, getCustomName, outputs) => {
     let filteredInputs = inputs;
     if (filter && hasInputFilters(filter)) {
         let inputIdReg = get(filter, 'input id');
@@ -111,6 +143,7 @@ export const getFilteredInputs = (filter, inputs, getCustomName) => {
         let blockSizeVal = get(filter, 'block size');
         let reorderingVal = get(filter, 'reordering');
         let inputChannelLabelReg = get(filter, 'input channel label');
+        let routableToOutput = get(filter, 'routable to output');
         filteredInputs = Object.fromEntries(
             Object.entries(filteredInputs).filter(
                 ([inputId, inputItem]) =>
@@ -122,6 +155,11 @@ export const getFilteredInputs = (filter, inputs, getCustomName) => {
                     ) &&
                     filterBlockSize(blockSizeVal, inputItem) &&
                     filterReordering(reorderingVal, inputItem) &&
+                    filterRoutableToOutput(
+                        routableToOutput,
+                        inputId,
+                        outputs
+                    ) &&
                     filterChannelLabel(
                         inputChannelLabelReg,
                         inputItem,

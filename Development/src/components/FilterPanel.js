@@ -285,6 +285,15 @@ export const NumberFilter = ({
     );
 };
 
+const isInvalidPattern = pattern => {
+    try {
+        RegExp(pattern, 'i');
+        return false;
+    } catch (exception) {
+        return true;
+    }
+};
+
 export const StringFilter = ({
     defaultValue,
     source,
@@ -292,6 +301,7 @@ export const StringFilter = ({
     filter,
     setFilter,
     autoFocus,
+    regex,
     ...props
 }) => {
     const [value, setValue] = useState(() => {
@@ -325,6 +335,7 @@ export const StringFilter = ({
             });
         };
     }, [value, setFilter, source]);
+    const invalid = regex && value !== '' && isInvalidPattern(value);
     return (
         <FilterTextField
             label={label}
@@ -337,6 +348,8 @@ export const StringFilter = ({
             onFocus={event => event.target.select()}
             inputRef={inputRef}
             {...props}
+            error={invalid}
+            title={invalid ? 'Invalid regular expression' : undefined}
         />
     );
 };

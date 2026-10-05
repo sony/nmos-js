@@ -130,6 +130,45 @@ describe('makeConnection', () => {
         expect(params.data.$staged.activation.mode).toBe('activate_immediate');
     });
 
+    it('copies the transport file and its Content-Type', async () => {
+        TRANSPORTS[TRANSPORT_EXAMPLE] = {
+            label: 'Carrier Pigeon',
+            oneToOne: true,
+        };
+        const { sender, receiver } = ends(TRANSPORT_EXAMPLE);
+        sender.$transportfile = "For heaven's sake, stop it.";
+        sender.$transportfiletype = 'text/plain';
+        const params = await connect(sender, receiver);
+        expect(params.data.$staged.transport_file).toEqual({
+            data: "For heaven's sake, stop it.",
+            type: 'text/plain',
+        });
+    });
+
+    it('uses the registered type when the transport file has no Content-Type', async () => {
+        const { sender, receiver } = ends('urn:x-nmos:transport:rtp');
+        sender.$active.transport_params[0].destination_ip = '192.0.2.1';
+        sender.$transportfile = 'v=0';
+        const params = await connect(sender, receiver);
+        expect(params.data.$staged.transport_file).toEqual({
+            data: 'v=0',
+            type: 'application/sdp',
+        });
+    });
+
+    it('does not invent a type for a transport file with no default', async () => {
+        TRANSPORTS[TRANSPORT_EXAMPLE] = {
+            label: 'Carrier Pigeon',
+            oneToOne: true,
+        };
+        const { sender, receiver } = ends(TRANSPORT_EXAMPLE);
+        sender.$transportfile = "For heaven's sake, stop it.";
+        const params = await connect(sender, receiver);
+        expect(params.data.$staged.transport_file).toEqual({
+            data: "For heaven's sake, stop it.",
+        });
+    });
+
     it('still copies only the listed parameters for RTP', async () => {
         const sender = {
             id: 'sender0',

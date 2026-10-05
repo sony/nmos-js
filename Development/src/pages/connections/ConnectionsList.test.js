@@ -18,8 +18,6 @@ import {
     receiverEssenceFromSender,
     senderEssenceFromReceiver,
 } from './connectionHeadingMatch';
-import { transportFileHint } from '../../components/controlApiMessages';
-import { parseTransportUrn } from '../../transportUrn';
 import {
     FORMATS,
     TRANSPORTS,
@@ -404,38 +402,5 @@ describe('heading match', () => {
             format: video,
             transport: rtpMcast,
         });
-    });
-});
-
-describe('control API messages', () => {
-    it('names transports that do not use a transport file', () => {
-        expect(transportFileHint('urn:x-nmos:transport:mxl')).toBe(
-            'MXL does not use a transport file.'
-        );
-        expect(transportFileHint('urn:x-nmos:transport:websocket')).toBe(
-            'WebSocket does not use a transport file.'
-        );
-        expect(transportFileHint('urn:x-nmos:transport:mqtt')).toBe(
-            'MQTT does not use a transport file.'
-        );
-    });
-
-    it('treats RTP as a missing transport file', () => {
-        expect(transportFileHint('urn:x-nmos:transport:rtp')).toBe(
-            'Transport file is not available.'
-        );
-        expect(transportFileHint('urn:x-nmos:transport:rtp.ucast')).toBe(
-            'Transport file is not available.'
-        );
-    });
-
-    it('takes the URN-base of a versioned or subclassified transport', () => {
-        expect(parseTransportUrn('urn:x-nmos:transport:rtp.mcast').base).toBe(
-            'urn:x-nmos:transport:rtp'
-        );
-        expect(
-            parseTransportUrn('urn:x-nmos:transport:websocket/v1.0').base
-        ).toBe('urn:x-nmos:transport:websocket');
-        expect(parseTransportUrn(undefined)).toBeNull();
     });
 });

@@ -8,17 +8,22 @@ import { ContentCopyIcon } from '../icons';
 const TransportFileViewer = ({ endpoint, ...props }) => {
     const notify = useNotify();
     const handleCopy = () => {
-        copy(get(props.record, `${endpoint}`)).then(() => {
+        copy(data).then(() => {
             notify('Transport file copied');
         });
     };
 
-    if (!get(props.record, `${endpoint}`)) {
-        return null;
+    const data = get(props.record, endpoint);
+    if (!data) {
+        return (
+            <Labeled label="Transport File Data">
+                <span />
+            </Labeled>
+        );
     }
 
     return (
-        <Labeled label="Transport File">
+        <Labeled label="Transport File Data">
             <Card elevation={3}>
                 <CardContent>
                     <IconButton
@@ -29,9 +34,7 @@ const TransportFileViewer = ({ endpoint, ...props }) => {
                         <ContentCopyIcon fontSize="small" />
                     </IconButton>
                     <pre style={{ fontFamily: 'inherit' }}>
-                        <Typography>
-                            {get(props.record, `${endpoint}`)}
-                        </Typography>
+                        <Typography>{data}</Typography>
                     </pre>
                 </CardContent>
             </Card>

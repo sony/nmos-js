@@ -30,6 +30,7 @@ import {
     FORMATS,
     ParameterField,
     TRANSPORTS,
+    transportOmitsTransportFile,
 } from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
 import SanitizedDivider from '../../components/SanitizedDivider';
@@ -229,6 +230,9 @@ const ShowSummaryTab = ({ record, ...props }) => {
 };
 
 const ShowActiveTab = ({ record, ...props }) => {
+    const showTransportFile = !transportOmitsTransportFile(
+        get(record, '$transporttype')
+    );
     return (
         <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
@@ -271,13 +275,24 @@ const ShowActiveTab = ({ record, ...props }) => {
                 >
                     <ReceiverTransportParamsCardsGrid record={record} />
                 </ArrayField>
-                <TransportFileViewer endpoint="$active.transport_file.data" />
+                {showTransportFile && (
+                    <TextField
+                        label="Transport File Type"
+                        source="$active.transport_file.type"
+                    />
+                )}
+                {showTransportFile && (
+                    <TransportFileViewer endpoint="$active.transport_file.data" />
+                )}
             </SimpleShowLayout>
         </ShowView>
     );
 };
 
 const ShowStagedTab = ({ record, ...props }) => {
+    const showTransportFile = !transportOmitsTransportFile(
+        get(record, '$transporttype')
+    );
     return (
         <ShowView {...props} title={<ResourceTitle />} actions={<Fragment />}>
             <SimpleShowLayout>
@@ -318,7 +333,15 @@ const ShowStagedTab = ({ record, ...props }) => {
                 >
                     <ReceiverTransportParamsCardsGrid record={record} />
                 </ArrayField>
-                <TransportFileViewer endpoint="$staged.transport_file.data" />
+                {showTransportFile && (
+                    <TextField
+                        label="Transport File Type"
+                        source="$staged.transport_file.type"
+                    />
+                )}
+                {showTransportFile && (
+                    <TransportFileViewer endpoint="$staged.transport_file.data" />
+                )}
             </SimpleShowLayout>
         </ShowView>
     );

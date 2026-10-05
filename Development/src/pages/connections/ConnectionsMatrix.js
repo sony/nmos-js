@@ -51,10 +51,7 @@ import {
     useMatrixViewport,
 } from '../../components/matrixViewport';
 import { useMatrixCrosshair } from '../../components/matrixCrosshair';
-import {
-    CONNECTION_API_NOT_AVAILABLE,
-    transportUsesTransportFile,
-} from '../../components/controlApiMessages';
+import { CONNECTION_API_NOT_AVAILABLE } from '../../components/controlApiMessages';
 import {
     CELL_EXTENT,
     CHIP_MARGIN,
@@ -90,6 +87,7 @@ import {
     FORMATS,
     TRANSPORTS,
     parameterLabel,
+    transportUsesTransportFile,
 } from '../../components/ParameterRegisters';
 import {
     FRIENDLY_PARAMETERS,

@@ -1,7 +1,7 @@
 import { cloneDeep, get, intersection, set } from 'lodash';
 import dataProvider from '../dataProvider';
 import { CONNECTION_API_NOT_AVAILABLE } from './controlApiMessages';
-import { transportIsOneToOne } from './ParameterRegisters';
+import { transportFileType, transportIsOneToOne } from './ParameterRegisters';
 
 // keys for parameters to be copied directly from sender to receiver
 // (an empty list means the transport is known and has nothing to copy)
@@ -243,6 +243,14 @@ const makeConnection = (senderID, receiverID, endpoint, options) => {
                         '$staged.transport_file.data',
                         get(data.sender, '$transportfile')
                     );
+                    // $transportfiletype is the transportfile Content-Type.
+                    // A registered default fills in only when that is missing.
+                    const fileType =
+                        get(data.sender, '$transportfiletype') ||
+                        transportFileType(get(data.sender, '$transporttype'));
+                    if (fileType) {
+                        set(patchData, '$staged.transport_file.type', fileType);
+                    }
                     // when preparing a PATCH which might include an SDP file,
                     // force the dataProvider to include `rtp_enabled`, because
                     // the spec doesn't define any means to indicate the active

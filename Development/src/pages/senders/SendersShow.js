@@ -4,6 +4,7 @@ import { IconButton, Paper, Tab, Tabs, Typography } from '@material-ui/core';
 import {
     ArrayField,
     BooleanField,
+    Labeled,
     ReferenceField,
     ShowContextProvider,
     ShowView,
@@ -23,7 +24,7 @@ import ConnectionShowActions from '../../components/ConnectionShowActions';
 import HintedTab from '../../components/HintedTab';
 import {
     CONNECTION_API_NOT_AVAILABLE,
-    transportFileHint,
+    missingTransportFileHint,
 } from '../../components/controlApiMessages';
 import ItemArrayField from '../../components/ItemArrayField';
 import AnnotationFields, {
@@ -74,7 +75,7 @@ const SendersShowView = props => {
             useConnectionAPI &&
             !get(record, '$transportfile')
         ) {
-            return transportFileHint(get(record, 'transport'));
+            return missingTransportFileHint(get(record, 'transport'));
         }
         return '';
     };
@@ -331,18 +332,23 @@ const ShowTransportFileTab = ({ record }) => {
             actions={<Fragment />}
         >
             <SimpleShowLayout>
-                <>
-                    <IconButton
-                        onClick={handleCopy}
-                        style={{ float: 'right' }}
-                        title="Copy"
-                    >
-                        <ContentCopyIcon fontSize="small" />
-                    </IconButton>
-                    <pre style={{ fontFamily: 'inherit' }}>
-                        <Typography>{get(record, '$transportfile')}</Typography>
-                    </pre>
-                </>
+                <TextField label="Type" source="$transportfiletype" />
+                <Labeled label="Data">
+                    <div>
+                        <IconButton
+                            onClick={handleCopy}
+                            style={{ float: 'right' }}
+                            title="Copy"
+                        >
+                            <ContentCopyIcon fontSize="small" />
+                        </IconButton>
+                        <pre style={{ fontFamily: 'inherit' }}>
+                            <Typography>
+                                {get(record, '$transportfile')}
+                            </Typography>
+                        </pre>
+                    </div>
+                </Labeled>
             </SimpleShowLayout>
         </ShowView>
     );

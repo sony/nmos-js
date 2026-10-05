@@ -650,11 +650,13 @@ const convertDataProviderRequestToHTTP = (
                 );
             }
 
-            if (has(patchData, 'transport_file')) {
-                if (get(patchData, 'transport_file.data') === null) {
+            // data and type are both strings or both null. Clearing the
+            // file clears the type. A type the user set is left as it is.
+            if (has(patchData, 'transport_file.data')) {
+                const fileData = get(patchData, 'transport_file.data');
+                if (fileData == null || fileData === '') {
+                    set(patchData, 'transport_file.data', null);
                     set(patchData, 'transport_file.type', null);
-                } else {
-                    set(patchData, 'transport_file.type', 'application/sdp');
                 }
             }
 
@@ -724,6 +726,14 @@ const firstOf = ps => {
     return invertPromise(Promise.all(ps.map(invertPromise)));
 };
 
+// Content-Type without parameters: "application/sdp; charset=utf-8"
+// is "application/sdp".
+export const transportFileMediaType = contentType => {
+    if (typeof contentType !== 'string') return undefined;
+    const mediaType = contentType.split(';')[0].trim();
+    return mediaType || undefined;
+};
+
 const getConnectionResourceEndpoints = (
     addresses,
     resource,
@@ -774,21 +784,37 @@ const getConnectionResourceEndpoints = (
                             fetchOptions
                         )
                             .then(response => {
-                                if (response.ok) {
-                                    return response.text();
+                                if (!response.ok) {
+                                    return { data: undefined };
                                 }
+                                const contentType =
+                                    response.headers.get('Content-Type');
+                                return response.text().then(text => {
+                                    let data = text;
+                                    try {
+                                        data = JSON.parse(text);
+                                    } catch (e) {
+                                        data = text;
+                                    }
+                                    return { data, contentType };
+                                });
                             })
-                            .then(text => {
-                                try {
-                                    return JSON.parse(text);
-                                } catch (e) {
-                                    return text;
-                                }
-                            })
-                            .then(data => {
+                            .then(({ data, contentType }) => {
                                 endpointData.push({
                                     [`$${endpoint.slice(0, -1)}`]: data,
                                 });
+                                // The transportfile body is the file. Its
+                                // media type is the response Content-Type,
+                                // without parameters.
+                                if (endpoint === 'transportfile/') {
+                                    const mediaType =
+                                        transportFileMediaType(contentType);
+                                    if (mediaType) {
+                                        endpointData.push({
+                                            $transportfiletype: mediaType,
+                                        });
+                                    }
+                                }
                             })
                             .catch(error => {
                                 throw error;

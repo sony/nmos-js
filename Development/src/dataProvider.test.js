@@ -1,5 +1,8 @@
 import { fetchUtils } from 'react-admin';
-import dataProvider, { channelMappingAction } from './dataProvider';
+import dataProvider, {
+    channelMappingAction,
+    transportFileMediaType,
+} from './dataProvider';
 
 describe('channelMappingAction', () => {
     const activeMap = {
@@ -235,5 +238,55 @@ describe('UPDATE receivers', () => {
 
     it('patches a boolean switch as a boolean', async () => {
         expect(await patchBody(false, true)).toEqual(edited(true));
+    });
+
+    const filePatch = async (previous, next) => {
+        const fetchJson = jest
+            .spyOn(fetchUtils, 'fetchJson')
+            .mockResolvedValue({ json: { id: record.id } });
+        const staged = transport_file => ({
+            master_enable: true,
+            transport_params: [{}],
+            transport_file,
+        });
+        await dataProvider('UPDATE', 'receivers', {
+            id: record.id,
+            previousData: { ...record, $staged: staged(previous) },
+            data: { ...record, $staged: staged(next) },
+        });
+        return JSON.parse(fetchJson.mock.calls.pop()[1].body);
+    };
+
+    it('clears the transport file type when the data is cleared', async () => {
+        expect(
+            await filePatch(
+                { data: 'v=0', type: 'application/sdp' },
+                { data: null, type: 'application/sdp' }
+            )
+        ).toEqual({
+            transport_params: [{}],
+            transport_file: { data: null, type: null },
+        });
+    });
+
+    it('keeps a transport file type set with the data', async () => {
+        expect(
+            await filePatch(
+                { data: null, type: null },
+                { data: 'v=0', type: 'text/plain' }
+            )
+        ).toEqual({
+            transport_params: [{}],
+            transport_file: { data: 'v=0', type: 'text/plain' },
+        });
+    });
+});
+
+describe('transportFileMediaType', () => {
+    it('drops parameters and ignores a missing header', () => {
+        expect(transportFileMediaType('application/sdp; charset=utf-8')).toBe(
+            'application/sdp'
+        );
+        expect(transportFileMediaType(null)).toBeUndefined();
     });
 });

@@ -109,7 +109,8 @@ const MQTTReceiverEdit = ({ record }) => {
                         source="broker_protocol"
                         label="Broker Protocol"
                         kind="enum"
-                        choices={['auto', 'mqtt', 'secure-mqtt']}
+                        auto
+                        choices={['mqtt', 'secure-mqtt']}
                     />
                 )}
                 {uniqueKeys.includes('broker_authorization') && (
@@ -315,7 +316,8 @@ const RTPReceiverEdit = ({ record }) => {
                         source="fec_mode"
                         label="FEC Mode"
                         kind="enum"
-                        choices={['auto', '1D', '2D']}
+                        auto
+                        choices={['1D', '2D']}
                     />
                 )}
                 {uniqueKeys.includes('fec_destination_ip') && (

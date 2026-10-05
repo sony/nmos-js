@@ -1,6 +1,13 @@
 import React from 'react';
-import { Tooltip, Typography } from '@material-ui/core';
-import { SelectInput } from 'react-admin';
+import {
+    Divider,
+    MenuItem,
+    TextField,
+    Tooltip,
+    Typography,
+} from '@material-ui/core';
+import { useTheme } from '@material-ui/core/styles';
+import { useField } from 'react-final-form';
 import get from 'lodash/get';
 import HintTypography from './HintTypography';
 import { FRIENDLY_PARAMETERS, useJSONSetting } from '../settings';
@@ -38,16 +45,65 @@ ActivationModeField.defaultProps = {
     addLabel: true,
 };
 
-export const ActivationModeInput = props => {
+export const ActivationModeInput = ({
+    source,
+    label,
+    helperText,
+    className,
+}) => {
+    const theme = useTheme();
     const [friendlyFirst] = useJSONSetting(FRIENDLY_PARAMETERS, false);
+    const {
+        input: { value, onChange, onBlur, onFocus },
+    } = useField(source, {
+        // This menu always offers null, so the input is given JSON null.
+        allowNull: true,
+        parse: value => value,
+    });
     return (
-        <SelectInput
-            {...props}
-            allowEmpty
-            choices={activationModeChoices(friendlyFirst)}
-            format={value => (value == null ? '' : value)}
-            parse={value => (value === '' ? null : value)}
-            translateChoice={false}
-        />
+        <TextField
+            select
+            className={className}
+            label={label}
+            variant="filled"
+            margin="dense"
+            value={value == null ? '' : value}
+            // A select shows nothing for "" unless displayEmpty, so the null row
+            // would not appear in the closed field. The label then stays up.
+            SelectProps={{ displayEmpty: true }}
+            InputLabelProps={{ shrink: true }}
+            helperText={
+                typeof helperText === 'string' && helperText !== ''
+                    ? helperText
+                    : undefined
+            }
+            onChange={event =>
+                onChange(event.target.value === '' ? null : event.target.value)
+            }
+            onBlur={onBlur}
+            onFocus={onFocus}
+        >
+            {activationModeChoices(friendlyFirst).map(mode => (
+                <MenuItem key={mode.id} value={mode.id}>
+                    {mode.name}
+                </MenuItem>
+            ))}
+            <Divider />
+            <MenuItem value="">
+                {/* 13px is the small button, the same size as the null word. */}
+                <span
+                    style={{
+                        fontSize: 13,
+                        fontWeight: value == null ? 600 : 400,
+                        color:
+                            value == null
+                                ? theme.palette.primary.main
+                                : undefined,
+                    }}
+                >
+                    null
+                </span>
+            </MenuItem>
+        </TextField>
     );
 };

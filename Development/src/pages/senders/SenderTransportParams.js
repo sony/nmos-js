@@ -109,7 +109,8 @@ const MQTTSenderEdit = ({ record }) => {
                         source="broker_protocol"
                         label="Broker Protocol"
                         kind="enum"
-                        choices={['auto', 'mqtt', 'secure-mqtt']}
+                        auto
+                        choices={['mqtt', 'secure-mqtt']}
                     />
                 )}
                 {uniqueKeys.includes('broker_authorization') && (

@@ -3,6 +3,7 @@ import { get, map } from 'lodash';
 import HintTypography from './HintTypography';
 import labelize from './labelize';
 import { FRIENDLY_PARAMETERS, useJSONSetting } from '../settings';
+import { parseTransportUrn } from '../transportUrn';
 
 // const SOME_PARAMETER_REGISTER = {
 //    'urn:x-vendor:foo:bar': {
@@ -203,6 +204,10 @@ export const TAGS = {
 
 // Transports in the NMOS Parameter Registers
 // see https://github.com/AMWA-TV/nmos-parameter-registers/tree/master/transports
+// oneToOne on an entry copies each parameter name present on both the
+// Sender's active transport_params and the Receiver's staged transport_params.
+// An explicit mapping for that transport takes precedence.
+// The helper reads the URN base, so a subclass uses the base entry.
 export const TRANSPORTS = {
     'urn:x-nmos:transport:rtp': {
         label: 'RTP',
@@ -226,3 +231,9 @@ export const TRANSPORTS = {
         label: 'MXL',
     },
 };
+
+const transportEntry = transport =>
+    get(TRANSPORTS, [get(parseTransportUrn(transport), 'base')]);
+
+export const transportIsOneToOne = transport =>
+    Boolean(get(transportEntry(transport), 'oneToOne'));

@@ -1,8 +1,10 @@
-import { cloneDeep, get, set } from 'lodash';
+import { cloneDeep, get, intersection, set } from 'lodash';
 import dataProvider from '../dataProvider';
 import { CONNECTION_API_NOT_AVAILABLE } from './controlApiMessages';
+import { transportIsOneToOne } from './ParameterRegisters';
 
 // keys for parameters to be copied directly from sender to receiver
+// (an empty list means the transport is known and has nothing to copy)
 const oneToOneTransportParams = {
     'urn:x-nmos:transport:mqtt': [
         'broker_protocol',
@@ -39,28 +41,21 @@ const createLegMap = (senderParams, patchParams, options) => {
     return [...Array(legs).keys()];
 };
 
-// get 'ext_' parameters supported by the receiver
-const getExtParams = transportParams => {
-    // each leg should have the same parameters but merge both anyway
-    const uniqueKeys = Object.keys(
-        transportParams.reduce((result, obj) => {
-            return Object.assign(result, obj);
-        }, {})
+// each leg should have the same parameters but merge both anyway
+const getParams = transportParams =>
+    Object.keys(
+        transportParams.reduce((result, obj) => Object.assign(result, obj), {})
     );
-    return uniqueKeys.filter(x => {
-        return x.startsWith('ext_');
-    });
-};
 
-// get parameters that both the sender and the receiver have, for a transport
-// with no list of its own above
-const getSharedParams = (senderParams, patchParams) => {
-    const senderKeys = new Set(senderParams.flatMap(Object.keys));
-    const receiverKeys = new Set(patchParams.flatMap(Object.keys));
-    return [...senderKeys].filter(
-        x => receiverKeys.has(x) && !x.startsWith('ext_')
+// get 'ext_' parameters supported by the receiver
+const getExtParams = transportParams =>
+    getParams(transportParams).filter(param => param.startsWith('ext_'));
+
+// parameters present on both ends; ext_ parameters are copied separately
+const getSharedParams = (senderParams, receiverParams) =>
+    intersection(getParams(senderParams), getParams(receiverParams)).filter(
+        param => !param.startsWith('ext_')
     );
-};
 
 // copy params from sender to receiver of the matching legs
 const copyTransportParams = (senderParams, params, patchParams, legMap) => {
@@ -84,6 +79,7 @@ export const isMulticast = address => {
 };
 
 const makePatchDataWithTransportParams = (data, options) => {
+    const transport = get(data.sender, '$transporttype');
     let patchData = cloneDeep(data.receiver);
 
     const senderParams = get(data.sender, '$active.transport_params');
@@ -92,17 +88,24 @@ const makePatchDataWithTransportParams = (data, options) => {
     let patchParams = get(patchData, '$staged.transport_params');
     if (!Array.isArray(patchParams)) return;
 
+    // an explicit list wins over oneToOne
+    let oneToOneParams = oneToOneTransportParams[transport];
+    if (oneToOneParams === undefined) {
+        if (!transportIsOneToOne(transport)) {
+            throw new Error(
+                transport
+                    ? `Cannot connect transport ${transport}`
+                    : 'Cannot connect this transport'
+            );
+        }
+        oneToOneParams = getSharedParams(senderParams, patchParams);
+    }
+
     // create a map of receiver leg to sender leg
     const legMap = createLegMap(senderParams, patchParams, options);
 
     // do the easy ones
-    copyTransportParams(
-        senderParams,
-        oneToOneTransportParams[get(data.sender, '$transporttype')] ||
-            getSharedParams(senderParams, patchParams),
-        patchParams,
-        legMap
-    );
+    copyTransportParams(senderParams, oneToOneParams, patchParams, legMap);
 
     // do the 'ext_' ones
     copyTransportParams(
@@ -113,7 +116,7 @@ const makePatchDataWithTransportParams = (data, options) => {
     );
 
     // do the transport-specific stuff
-    switch (get(data.sender, '$transporttype')) {
+    switch (transport) {
         case 'urn:x-nmos:transport:mqtt':
             legMap.forEach((senderLeg, receiverLeg) => {
                 const destination_host = get(

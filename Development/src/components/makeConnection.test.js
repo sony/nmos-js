@@ -1,5 +1,8 @@
 import dataProvider from '../dataProvider';
 import makeConnection from './makeConnection';
+import { TRANSPORTS, transportIsOneToOne } from './ParameterRegisters';
+
+const TRANSPORT_EXAMPLE = 'urn:x-example:transport:carrier-pigeon';
 
 jest.mock('../dataProvider', () => ({
     __esModule: true,
@@ -19,23 +22,72 @@ const connect = async (sender, receiver) => {
     return params;
 };
 
+const ends = transport => ({
+    sender: {
+        id: 'sender0',
+        $connectionAPI:
+            'http://node/x-nmos/connection/v1.2/single/senders/sender0',
+        $transporttype: transport,
+        $active: {
+            master_enable: true,
+            transport_params: [{ channel_name: '11' }],
+        },
+    },
+    receiver: {
+        id: 'receiver0',
+        $connectionAPI:
+            'http://node/x-nmos/connection/v1.2/single/receivers/receiver0',
+        $staged: {
+            master_enable: false,
+            sender_id: null,
+            activation: { mode: null, requested_time: null },
+            transport_params: [{ channel_name: null }],
+        },
+    },
+});
+
 describe('makeConnection', () => {
     afterEach(() => {
         jest.clearAllMocks();
+        delete TRANSPORTS[TRANSPORT_EXAMPLE];
     });
 
-    it('copies the parameters both ends have for a transport not listed', async () => {
+    const expectRefused = async transport => {
+        const { sender, receiver } = ends(transport);
+        await expect(
+            makeConnection(sender.id, receiver.id, 'active', {
+                sender,
+                receiver,
+            })
+        ).rejects.toThrow(`Cannot connect transport ${transport}`);
+        expect(dataProvider).not.toHaveBeenCalled();
+    };
+
+    it('refuses a transport that has not opted in', async () => {
+        await expectRefused(TRANSPORT_EXAMPLE);
+    });
+
+    it('refuses DASH, which is named but has not opted in', async () => {
+        await expectRefused('urn:x-nmos:transport:dash');
+    });
+
+    it('copies parameters present on both ends when the transport opts in', async () => {
+        TRANSPORTS[TRANSPORT_EXAMPLE] = {
+            label: 'Carrier Pigeon',
+            oneToOne: true,
+        };
         const sender = {
             id: 'sender0',
             $connectionAPI:
                 'http://node/x-nmos/connection/v1.2/single/senders/sender0',
-            $transporttype: 'urn:x-example:transport:audio',
+            $transporttype: TRANSPORT_EXAMPLE,
             $active: {
                 master_enable: true,
                 transport_params: [
                     {
                         channel_name: '11',
                         device_name: 'Device-A',
+                        ext_note: 'keep',
                         sender_only: 1,
                     },
                 ],
@@ -53,11 +105,15 @@ describe('makeConnection', () => {
                     {
                         channel_name: null,
                         device_name: null,
+                        ext_note: null,
                         receiver_only: 2,
                     },
                 ],
             },
         };
+
+        expect(transportIsOneToOne(`${TRANSPORT_EXAMPLE}.bar`)).toBe(true);
+        expect(transportIsOneToOne(`${TRANSPORT_EXAMPLE}/v1.0`)).toBe(true);
 
         const params = await connect(sender, receiver);
 
@@ -65,6 +121,7 @@ describe('makeConnection', () => {
             {
                 channel_name: '11',
                 device_name: 'Device-A',
+                ext_note: 'keep',
                 receiver_only: 2,
             },
         ]);

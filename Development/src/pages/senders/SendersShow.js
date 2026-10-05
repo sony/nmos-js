@@ -18,6 +18,7 @@ import { get, has } from 'lodash';
 import copy from 'clipboard-copy';
 import { useTheme } from '@material-ui/styles';
 import emphasizedPaper from '../../theme/emphasizedPaper';
+import { ActivationModeField } from '../../components/ActivationMode';
 import ActiveField from '../../components/ActiveField';
 import LinkChipField from '../../components/LinkChipField';
 import ConnectionShowActions from '../../components/ConnectionShowActions';
@@ -245,7 +246,10 @@ const ShowActiveTab = ({ record, ...props }) => {
                     label="Master Enable"
                     source="$active.master_enable"
                 />
-                <TextField label="Mode" source="$active.activation.mode" />
+                <ActivationModeField
+                    label="Activation Mode"
+                    source="$active.activation.mode"
+                />
                 <TAIField
                     label="Requested Time"
                     source="$active.activation.requested_time"
@@ -291,7 +295,10 @@ const ShowStagedTab = ({ record, ...props }) => {
                     label="Master Enable"
                     source="$staged.master_enable"
                 />
-                <TextField label="Mode" source="$staged.activation.mode" />
+                <ActivationModeField
+                    label="Activation Mode"
+                    source="$staged.activation.mode"
+                />
                 <TAIField
                     label="Requested Time"
                     source="$staged.activation.requested_time"

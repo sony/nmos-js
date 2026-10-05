@@ -5,18 +5,17 @@ import {
     BooleanInput,
     Edit,
     FormDataConsumer,
-    SelectInput,
     SimpleForm,
     TextInput,
 } from 'react-admin';
 import get from 'lodash/get';
 import set from 'lodash/set';
 import { useTheme } from '@material-ui/styles';
-import ClearIcon from '@material-ui/icons/Clear';
 import ConnectionEditActions from '../../components/ConnectionEditActions';
 import ConnectionEditToolbar from '../../components/ConnectionEditToolbar';
 import ResourceTitle from '../../components/ResourceTitle';
 import emphasizedPaper from '../../theme/emphasizedPaper';
+import { ActivationModeInput } from '../../components/ActivationMode';
 import TransportParamInput from '../../components/TransportParamInput';
 import SenderTransportParamsCardsGrid from './SenderTransportParams';
 
@@ -94,25 +93,10 @@ const EditStagedTab = props => (
                 source="$staged.master_enable"
                 helperText={false}
             />
-            <SelectInput
+            <ActivationModeInput
                 label="Activation Mode"
                 source="$staged.activation.mode"
-                choices={[
-                    { id: null, name: <ClearIcon /> },
-                    {
-                        id: 'activate_immediate',
-                        name: 'activate_immediate',
-                    },
-                    {
-                        id: 'activate_scheduled_relative',
-                        name: 'activate_scheduled_relative',
-                    },
-                    {
-                        id: 'activate_scheduled_absolute',
-                        name: 'activate_scheduled_absolute',
-                    },
-                ]}
-                translateChoice={false}
+                helperText={false}
             />
             <FormDataConsumer>
                 {({ formData, ...rest }) => {

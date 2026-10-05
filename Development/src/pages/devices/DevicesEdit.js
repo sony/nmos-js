@@ -22,17 +22,13 @@ import {
     useShowController,
 } from 'react-admin';
 import { Link, useHistory } from 'react-router-dom';
+import { activationModeChoices } from '../../components/ActivationMode';
 import ResourceTitle from '../../components/ResourceTitle';
+import { FRIENDLY_PARAMETERS, useJSONSetting } from '../../settings';
 import emphasizedPaper from '../../theme/emphasizedPaper';
 import { ActivateImmediateIcon, ActivateScheduledIcon } from '../../icons';
 import dataProvider from '../../dataProvider';
 import ChannelMappingMatrix from './ChannelMappingMatrix';
-
-const activationModes = [
-    'activate_immediate',
-    'activate_scheduled_relative',
-    'activate_scheduled_absolute',
-];
 
 const DevicesEditActions = ({ basePath, id }) => {
     const theme = useTheme();
@@ -68,6 +64,7 @@ const DevicesEditView = props => {
     const notify = useNotify();
     const refresh = useRefresh();
     const theme = useTheme();
+    const [friendlyFirst] = useJSONSetting(FRIENDLY_PARAMETERS, false);
     const scheduled = activationMode !== 'activate_immediate';
 
     // Seed the draft once, so that a refresh of the Device record while still
@@ -193,6 +190,7 @@ const DevicesEditView = props => {
                             flexWrap: 'wrap',
                         }}
                     >
+                        {/* POST /map/activations/ requires a mode. Null is a response value. */}
                         <TextField
                             label="Activation Mode"
                             margin="dense"
@@ -212,9 +210,9 @@ const DevicesEditView = props => {
                             value={activationMode}
                             variant="filled"
                         >
-                            {activationModes.map(mode => (
-                                <MenuItem key={mode} value={mode}>
-                                    {mode}
+                            {activationModeChoices(friendlyFirst).map(mode => (
+                                <MenuItem key={mode.id} value={mode.id}>
+                                    {mode.name}
                                 </MenuItem>
                             ))}
                         </TextField>

@@ -128,7 +128,6 @@ describe('makeConnection', () => {
         expect(params.data.$staged.sender_id).toBe('sender0');
         expect(params.data.$staged.master_enable).toBe(true);
         expect(params.data.$staged.activation.mode).toBe('activate_immediate');
-        expect(params.verbatim).toBe(true);
     });
 
     it('still copies only the listed parameters for RTP', async () => {

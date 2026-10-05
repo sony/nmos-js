@@ -32,10 +32,11 @@ export class CardFormIterator extends Component {
         const { basePath, children, fields, record, resource, source } =
             this.props;
         const records = get(record, source);
+        // ArrayInput's label is absolutely positioned, and the grid's negative
+        // margin would pull the card up over it. 16px matches the show view.
         return fields ? (
             <>
-                <br style={{ lineHeight: 2 }} />
-                <Grid container spacing={2}>
+                <Grid container spacing={2} style={{ marginTop: 16 }}>
                     {fields.map((member, index) => (
                         <Grid item sm key={index} style={{ flexGrow: 0 }}>
                             <Card elevation={3}>
@@ -57,6 +58,7 @@ export class CardFormIterator extends Component {
                                                     label:
                                                         input.props.label ||
                                                         input.props.source,
+                                                    helperText: false,
                                                 })}
                                                 record={
                                                     (records &&
@@ -64,9 +66,6 @@ export class CardFormIterator extends Component {
                                                     {}
                                                 }
                                                 resource={resource}
-                                                style={{
-                                                    display: 'inline-block',
-                                                }}
                                             />
                                         ) : null
                                     )}

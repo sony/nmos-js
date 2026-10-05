@@ -17,6 +17,7 @@ import ConnectionEditActions from '../../components/ConnectionEditActions';
 import ConnectionEditToolbar from '../../components/ConnectionEditToolbar';
 import ResourceTitle from '../../components/ResourceTitle';
 import emphasizedPaper from '../../theme/emphasizedPaper';
+import TransportParamInput from '../../components/TransportParamInput';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
 
 const ReceiversEdit = props => {
@@ -82,10 +83,16 @@ const EditStagedTab = props => (
             toolbar={<ConnectionEditToolbar />}
             redirect={`/receivers/${props.id}/show/staged`}
         >
-            <TextInput label="Sender ID" source="$staged.sender_id" />
+            {/* TransportParamInput only so null is indicated the same way as on the transport cards. */}
+            <TransportParamInput
+                label="Sender ID"
+                source="$staged.sender_id"
+                nullable
+            />
             <BooleanInput
                 label="Master Enable"
                 source="$staged.master_enable"
+                helperText={false}
             />
             <SelectInput
                 label="Activation Mode"
@@ -116,6 +123,7 @@ const EditStagedTab = props => (
                                     label="Requested Time"
                                     source="$staged.activation.requested_time"
                                     {...rest}
+                                    helperText={false}
                                 />
                             );
                         case 'activate_scheduled_absolute':
@@ -124,6 +132,7 @@ const EditStagedTab = props => (
                                     label="Requested Time"
                                     source="$staged.activation.requested_time"
                                     {...rest}
+                                    helperText={false}
                                 />
                             );
                         default:

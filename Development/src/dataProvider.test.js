@@ -194,27 +194,20 @@ describe('UPDATE receivers', () => {
         id: '22222222-2222-4222-8222-222222222222',
         $connectionAPI:
             'http://node/x-nmos/connection/v1.2/single/receivers/22222222-2222-4222-8222-222222222222',
-        $staged: {
-            master_enable: true,
-            transport_params: [{ channel_name: null }],
-        },
-    };
-    const data = {
-        ...record,
-        $staged: {
-            master_enable: true,
-            transport_params: [{ channel_name: '11' }],
-        },
     };
 
-    const patchBody = async params => {
+    const patchBody = async (previous, next, params) => {
+        const staged = value => ({
+            master_enable: true,
+            transport_params: [{ channel_name: value }],
+        });
         const fetchJson = jest
             .spyOn(fetchUtils, 'fetchJson')
             .mockResolvedValue({ json: { id: record.id } });
         await dataProvider('UPDATE', 'receivers', {
             id: record.id,
-            data,
-            previousData: record,
+            previousData: { ...record, $staged: staged(previous) },
+            data: { ...record, $staged: staged(next) },
             ...params,
         });
         const [url, options] = fetchJson.mock.calls.pop();
@@ -223,15 +216,24 @@ describe('UPDATE receivers', () => {
         return JSON.parse(options.body);
     };
 
-    it('takes a number entered as text to be a number', async () => {
-        expect(await patchBody({})).toEqual({
-            transport_params: [{ channel_name: 11 }],
-        });
+    const edited = value => ({
+        transport_params: [{ channel_name: value }],
+    });
+    const omitted = { transport_params: [{}] };
+
+    it.each([
+        ['null to a digit string', null, '11', edited('11')],
+        ['null to the word true', null, 'true', edited('true')],
+        ['null to an empty string', null, '', edited('')],
+        ['a string kept as a string', '11', '12', edited('12')],
+        ['a string cleared', 'meow', '', edited('')],
+        ['a number replaced by a string', 42, '57', edited('57')],
+        ['an unchanged value', 42, 42, omitted],
+    ])('%s', async (name, previous, next, expected) => {
+        expect(await patchBody(previous, next)).toEqual(expected);
     });
 
-    it('leaves a verbatim string as it is', async () => {
-        expect(await patchBody({ verbatim: true })).toEqual({
-            transport_params: [{ channel_name: '11' }],
-        });
+    it('patches a boolean switch as a boolean', async () => {
+        expect(await patchBody(false, true)).toEqual(edited(true));
     });
 });

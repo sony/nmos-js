@@ -619,35 +619,10 @@ const convertDataProviderRequestToHTTP = (
                 get(params, 'previousData.$staged'),
                 get(params, 'data.$staged')
             );
+            // Each staged value is submitted with the JSON type it should
+            // keep. A string such as "" or "11" is not reinterpreted.
             if (allDifferences !== undefined) {
-                for (const d of allDifferences) {
-                    if (d.rhs === '') {
-                        // if the user clears a text input, set the param to null
-                        if (d.lhs !== null) {
-                            differences.push({
-                                kind: d.kind,
-                                lhs: d.lhs,
-                                path: d.path,
-                                rhs: null,
-                            });
-                        }
-                    } else if (typeof d.rhs === 'string' && !params.verbatim) {
-                        // ideally, if and only if the user enters a number without any extraneous cruft
-                        // (consider e.g. '233.252.0.0'),  set the param to the number
-                        // note that with the following implementation, we avoid e.g. ' ' being coerced to 0,
-                        // but accept that ' 0x2a ' is the answer to life, the universe and everything
-                        const n = Number(d.rhs.trim());
-                        differences.push({
-                            kind: d.kind,
-                            lhs: d.lhs,
-                            path: d.path,
-                            rhs: !isNaN(n) ? n : d.rhs,
-                        });
-                    } else {
-                        // e.g. boolean from a toggle switch
-                        differences.push(d);
-                    }
-                }
+                differences = allDifferences;
             }
 
             let patchData = { transport_params: [] };

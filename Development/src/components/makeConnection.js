@@ -267,8 +267,6 @@ const makeConnection = (senderID, receiverID, endpoint, options) => {
                     id: get(data.receiver, 'id'),
                     data: patchData,
                     previousData: data.receiver,
-                    // these values come from the sender, not from a text input
-                    verbatim: true,
                 };
             })
             .then(params => dataProvider('UPDATE', 'receivers', params))

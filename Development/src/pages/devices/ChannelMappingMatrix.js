@@ -2241,10 +2241,10 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                 filterButtonLabel={'Output filters'}
                 noFilters
             >
-                <StringFilter source="output id" />
-                <StringFilter source="output name" />
-                <StringFilter source="output channel label" />
-                <StringFilter source="routable inputs" />
+                <StringFilter regex source="output id" />
+                <StringFilter regex source="output name" />
+                <StringFilter regex source="output channel label" />
+                <StringFilter regex source="routable inputs" />
             </FilterPanel>
             <Divider light style={{ margin: '8px 0' }} />
             <FilterPanel
@@ -2254,9 +2254,9 @@ const ChannelMappingMatrix = ({ record, isShow, mapping, handleMap }) => {
                 filterButtonLabel={'Input filters'}
                 noFilters
             >
-                <StringFilter source="input id" />
-                <StringFilter source="input name" />
-                <StringFilter source="input channel label" />
+                <StringFilter regex source="input id" />
+                <StringFilter regex source="input name" />
+                <StringFilter regex source="input channel label" />
                 <StringFilter source="routable to output" />
                 <NumberFilter
                     source="block size"

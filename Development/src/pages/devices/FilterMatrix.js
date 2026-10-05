@@ -13,8 +13,18 @@ export const isRoutableInput = (outputItem, inputId) => {
     return !Array.isArray(routableInputs) || routableInputs.includes(inputId);
 };
 
+// a pattern is compiled while the matrix renders, so a mistyped one must
+// match nothing instead of throwing
+const matchesPattern = (pattern, value) => {
+    try {
+        return RegExp(pattern, 'i').test(value);
+    } catch (exception) {
+        return false;
+    }
+};
+
 const channelIncludes = (label, channelLabelReg) =>
-    RegExp(channelLabelReg, 'i').test(label);
+    matchesPattern(channelLabelReg, label);
 
 const filterChannelLabel = (channelLabelReg, item, getCustomChannelLabel) =>
     !channelLabelReg ||
@@ -34,10 +44,10 @@ const routableInputsIncludes = (
     getInputName
 ) =>
     inputId === null
-        ? RegExp(routableInputsReg, 'i').test('Unrouted')
-        : RegExp(routableInputsReg, 'i').test(inputId) ||
-          RegExp(routableInputsReg, 'i').test(getInputAPIName(inputId)) ||
-          RegExp(routableInputsReg, 'i').test(getInputName(inputId));
+        ? matchesPattern(routableInputsReg, 'Unrouted')
+        : matchesPattern(routableInputsReg, inputId) ||
+          matchesPattern(routableInputsReg, getInputAPIName(inputId)) ||
+          matchesPattern(routableInputsReg, getInputName(inputId));
 
 const filterRoutableInputs = (
     routableInputsReg,
@@ -55,14 +65,14 @@ const filterRoutableInputs = (
                   getInputName
               )
           )
-        : RegExp(routableInputsReg, 'i').test('No Constraints'));
+        : matchesPattern(routableInputsReg, 'No Constraints'));
 
 const filterName = (nameReg, apiName, name) =>
     !nameReg ||
-    RegExp(nameReg, 'i').test(apiName) ||
-    RegExp(nameReg, 'i').test(name);
+    matchesPattern(nameReg, apiName) ||
+    matchesPattern(nameReg, name);
 
-const filterId = (idReg, itemId) => !idReg || RegExp(idReg, 'i').test(itemId);
+const filterId = (idReg, itemId) => !idReg || matchesPattern(idReg, itemId);
 
 const filterBlockSize = (blockSizeVal, item) =>
     blockSizeVal === undefined ||

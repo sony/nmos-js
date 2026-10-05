@@ -209,6 +209,28 @@ describe('routable heading filters', () => {
         expect(Object.keys(filtered)).toEqual(['listed', 'open']);
     });
 
+    it('matches nothing when the routable-inputs pattern is invalid', () => {
+        const pattern = '^?:in-1|No Constraints)$';
+        expect(() =>
+            getFilteredOutputs(
+                { 'routable inputs': pattern },
+                outputs,
+                () => 'Mic',
+                names
+            )
+        ).not.toThrow();
+        expect(
+            Object.keys(
+                getFilteredOutputs(
+                    { 'routable inputs': pattern },
+                    outputs,
+                    () => 'Mic',
+                    names
+                )
+            )
+        ).toEqual([]);
+    });
+
     it('matches Unrouted and outputs with no constraints', () => {
         const filtered = getFilteredOutputs(
             { 'routable inputs': routableInputsQuery('Unrouted') },

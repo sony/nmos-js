@@ -1,12 +1,11 @@
 import React from 'react';
-import { Card, Grid, Typography } from '@material-ui/core';
+import { Card, Grid } from '@material-ui/core';
 import { ArrayInput, SimpleShowLayout } from 'react-admin';
 import { get, has } from 'lodash';
 import CardFormIterator from '../../components/CardFormIterator';
 import GenericTransportParamInput from '../../components/GenericTransportParamInput';
 import TransportParamField from '../../components/TransportParamField';
 import TransportParamInput from '../../components/TransportParamInput';
-import { transportIsOneToOne } from '../../components/ParameterRegisters';
 import SanitizedDivider from '../../components/SanitizedDivider';
 import labelize from '../../components/labelize';
 
@@ -671,10 +670,6 @@ const GenericSenderEdit = ({ record }) => {
     );
 };
 
-const UnknownTransportType = () => (
-    <Typography variant="body2">Unknown Type</Typography>
-);
-
 const SenderTransportParamsCardsGrid = ({ ids, record }) => {
     const type = get(record, '$transporttype');
     const data = [];
@@ -692,11 +687,7 @@ const SenderTransportParamsCardsGrid = ({ ids, record }) => {
             case 'urn:x-nmos:transport:mxl':
                 return <MXLSender data={data} />;
             default:
-                return transportIsOneToOne(type) ? (
-                    <GenericSender data={data} />
-                ) : (
-                    <UnknownTransportType />
-                );
+                return <GenericSender data={data} />;
         }
     } else {
         switch (type) {
@@ -709,11 +700,7 @@ const SenderTransportParamsCardsGrid = ({ ids, record }) => {
             case 'urn:x-nmos:transport:mxl':
                 return <MXLSenderEdit record={record} />;
             default:
-                return transportIsOneToOne(type) ? (
-                    <GenericSenderEdit record={record} />
-                ) : (
-                    <UnknownTransportType />
-                );
+                return <GenericSenderEdit record={record} />;
         }
     }
 };

@@ -1,12 +1,11 @@
 import React from 'react';
-import { Card, Grid, Typography } from '@material-ui/core';
+import { Card, Grid } from '@material-ui/core';
 import { ArrayInput, SimpleShowLayout } from 'react-admin';
 import { get, has } from 'lodash';
 import CardFormIterator from '../../components/CardFormIterator';
 import GenericTransportParamInput from '../../components/GenericTransportParamInput';
 import TransportParamField from '../../components/TransportParamField';
 import TransportParamInput from '../../components/TransportParamInput';
-import { transportIsOneToOne } from '../../components/ParameterRegisters';
 import SanitizedDivider from '../../components/SanitizedDivider';
 import labelize from '../../components/labelize';
 
@@ -587,10 +586,6 @@ const GenericReceiverEdit = ({ record }) => {
     );
 };
 
-const UnknownTransportType = () => (
-    <Typography variant="body2">Unknown Type</Typography>
-);
-
 const ReceiverTransportParamsCardsGrid = ({ ids, record }) => {
     const type = get(record, '$transporttype');
     const data = [];
@@ -608,11 +603,7 @@ const ReceiverTransportParamsCardsGrid = ({ ids, record }) => {
             case 'urn:x-nmos:transport:mxl':
                 return <MXLReceiver data={data} />;
             default:
-                return transportIsOneToOne(type) ? (
-                    <GenericReceiver data={data} />
-                ) : (
-                    <UnknownTransportType />
-                );
+                return <GenericReceiver data={data} />;
         }
     } else {
         switch (type) {
@@ -625,11 +616,7 @@ const ReceiverTransportParamsCardsGrid = ({ ids, record }) => {
             case 'urn:x-nmos:transport:mxl':
                 return <MXLReceiverEdit record={record} />;
             default:
-                return transportIsOneToOne(type) ? (
-                    <GenericReceiverEdit record={record} />
-                ) : (
-                    <UnknownTransportType />
-                );
+                return <GenericReceiverEdit record={record} />;
         }
     }
 };

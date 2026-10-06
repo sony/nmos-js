@@ -32,7 +32,12 @@ const QueryAPIsList = props => {
             <Card>
                 <Title title={'Query APIs'} />
                 <CardContent>
-                    <FilterPanel filter={filter} setFilter={setFilter}>
+                    {/* this resource is fetched without RQL */}
+                    <FilterPanel
+                        filter={filter}
+                        setFilter={setFilter}
+                        usingRql={false}
+                    >
                         <StringFilter
                             source="query.domain"
                             label="Browse Domain"

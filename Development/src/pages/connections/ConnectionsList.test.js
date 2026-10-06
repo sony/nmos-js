@@ -347,8 +347,8 @@ describe('heading match', () => {
         ).toEqual({
             transport: `${rtpMcast}|urn:x-nmos:transport:rtp$`,
             '$flow.format': video,
-            '$flow.media_type': ['video/raw'],
-            '$flow.event_type': ['number'],
+            '$flow.media_type': 'video/raw',
+            '$flow.event_type': 'number',
             $constraint_sets: constraintSets,
             $constraint_sets_active: 'r',
         });
@@ -360,6 +360,25 @@ describe('heading match', () => {
         ).toEqual({
             transport: rtpMcast,
             '$flow.format': video,
+        });
+    });
+
+    it('keeps string entries from a broken receiver list', () => {
+        expect(
+            senderEssenceFromReceiver(
+                {
+                    ...receiver,
+                    caps: {
+                        media_types: ['video/raw', null, ''],
+                        event_types: [null],
+                    },
+                },
+                { usingRql: true, version: 'v1.3' }
+            )
+        ).toEqual({
+            transport: `${rtpMcast}|urn:x-nmos:transport:rtp$`,
+            '$flow.format': video,
+            '$flow.media_type': 'video/raw',
         });
     });
 

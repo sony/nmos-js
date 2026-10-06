@@ -24,7 +24,12 @@ import {
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
-import { queryVersion, useJSONSetting } from '../../settings';
+import {
+    QUERY_API,
+    apiUsingRql,
+    queryVersion,
+    useJSONSetting,
+} from '../../settings';
 
 const ReceiversList = props => {
     const [filter, setFilter] = useJSONSetting('Receivers Filter');
@@ -49,7 +54,11 @@ const ReceiversList = props => {
             <Card>
                 <Title title={'Receivers'} />
                 <CardContent>
-                    <FilterPanel filter={filter} setFilter={setFilter}>
+                    <FilterPanel
+                        filter={filter}
+                        setFilter={setFilter}
+                        usingRql={apiUsingRql(QUERY_API)}
+                    >
                         <StringFilter source="label" />
                         <StringFilter source="description" />
                         <AutocompleteFilter

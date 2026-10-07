@@ -280,6 +280,18 @@ describe('UPDATE receivers', () => {
             transport_file: { data: 'v=0', type: 'text/plain' },
         });
     });
+
+    it('sends the transport file type with changed data when the type is unchanged', async () => {
+        expect(
+            await filePatch(
+                { data: 'v=0', type: 'application/sdp' },
+                { data: 'v=1', type: 'application/sdp' }
+            )
+        ).toEqual({
+            transport_params: [{}],
+            transport_file: { data: 'v=1', type: 'application/sdp' },
+        });
+    });
 });
 
 describe('transportFileMediaType', () => {

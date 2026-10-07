@@ -1,5 +1,8 @@
 import { fetchUtils } from 'react-admin';
-import dataProvider, { channelMappingAction } from './dataProvider';
+import dataProvider, {
+    channelMappingAction,
+    transportFileMediaType,
+} from './dataProvider';
 
 describe('channelMappingAction', () => {
     const activeMap = {
@@ -186,5 +189,116 @@ describe('DELETE devices', () => {
                 method: 'DELETE',
             })
         );
+    });
+});
+
+describe('UPDATE receivers', () => {
+    const record = {
+        id: '22222222-2222-4222-8222-222222222222',
+        $connectionAPI:
+            'http://node/x-nmos/connection/v1.2/single/receivers/22222222-2222-4222-8222-222222222222',
+    };
+
+    const patchBody = async (previous, next, params) => {
+        const staged = value => ({
+            master_enable: true,
+            transport_params: [{ channel_name: value }],
+        });
+        const fetchJson = jest
+            .spyOn(fetchUtils, 'fetchJson')
+            .mockResolvedValue({ json: { id: record.id } });
+        await dataProvider('UPDATE', 'receivers', {
+            id: record.id,
+            previousData: { ...record, $staged: staged(previous) },
+            data: { ...record, $staged: staged(next) },
+            ...params,
+        });
+        const [url, options] = fetchJson.mock.calls.pop();
+        expect(url).toBe(`${record.$connectionAPI}/staged`);
+        expect(options.method).toBe('PATCH');
+        return JSON.parse(options.body);
+    };
+
+    const edited = value => ({
+        transport_params: [{ channel_name: value }],
+    });
+    const omitted = { transport_params: [{}] };
+
+    it.each([
+        ['null to a digit string', null, '11', edited('11')],
+        ['null to the word true', null, 'true', edited('true')],
+        ['null to an empty string', null, '', edited('')],
+        ['a string kept as a string', '11', '12', edited('12')],
+        ['a string cleared', 'meow', '', edited('')],
+        ['a number replaced by a string', 42, '57', edited('57')],
+        ['an unchanged value', 42, 42, omitted],
+    ])('%s', async (name, previous, next, expected) => {
+        expect(await patchBody(previous, next)).toEqual(expected);
+    });
+
+    it('patches a boolean switch as a boolean', async () => {
+        expect(await patchBody(false, true)).toEqual(edited(true));
+    });
+
+    const filePatch = async (previous, next) => {
+        const fetchJson = jest
+            .spyOn(fetchUtils, 'fetchJson')
+            .mockResolvedValue({ json: { id: record.id } });
+        const staged = transport_file => ({
+            master_enable: true,
+            transport_params: [{}],
+            transport_file,
+        });
+        await dataProvider('UPDATE', 'receivers', {
+            id: record.id,
+            previousData: { ...record, $staged: staged(previous) },
+            data: { ...record, $staged: staged(next) },
+        });
+        return JSON.parse(fetchJson.mock.calls.pop()[1].body);
+    };
+
+    it('clears the transport file type when the data is cleared', async () => {
+        expect(
+            await filePatch(
+                { data: 'v=0', type: 'application/sdp' },
+                { data: null, type: 'application/sdp' }
+            )
+        ).toEqual({
+            transport_params: [{}],
+            transport_file: { data: null, type: null },
+        });
+    });
+
+    it('keeps a transport file type set with the data', async () => {
+        expect(
+            await filePatch(
+                { data: null, type: null },
+                { data: 'v=0', type: 'text/plain' }
+            )
+        ).toEqual({
+            transport_params: [{}],
+            transport_file: { data: 'v=0', type: 'text/plain' },
+        });
+    });
+
+    it('sends the transport file type with changed data when the type is unchanged', async () => {
+        expect(
+            await filePatch(
+                { data: 'v=0', type: 'application/sdp' },
+                { data: 'v=1', type: 'application/sdp' }
+            )
+        ).toEqual({
+            transport_params: [{}],
+            transport_file: { data: 'v=1', type: 'application/sdp' },
+        });
+    });
+});
+
+describe('transportFileMediaType', () => {
+    it('drops parameters and ignores a missing header', () => {
+        expect(transportFileMediaType('application/sdp; charset=utf-8')).toBe(
+            'application/sdp'
+        );
+        expect(transportFileMediaType(null)).toBeUndefined();
     });
 });

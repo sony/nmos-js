@@ -110,6 +110,7 @@ const ConnectionManagementTab = ({ receiverData, basePath }) => {
                         defaultFilter={baseFilter}
                         filter={filter}
                         setFilter={setFilter}
+                        usingRql={apiUsingRql(QUERY_API)}
                     >
                         <StringFilter source="label" label="Sender Label" />
                         <StringFilter

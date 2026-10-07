@@ -20,7 +20,7 @@ import FilterPanel, {
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
-import { useJSONSetting } from '../../settings';
+import { QUERY_API, apiUsingRql, useJSONSetting } from '../../settings';
 
 const SubscriptionsList = props => {
     const [filter, setFilter] = useJSONSetting('Subscriptions Filter');
@@ -45,7 +45,11 @@ const SubscriptionsList = props => {
             <Card>
                 <Title title={'Subscriptions'} />
                 <CardContent>
-                    <FilterPanel filter={filter} setFilter={setFilter}>
+                    <FilterPanel
+                        filter={filter}
+                        setFilter={setFilter}
+                        usingRql={apiUsingRql(QUERY_API)}
+                    >
                         <AutocompleteFilter
                             source="resource_path"
                             freeSolo

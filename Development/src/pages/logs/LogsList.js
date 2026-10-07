@@ -17,7 +17,7 @@ import FilterPanel, {
 import PaginationButtons from '../../components/PaginationButtons';
 import ListActions from '../../components/ListActions';
 import useGetList from '../../components/useGetList';
-import { useJSONSetting } from '../../settings';
+import { LOGGING_API, apiUsingRql, useJSONSetting } from '../../settings';
 
 const LogsList = props => {
     const [filter, setFilter] = useJSONSetting('Logs Filter');
@@ -42,7 +42,11 @@ const LogsList = props => {
             <Card>
                 <Title title={'Logs'} />
                 <CardContent>
-                    <FilterPanel filter={filter} setFilter={setFilter}>
+                    <FilterPanel
+                        filter={filter}
+                        setFilter={setFilter}
+                        usingRql={apiUsingRql(LOGGING_API)}
+                    >
                         <StringFilter source="timestamp" />
                         <NumberFilter source="level" />
                         <StringFilter source="message" />

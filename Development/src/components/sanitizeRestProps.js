@@ -9,6 +9,7 @@ const sanitizeRestProps = props =>
         'className',
         'formClassName',
         'headerClassName',
+        'helperText',
         'label',
         'linkType',
         'link',

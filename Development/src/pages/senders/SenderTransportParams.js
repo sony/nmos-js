@@ -1,19 +1,11 @@
 import React from 'react';
-import { Card, CardContent, Grid } from '@material-ui/core';
-import CheckIcon from '@material-ui/icons/Check';
-import ClearIcon from '@material-ui/icons/Clear';
-import {
-    ArrayInput,
-    BooleanField,
-    BooleanInput,
-    SelectField,
-    SelectInput,
-    SimpleShowLayout,
-    TextField,
-    TextInput,
-} from 'react-admin';
+import { Card, Grid } from '@material-ui/core';
+import { ArrayInput, SimpleShowLayout } from 'react-admin';
 import { get, has } from 'lodash';
 import CardFormIterator from '../../components/CardFormIterator';
+import GenericTransportParamInput from '../../components/GenericTransportParamInput';
+import TransportParamField from '../../components/TransportParamField';
+import TransportParamInput from '../../components/TransportParamInput';
 import SanitizedDivider from '../../components/SanitizedDivider';
 import labelize from '../../components/labelize';
 
@@ -31,63 +23,54 @@ const MQTTSenderLeg = ({ data }) => {
     const params_ext = Object.keys(data).filter(x => x.startsWith('ext_'));
     return (
         <Card elevation={3}>
-            <CardContent>
+            <>
                 <SimpleShowLayout record={data}>
                     {has(data, 'destination_host') && (
-                        <TextField
+                        <TransportParamField
                             source="destination_host"
                             label="Destination Host"
                         />
                     )}
                     {has(data, 'destination_port') && (
-                        <TextField
+                        <TransportParamField
                             source="destination_port"
                             label="Destination Port"
                         />
                     )}
                     {has(data, 'broker_protocol') && (
-                        <TextField
+                        <TransportParamField
                             source="broker_protocol"
                             label="Broker Protocol"
                         />
                     )}
                     {has(data, 'broker_authorization') && (
-                        <SelectField
+                        <TransportParamField
                             source="broker_authorization"
                             label="Broker Authorization"
-                            choices={[
-                                {
-                                    id: true,
-                                    name: <CheckIcon />,
-                                },
-                                {
-                                    id: false,
-                                    name: <ClearIcon />,
-                                },
-                                { id: 'auto', name: 'auto' },
-                            ]}
-                            translateChoice={false}
                         />
                     )}
                     {has(data, 'broker_topic') && (
-                        <TextField source="broker_topic" label="Broker Topic" />
+                        <TransportParamField
+                            source="broker_topic"
+                            label="Broker Topic"
+                        />
                     )}
                     {has(data, 'connection_status_broker_topic') && (
-                        <TextField
+                        <TransportParamField
                             source="connection_status_broker_topic"
                             label="Connection Status Broker Topic"
                         />
                     )}
                     {params_ext.length !== 0 && <SanitizedDivider />}
                     {params_ext.map(param => (
-                        <TextField
+                        <TransportParamField
                             source={param}
                             label={labelize(param)}
                             key={param}
                         />
                     ))}
                 </SimpleShowLayout>
-            </CardContent>
+            </>
         </Card>
     );
 };
@@ -105,47 +88,55 @@ const MQTTSenderEdit = ({ record }) => {
         >
             <CardFormIterator disableRemove disableAdd>
                 {uniqueKeys.includes('destination_host') && (
-                    <TextInput
+                    <TransportParamInput
                         source="destination_host"
                         label="Destination Host"
+                        nullable
+                        auto
                     />
                 )}
                 {uniqueKeys.includes('destination_port') && (
-                    <TextInput
+                    <TransportParamInput
                         source="destination_port"
                         label="Destination Port"
+                        kind="integer"
+                        auto
                     />
                 )}
                 {uniqueKeys.includes('broker_protocol') && (
-                    <TextInput
+                    <TransportParamInput
                         source="broker_protocol"
                         label="Broker Protocol"
+                        kind="enum"
+                        auto
+                        choices={['mqtt', 'secure-mqtt']}
                     />
                 )}
                 {uniqueKeys.includes('broker_authorization') && (
-                    <SelectInput
+                    <TransportParamInput
                         source="broker_authorization"
                         label="Broker Authorization"
-                        choices={[
-                            { id: true, name: <CheckIcon /> },
-                            { id: false, name: <ClearIcon /> },
-                            { id: 'auto', name: 'auto' },
-                        ]}
-                        translateChoice={false}
+                        kind="boolean"
+                        auto
                     />
                 )}
                 {uniqueKeys.includes('broker_topic') && (
-                    <TextInput source="broker_topic" label="Broker Topic" />
+                    <TransportParamInput
+                        source="broker_topic"
+                        label="Broker Topic"
+                        nullable
+                    />
                 )}
                 {uniqueKeys.includes('connection_status_broker_topic') && (
-                    <TextInput
+                    <TransportParamInput
                         source="connection_status_broker_topic"
                         label="Connection Status Broker Topic"
+                        nullable
                     />
                 )}
                 {params_ext.length !== 0 && <SanitizedDivider />}
                 {params_ext.map(param => (
-                    <TextInput
+                    <GenericTransportParamInput
                         source={param}
                         label={labelize(param)}
                         key={param}
@@ -170,120 +161,132 @@ const RTPSenderLeg = ({ data }) => {
     const params_ext = Object.keys(data).filter(x => x.startsWith('ext_'));
     return (
         <Card elevation={3}>
-            <CardContent>
+            <>
                 <SimpleShowLayout record={data}>
                     {has(data, 'rtp_enabled') && (
-                        <BooleanField
+                        <TransportParamField
                             source="rtp_enabled"
                             label="RTP Enabled"
                         />
                     )}
                     {has(data, 'source_ip') && (
-                        <TextField source="source_ip" label="Source IP" />
+                        <TransportParamField
+                            source="source_ip"
+                            label="Source IP"
+                        />
                     )}
                     {has(data, 'destination_ip') && (
-                        <TextField
+                        <TransportParamField
                             source="destination_ip"
                             label="Destination IP"
                         />
                     )}
                     {has(data, 'source_port') && (
-                        <TextField source="source_port" label="Source Port" />
+                        <TransportParamField
+                            source="source_port"
+                            label="Source Port"
+                        />
                     )}
                     {has(data, 'destination_port') && (
-                        <TextField
+                        <TransportParamField
                             source="destination_port"
                             label="Destination Port"
                         />
                     )}
                     {has(data, 'fec_enabled') && <SanitizedDivider /> && (
-                        <BooleanField
+                        <TransportParamField
                             source="fec_enabled"
                             label="FEC Enabled"
                         />
                     )}
                     {has(data, 'fec_destination_ip') && (
-                        <TextField
+                        <TransportParamField
                             source="fec_destination_ip"
                             label="FEC Destination IP"
                         />
                     )}
                     {has(data, 'fec_type') && (
-                        <TextField source="fec_type" label="FEC Type" />
+                        <TransportParamField
+                            source="fec_type"
+                            label="FEC Type"
+                        />
                     )}
                     {has(data, 'fec_mode') && (
-                        <TextField source="fec_mode" label="FEC Mode" />
+                        <TransportParamField
+                            source="fec_mode"
+                            label="FEC Mode"
+                        />
                     )}
                     {has(data, 'fec_block_width') && (
-                        <TextField
+                        <TransportParamField
                             source="fec_block_width"
                             label="FEC Block Width"
                         />
                     )}
                     {has(data, 'fec_block_height') && (
-                        <TextField
+                        <TransportParamField
                             source="fec_block_height"
                             label="FEC Block Height"
                         />
                     )}
                     {has(data, 'fec1D_destination_port') && (
-                        <TextField
+                        <TransportParamField
                             source="fec1D_destination_port"
                             label="FEC1D Destination Port"
                         />
                     )}
                     {has(data, 'fec2D_destination_port') && (
-                        <TextField
+                        <TransportParamField
                             source="fec2D_destination_port"
                             label="FEC2D Destination Port"
                         />
                     )}
                     {has(data, 'fec1D_source_port') && (
-                        <TextField
+                        <TransportParamField
                             source="fec1D_source_port"
                             label="FEC1D source Port"
                         />
                     )}
                     {has(data, 'fec2D_source_port') && (
-                        <TextField
+                        <TransportParamField
                             source="fec2D_source_port"
                             label="FEC2D Source Port"
                         />
                     )}
                     {has(data, 'rtcp_enabled') && <SanitizedDivider /> && (
-                        <BooleanField
+                        <TransportParamField
                             source="rtcp_enabled"
                             label="RTCP Enabled"
                         />
                     )}
                     {has(data, 'rtcp_destination_ip') && (
-                        <TextField
+                        <TransportParamField
                             source="rtcp_destination_ip"
                             label="RTCP Destination IP"
                         />
                     )}
                     {has(data, 'rtcp_destination_port') && (
-                        <TextField
+                        <TransportParamField
                             source="rtcp_destination_port"
                             label="RTCP Destination Port"
                         />
                     )}
                     {has(data, 'rtcp_source_port') && (
-                        <TextField
+                        <TransportParamField
                             source="rtcp_source_port"
                             label="RTCP Source Port"
                         />
                     )}
                     {params_ext.length !== 0 && <SanitizedDivider />}
                     {params_ext.map(param => (
-                        <TextField
+                        <TransportParamField
                             source={param}
                             label={labelize(param)}
                             key={param}
                         />
                     ))}
                 </SimpleShowLayout>
-            </CardContent>
+            </>
         </Card>
     );
 };
@@ -301,98 +304,151 @@ const RTPSenderEdit = ({ record }) => {
         >
             <CardFormIterator disableRemove disableAdd>
                 {uniqueKeys.includes('rtp_enabled') && (
-                    <BooleanInput source="rtp_enabled" label="RTP Enabled" />
+                    <TransportParamInput
+                        source="rtp_enabled"
+                        label="RTP Enabled"
+                        kind="boolean"
+                    />
                 )}
                 {uniqueKeys.includes('source_ip') && (
-                    <TextInput source="source_ip" label="Source IP" />
+                    <TransportParamInput
+                        source="source_ip"
+                        label="Source IP"
+                        auto
+                    />
                 )}
                 {uniqueKeys.includes('destination_ip') && (
-                    <TextInput source="destination_ip" label="Destination IP" />
+                    <TransportParamInput
+                        source="destination_ip"
+                        label="Destination IP"
+                        auto
+                    />
                 )}
                 {uniqueKeys.includes('source_port') && (
-                    <TextInput source="source_port" label="Source Port" />
+                    <TransportParamInput
+                        source="source_port"
+                        label="Source Port"
+                        kind="integer"
+                        auto
+                    />
                 )}
                 {uniqueKeys.includes('destination_port') && (
-                    <TextInput
+                    <TransportParamInput
                         source="destination_port"
                         label="Destination Port"
+                        kind="integer"
+                        auto
                     />
                 )}
                 {uniqueKeys.includes('fec_enabled') && (
-                    <BooleanInput source="fec_enabled" label="FEC Enabled" />
+                    <TransportParamInput
+                        source="fec_enabled"
+                        label="FEC Enabled"
+                        kind="boolean"
+                    />
                 )}
                 {uniqueKeys.includes('fec_destination_ip') && (
-                    <TextInput
+                    <TransportParamInput
                         source="fec_destination_ip"
                         label="FEC Destination IP"
+                        auto
                     />
                 )}
                 {uniqueKeys.includes('fec_type') && (
-                    <TextInput source="fec_type" label="FEC Type" />
+                    <TransportParamInput
+                        source="fec_type"
+                        label="FEC Type"
+                        kind="enum"
+                        choices={['XOR', 'Reed-Solomon']}
+                    />
                 )}
                 {uniqueKeys.includes('fec_mode') && (
-                    <TextInput source="fec_mode" label="FEC Mode" />
+                    <TransportParamInput
+                        source="fec_mode"
+                        label="FEC Mode"
+                        kind="enum"
+                        choices={['1D', '2D']}
+                    />
                 )}
                 {uniqueKeys.includes('fec_block_width') && (
-                    <TextInput
+                    <TransportParamInput
                         source="fec_block_width"
                         label="FEC Block Width"
+                        kind="integer"
                     />
                 )}
                 {uniqueKeys.includes('fec_block_height') && (
-                    <TextInput
+                    <TransportParamInput
                         source="fec_block_height"
                         label="FEC Block Height"
+                        kind="integer"
                     />
                 )}
                 {uniqueKeys.includes('fec1D_destination_port') && (
-                    <TextInput
+                    <TransportParamInput
                         source="fec1D_destination_port"
                         label="FEC1D Destination Port"
+                        kind="integer"
+                        auto
                     />
                 )}
                 {uniqueKeys.includes('fec2D_destination_port') && (
-                    <TextInput
+                    <TransportParamInput
                         source="fec2D_destination_port"
                         label="FEC2D Destination Port"
+                        kind="integer"
+                        auto
                     />
                 )}
                 {uniqueKeys.includes('fec1D_source_port') && (
-                    <TextInput
+                    <TransportParamInput
                         source="fec1D_source_port"
                         label="FEC1D Source Port"
+                        kind="integer"
+                        auto
                     />
                 )}
                 {uniqueKeys.includes('fec2D_source_port') && (
-                    <TextInput
+                    <TransportParamInput
                         source="fec2D_source_port"
                         label="FEC2D Source Port"
+                        kind="integer"
+                        auto
                     />
                 )}
                 {uniqueKeys.includes('rtcp_enabled') && (
-                    <BooleanInput source="rtcp_enabled" label="RTCP Enabled" />
+                    <TransportParamInput
+                        source="rtcp_enabled"
+                        label="RTCP Enabled"
+                        kind="boolean"
+                    />
                 )}
                 {uniqueKeys.includes('rtcp_destination_ip') && (
-                    <TextInput
+                    <TransportParamInput
                         source="rtcp_destination_ip"
                         label="RTCP Destination IP"
+                        auto
                     />
                 )}
                 {uniqueKeys.includes('rtcp_destination_port') && (
-                    <TextInput
+                    <TransportParamInput
                         source="rtcp_destination_port"
                         label="RTCP Destination Port"
+                        kind="integer"
+                        auto
                     />
                 )}
                 {uniqueKeys.includes('rtcp_source_port') && (
-                    <TextInput
+                    <TransportParamInput
                         source="rtcp_source_port"
                         label="RTCP Source Port"
+                        kind="integer"
+                        auto
                     />
                 )}
                 {params_ext.length !== 0 && <SanitizedDivider />}
                 {params_ext.map(param => (
-                    <TextInput
+                    <GenericTransportParamInput
                         source={param}
                         label={labelize(param)}
                         key={param}
@@ -417,42 +473,30 @@ const WebSocketSenderLeg = ({ data }) => {
     const params_ext = Object.keys(data).filter(x => x.startsWith('ext_'));
     return (
         <Card elevation={3}>
-            <CardContent>
+            <>
                 <SimpleShowLayout record={data}>
                     {has(data, 'connection_authorization') && (
-                        <SelectField
+                        <TransportParamField
                             source="connection_authorization"
                             label="Connection Authorization"
-                            choices={[
-                                {
-                                    id: true,
-                                    name: <CheckIcon />,
-                                },
-                                {
-                                    id: false,
-                                    name: <ClearIcon />,
-                                },
-                                { id: 'auto', name: 'auto' },
-                            ]}
-                            translateChoice={false}
                         />
                     )}
                     {has(data, 'connection_uri') && (
-                        <TextField
+                        <TransportParamField
                             source="connection_uri"
                             label="Connection URI"
                         />
                     )}
                     {params_ext.length !== 0 && <SanitizedDivider />}
                     {params_ext.map(param => (
-                        <TextField
+                        <TransportParamField
                             source={param}
                             label={labelize(param)}
                             key={param}
                         />
                     ))}
                 </SimpleShowLayout>
-            </CardContent>
+            </>
         </Card>
     );
 };
@@ -470,23 +514,24 @@ const WebSocketSenderEdit = ({ record }) => {
         >
             <CardFormIterator disableRemove disableAdd>
                 {uniqueKeys.includes('connection_authorization') && (
-                    <SelectInput
+                    <TransportParamInput
                         source="connection_authorization"
                         label="Connection Authorization"
-                        choices={[
-                            { id: true, name: <CheckIcon /> },
-                            { id: false, name: <ClearIcon /> },
-                            { id: 'auto', name: 'auto' },
-                        ]}
-                        translateChoice={false}
+                        kind="boolean"
+                        auto
                     />
                 )}
                 {uniqueKeys.includes('connection_uri') && (
-                    <TextInput source="connection_uri" label="Connection URI" />
+                    <TransportParamInput
+                        source="connection_uri"
+                        label="Connection URI"
+                        nullable
+                        auto
+                    />
                 )}
                 {params_ext.length !== 0 && <SanitizedDivider />}
                 {params_ext.map(param => (
-                    <TextInput
+                    <GenericTransportParamInput
                         source={param}
                         label={labelize(param)}
                         key={param}
@@ -511,27 +556,30 @@ const MXLSenderLeg = ({ data }) => {
     const params_ext = Object.keys(data).filter(x => x.startsWith('ext_'));
     return (
         <Card elevation={3}>
-            <CardContent>
+            <>
                 <SimpleShowLayout record={data}>
                     {has(data, 'mxl_domain_id') && (
-                        <TextField
+                        <TransportParamField
                             source="mxl_domain_id"
                             label="MXL Domain ID"
                         />
                     )}
                     {has(data, 'mxl_flow_id') && (
-                        <TextField source="mxl_flow_id" label="MXL Flow ID" />
+                        <TransportParamField
+                            source="mxl_flow_id"
+                            label="MXL Flow ID"
+                        />
                     )}
                     {params_ext.length !== 0 && <SanitizedDivider />}
                     {params_ext.map(param => (
-                        <TextField
+                        <TransportParamField
                             source={param}
                             label={labelize(param)}
                             key={param}
                         />
                     ))}
                 </SimpleShowLayout>
-            </CardContent>
+            </>
         </Card>
     );
 };
@@ -548,14 +596,73 @@ const MXLSenderEdit = ({ record }) => {
             source="$staged.transport_params"
         >
             <CardFormIterator disableRemove disableAdd>
-                <TextInput source="mxl_domain_id" label="MXL Domain ID" />
-                <TextInput source="mxl_flow_id" label="MXL Flow ID" />
+                <TransportParamInput
+                    source="mxl_domain_id"
+                    label="MXL Domain ID"
+                    nullable
+                    auto
+                />
+                <TransportParamInput
+                    source="mxl_flow_id"
+                    label="MXL Flow ID"
+                    nullable
+                    auto
+                />
                 {params_ext.length !== 0 && <SanitizedDivider />}
                 {params_ext.map(param => (
-                    <TextInput
+                    <GenericTransportParamInput
                         source={param}
                         label={labelize(param)}
                         key={param}
+                    />
+                ))}
+            </CardFormIterator>
+        </ArrayInput>
+    );
+};
+
+const GenericSender = ({ data }) => (
+    <Grid container spacing={2}>
+        {Object.keys(data).map(i => (
+            <Grid item sm key={i}>
+                <GenericSenderLeg data={data[i]} />
+            </Grid>
+        ))}
+    </Grid>
+);
+
+const GenericSenderLeg = ({ data }) => (
+    <Card elevation={3}>
+        <>
+            <SimpleShowLayout record={data}>
+                {Object.keys(data).map(param => (
+                    <TransportParamField
+                        source={param}
+                        label={labelize(param)}
+                        key={param}
+                    />
+                ))}
+            </SimpleShowLayout>
+        </>
+    </Card>
+);
+
+const GenericSenderEdit = ({ record }) => {
+    const data = get(record, '$staged.transport_params');
+    const uniqueKeys = Object.keys(
+        data.reduce((result, obj) => Object.assign(result, obj), {})
+    );
+    return (
+        <ArrayInput
+            label="Transport Parameters"
+            source="$staged.transport_params"
+        >
+            <CardFormIterator disableRemove disableAdd>
+                {uniqueKeys.map(param => (
+                    <GenericTransportParamInput
+                        key={param}
+                        source={param}
+                        label={labelize(param)}
                     />
                 ))}
             </CardFormIterator>
@@ -580,7 +687,7 @@ const SenderTransportParamsCardsGrid = ({ ids, record }) => {
             case 'urn:x-nmos:transport:mxl':
                 return <MXLSender data={data} />;
             default:
-                return <b>Unknown Type</b>;
+                return <GenericSender data={data} />;
         }
     } else {
         switch (type) {
@@ -593,7 +700,7 @@ const SenderTransportParamsCardsGrid = ({ ids, record }) => {
             case 'urn:x-nmos:transport:mxl':
                 return <MXLSenderEdit record={record} />;
             default:
-                return <b>Unknown Type</b>;
+                return <GenericSenderEdit record={record} />;
         }
     }
 };

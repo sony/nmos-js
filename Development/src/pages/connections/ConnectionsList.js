@@ -19,6 +19,7 @@ import useGetList from '../../components/useGetList';
 import {
     QUERY_API,
     apiPagingLimit,
+    apiUsingRql,
     queryVersion,
     useJSONSetting,
 } from '../../settings';
@@ -40,6 +41,7 @@ const AxisFilters = ({ filter, setFilter, filterButtonLabel, resource }) => (
         setFilter={setFilter}
         filterButtonLabel={filterButtonLabel}
         noFilters
+        usingRql={apiUsingRql(QUERY_API)}
     >
         <StringFilter source="label" />
         <StringFilter source="description" />

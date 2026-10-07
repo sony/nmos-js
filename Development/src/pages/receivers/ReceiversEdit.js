@@ -5,19 +5,76 @@ import {
     BooleanInput,
     Edit,
     FormDataConsumer,
-    SelectInput,
     SimpleForm,
     TextInput,
 } from 'react-admin';
 import get from 'lodash/get';
 import set from 'lodash/set';
-import ClearIcon from '@material-ui/icons/Clear';
+import { useField } from 'react-final-form';
 import { useTheme } from '@material-ui/styles';
 import ConnectionEditActions from '../../components/ConnectionEditActions';
 import ConnectionEditToolbar from '../../components/ConnectionEditToolbar';
+import { ActivationModeInput } from '../../components/ActivationMode';
+import TransportParamInput from '../../components/TransportParamInput';
+import {
+    transportFileType,
+    transportOmitsTransportFile,
+} from '../../components/ParameterRegisters';
 import ResourceTitle from '../../components/ResourceTitle';
 import emphasizedPaper from '../../theme/emphasizedPaper';
 import ReceiverTransportParamsCardsGrid from './ReceiverTransportParams';
+
+const typedValue = event =>
+    event && event.target ? event.target.value : event;
+
+const TransportFileInputs = ({ transport }) => {
+    const {
+        input: { value: dataValue },
+    } = useField('$staged.transport_file.data', { allowNull: true });
+    const {
+        input: { value: typeValue, onChange: setType },
+    } = useField('$staged.transport_file.type', { allowNull: true });
+
+    // A file and its type are both set or both null. The default type
+    // appears when data goes from empty to set and type is still empty.
+    const onDataChange = event => {
+        const next = typedValue(event);
+        if (next == null || next === '') {
+            setType(null);
+            return;
+        }
+        if (
+            (dataValue == null || dataValue === '') &&
+            (typeValue == null || typeValue === '')
+        ) {
+            const fallback = transportFileType(transport);
+            if (fallback) setType(fallback);
+        }
+    };
+
+    return (
+        <>
+            <TextInput
+                label="Transport File Type"
+                source="$staged.transport_file.type"
+                helperText={false}
+                format={value => (value == null ? '' : value)}
+                parse={value => (value === '' ? null : value)}
+            />
+            <TextInput
+                label="Transport File Data"
+                source="$staged.transport_file.data"
+                fullWidth
+                multiline
+                resettable
+                helperText={false}
+                format={value => (value == null ? '' : value)}
+                parse={value => (value === '' ? null : value)}
+                onChange={onDataChange}
+            />
+        </>
+    );
+};
 
 const ReceiversEdit = props => {
     const theme = useTheme();
@@ -82,30 +139,21 @@ const EditStagedTab = props => (
             toolbar={<ConnectionEditToolbar />}
             redirect={`/receivers/${props.id}/show/staged`}
         >
-            <TextInput label="Sender ID" source="$staged.sender_id" />
+            {/* TransportParamInput only so null is indicated the same way as on the transport cards. */}
+            <TransportParamInput
+                label="Sender ID"
+                source="$staged.sender_id"
+                nullable
+            />
             <BooleanInput
                 label="Master Enable"
                 source="$staged.master_enable"
+                helperText={false}
             />
-            <SelectInput
+            <ActivationModeInput
                 label="Activation Mode"
                 source="$staged.activation.mode"
-                choices={[
-                    { id: null, name: <ClearIcon /> },
-                    {
-                        id: 'activate_immediate',
-                        name: 'activate_immediate',
-                    },
-                    {
-                        id: 'activate_scheduled_relative',
-                        name: 'activate_scheduled_relative',
-                    },
-                    {
-                        id: 'activate_scheduled_absolute',
-                        name: 'activate_scheduled_absolute',
-                    },
-                ]}
-                translateChoice={false}
+                helperText={false}
             />
             <FormDataConsumer>
                 {({ formData, ...rest }) => {
@@ -116,6 +164,7 @@ const EditStagedTab = props => (
                                     label="Requested Time"
                                     source="$staged.activation.requested_time"
                                     {...rest}
+                                    helperText={false}
                                 />
                             );
                         case 'activate_scheduled_absolute':
@@ -124,6 +173,7 @@ const EditStagedTab = props => (
                                     label="Requested Time"
                                     source="$staged.activation.requested_time"
                                     {...rest}
+                                    helperText={false}
                                 />
                             );
                         default:
@@ -138,18 +188,14 @@ const EditStagedTab = props => (
             </FormDataConsumer>
             <ReceiverTransportParamsCardsGrid />
             <FormDataConsumer>
-                {({ formData }) =>
-                    get(formData, '$transporttype') !==
-                        'urn:x-nmos:transport:mxl' && (
-                        <TextInput
-                            label="Transport File"
-                            source="$staged.transport_file.data"
-                            fullWidth
-                            multiline
-                            resettable
-                        />
-                    )
-                }
+                {({ formData }) => {
+                    const type = get(formData, '$transporttype');
+                    return (
+                        !transportOmitsTransportFile(type) && (
+                            <TransportFileInputs transport={type} />
+                        )
+                    );
+                }}
             </FormDataConsumer>
         </SimpleForm>
     </Edit>

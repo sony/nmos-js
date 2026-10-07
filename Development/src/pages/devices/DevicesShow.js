@@ -47,6 +47,7 @@ import ResourceTitle from '../../components/ResourceTitle';
 import SanitizedDivider from '../../components/SanitizedDivider';
 import TAIField from '../../components/TAIField';
 import UnsortableDatagrid from '../../components/UnsortableDatagrid';
+import { ActivationModeField } from '../../components/ActivationMode';
 import UrlField from '../../components/URLField';
 import { CancelScheduledActivationIcon } from '../../icons';
 import labelize from '../../components/labelize';
@@ -374,7 +375,10 @@ const ActivationsField = ({ record, source }) => {
                     <TableRow key={activationId}>
                         <TableCell>{activationId}</TableCell>
                         <TableCell>
-                            {get(activation, 'activation.mode')}
+                            <ActivationModeField
+                                record={activation}
+                                source="activation.mode"
+                            />
                         </TableCell>
                         <TableCell>
                             <TAIField

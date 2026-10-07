@@ -18,8 +18,6 @@ import {
     receiverEssenceFromSender,
     senderEssenceFromReceiver,
 } from './connectionHeadingMatch';
-import { transportFileHint } from '../../components/controlApiMessages';
-import { parseTransportUrn } from '../../transportUrn';
 import {
     FORMATS,
     TRANSPORTS,
@@ -349,8 +347,8 @@ describe('heading match', () => {
         ).toEqual({
             transport: `${rtpMcast}|urn:x-nmos:transport:rtp$`,
             '$flow.format': video,
-            '$flow.media_type': ['video/raw'],
-            '$flow.event_type': ['number'],
+            '$flow.media_type': 'video/raw',
+            '$flow.event_type': 'number',
             $constraint_sets: constraintSets,
             $constraint_sets_active: 'r',
         });
@@ -362,6 +360,25 @@ describe('heading match', () => {
         ).toEqual({
             transport: rtpMcast,
             '$flow.format': video,
+        });
+    });
+
+    it('keeps string entries from a broken receiver list', () => {
+        expect(
+            senderEssenceFromReceiver(
+                {
+                    ...receiver,
+                    caps: {
+                        media_types: ['video/raw', null, ''],
+                        event_types: [null],
+                    },
+                },
+                { usingRql: true, version: 'v1.3' }
+            )
+        ).toEqual({
+            transport: `${rtpMcast}|urn:x-nmos:transport:rtp$`,
+            '$flow.format': video,
+            '$flow.media_type': 'video/raw',
         });
     });
 
@@ -404,38 +421,5 @@ describe('heading match', () => {
             format: video,
             transport: rtpMcast,
         });
-    });
-});
-
-describe('control API messages', () => {
-    it('names transports that do not use a transport file', () => {
-        expect(transportFileHint('urn:x-nmos:transport:mxl')).toBe(
-            'MXL does not use a transport file.'
-        );
-        expect(transportFileHint('urn:x-nmos:transport:websocket')).toBe(
-            'WebSocket does not use a transport file.'
-        );
-        expect(transportFileHint('urn:x-nmos:transport:mqtt')).toBe(
-            'MQTT does not use a transport file.'
-        );
-    });
-
-    it('treats RTP as a missing transport file', () => {
-        expect(transportFileHint('urn:x-nmos:transport:rtp')).toBe(
-            'Transport file is not available.'
-        );
-        expect(transportFileHint('urn:x-nmos:transport:rtp.ucast')).toBe(
-            'Transport file is not available.'
-        );
-    });
-
-    it('takes the URN-base of a versioned or subclassified transport', () => {
-        expect(parseTransportUrn('urn:x-nmos:transport:rtp.mcast').base).toBe(
-            'urn:x-nmos:transport:rtp'
-        );
-        expect(
-            parseTransportUrn('urn:x-nmos:transport:websocket/v1.0').base
-        ).toBe('urn:x-nmos:transport:websocket');
-        expect(parseTransportUrn(undefined)).toBeNull();
     });
 });

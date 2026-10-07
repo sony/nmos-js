@@ -33,6 +33,13 @@ export const connectTabTransportQuery = (transport, usingRql) => {
     return transport;
 };
 
+// translate an array into comma-separated values because the input can only
+// show a string, although encodeRQLKeyValueFilter would accept the array
+const commaSeparated = value =>
+    (Array.isArray(value) ? value : [])
+        .filter(entry => typeof entry === 'string' && entry !== '')
+        .join(',') || undefined;
+
 const omitEmpty = essence => {
     const next = {};
     for (const [key, value] of Object.entries(essence)) {
@@ -81,10 +88,14 @@ export const senderEssenceFromReceiver = (receiver, { usingRql, version }) => {
         '$flow.format': receiver.format,
     };
     if (usingRql && version >= 'v1.1') {
-        essence['$flow.media_type'] = get(receiver, 'caps.media_types');
+        essence['$flow.media_type'] = commaSeparated(
+            get(receiver, 'caps.media_types')
+        );
     }
     if (usingRql && version >= 'v1.3') {
-        essence['$flow.event_type'] = get(receiver, 'caps.event_types');
+        essence['$flow.event_type'] = commaSeparated(
+            get(receiver, 'caps.event_types')
+        );
     }
     const matched = omitEmpty(essence);
     // the receiver's own constraint sets, which only RQL can match; the flag

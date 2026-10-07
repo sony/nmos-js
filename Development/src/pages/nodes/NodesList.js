@@ -52,7 +52,11 @@ const NodesList = props => {
             <Card>
                 <Title title={'Nodes'} />
                 <CardContent>
-                    <FilterPanel filter={filter} setFilter={setFilter}>
+                    <FilterPanel
+                        filter={filter}
+                        setFilter={setFilter}
+                        usingRql={apiUsingRql(QUERY_API)}
+                    >
                         <StringFilter source="label" />
                         {queryVersion() >= 'v1.1' && (
                             <StringFilter source="description" />

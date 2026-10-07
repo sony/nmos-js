@@ -5,18 +5,18 @@ import {
     BooleanInput,
     Edit,
     FormDataConsumer,
-    SelectInput,
     SimpleForm,
     TextInput,
 } from 'react-admin';
 import get from 'lodash/get';
 import set from 'lodash/set';
 import { useTheme } from '@material-ui/styles';
-import ClearIcon from '@material-ui/icons/Clear';
 import ConnectionEditActions from '../../components/ConnectionEditActions';
 import ConnectionEditToolbar from '../../components/ConnectionEditToolbar';
 import ResourceTitle from '../../components/ResourceTitle';
 import emphasizedPaper from '../../theme/emphasizedPaper';
+import { ActivationModeInput } from '../../components/ActivationMode';
+import TransportParamInput from '../../components/TransportParamInput';
 import SenderTransportParamsCardsGrid from './SenderTransportParams';
 
 const SendersEdit = props => {
@@ -82,30 +82,21 @@ const EditStagedTab = props => (
             toolbar={<ConnectionEditToolbar />}
             redirect={`/senders/${props.id}/show/staged`}
         >
-            <TextInput label="Receiver ID" source="$staged.receiver_id" />
+            {/* TransportParamInput only so null is indicated the same way as on the transport cards. */}
+            <TransportParamInput
+                label="Receiver ID"
+                source="$staged.receiver_id"
+                nullable
+            />
             <BooleanInput
                 label="Master Enable"
                 source="$staged.master_enable"
+                helperText={false}
             />
-            <SelectInput
+            <ActivationModeInput
                 label="Activation Mode"
                 source="$staged.activation.mode"
-                choices={[
-                    { id: null, name: <ClearIcon /> },
-                    {
-                        id: 'activate_immediate',
-                        name: 'activate_immediate',
-                    },
-                    {
-                        id: 'activate_scheduled_relative',
-                        name: 'activate_scheduled_relative',
-                    },
-                    {
-                        id: 'activate_scheduled_absolute',
-                        name: 'activate_scheduled_absolute',
-                    },
-                ]}
-                translateChoice={false}
+                helperText={false}
             />
             <FormDataConsumer>
                 {({ formData, ...rest }) => {
@@ -116,6 +107,7 @@ const EditStagedTab = props => (
                                     label="Requested Time"
                                     source="$staged.activation.requested_time"
                                     {...rest}
+                                    helperText={false}
                                 />
                             );
                         case 'activate_scheduled_absolute':
@@ -124,6 +116,7 @@ const EditStagedTab = props => (
                                     label="Requested Time"
                                     source="$staged.activation.requested_time"
                                     {...rest}
+                                    helperText={false}
                                 />
                             );
                         default:

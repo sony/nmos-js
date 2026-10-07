@@ -86,8 +86,8 @@ const encodeBasicKeyValueFilter = (key, value) => {
         // hmm, in basic query syntax, multiple values are not supported
         console.warn('Basic query - unsupported filter type:', 'Array');
     } else if (typeof value === 'string') {
-        // ignore empty strings
-        if (value.length > 0) {
+        // ignore empty strings and comma-separated values because basic query cannot express that
+        if (value.length > 0 && !value.includes(',')) {
             return key + '=' + encodeURIComponent(value);
         }
     } else if (typeof value === 'boolean') {
@@ -619,35 +619,10 @@ const convertDataProviderRequestToHTTP = (
                 get(params, 'previousData.$staged'),
                 get(params, 'data.$staged')
             );
+            // Each staged value is submitted with the JSON type it should
+            // keep. A string such as "" or "11" is not reinterpreted.
             if (allDifferences !== undefined) {
-                for (const d of allDifferences) {
-                    if (d.rhs === '') {
-                        // if the user clears a text input, set the param to null
-                        if (d.lhs !== null) {
-                            differences.push({
-                                kind: d.kind,
-                                lhs: d.lhs,
-                                path: d.path,
-                                rhs: null,
-                            });
-                        }
-                    } else if (typeof d.rhs === 'string') {
-                        // ideally, if and only if the user enters a number without any extraneous cruft
-                        // (consider e.g. '233.252.0.0'),  set the param to the number
-                        // note that with the following implementation, we avoid e.g. ' ' being coerced to 0,
-                        // but accept that ' 0x2a ' is the answer to life, the universe and everything
-                        const n = Number(d.rhs.trim());
-                        differences.push({
-                            kind: d.kind,
-                            lhs: d.lhs,
-                            path: d.path,
-                            rhs: !isNaN(n) ? n : d.rhs,
-                        });
-                    } else {
-                        // e.g. boolean from a toggle switch
-                        differences.push(d);
-                    }
-                }
+                differences = allDifferences;
             }
 
             let patchData = { transport_params: [] };
@@ -675,11 +650,23 @@ const convertDataProviderRequestToHTTP = (
                 );
             }
 
-            if (has(patchData, 'transport_file')) {
-                if (get(patchData, 'transport_file.data') === null) {
+            // data and type are both strings or both null. Clearing the
+            // file clears the type. IS-05 requires a PATCH that carries
+            // data to also carry type, even when it is unchanged.
+            if (has(patchData, 'transport_file.data')) {
+                const fileData = get(patchData, 'transport_file.data');
+                if (fileData == null || fileData === '') {
+                    set(patchData, 'transport_file.data', null);
                     set(patchData, 'transport_file.type', null);
                 } else {
-                    set(patchData, 'transport_file.type', 'application/sdp');
+                    const fileType = get(
+                        params,
+                        'data.$staged.transport_file.type'
+                    );
+                    if (typeof fileType === 'string' && fileType !== '') {
+                        set(patchData, 'transport_file.type', fileType);
+                    }
+                    // else omit transport_file.type even though...
                 }
             }
 
@@ -749,6 +736,14 @@ const firstOf = ps => {
     return invertPromise(Promise.all(ps.map(invertPromise)));
 };
 
+// Content-Type without parameters: "application/sdp; charset=utf-8"
+// is "application/sdp".
+export const transportFileMediaType = contentType => {
+    if (typeof contentType !== 'string') return undefined;
+    const mediaType = contentType.split(';')[0].trim();
+    return mediaType || undefined;
+};
+
 const getConnectionResourceEndpoints = (
     addresses,
     resource,
@@ -799,21 +794,37 @@ const getConnectionResourceEndpoints = (
                             fetchOptions
                         )
                             .then(response => {
-                                if (response.ok) {
-                                    return response.text();
+                                if (!response.ok) {
+                                    return { data: undefined };
                                 }
+                                const contentType =
+                                    response.headers.get('Content-Type');
+                                return response.text().then(text => {
+                                    let data = text;
+                                    try {
+                                        data = JSON.parse(text);
+                                    } catch (e) {
+                                        data = text;
+                                    }
+                                    return { data, contentType };
+                                });
                             })
-                            .then(text => {
-                                try {
-                                    return JSON.parse(text);
-                                } catch (e) {
-                                    return text;
-                                }
-                            })
-                            .then(data => {
+                            .then(({ data, contentType }) => {
                                 endpointData.push({
                                     [`$${endpoint.slice(0, -1)}`]: data,
                                 });
+                                // The transportfile body is the file. Its
+                                // media type is the response Content-Type,
+                                // without parameters.
+                                if (endpoint === 'transportfile/') {
+                                    const mediaType =
+                                        transportFileMediaType(contentType);
+                                    if (mediaType) {
+                                        endpointData.push({
+                                            $transportfiletype: mediaType,
+                                        });
+                                    }
+                                }
                             })
                             .catch(error => {
                                 throw error;

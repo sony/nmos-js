@@ -207,13 +207,13 @@ export const TAGS = {
 // oneToOne on an entry copies each parameter name present on both the
 // Sender's active transport_params and the Receiver's staged transport_params.
 // An explicit mapping for that transport takes precedence.
-// transportFile is the default media type for a transport that uses a file.
+// transportFileType is the default media type for a transport that uses a file.
 // A registered transport without it does not use one.
 // These helpers read the URN base, so rtp.mcast uses the rtp entry.
 export const TRANSPORTS = {
     'urn:x-nmos:transport:rtp': {
         label: 'RTP',
-        transportFile: 'application/sdp',
+        transportFileType: 'application/sdp',
     },
     'urn:x-nmos:transport:rtp.mcast': {
         label: 'RTP Multicast',
@@ -243,7 +243,7 @@ export const transportIsOneToOne = transport =>
 
 // The default media type, when this transport uses a transport file.
 export const transportFileType = transport => {
-    const type = get(transportEntry(transport), 'transportFile');
+    const type = get(transportEntry(transport), 'transportFileType');
     return typeof type === 'string' && type !== '' ? type : undefined;
 };
 

@@ -650,23 +650,24 @@ const convertDataProviderRequestToHTTP = (
                 );
             }
 
-            // data and type are both strings or both null. Clearing the
-            // file clears the type. IS-05 requires a PATCH that carries
-            // data to also carry type, even when it is unchanged.
+            // 'data' and 'type' must both be strings or both be null.
             if (has(patchData, 'transport_file.data')) {
-                const fileData = get(patchData, 'transport_file.data');
-                if (fileData == null || fileData === '') {
-                    set(patchData, 'transport_file.data', null);
-                    set(patchData, 'transport_file.type', null);
-                } else {
-                    const fileType = get(
+                const rawData = get(patchData, 'transport_file.data');
+                const fileData =
+                    typeof rawData === 'string' && rawData !== ''
+                        ? rawData
+                        : null;
+                set(patchData, 'transport_file.data', fileData);
+
+                if (fileData !== null) {
+                    const rawType = get(
                         params,
                         'data.$staged.transport_file.type'
                     );
-                    if (typeof fileType === 'string' && fileType !== '') {
-                        set(patchData, 'transport_file.type', fileType);
-                    }
-                    // else omit transport_file.type even though...
+                    const fileType = typeof rawType === 'string' ? rawType : '';
+                    set(patchData, 'transport_file.type', fileType);
+                } else {
+                    set(patchData, 'transport_file.type', null);
                 }
             }
 

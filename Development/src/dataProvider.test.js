@@ -292,6 +292,30 @@ describe('UPDATE receivers', () => {
             transport_file: { data: 'v=1', type: 'application/sdp' },
         });
     });
+
+    it('sends an empty transport file type when none is known', async () => {
+        expect(
+            await filePatch(
+                { data: null, type: null },
+                { data: 'v=0', type: null }
+            )
+        ).toEqual({
+            transport_params: [{}],
+            transport_file: { data: 'v=0', type: '' },
+        });
+    });
+
+    it('clears a non-string transport file', async () => {
+        expect(
+            await filePatch(
+                { data: 'v=0', type: 'application/sdp' },
+                { data: 1, type: 'application/sdp' }
+            )
+        ).toEqual({
+            transport_params: [{}],
+            transport_file: { data: null, type: null },
+        });
+    });
 });
 
 describe('transportFileMediaType', () => {

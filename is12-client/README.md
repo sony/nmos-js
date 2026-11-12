@@ -55,3 +55,11 @@ yarn start
 yarn build-and-start
 ```
 
+### Testing:
+
+- Unit tests run against a fake IS-12 device, so no NMOS Node is needed. CI runs them, along with a production build, on every push and pull request.
+
+```bash
+yarn test
+```
+

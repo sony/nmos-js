@@ -2,8 +2,88 @@ import { fetchUtils } from 'react-admin';
 import dataProvider, {
     channelMappingAction,
     findApiAddress,
+    getConnectionResource,
     transportFileMediaType,
 } from './dataProvider';
+
+describe('Device control addresses', () => {
+    const controls = (type, path) => [
+        { type, href: `http://unresolvable.local${path}` },
+        { type, href: `http://192.0.2.1${path}` },
+    ];
+    const fetchFromAddress = responses => url =>
+        url.startsWith('http://unresolvable.local')
+            ? Promise.reject(new TypeError('Failed to fetch'))
+            : Promise.resolve({
+                  ok: true,
+                  url,
+                  headers: new Headers(),
+                  json: async () => responses[url],
+                  text: async () => JSON.stringify(responses[url]),
+              });
+
+    beforeEach(() => {
+        window.localStorage.clear();
+    });
+
+    afterEach(() => {
+        delete global.fetch;
+        jest.restoreAllMocks();
+    });
+
+    it('uses whichever Connection API address answers', async () => {
+        const api = 'http://192.0.2.1/x-nmos/connection/v1.1';
+        const single = `${api}/single/senders/sender0`;
+        global.fetch = jest.fn(
+            fetchFromAddress({
+                [single]: ['active/'],
+                [`${single}/active/`]: { master_enable: true },
+            })
+        );
+
+        const data = await getConnectionResource(
+            { id: 'sender0' },
+            'senders',
+            {
+                id: 'device-connection',
+                controls: controls(
+                    'urn:x-nmos:control:sr-ctrl/v1.1',
+                    '/x-nmos/connection/v1.1'
+                ),
+            },
+            ['active/']
+        );
+
+        expect(data.$connectionAPI).toBe(single);
+        expect(data.$active).toEqual({ master_enable: true });
+    });
+
+    it('uses whichever Channel Mapping API address answers', async () => {
+        const api = 'http://192.0.2.1/x-nmos/channelmapping/v1.0';
+        jest.spyOn(fetchUtils, 'fetchJson').mockResolvedValue({
+            headers: new Headers(),
+            json: {
+                id: 'device-channelmapping',
+                controls: controls(
+                    'urn:x-nmos:control:cm-ctrl/v1.0',
+                    '/x-nmos/channelmapping/v1.0'
+                ),
+            },
+        });
+        global.fetch = jest.fn(
+            fetchFromAddress({
+                [`${api}/io`]: { inputs: {}, outputs: {} },
+            })
+        );
+
+        const { data } = await dataProvider('GET_ONE', 'devices', {
+            id: 'device-channelmapping',
+        });
+
+        expect(data.$channelmappingAPI).toBe(api);
+        expect(data.$io).toEqual({ inputs: {}, outputs: {} });
+    });
+});
 
 describe('findApiAddress', () => {
     const typePrefix = 'urn:x-nmos:control:sr-ctrl/';

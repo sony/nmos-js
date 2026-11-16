@@ -1,8 +1,111 @@
 import { fetchUtils } from 'react-admin';
 import dataProvider, {
     channelMappingAction,
+    findApiAddress,
     transportFileMediaType,
 } from './dataProvider';
+
+describe('findApiAddress', () => {
+    const typePrefix = 'urn:x-nmos:control:sr-ctrl/';
+    const find = (key, endpoints) =>
+        findApiAddress({
+            endpoints,
+            typePrefix,
+            bridgeUrl: version => `http://bridge/${version}`,
+            path: '/single/senders/',
+            key,
+        });
+    const fetchedUrls = () => global.fetch.mock.calls.map(([url]) => url);
+    // answers OK for the listed addresses only
+    const answering =
+        (...addresses) =>
+        url =>
+            addresses.some(address => url.startsWith(address))
+                ? Promise.resolve({ ok: true })
+                : Promise.resolve({ ok: false, status: 404 });
+
+    beforeEach(() => {
+        window.localStorage.clear();
+        global.fetch = jest.fn();
+    });
+
+    afterEach(() => {
+        delete global.fetch;
+    });
+
+    it('falls back to an older version when no newer address answers', async () => {
+        global.fetch.mockImplementation(answering('http://b'));
+
+        const found = await find('older', [
+            { type: `${typePrefix}v1.1`, href: 'http://a' },
+            { type: `${typePrefix}v1.0`, href: 'http://b' },
+        ]);
+
+        expect(found.address).toBe('http://b');
+        expect(fetchedUrls()).toEqual([
+            'http://a/single/senders/',
+            'http://b/single/senders/',
+        ]);
+    });
+
+    it('ignores a different major version', async () => {
+        global.fetch.mockImplementation(answering('http://a', 'http://b'));
+
+        const found = await find('major', [
+            { type: `${typePrefix}v2.0`, href: 'http://a' },
+            { type: `${typePrefix}v1.0`, href: 'http://b' },
+        ]);
+
+        expect(found.address).toBe('http://b');
+        expect(fetchedUrls()).toEqual(['http://b/single/senders/']);
+    });
+
+    it('orders minor versions numerically', async () => {
+        global.fetch.mockImplementation(answering('http://a', 'http://b'));
+
+        const found = await find('numeric', [
+            { type: `${typePrefix}v1.9`, href: 'http://a' },
+            { type: `${typePrefix}v1.10`, href: 'http://b' },
+        ]);
+
+        expect(found.address).toBe('http://b');
+        expect(fetchedUrls()).toEqual(['http://b/single/senders/']);
+    });
+
+    it('waits for an address that answers successfully', async () => {
+        global.fetch.mockImplementation(answering('http://b'));
+
+        const found = await find('success', [
+            { type: `${typePrefix}v1.1`, href: 'http://a' },
+            { type: `${typePrefix}v1.1`, href: 'http://b' },
+        ]);
+
+        expect(found.address).toBe('http://b');
+    });
+
+    it('resolves to undefined when no address answers', async () => {
+        global.fetch.mockImplementation(answering());
+
+        await expect(
+            find('none', [{ type: `${typePrefix}v1.1`, href: 'http://a' }])
+        ).resolves.toBeUndefined();
+    });
+
+    it('tries the address that answered last time on its own first', async () => {
+        const endpoints = [
+            { type: `${typePrefix}v1.1`, href: 'http://a' },
+            { type: `${typePrefix}v1.1`, href: 'http://b' },
+        ];
+        global.fetch.mockImplementation(answering('http://b'));
+        await find('remembered', endpoints);
+        global.fetch.mockClear();
+
+        const found = await find('remembered', endpoints);
+
+        expect(found.address).toBe('http://b');
+        expect(fetchedUrls()).toEqual(['http://b/single/senders/']);
+    });
+});
 
 describe('channelMappingAction', () => {
     const activeMap = {

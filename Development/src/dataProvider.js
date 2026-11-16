@@ -46,6 +46,11 @@ const deviceAccessPaths = new Map();
 // Device last time. The next request tries it alone, and only races all
 // the advertised addresses again if it fails
 const deviceConnectionAddresses = new Map();
+// for each API of each Device or Node, which access path, direct or bridge,
+// and which address answered last time
+const apiAccess = new Map();
+// major version 1, capturing the minor version
+const V1_VERSION = /^v1\.(\d+)$/;
 
 const apiResource = resource => {
     let api;
@@ -735,6 +740,98 @@ const timeout = (ms, promise) => {
 const firstOf = ps => {
     const invertPromise = p => new Promise((res, rej) => p.then(rej, res));
     return invertPromise(Promise.all(ps.map(invertPromise)));
+};
+
+// resolves to the first of the addresses to answer GET address + path
+// successfully, with its response, or undefined if none does in time
+const firstToAnswer = (addresses, path, headers) => {
+    const controllers = addresses.map(() => new AbortController());
+    const timer = setTimeout(
+        () => controllers.forEach(controller => controller.abort()),
+        5000
+    );
+    let winner;
+    return firstOf(
+        addresses.map((address, index) =>
+            fetch(concatUrl(address, path), {
+                headers,
+                signal: controllers[index].signal,
+            }).then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                if (winner === undefined) winner = index;
+                return { address, response };
+            })
+        )
+    )
+        .catch(() => undefined)
+        .finally(() => {
+            clearTimeout(timer);
+            // the caller may still read the body of the winning response
+            controllers.forEach(
+                (controller, index) => index !== winner && controller.abort()
+            );
+        });
+};
+
+// Finds an address that answers for an API which a Device or Node advertises
+// once for each version and each of its host names and addresses, in
+// Device.controls or Node.services. Tries each advertised v1.x version,
+// newest first, since minor versions are backwards compatible: the address
+// that answered last time on its own, then all the advertised addresses at
+// once, then the bridge, as the bridge mode allows.
+// Resolves to the address and the successful response to GET address + path,
+// or undefined if none answers.
+export const findApiAddress = async ({
+    endpoints = [],
+    typePrefix,
+    bridgeUrl,
+    path = '',
+    key,
+    headers,
+}) => {
+    const mode = bridgeMode();
+    const remembered = apiAccess.get(key) || {};
+    const minor = version => Number(version.match(V1_VERSION)[1]);
+    const versions = [
+        ...new Set(
+            endpoints
+                .filter(({ type }) => type.startsWith(typePrefix))
+                .map(({ type }) => type.slice(typePrefix.length))
+                .filter(version => V1_VERSION.test(version))
+        ),
+    ].sort((left, right) => minor(right) - minor(left));
+    for (const version of versions) {
+        const addresses = endpoints
+            .filter(({ type, href }) => type === typePrefix + version && href)
+            .map(({ href }) => href);
+        if (addresses.length === 0) continue;
+        const attempts = [];
+        if (mode !== BRIDGE_FORCED) {
+            attempts.push(['direct', addresses]);
+        }
+        if (mode === BRIDGE_AUTO || mode === BRIDGE_FORCED) {
+            attempts.push(['bridge', [bridgeUrl(version)]]);
+        }
+        if (mode === BRIDGE_AUTO && remembered.accessPath === 'bridge') {
+            attempts.reverse();
+        }
+        if (mode !== BRIDGE_FORCED && addresses.includes(remembered.address)) {
+            attempts.unshift(['direct', [remembered.address]]);
+        }
+        for (const [accessPath, candidates] of attempts) {
+            const found = await firstToAnswer(candidates, path, headers);
+            if (found) {
+                apiAccess.set(key, {
+                    accessPath,
+                    address:
+                        accessPath === 'direct' ? found.address : undefined,
+                });
+                return found;
+            }
+        }
+    }
+    apiAccess.delete(key);
+    return undefined;
 };
 
 // Content-Type without parameters: "application/sdp; charset=utf-8"

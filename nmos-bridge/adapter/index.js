@@ -10,6 +10,7 @@
 
 const crypto = require('crypto');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const REGISTRY_QUERY_URL = (process.env.REGISTRY_QUERY_URL || '').replace(
@@ -873,6 +874,12 @@ const run = () =>
     ]);
 
 const main = () => {
+    // as PID 1 in a container, the process ignores signals it does not handle
+    for (const signal of ['SIGTERM', 'SIGINT']) {
+        process.on(signal, () =>
+            process.exit(128 + os.constants.signals[signal])
+        );
+    }
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
     // write a baseline configuration immediately so Envoy can serve the
     // Registry and app routes before the first subscription sync

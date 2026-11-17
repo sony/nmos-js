@@ -3,7 +3,6 @@ import {
     ArrayField,
     BooleanField,
     Loading,
-    ReferenceArrayField,
     ReferenceField,
     ReferenceManyField,
     ShowContextProvider,
@@ -264,16 +263,24 @@ const ShowSummaryTab = ({ record, ...props }) => {
                 >
                     <LinkChipField />
                 </ReferenceField>
-                <ReferenceArrayField source="receivers" reference="receivers">
+                <ReferenceManyField
+                    label="Receivers"
+                    reference="receivers"
+                    target="device_id"
+                >
                     <SingleFieldList linkType="show">
                         <LinkChipField />
                     </SingleFieldList>
-                </ReferenceArrayField>
-                <ReferenceArrayField source="senders" reference="senders">
+                </ReferenceManyField>
+                <ReferenceManyField
+                    label="Senders"
+                    reference="senders"
+                    target="device_id"
+                >
                     <SingleFieldList linkType="show">
                         <LinkChipField />
                     </SingleFieldList>
-                </ReferenceArrayField>
+                </ReferenceManyField>
                 <ReferenceManyField
                     label="Sources"
                     reference="sources"

@@ -1,6 +1,6 @@
 import {render, screen} from '@testing-library/react';
 import NCAController from './NCAController';
-import {MSGTYPES} from '../global/IS12CommandTemplates';
+import {METHOD_IDS, MSGTYPES} from '../global/IS12CommandTemplates';
 import {NcDatatypeType, NcMethodStatus} from '../global/Types';
 
 // Minimal IS-12 device: a root block with a ClassManager and a DeviceManager
@@ -23,6 +23,8 @@ const datatypeDescriptors = [{name: 'NcString', type: NcDatatypeType.NcPrimitive
 // property values by '<oid>.<level>.<index>'
 const propertyValues = {'3.3.2': datatypeDescriptors, '4.1.6': 'Test device'};
 
+const toMethodKey = ({level, index}) => `${level}.${index}`;
+
 // Answers each command from the client straight away, as a device would
 class FakeDeviceSocket {
     constructor() {
@@ -36,12 +38,11 @@ class FakeDeviceSocket {
             : {
                 messageType: MSGTYPES.CommandResponse,
                 responses: message.commands.map(({handle, oid, methodId, arguments: methodArguments}) => {
-                    const method = `${methodId.level}.${methodId.index}`;
                     const value = {
-                        '1.1': propertyValues[`${oid}.${methodArguments?.id?.level}.${methodArguments?.id?.index}`],
-                        '2.1': memberDescriptors,
-                        '3.1': classDescriptor,
-                    }[method];
+                        [toMethodKey(METHOD_IDS.OBJECT.GET)]: propertyValues[`${oid}.${methodArguments?.id?.level}.${methodArguments?.id?.index}`],
+                        [toMethodKey(METHOD_IDS.BLOCK.GET_MEMBERS_DESCRIPTORS)]: memberDescriptors,
+                        [toMethodKey(METHOD_IDS.CLASS_MANAGER.GET_CONTROL_CLASS)]: classDescriptor,
+                    }[toMethodKey(methodId)];
                     return {handle, result: {status: NcMethodStatus.OK, value}};
                 }),
             };

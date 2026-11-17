@@ -23,31 +23,9 @@ import {
     Toolbar,
     Typography,
 } from '@mui/material';
-import {
-    CategoryScale,
-    Chart as ChartJS,
-    Filler,
-    LinearScale,
-    LineElement,
-    PointElement,
-    Title,
-    Tooltip
-} from 'chart.js';
 
 import Tables from "./DataTables";
 import DataProvider from "../middleware/DataProvider";
-
-
-/* Registering the chart.js elements to the chart.js library. */
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Filler
-);
 
 export const _SAMPLER_SIZE = 100;
 export let DataProviderContext = createContext(typeof DataProvider)

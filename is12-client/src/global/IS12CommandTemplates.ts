@@ -8,7 +8,7 @@ import {NcElementId, NCACommand, NCAValue, GenericMap} from './Types'
 
 export const ROOT_BLOCK_OID = 1
 
-const METHOD_IDS = {
+export const METHOD_IDS = {
     OBJECT: {
         GET: {
             level: 1,

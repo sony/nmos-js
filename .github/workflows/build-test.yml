@@ -40,6 +40,25 @@ jobs:
     - name: unit test location rewrite
       run: lua5.1 location_rewrite_test.lua -v
 
+  is12_client:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: is12-client
+    steps:
+    - uses: actions/checkout@v7
+
+    - uses: actions/setup-node@v7
+
+    - name: install is12-client
+      run: yarn install --frozen-lockfile
+
+    - name: build is12-client
+      run: yarn build
+
+    - name: unit test is12-client
+      run: yarn test --watchAll=false
+
   build_and_test:
     runs-on: ubuntu-22.04
     steps:

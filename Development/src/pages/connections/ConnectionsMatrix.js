@@ -648,6 +648,7 @@ const ConnectionsMatrix = ({
     // passed into every cell as disabled, re-renders the whole matrix twice
     // per click
     const busy = useRef(false);
+    const refreshTimer = useRef(null);
     const [noConnectionApi, setNoConnectionApi] = useState({});
     const cellTip = useRef(null);
     const legMenu = useRef(null);
@@ -741,16 +742,23 @@ const ConnectionsMatrix = ({
     const senderMatchDisabled = port =>
         !(port.flow_id && flowsLoaded && flows[port.flow_id]);
 
-    // React 17 does not batch updates from a promise, so notify, refresh and
-    // closing the menu would each re-render the matrix in turn
+    // React 17 does not batch updates from a promise, so notify and closing
+    // the menu would each re-render the matrix in turn. The Node may register
+    // the result of a write after responding to it, so the matrix stays busy
+    // and refreshes after a short delay, which should usually be long enough
+    // for the Query API to be updated.
     const finishWrite = () => {
-        busy.current = false;
         unstable_batchedUpdates(() => {
             notify('Element updated', 'info');
-            refresh();
             legMenu.current.close();
         });
+        refreshTimer.current = setTimeout(() => {
+            busy.current = false;
+            refresh();
+        }, 200);
     };
+
+    useEffect(() => () => clearTimeout(refreshTimer.current), []);
 
     const failWrite = (receiverId, error) => {
         busy.current = false;

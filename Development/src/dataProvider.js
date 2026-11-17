@@ -40,12 +40,11 @@ import {
 } from './settings';
 import { parseTransportUrn } from './transportUrn';
 
-// which access path, direct or bridge, most recently worked for each Device
-const deviceAccessPaths = new Map();
-// the Connection API address that answered first successfully for this
-// Device last time. The next request tries it alone, and only races all
-// the advertised addresses again if it fails
-const deviceConnectionAddresses = new Map();
+// for each API of each Device or Node, which access path, direct or bridge,
+// and which address answered last time
+const apiAccess = new Map();
+// major version 1, capturing the minor version
+const V1_VERSION = /^v1\.(\d+)$/;
 
 const apiResource = resource => {
     let api;
@@ -722,19 +721,102 @@ const convertDataProviderRequestToHTTP = (
     }
 };
 
-const timeout = (ms, promise) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            reject(new Error('Timeout'));
-        }, ms);
-        promise.then(resolve, reject);
-    });
-};
-
 // looking for the first promise to succeed or all to fail
 const firstOf = ps => {
     const invertPromise = p => new Promise((res, rej) => p.then(rej, res));
     return invertPromise(Promise.all(ps.map(invertPromise)));
+};
+
+// resolves to the first of the addresses to answer GET address + path
+// successfully, with its response, or undefined if none does in time
+const firstToAnswer = (addresses, path, headers) => {
+    const controllers = addresses.map(() => new AbortController());
+    const timer = setTimeout(
+        () => controllers.forEach(controller => controller.abort()),
+        5000
+    );
+    let winner;
+    return firstOf(
+        addresses.map((address, index) =>
+            fetch(concatUrl(address, path), {
+                headers,
+                signal: controllers[index].signal,
+            }).then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                if (winner === undefined) winner = index;
+                return { address, response };
+            })
+        )
+    )
+        .catch(() => undefined)
+        .finally(() => {
+            clearTimeout(timer);
+            // the caller may still read the body of the winning response
+            controllers.forEach(
+                (controller, index) => index !== winner && controller.abort()
+            );
+        });
+};
+
+// Finds an address that answers for an API which a Device or Node advertises
+// once for each version and each of its host names and addresses, in
+// Device.controls or Node.services. Tries each advertised v1.x version,
+// newest first, since minor versions are backwards compatible: the address
+// that answered last time on its own, then all the advertised addresses at
+// once, then the bridge, as the bridge mode allows.
+// Resolves to the address and the successful response to GET address + path,
+// or undefined if none answers.
+export const findApiAddress = async ({
+    endpoints = [],
+    typePrefix,
+    bridgeUrl,
+    path = '',
+    key,
+    headers,
+}) => {
+    const mode = bridgeMode();
+    const remembered = apiAccess.get(key) || {};
+    const minor = version => Number(version.match(V1_VERSION)[1]);
+    const versions = [
+        ...new Set(
+            endpoints
+                .filter(({ type }) => type.startsWith(typePrefix))
+                .map(({ type }) => type.slice(typePrefix.length))
+                .filter(version => V1_VERSION.test(version))
+        ),
+    ].sort((left, right) => minor(right) - minor(left));
+    for (const version of versions) {
+        const addresses = endpoints
+            .filter(({ type, href }) => type === typePrefix + version && href)
+            .map(({ href }) => href);
+        if (addresses.length === 0) continue;
+        const attempts = [];
+        if (mode !== BRIDGE_FORCED) {
+            attempts.push(['direct', addresses]);
+        }
+        if (mode === BRIDGE_AUTO || mode === BRIDGE_FORCED) {
+            attempts.push(['bridge', [bridgeUrl(version)]]);
+        }
+        if (mode === BRIDGE_AUTO && remembered.accessPath === 'bridge') {
+            attempts.reverse();
+        }
+        if (mode !== BRIDGE_FORCED && addresses.includes(remembered.address)) {
+            attempts.unshift(['direct', [remembered.address]]);
+        }
+        for (const [accessPath, candidates] of attempts) {
+            const found = await firstToAnswer(candidates, path, headers);
+            if (found) {
+                apiAccess.set(key, {
+                    accessPath,
+                    address:
+                        accessPath === 'direct' ? found.address : undefined,
+                });
+                return found;
+            }
+        }
+    }
+    apiAccess.delete(key);
+    return undefined;
 };
 
 // Content-Type without parameters: "application/sdp; charset=utf-8"
@@ -745,120 +827,52 @@ export const transportFileMediaType = contentType => {
     return mediaType || undefined;
 };
 
-const getConnectionResourceEndpoints = (
-    addresses,
-    resource,
-    id,
-    endpointNames
-) => {
+const getConnectionResourceEndpoints = async (response, endpointNames) => {
     const endpointData = [];
-    let connectionAPI;
-    let connectionAddress;
-    const controller = new AbortController();
-    const signal = controller.signal;
-    const fetchOptions = isAuth()
-        ? { signal, headers: makeBearerAuthHeader() }
-        : { signal };
+    const connectionAPI = response.url;
+    const fetchOptions = isAuth() ? { headers: makeBearerAuthHeader() } : {};
 
-    return new Promise((resolve, reject) => {
-        firstOf(
-            addresses.map(address => {
-                return timeout(
-                    5000,
-                    fetch(
-                        concatUrl(address, `/single/${resource}/${id}`),
-                        fetchOptions
-                    ).then(response => ({ address, response }))
-                );
-            })
+    const endpoints = await response.json();
+    const listed = endpointNames
+        ? endpoints.filter(endpoint => endpointNames.includes(endpoint))
+        : endpoints;
+    await Promise.all(
+        listed.map(endpoint =>
+            fetch(concatUrl(connectionAPI, `/${endpoint}`), fetchOptions)
+                .then(response => {
+                    if (!response.ok) {
+                        return { data: undefined };
+                    }
+                    const contentType = response.headers.get('Content-Type');
+                    return response.text().then(text => {
+                        let data = text;
+                        try {
+                            data = JSON.parse(text);
+                        } catch (e) {
+                            data = text;
+                        }
+                        return { data, contentType };
+                    });
+                })
+                .then(({ data, contentType }) => {
+                    endpointData.push({
+                        [`$${endpoint.slice(0, -1)}`]: data,
+                    });
+                    // The transportfile body is the file. Its media type is
+                    // the response Content-Type, without parameters.
+                    if (endpoint === 'transportfile/') {
+                        const mediaType = transportFileMediaType(contentType);
+                        if (mediaType) {
+                            endpointData.push({
+                                $transportfiletype: mediaType,
+                            });
+                        }
+                    }
+                })
         )
-            .then(({ address, response }) => {
-                connectionAddress = address;
-                connectionAPI = response.url;
-                return response.json();
-            })
-            .then(endpoints => {
-                if (get(endpoints, 'code')) {
-                    controller.abort();
-                    reject(new Error(`${endpoints.error} - ${endpoints.code}`));
-                    return;
-                }
-                const listed = endpointNames
-                    ? endpoints.filter(endpoint =>
-                          endpointNames.includes(endpoint)
-                      )
-                    : endpoints;
-                Promise.all(
-                    listed.map(endpoint =>
-                        fetch(
-                            concatUrl(connectionAPI, `/${endpoint}`),
-                            fetchOptions
-                        )
-                            .then(response => {
-                                if (!response.ok) {
-                                    return { data: undefined };
-                                }
-                                const contentType =
-                                    response.headers.get('Content-Type');
-                                return response.text().then(text => {
-                                    let data = text;
-                                    try {
-                                        data = JSON.parse(text);
-                                    } catch (e) {
-                                        data = text;
-                                    }
-                                    return { data, contentType };
-                                });
-                            })
-                            .then(({ data, contentType }) => {
-                                endpointData.push({
-                                    [`$${endpoint.slice(0, -1)}`]: data,
-                                });
-                                // The transportfile body is the file. Its
-                                // media type is the response Content-Type,
-                                // without parameters.
-                                if (endpoint === 'transportfile/') {
-                                    const mediaType =
-                                        transportFileMediaType(contentType);
-                                    if (mediaType) {
-                                        endpointData.push({
-                                            $transportfiletype: mediaType,
-                                        });
-                                    }
-                                }
-                            })
-                            .catch(error => {
-                                throw error;
-                            })
-                    )
-                ).then(() => {
-                    endpointData.push({ $connectionAPI: connectionAPI });
-                    controller.abort();
-                    resolve({ connectionAddress, endpointData });
-                });
-            })
-            .catch(errors => {
-                controller.abort();
-                reject(errors[0]);
-            });
-    });
-};
-
-const connectionAddressesFromDevice = device => {
-    const connectionAddresses = {};
-    if (has(device, 'controls')) {
-        device.controls.forEach(control => {
-            const type = control.type.replace('.', '_');
-            if (type.startsWith('urn:x-nmos:control:sr-ctrl')) {
-                if (!has(connectionAddresses, type)) {
-                    set(connectionAddresses, type, [control.href]);
-                } else {
-                    connectionAddresses[type].push(control.href);
-                }
-            }
-        });
-    }
-    return connectionAddresses;
+    );
+    endpointData.push({ $connectionAPI: connectionAPI });
+    return endpointData;
 };
 
 const fetchConnectionFromDevice = async (
@@ -867,78 +881,23 @@ const fetchConnectionFromDevice = async (
     id,
     endpointNames
 ) => {
-    const connectionAddresses = connectionAddressesFromDevice(device);
-    if (Object.keys(connectionAddresses).length === 0) {
+    const found = await findApiAddress({
+        endpoints: device.controls,
+        typePrefix: 'urn:x-nmos:control:sr-ctrl/',
+        bridgeUrl: version => deviceBridgeUrl(device.id, 'connection', version),
+        path: `/single/${resource}/${id}`,
+        key: `connection ${device.id}`,
+        headers: isAuth() ? makeBearerAuthHeader() : {},
+    });
+    if (!found) return undefined;
+    try {
+        return await getConnectionResourceEndpoints(
+            found.response,
+            endpointNames
+        );
+    } catch (e) {
         return undefined;
     }
-
-    const versions = Object.keys(connectionAddresses).sort().reverse();
-    const deviceId = device.id;
-    const mode = bridgeMode();
-
-    let endpointData;
-    let accessPath;
-    for (let version of versions) {
-        // e.g. 'urn:x-nmos:control:sr-ctrl/v1_1' -> 'v1.1'
-        const connectionVersion = version
-            .split('/')
-            .slice(-1)[0]
-            .replace('_', '.');
-        // preferred access sequence: use the Device control hrefs
-        // directly, and only fall back to the bridge if they are
-        // inaccessible; start with whichever worked last time,
-        // unless the bridge is forced
-        const attempts = [];
-        if (mode !== BRIDGE_FORCED) {
-            attempts.push(['direct', connectionAddresses[version]]);
-        }
-        if (mode === BRIDGE_AUTO || mode === BRIDGE_FORCED) {
-            attempts.push([
-                'bridge',
-                [deviceBridgeUrl(deviceId, 'connection', connectionVersion)],
-            ]);
-        }
-        if (
-            mode === BRIDGE_AUTO &&
-            deviceAccessPaths.get(deviceId) === 'bridge'
-        ) {
-            attempts.reverse();
-        }
-        // the address that answered last time is worth trying on
-        // its own before racing every one the Device advertises
-        const rememberedAddress = deviceConnectionAddresses.get(deviceId);
-        if (
-            mode !== BRIDGE_FORCED &&
-            connectionAddresses[version].includes(rememberedAddress)
-        ) {
-            attempts.unshift(['direct', [rememberedAddress]]);
-        }
-        for (const [path, addresses] of attempts) {
-            let connectionAddress;
-            try {
-                ({ connectionAddress, endpointData } =
-                    await getConnectionResourceEndpoints(
-                        addresses,
-                        resource,
-                        id,
-                        endpointNames
-                    ));
-            } catch (e) {}
-            if (endpointData) {
-                deviceConnectionAddresses.set(deviceId, connectionAddress);
-                accessPath = path;
-                break;
-            }
-        }
-        if (endpointData) break;
-    }
-    if (endpointData) {
-        deviceAccessPaths.set(deviceId, accessPath);
-    } else {
-        deviceAccessPaths.delete(deviceId);
-        deviceConnectionAddresses.delete(deviceId);
-    }
-    return endpointData;
 };
 
 // IS-04 record plus the Connection API endpoints named in endpointNames.
@@ -980,81 +939,41 @@ export const getConnectionResource = async (
     return data;
 };
 
-const getChannelMappingEndpoints = (addresses, endpoints) => {
+const getChannelMappingEndpoints = async (channelmappingAPI, endpoints) => {
     const endpointData = [];
-    let channelmappingAPI;
-    const controller = new AbortController();
-    const signal = controller.signal;
-    const fetchOptions = isAuth()
-        ? { signal, headers: makeBearerAuthHeader() }
-        : { signal };
+    const fetchOptions = isAuth() ? { headers: makeBearerAuthHeader() } : {};
 
-    return new Promise((resolve, reject) => {
-        firstOf(
-            addresses.map(address => {
-                return timeout(
-                    5000,
-                    fetch(concatUrl(address, ``), fetchOptions)
-                );
-            })
-        )
-            .then(response => {
-                channelmappingAPI = response.url;
-                return endpoints;
-            })
-            .then(endpoints => {
-                if (get(endpoints, 'code')) {
-                    controller.abort();
-                    reject(new Error(`${endpoints.error} - ${endpoints.code}`));
-                    return;
-                }
-                endpoints
-                    .map(
-                        endpoint => () =>
-                            fetch(
-                                concatUrl(channelmappingAPI, `/${endpoint}`),
-                                fetchOptions
-                            )
-                                .then(response => {
-                                    if (response.ok) {
-                                        return response.text();
-                                    }
-                                })
-                                .then(text => {
-                                    try {
-                                        return JSON.parse(text);
-                                    } catch (e) {
-                                        return text;
-                                    }
-                                })
-                                .then(data => {
-                                    endpointData.push({
-                                        [`$${
-                                            endpoint.split('/').slice(-1)[0]
-                                        }`]: data,
-                                    });
-                                })
-                                .catch(error => {
-                                    throw error;
-                                })
-                    )
-                    .reduce(
-                        (before, after) => before.then(_ => after()),
-                        Promise.resolve()
-                    )
-                    .then(() => {
+    await endpoints
+        .map(
+            endpoint => () =>
+                fetch(
+                    concatUrl(channelmappingAPI, `/${endpoint}`),
+                    fetchOptions
+                )
+                    .then(response => {
+                        if (response.ok) {
+                            return response.text();
+                        }
+                    })
+                    .then(text => {
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            return text;
+                        }
+                    })
+                    .then(data => {
                         endpointData.push({
-                            $channelmappingAPI: channelmappingAPI,
+                            [`$${endpoint.split('/').slice(-1)[0]}`]: data,
                         });
-                        controller.abort();
-                        resolve(endpointData);
-                    });
-            })
-            .catch(errors => {
-                controller.abort();
-                reject(errors[0]);
-            });
-    });
+                    })
+        )
+        .reduce(
+            (before, after) => before.then(_ => after()),
+            Promise.resolve()
+        );
+    endpointData.push({ $channelmappingAPI: channelmappingAPI });
+    return endpointData;
 };
 
 const filterAsync = async (data, predicate) => {
@@ -1145,93 +1064,23 @@ const convertHTTPResponseToDataProvider = async (
                     });
                 }
             } else if (resource === 'devices') {
-                let deviceJSONData = json;
-
-                let channelmappingAddresses = {};
                 // Device.controls was added in v1.1
-                if (has(deviceJSONData, 'controls')) {
-                    deviceJSONData.controls.forEach(control => {
-                        const type = control.type.replace('.', '_');
-                        if (type.startsWith('urn:x-nmos:control:cm-ctrl')) {
-                            if (!has(channelmappingAddresses, type)) {
-                                set(channelmappingAddresses, type, [
-                                    control.href,
-                                ]);
-                            } else {
-                                channelmappingAddresses[type].push(
-                                    control.href
-                                );
-                            }
-                        }
-                    });
-                }
-                // just return IS-04 data if no Channel Mapping API endpoints
-                if (Object.keys(channelmappingAddresses).length === 0) {
-                    set(json, '$channelmappingAPI', null);
-                    return { url, data: json };
-                }
-
-                const versions = Object.keys(channelmappingAddresses)
-                    .sort()
-                    .reverse();
-
-                const deviceId = deviceJSONData.id;
-                const mode = bridgeMode();
-
+                const found = await findApiAddress({
+                    endpoints: json.controls,
+                    typePrefix: 'urn:x-nmos:control:cm-ctrl/',
+                    bridgeUrl: version =>
+                        deviceBridgeUrl(json.id, 'channelmapping', version),
+                    key: `channelmapping ${json.id}`,
+                    headers: isAuth() ? makeBearerAuthHeader() : {},
+                });
                 let endpointData;
-                let accessPath;
-                for (let version of versions) {
-                    // e.g. 'urn:x-nmos:control:cm-ctrl/v1_0' -> 'v1.0'
-                    const channelmappingVersion = version
-                        .split('/')
-                        .slice(-1)[0]
-                        .replace('_', '.');
-                    // same access sequence as Connection: direct hrefs, then
-                    // bridge; start with whichever path last worked for this
-                    // Device unless Forced
-                    const attempts = [];
-                    if (mode !== BRIDGE_FORCED) {
-                        attempts.push([
-                            'direct',
-                            channelmappingAddresses[version],
-                        ]);
-                    }
-                    if (mode === BRIDGE_AUTO || mode === BRIDGE_FORCED) {
-                        attempts.push([
-                            'bridge',
-                            [
-                                deviceBridgeUrl(
-                                    deviceId,
-                                    'channelmapping',
-                                    channelmappingVersion
-                                ),
-                            ],
-                        ]);
-                    }
-                    if (
-                        mode === BRIDGE_AUTO &&
-                        deviceAccessPaths.get(deviceId) === 'bridge'
-                    ) {
-                        attempts.reverse();
-                    }
-                    for (const [path, addresses] of attempts) {
-                        try {
-                            endpointData = await getChannelMappingEndpoints(
-                                addresses,
-                                ['io', 'map/active', 'map/activations']
-                            );
-                        } catch (e) {}
-                        if (endpointData) {
-                            accessPath = path;
-                            break;
-                        }
-                    }
-                    if (endpointData) break;
-                }
-                if (endpointData) {
-                    deviceAccessPaths.set(deviceId, accessPath);
-                } else {
-                    deviceAccessPaths.delete(deviceId);
+                if (found) {
+                    try {
+                        endpointData = await getChannelMappingEndpoints(
+                            found.response.url,
+                            ['io', 'map/active', 'map/activations']
+                        );
+                    } catch (e) {}
                 }
 
                 // just return IS-04 data if no Channel Mapping API was able to connect

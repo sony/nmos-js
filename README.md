@@ -5,8 +5,8 @@
 
 This repository contains a client implementation of the [AMWA Networked Media Open Specifications](https://github.com/AMWA-TV/nmos) in JavaScript, [licensed](LICENSE) under the terms of the Apache License 2.0.
 
-- [AMWA IS-04 NMOS Discovery and Registration Specification](https://amwa-tv.github.io/nmos-discovery-registration)
-- [AMWA IS-05 NMOS Device Connection Management Specification](https://amwa-tv.github.io/nmos-device-connection-management)
+- [AMWA IS-04 NMOS Discovery and Registration Specification](https://specs.amwa.tv/is-04/)
+- [AMWA IS-05 NMOS Device Connection Management Specification](https://specs.amwa.tv/is-05/)
 - [AMWA IS-08 NMOS Audio Channel Mapping Specification](https://specs.amwa.tv/is-08/)
 - [AMWA BCP-004-01 NMOS Receiver Capabilities](https://specs.amwa.tv/bcp-004-01/)
 - [AMWA BCP-007-03 NMOS Support for MXL](https://specs.amwa.tv/bcp-007-03/)
